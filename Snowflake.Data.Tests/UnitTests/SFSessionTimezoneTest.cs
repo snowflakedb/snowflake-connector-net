@@ -5,98 +5,97 @@ using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
-namespace Snowflake.Data.Tests.UnitTests
+namespace Snowflake.Data.Tests.UnitTests;
+
+public class SFSessionTimezoneTest
 {
-    public class SFSessionTimezoneTest
+    [SFFact]
+    public void TestGetSessionTimezoneReturnsLocalWhenFeatureDisabled()
     {
-        [SFFact]
-        public void TestGetSessionTimezoneReturnsLocalWhenFeatureDisabled()
+        var session = new SFSession(
+            "account=test;user=test;password=test;HonorSessionTimezone=false",
+            new SessionPropertiesContext());
+
+        session.ParameterMap[SFSessionParameter.TIMEZONE] = "Asia/Tokyo";
+
+        Assert.Equal(TimeZoneInfo.Local, session.GetSessionTimezone());
+    }
+
+    [SFFact]
+    public void TestGetSessionTimezoneFallsBackWhenTimezoneNotInParameterMap()
+    {
+        var session = new SFSession(
+            "account=test;user=test;password=test;HonorSessionTimezone=true",
+            new SessionPropertiesContext());
+
+        Assert.Equal(TimeZoneInfo.Local, session.GetSessionTimezone());
+    }
+
+    [SFFact]
+    public void TestGetSessionTimezoneFallsBackOnUnknownTimezone()
+    {
+        var session = new SFSession(
+            "account=test;user=test;password=test;HonorSessionTimezone=true",
+            new SessionPropertiesContext());
+
+        session.ParameterMap[SFSessionParameter.TIMEZONE] = "Invalid/Nowhere";
+
+        Assert.Equal(TimeZoneInfo.Local, session.GetSessionTimezone());
+    }
+
+    [SFFact]
+    public void TestGetSessionTimezoneCachesResult()
+    {
+        var session = new SFSession(
+            "account=test;user=test;password=test;HonorSessionTimezone=true",
+            new SessionPropertiesContext());
+
+        session.ParameterMap[SFSessionParameter.TIMEZONE] = "America/New_York";
+
+        var first = session.GetSessionTimezone();
+        var second = session.GetSessionTimezone();
+
+        Assert.Same(first, second);
+    }
+
+    [SFFact]
+    public void TestGetSessionTimezoneCacheInvalidatedOnParameterUpdate()
+    {
+        var session = new SFSession(
+            "account=test;user=test;password=test;HonorSessionTimezone=true",
+            new SessionPropertiesContext());
+
+        session.ParameterMap[SFSessionParameter.TIMEZONE] = "America/New_York";
+        var beforeUpdate = session.GetSessionTimezone();
+
+        session.UpdateSessionParameterMap(new List<NameValueParameter>
         {
-            var session = new SFSession(
-                "account=test;user=test;password=test;HonorSessionTimezone=false",
-                new SessionPropertiesContext());
+            new NameValueParameter { name = "TIMEZONE", value = "Asia/Tokyo" }
+        });
 
-            session.ParameterMap[SFSessionParameter.TIMEZONE] = "Asia/Tokyo";
+        var afterUpdate = session.GetSessionTimezone();
+        var expectedTokyo = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Asia/Tokyo");
 
-            Assert.Equal(TimeZoneInfo.Local, session.GetSessionTimezone());
-        }
+        Assert.NotEqual(beforeUpdate, afterUpdate);
+        Assert.Equal(expectedTokyo, afterUpdate);
+    }
 
-        [SFFact]
-        public void TestGetSessionTimezoneFallsBackWhenTimezoneNotInParameterMap()
-        {
-            var session = new SFSession(
-                "account=test;user=test;password=test;HonorSessionTimezone=true",
-                new SessionPropertiesContext());
+    [SFTheory]
+    [InlineData("America/Los_Angeles")]
+    [InlineData("UTC")]
+    [InlineData("Asia/Tokyo")]
+    [InlineData("Europe/Warsaw")]
+    [InlineData("Pacific/Honolulu")]
+    public void TestGetSessionTimezoneResolvesVariousTimezones(string tzName)
+    {
+        var session = new SFSession(
+            "account=test;user=test;password=test;HonorSessionTimezone=true",
+            new SessionPropertiesContext());
 
-            Assert.Equal(TimeZoneInfo.Local, session.GetSessionTimezone());
-        }
+        session.ParameterMap[SFSessionParameter.TIMEZONE] = tzName;
 
-        [SFFact]
-        public void TestGetSessionTimezoneFallsBackOnUnknownTimezone()
-        {
-            var session = new SFSession(
-                "account=test;user=test;password=test;HonorSessionTimezone=true",
-                new SessionPropertiesContext());
-
-            session.ParameterMap[SFSessionParameter.TIMEZONE] = "Invalid/Nowhere";
-
-            Assert.Equal(TimeZoneInfo.Local, session.GetSessionTimezone());
-        }
-
-        [SFFact]
-        public void TestGetSessionTimezoneCachesResult()
-        {
-            var session = new SFSession(
-                "account=test;user=test;password=test;HonorSessionTimezone=true",
-                new SessionPropertiesContext());
-
-            session.ParameterMap[SFSessionParameter.TIMEZONE] = "America/New_York";
-
-            var first = session.GetSessionTimezone();
-            var second = session.GetSessionTimezone();
-
-            Assert.Same(first, second);
-        }
-
-        [SFFact]
-        public void TestGetSessionTimezoneCacheInvalidatedOnParameterUpdate()
-        {
-            var session = new SFSession(
-                "account=test;user=test;password=test;HonorSessionTimezone=true",
-                new SessionPropertiesContext());
-
-            session.ParameterMap[SFSessionParameter.TIMEZONE] = "America/New_York";
-            var beforeUpdate = session.GetSessionTimezone();
-
-            session.UpdateSessionParameterMap(new List<NameValueParameter>
-            {
-                new NameValueParameter { name = "TIMEZONE", value = "Asia/Tokyo" }
-            });
-
-            var afterUpdate = session.GetSessionTimezone();
-            var expectedTokyo = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Asia/Tokyo");
-
-            Assert.NotEqual(beforeUpdate, afterUpdate);
-            Assert.Equal(expectedTokyo, afterUpdate);
-        }
-
-        [SFTheory]
-        [InlineData("America/Los_Angeles")]
-        [InlineData("UTC")]
-        [InlineData("Asia/Tokyo")]
-        [InlineData("Europe/Warsaw")]
-        [InlineData("Pacific/Honolulu")]
-        public void TestGetSessionTimezoneResolvesVariousTimezones(string tzName)
-        {
-            var session = new SFSession(
-                "account=test;user=test;password=test;HonorSessionTimezone=true",
-                new SessionPropertiesContext());
-
-            session.ParameterMap[SFSessionParameter.TIMEZONE] = tzName;
-
-            var result = session.GetSessionTimezone();
-            var expected = TimeZoneConverter.TZConvert.GetTimeZoneInfo(tzName);
-            Assert.Equal(expected, result);
-        }
+        var result = session.GetSessionTimezone();
+        var expected = TimeZoneConverter.TZConvert.GetTimeZoneInfo(tzName);
+        Assert.Equal(expected, result);
     }
 }

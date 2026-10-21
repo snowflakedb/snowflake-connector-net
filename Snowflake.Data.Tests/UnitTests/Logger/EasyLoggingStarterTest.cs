@@ -10,350 +10,349 @@ using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
 
-namespace Snowflake.Data.Tests.UnitTests.Session
+namespace Snowflake.Data.Tests.UnitTests.Session;
+
+public sealed class EasyLoggingStarterTest
 {
-    public sealed class EasyLoggingStarterTest
+    private static readonly string HomeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+    private static readonly string LogPath = Path.Combine(HomeDirectory, "some-logs-path/some-folder");
+    private const string ConfigPath = "/some-path/config.json";
+    private const string AnotherConfigPath = "/another/path";
+    private static readonly string s_expectedLogPath = Path.Combine(LogPath, "dotnet");
+
+    private static readonly ClientConfig s_configWithErrorLevel = new ClientConfig
     {
-        private static readonly string HomeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        private static readonly string LogPath = Path.Combine(HomeDirectory, "some-logs-path/some-folder");
-        private const string ConfigPath = "/some-path/config.json";
-        private const string AnotherConfigPath = "/another/path";
-        private static readonly string s_expectedLogPath = Path.Combine(LogPath, "dotnet");
-
-        private static readonly ClientConfig s_configWithErrorLevel = new ClientConfig
+        CommonProps = new ClientConfigCommonProps
         {
-            CommonProps = new ClientConfigCommonProps
-            {
-                LogLevel = "Error",
-                LogPath = LogPath
-            }
-        };
-
-        private static readonly ClientConfig s_configWithInfoLevel = new ClientConfig
-        {
-            CommonProps = new ClientConfigCommonProps
-            {
-                LogLevel = "Info",
-                LogPath = LogPath
-            }
-        };
-
-        private static readonly ClientConfig s_configWithNoLogPath = new ClientConfig
-        {
-            CommonProps = new ClientConfigCommonProps
-            {
-                LogLevel = "Info"
-            }
-        };
-
-        private static readonly ClientConfig s_configWithStdoutAsLogPath = new ClientConfig
-        {
-            CommonProps = new ClientConfigCommonProps
-            {
-                LogLevel = "Info",
-                LogPath = "STDOUT"
-            }
-        };
-
-        private static readonly ClientConfig s_configWithValidLogPermission = new ClientConfig
-        {
-            CommonProps = new ClientConfigCommonProps
-            {
-                LogLevel = "Error",
-                LogPath = LogPath
-            },
-            Dotnet = new ClientConfigDotnet
-            {
-                LogFileUnixPermissions = "640"
-            }
-        };
-
-        [ThreadStatic]
-        private static Mock<EasyLoggingConfigProvider> t_easyLoggingProvider;
-
-        [ThreadStatic]
-        private static Mock<EasyLoggerManager> t_easyLoggerManager;
-
-        [ThreadStatic]
-        private static Mock<UnixOperations> t_unixOperations;
-
-        [ThreadStatic]
-        private static Mock<DirectoryOperations> t_directoryOperations;
-
-        [ThreadStatic]
-        private static Mock<IEnvironmentFacade> t_environmentOperations;
-
-        [ThreadStatic]
-        private static EasyLoggingStarter t_easyLoggerStarter;
-
-        public EasyLoggingStarterTest()
-        {
-            t_easyLoggingProvider = new Mock<EasyLoggingConfigProvider>();
-            t_easyLoggerManager = new Mock<EasyLoggerManager>();
-            t_unixOperations = new Mock<UnixOperations>();
-            t_directoryOperations = new Mock<DirectoryOperations>();
-            t_environmentOperations = new Mock<IEnvironmentFacade>();
-            t_easyLoggerStarter = new EasyLoggingStarter(
-                t_easyLoggingProvider.Object,
-                t_easyLoggerManager.Object,
-                t_unixOperations.Object,
-                t_directoryOperations.Object,
-                t_environmentOperations.Object);
+            LogLevel = "Error",
+            LogPath = LogPath
         }
+    };
 
-        [SFFact]
-        public void TestThatThrowsErrorWhenLogPathAndHomeDirectoryIsNotSet()
+    private static readonly ClientConfig s_configWithInfoLevel = new ClientConfig
+    {
+        CommonProps = new ClientConfigCommonProps
         {
-            // arrange
-            t_easyLoggingProvider
-                .Setup(provider => provider.ProvideConfig(ConfigPath))
-                .Returns(s_configWithNoLogPath);
-            t_environmentOperations
-                .Setup(env => env.GetFolderPath(Environment.SpecialFolder.UserProfile))
-                .Returns("");
-
-            // act
-            var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
-
-            // assert
-            Assert.NotNull(thrown);
-            Assert.NotEmpty(thrown.Message);
+            LogLevel = "Info",
+            LogPath = LogPath
         }
+    };
 
-        [SFFact]
-        public void TestThatThrowsErrorWhenLogPathIsNotSetAndHomeDirectoryThrowsAnException()
+    private static readonly ClientConfig s_configWithNoLogPath = new ClientConfig
+    {
+        CommonProps = new ClientConfigCommonProps
         {
-            // arrange
-            var ex = new Exception("No home directory");
-            t_easyLoggingProvider
-                .Setup(provider => provider.ProvideConfig(ConfigPath))
-                .Returns(s_configWithNoLogPath);
-            t_environmentOperations
-                .Setup(env => env.GetFolderPath(Environment.SpecialFolder.UserProfile))
-                .Throws(() => ex);
-
-            // act
-            var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
-
-            // assert
-            Assert.NotNull(thrown);
-            Assert.Equal("No log path found for easy logging. Home directory is not configured and log path is not provided", thrown.Message);
+            LogLevel = "Info"
         }
+    };
 
-
-        [SFTheory(SkipCondition.SkipOnWindows)]
-        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupExecute, "User RWX + Group RX")]
-        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupWrite | FileAccessPermissions.GroupExecute, "User RWX + Group RWX")]
-        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherRead | FileAccessPermissions.OtherExecute, "User RWX + Group RWX + Other RX")]
-        [InlineData(FileAccessPermissions.AllPermissions, "All")]
-        [InlineData(FileAccessPermissions.GroupReadWriteExecute, "Group RWX")]
-        [InlineData(FileAccessPermissions.OtherReadWriteExecute, "Other RWX")]
-        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead, "User RWX + Other R")]
-        [InlineData(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite, "User RW")]
-        [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead, "User RWX + Group R")]
-        public void TestThatThrowsErrorWhenLogDirectoryHasInvalidPermissions(FileAccessPermissions invalidPermissions, string log)
+    private static readonly ClientConfig s_configWithStdoutAsLogPath = new ClientConfig
+    {
+        CommonProps = new ClientConfigCommonProps
         {
-            // arrange
-            Console.WriteLine($@"Executing {nameof(TestThatThrowsErrorWhenLogDirectoryHasInvalidPermissions)} with {log}..");
-            t_easyLoggingProvider
-                .Setup(provider => provider.ProvideConfig(ConfigPath))
-                .Returns(s_configWithInfoLevel);
-            t_directoryOperations
-                .Setup(dir => dir.Exists(s_expectedLogPath))
-                .Returns(true);
-            t_unixOperations
-                .Setup(unix => unix.GetDirPermissions(s_expectedLogPath))
-                .Returns(invalidPermissions);
-
-            // act
-            var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
-
-            // assert
-            Assert.Contains("Too broad access permissions for logs directory", thrown.Message);
+            LogLevel = "Info",
+            LogPath = "STDOUT"
         }
+    };
 
-        [SFFact(SkipCondition.SkipOnWindows)]
-        public void TestThatSucceedsWhenLogDirectoryHasExactly700Permissions()
+    private static readonly ClientConfig s_configWithValidLogPermission = new ClientConfig
+    {
+        CommonProps = new ClientConfigCommonProps
         {
-            // arrange
-            t_easyLoggingProvider
-                .Setup(provider => provider.ProvideConfig(ConfigPath))
-                .Returns(s_configWithInfoLevel);
-            t_directoryOperations
-                .Setup(dir => dir.Exists(s_expectedLogPath))
-                .Returns(true);
-            t_unixOperations
-                .Setup(unix => unix.GetDirPermissions(s_expectedLogPath))
-                .Returns(FileAccessPermissions.UserReadWriteExecute);
-
-            // act & assert
-            t_easyLoggerStarter.Init(ConfigPath);
-            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, s_expectedLogPath), Times.Once);
-        }
-
-        [SFFact(SkipCondition.SkipOnWindows)]
-        public void TestFailIfDirectoryCreationFails()
+            LogLevel = "Error",
+            LogPath = LogPath
+        },
+        Dotnet = new ClientConfigDotnet
         {
-            // arrange
-            t_easyLoggingProvider
-                .Setup(provider => provider.ProvideConfig(ConfigPath))
-                .Returns(s_configWithErrorLevel);
-            t_directoryOperations
-                .Setup(d => d.CreateDirectory(s_expectedLogPath))
-                .Throws(() => new Exception("Unable to create directory"));
-            t_unixOperations
-                .Setup(u => u.CreateDirectoryWithPermissions(s_expectedLogPath, FileAccessPermissions.UserReadWriteExecute, true))
-                .Throws(() => new Exception("Unable to create directory"));
-
-            // act
-            var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
-
-            // assert
-            Assert.Contains("Failed to create logs directory", thrown.Message);
+            LogFileUnixPermissions = "640"
         }
+    };
 
-        [SFFact]
-        public void TestThatConfiguresEasyLoggingOnlyOnceWhenInitializedWithConfigPath()
+    [ThreadStatic]
+    private static Mock<EasyLoggingConfigProvider> t_easyLoggingProvider;
+
+    [ThreadStatic]
+    private static Mock<EasyLoggerManager> t_easyLoggerManager;
+
+    [ThreadStatic]
+    private static Mock<UnixOperations> t_unixOperations;
+
+    [ThreadStatic]
+    private static Mock<DirectoryOperations> t_directoryOperations;
+
+    [ThreadStatic]
+    private static Mock<IEnvironmentFacade> t_environmentOperations;
+
+    [ThreadStatic]
+    private static EasyLoggingStarter t_easyLoggerStarter;
+
+    public EasyLoggingStarterTest()
+    {
+        t_easyLoggingProvider = new Mock<EasyLoggingConfigProvider>();
+        t_easyLoggerManager = new Mock<EasyLoggerManager>();
+        t_unixOperations = new Mock<UnixOperations>();
+        t_directoryOperations = new Mock<DirectoryOperations>();
+        t_environmentOperations = new Mock<IEnvironmentFacade>();
+        t_easyLoggerStarter = new EasyLoggingStarter(
+            t_easyLoggingProvider.Object,
+            t_easyLoggerManager.Object,
+            t_unixOperations.Object,
+            t_directoryOperations.Object,
+            t_environmentOperations.Object);
+    }
+
+    [SFFact]
+    public void TestThatThrowsErrorWhenLogPathAndHomeDirectoryIsNotSet()
+    {
+        // arrange
+        t_easyLoggingProvider
+            .Setup(provider => provider.ProvideConfig(ConfigPath))
+            .Returns(s_configWithNoLogPath);
+        t_environmentOperations
+            .Setup(env => env.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            .Returns("");
+
+        // act
+        var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
+
+        // assert
+        Assert.NotNull(thrown);
+        Assert.NotEmpty(thrown.Message);
+    }
+
+    [SFFact]
+    public void TestThatThrowsErrorWhenLogPathIsNotSetAndHomeDirectoryThrowsAnException()
+    {
+        // arrange
+        var ex = new Exception("No home directory");
+        t_easyLoggingProvider
+            .Setup(provider => provider.ProvideConfig(ConfigPath))
+            .Returns(s_configWithNoLogPath);
+        t_environmentOperations
+            .Setup(env => env.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            .Throws(() => ex);
+
+        // act
+        var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
+
+        // assert
+        Assert.NotNull(thrown);
+        Assert.Equal("No log path found for easy logging. Home directory is not configured and log path is not provided", thrown.Message);
+    }
+
+
+    [SFTheory(SkipCondition.SkipOnWindows)]
+    [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupExecute, "User RWX + Group RX")]
+    [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupWrite | FileAccessPermissions.GroupExecute, "User RWX + Group RWX")]
+    [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupReadWriteExecute | FileAccessPermissions.OtherRead | FileAccessPermissions.OtherExecute, "User RWX + Group RWX + Other RX")]
+    [InlineData(FileAccessPermissions.AllPermissions, "All")]
+    [InlineData(FileAccessPermissions.GroupReadWriteExecute, "Group RWX")]
+    [InlineData(FileAccessPermissions.OtherReadWriteExecute, "Other RWX")]
+    [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.OtherRead, "User RWX + Other R")]
+    [InlineData(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite, "User RW")]
+    [InlineData(FileAccessPermissions.UserReadWriteExecute | FileAccessPermissions.GroupRead, "User RWX + Group R")]
+    public void TestThatThrowsErrorWhenLogDirectoryHasInvalidPermissions(FileAccessPermissions invalidPermissions, string log)
+    {
+        // arrange
+        Console.WriteLine($@"Executing {nameof(TestThatThrowsErrorWhenLogDirectoryHasInvalidPermissions)} with {log}..");
+        t_easyLoggingProvider
+            .Setup(provider => provider.ProvideConfig(ConfigPath))
+            .Returns(s_configWithInfoLevel);
+        t_directoryOperations
+            .Setup(dir => dir.Exists(s_expectedLogPath))
+            .Returns(true);
+        t_unixOperations
+            .Setup(unix => unix.GetDirPermissions(s_expectedLogPath))
+            .Returns(invalidPermissions);
+
+        // act
+        var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
+
+        // assert
+        Assert.Contains("Too broad access permissions for logs directory", thrown.Message);
+    }
+
+    [SFFact(SkipCondition.SkipOnWindows)]
+    public void TestThatSucceedsWhenLogDirectoryHasExactly700Permissions()
+    {
+        // arrange
+        t_easyLoggingProvider
+            .Setup(provider => provider.ProvideConfig(ConfigPath))
+            .Returns(s_configWithInfoLevel);
+        t_directoryOperations
+            .Setup(dir => dir.Exists(s_expectedLogPath))
+            .Returns(true);
+        t_unixOperations
+            .Setup(unix => unix.GetDirPermissions(s_expectedLogPath))
+            .Returns(FileAccessPermissions.UserReadWriteExecute);
+
+        // act & assert
+        t_easyLoggerStarter.Init(ConfigPath);
+        t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, s_expectedLogPath), Times.Once);
+    }
+
+    [SFFact(SkipCondition.SkipOnWindows)]
+    public void TestFailIfDirectoryCreationFails()
+    {
+        // arrange
+        t_easyLoggingProvider
+            .Setup(provider => provider.ProvideConfig(ConfigPath))
+            .Returns(s_configWithErrorLevel);
+        t_directoryOperations
+            .Setup(d => d.CreateDirectory(s_expectedLogPath))
+            .Throws(() => new Exception("Unable to create directory"));
+        t_unixOperations
+            .Setup(u => u.CreateDirectoryWithPermissions(s_expectedLogPath, FileAccessPermissions.UserReadWriteExecute, true))
+            .Throws(() => new Exception("Unable to create directory"));
+
+        // act
+        var thrown = Assert.Throws<Exception>(() => t_easyLoggerStarter.Init(ConfigPath));
+
+        // assert
+        Assert.Contains("Failed to create logs directory", thrown.Message);
+    }
+
+    [SFFact]
+    public void TestThatConfiguresEasyLoggingOnlyOnceWhenInitializedWithConfigPath()
+    {
+        // arrange
+        t_easyLoggingProvider
+            .Setup(provider => provider.ProvideConfig(ConfigPath))
+            .Returns(s_configWithErrorLevel);
+        t_easyLoggingProvider
+            .Setup(provider => provider.ProvideConfig(null))
+            .Returns(s_configWithInfoLevel);
+        t_easyLoggingProvider
+            .Setup(provider => provider.ProvideConfig(AnotherConfigPath))
+            .Returns(s_configWithInfoLevel);
+        t_unixOperations
+            .Setup(unix => unix.GetDirPermissions(s_expectedLogPath))
+            .Returns(FileAccessPermissions.UserReadWriteExecute);
+
+        // act
+        t_easyLoggerStarter.Init(ConfigPath);
+
+        // assert
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            // arrange
-            t_easyLoggingProvider
-                .Setup(provider => provider.ProvideConfig(ConfigPath))
-                .Returns(s_configWithErrorLevel);
-            t_easyLoggingProvider
-                .Setup(provider => provider.ProvideConfig(null))
-                .Returns(s_configWithInfoLevel);
-            t_easyLoggingProvider
-                .Setup(provider => provider.ProvideConfig(AnotherConfigPath))
-                .Returns(s_configWithInfoLevel);
-            t_unixOperations
-                .Setup(unix => unix.GetDirPermissions(s_expectedLogPath))
-                .Returns(FileAccessPermissions.UserReadWriteExecute);
-
-            // act
-            t_easyLoggerStarter.Init(ConfigPath);
-
-            // assert
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                t_directoryOperations.Verify(d => d.CreateDirectory(s_expectedLogPath), Times.Once);
-            }
-            else
-            {
-                t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
-                    FileAccessPermissions.UserReadWriteExecute, true), Times.Once);
-            }
-            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
-
-            // act
-            t_easyLoggerStarter.Init(null);
-            t_easyLoggerStarter.Init(ConfigPath);
-            t_easyLoggerStarter.Init(AnotherConfigPath);
-
-            // assert
-            t_easyLoggerManager.VerifyNoOtherCalls();
+            t_directoryOperations.Verify(d => d.CreateDirectory(s_expectedLogPath), Times.Once);
         }
-
-        [SFFact]
-        public void TestThatConfiguresEasyLoggingOnlyOnceForInitializationsWithoutConfigPath()
+        else
         {
-            // arrange
-            t_easyLoggingProvider
-                .Setup(provider => provider.ProvideConfig(null))
-                .Returns(s_configWithErrorLevel);
-            t_unixOperations
-                .Setup(unix => unix.GetDirPermissions(s_expectedLogPath))
-                .Returns(FileAccessPermissions.UserReadWriteExecute);
-
-            // act
-            t_easyLoggerStarter.Init(null);
-            t_easyLoggerStarter.Init(null);
-
-            // assert
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                t_directoryOperations.Verify(d => d.CreateDirectory(s_expectedLogPath), Times.Once);
-            }
-            else
-            {
-                t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
-                    FileAccessPermissions.UserReadWriteExecute, true), Times.Once);
-            }
-            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
+            t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
+                FileAccessPermissions.UserReadWriteExecute, true), Times.Once);
         }
+        t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
 
-        [SFFact]
-        public void TestThatReconfiguresEasyLoggingWithConfigPathIfNotGivenForTheFirstTime()
+        // act
+        t_easyLoggerStarter.Init(null);
+        t_easyLoggerStarter.Init(ConfigPath);
+        t_easyLoggerStarter.Init(AnotherConfigPath);
+
+        // assert
+        t_easyLoggerManager.VerifyNoOtherCalls();
+    }
+
+    [SFFact]
+    public void TestThatConfiguresEasyLoggingOnlyOnceForInitializationsWithoutConfigPath()
+    {
+        // arrange
+        t_easyLoggingProvider
+            .Setup(provider => provider.ProvideConfig(null))
+            .Returns(s_configWithErrorLevel);
+        t_unixOperations
+            .Setup(unix => unix.GetDirPermissions(s_expectedLogPath))
+            .Returns(FileAccessPermissions.UserReadWriteExecute);
+
+        // act
+        t_easyLoggerStarter.Init(null);
+        t_easyLoggerStarter.Init(null);
+
+        // assert
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            // arrange
-            t_easyLoggingProvider
-                .Setup(provider => provider.ProvideConfig(null))
-                .Returns(s_configWithErrorLevel);
-            t_easyLoggingProvider
-                .Setup(provider => provider.ProvideConfig(ConfigPath))
-                .Returns(s_configWithInfoLevel);
-            t_unixOperations
-                .Setup(unix => unix.GetDirPermissions(s_expectedLogPath))
-                .Returns(FileAccessPermissions.UserReadWriteExecute);
-
-            // act
-            t_easyLoggerStarter.Init(null);
-
-            // assert
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                t_directoryOperations.Verify(d => d.CreateDirectory(s_expectedLogPath), Times.Once);
-            }
-            else
-            {
-                t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
-                    FileAccessPermissions.UserReadWriteExecute, true), Times.Once);
-            }
-            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
-
-            // act
-            t_easyLoggerStarter.Init(ConfigPath);
-
-            // assert
-            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, s_expectedLogPath), Times.Once);
-            t_easyLoggerManager.VerifyNoOtherCalls();
+            t_directoryOperations.Verify(d => d.CreateDirectory(s_expectedLogPath), Times.Once);
         }
-
-        [SFFact]
-        public void TestConfigureStdout()
+        else
         {
-            // arrange
-            t_easyLoggingProvider
-                .Setup(provider => provider.ProvideConfig(null))
-                .Returns(s_configWithStdoutAsLogPath);
-
-            // act
-            t_easyLoggerStarter.Init(null);
-
-            // assert
-            t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, "STDOUT"), Times.Once);
+            t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
+                FileAccessPermissions.UserReadWriteExecute, true), Times.Once);
         }
+        t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
+    }
 
-        [SFFact(SkipCondition.SkipOnWindows)]
-        public void TestSettingLogPermissionValue()
+    [SFFact]
+    public void TestThatReconfiguresEasyLoggingWithConfigPathIfNotGivenForTheFirstTime()
+    {
+        // arrange
+        t_easyLoggingProvider
+            .Setup(provider => provider.ProvideConfig(null))
+            .Returns(s_configWithErrorLevel);
+        t_easyLoggingProvider
+            .Setup(provider => provider.ProvideConfig(ConfigPath))
+            .Returns(s_configWithInfoLevel);
+        t_unixOperations
+            .Setup(unix => unix.GetDirPermissions(s_expectedLogPath))
+            .Returns(FileAccessPermissions.UserReadWriteExecute);
+
+        // act
+        t_easyLoggerStarter.Init(null);
+
+        // assert
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            // arrange
-            const FileAccessPermissions ExpectedPermissions =
-                FileAccessPermissions.GroupRead |
-                FileAccessPermissions.UserRead |
-                FileAccessPermissions.UserWrite;
-
-            t_easyLoggingProvider
-                .Setup(provider => provider.ProvideConfig(ConfigPath))
-                .Returns(s_configWithValidLogPermission);
-            t_unixOperations
-                .Setup(unix => unix.GetDirPermissions(s_expectedLogPath))
-                .Returns(FileAccessPermissions.UserReadWriteExecute);
-
-            // act
-            t_easyLoggerStarter.Init(ConfigPath);
-
-            // assert
-            Assert.Equal(ExpectedPermissions, t_easyLoggerStarter._logFileUnixPermissions);
+            t_directoryOperations.Verify(d => d.CreateDirectory(s_expectedLogPath), Times.Once);
         }
+        else
+        {
+            t_unixOperations.Verify(u => u.CreateDirectoryWithPermissions(s_expectedLogPath,
+                FileAccessPermissions.UserReadWriteExecute, true), Times.Once);
+        }
+        t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, s_expectedLogPath), Times.Once);
+
+        // act
+        t_easyLoggerStarter.Init(ConfigPath);
+
+        // assert
+        t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, s_expectedLogPath), Times.Once);
+        t_easyLoggerManager.VerifyNoOtherCalls();
+    }
+
+    [SFFact]
+    public void TestConfigureStdout()
+    {
+        // arrange
+        t_easyLoggingProvider
+            .Setup(provider => provider.ProvideConfig(null))
+            .Returns(s_configWithStdoutAsLogPath);
+
+        // act
+        t_easyLoggerStarter.Init(null);
+
+        // assert
+        t_easyLoggerManager.Verify(manager => manager.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, "STDOUT"), Times.Once);
+    }
+
+    [SFFact(SkipCondition.SkipOnWindows)]
+    public void TestSettingLogPermissionValue()
+    {
+        // arrange
+        const FileAccessPermissions ExpectedPermissions =
+            FileAccessPermissions.GroupRead |
+            FileAccessPermissions.UserRead |
+            FileAccessPermissions.UserWrite;
+
+        t_easyLoggingProvider
+            .Setup(provider => provider.ProvideConfig(ConfigPath))
+            .Returns(s_configWithValidLogPermission);
+        t_unixOperations
+            .Setup(unix => unix.GetDirPermissions(s_expectedLogPath))
+            .Returns(FileAccessPermissions.UserReadWriteExecute);
+
+        // act
+        t_easyLoggerStarter.Init(ConfigPath);
+
+        // assert
+        Assert.Equal(ExpectedPermissions, t_easyLoggerStarter._logFileUnixPermissions);
     }
 }

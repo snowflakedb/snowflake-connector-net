@@ -1,9 +1,8 @@
 using System.Threading.Tasks;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core;
+
+interface IChunkDownloader
 {
-    interface IChunkDownloader
-    {
-        Task<BaseResultChunk> GetNextChunkAsync();
-    }
+    Task<BaseResultChunk> GetNextChunkAsync();
 }

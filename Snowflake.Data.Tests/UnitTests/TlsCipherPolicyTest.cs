@@ -13,127 +13,126 @@ using System.Net.Http;
 using System.Net.Security;
 #endif
 
-namespace Snowflake.Data.Tests.UnitTests
+namespace Snowflake.Data.Tests.UnitTests;
+
+public class TlsCipherPolicyTest
 {
-    public class TlsCipherPolicyTest
+    [SFFact]
+    public void TestUnsetPolicyLeavesCipherSelectionUnchanged()
     {
-        [SFFact]
-        public void TestUnsetPolicyLeavesCipherSelectionUnchanged()
-        {
-            Assert.Null(TlsCipherPolicy.Parse(null));
-            Assert.Null(TlsCipherPolicy.Parse("  "));
-        }
+        Assert.Null(TlsCipherPolicy.Parse(null));
+        Assert.Null(TlsCipherPolicy.Parse("  "));
+    }
 
-        [SFFact]
-        public void TestPolicyAcceptsPythonCompatibleMixedNames()
-        {
-            var policy = TlsCipherPolicy.Parse(
-                "TLS_AES_128_GCM_SHA256:ECDHE-RSA-AES256-GCM-SHA384");
+    [SFFact]
+    public void TestPolicyAcceptsPythonCompatibleMixedNames()
+    {
+        var policy = TlsCipherPolicy.Parse(
+            "TLS_AES_128_GCM_SHA256:ECDHE-RSA-AES256-GCM-SHA384");
 
-            Assert.Equal(
-                "TLS_AES_128_GCM_SHA256:TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-                policy.CanonicalValue);
-            Assert.True(policy.HasTls12Cipher);
-            Assert.True(policy.HasTls13Cipher);
-        }
+        Assert.Equal(
+            "TLS_AES_128_GCM_SHA256:TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+            policy.CanonicalValue);
+        Assert.True(policy.HasTls12Cipher);
+        Assert.True(policy.HasTls13Cipher);
+    }
 
-        [SFTheory]
-        [InlineData("NOT_A_CIPHER")]
-        [InlineData("TLS_NOPE_SHA999")]
-        [InlineData(" : ")]
-        public void TestPolicyRejectsUnknownOrEmptyNames(string rawValue)
-        {
-            var exception = Assert.Throws<SnowflakeDbException>(() => TlsCipherPolicy.Parse(rawValue));
+    [SFTheory]
+    [InlineData("NOT_A_CIPHER")]
+    [InlineData("TLS_NOPE_SHA999")]
+    [InlineData(" : ")]
+    public void TestPolicyRejectsUnknownOrEmptyNames(string rawValue)
+    {
+        var exception = Assert.Throws<SnowflakeDbException>(() => TlsCipherPolicy.Parse(rawValue));
 
-            SnowflakeDbExceptionAssert.HasErrorCode(exception, SFError.TLS_CONFIGURATION_NOT_SUPPORTED);
-            Assert.Contains("SNOWFLAKE_TLS_CIPHERS", exception.Message);
-        }
+        SnowflakeDbExceptionAssert.HasErrorCode(exception, SFError.TLS_CONFIGURATION_NOT_SUPPORTED);
+        Assert.Contains("SNOWFLAKE_TLS_CIPHERS", exception.Message);
+    }
 
 #if NET8_0_OR_GREATER
-        [SFFact]
-        public void TestPolicyIsAppliedToSessionHandlerOrRejectedByPlatform()
+    [SFFact]
+    public void TestPolicyIsAppliedToSessionHandlerOrRejectedByPlatform()
+    {
+        var policy = TlsCipherPolicy.Parse("TLS_AES_128_GCM_SHA256");
+        var config = new HttpClientConfig(
+            null,
+            new SFSessionRetryProperties(default, false, false, default, 7, true),
+            new SFSessionCRLProperties(),
+            20,
+            new SFSessionTLSProperties("tls13", "tls13", true, policy));
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            var policy = TlsCipherPolicy.Parse("TLS_AES_128_GCM_SHA256");
-            var config = new HttpClientConfig(
-                null,
-                new SFSessionRetryProperties(default, false, false, default, 7, true),
-                new SFSessionCRLProperties(),
-                20,
-                new SFSessionTLSProperties("tls13", "tls13", true, policy));
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                var exception = Assert.Throws<SnowflakeDbException>(
-                    () => HttpUtil.Instance.SetupCustomHttpHandler(config));
-                SnowflakeDbExceptionAssert.HasErrorCode(exception, SFError.TLS_CONFIGURATION_NOT_SUPPORTED);
-                return;
-            }
-
-            using var handler = Assert.IsType<SocketsHttpHandler>(
-                HttpUtil.Instance.SetupCustomHttpHandler(config));
-            Assert.Equal(SslProtocolsExtensions.Tls13, handler.SslOptions.EnabledSslProtocols);
-            Assert.Equal(
-                new[] { TlsCipherSuite.TLS_AES_128_GCM_SHA256 },
-                handler.SslOptions.CipherSuitesPolicy.AllowedCipherSuites.ToArray());
+            var exception = Assert.Throws<SnowflakeDbException>(
+                () => HttpUtil.Instance.SetupCustomHttpHandler(config));
+            SnowflakeDbExceptionAssert.HasErrorCode(exception, SFError.TLS_CONFIGURATION_NOT_SUPPORTED);
+            return;
         }
 
-        [SFFact]
-        public void TestCipherOnlyPolicyPreservesStorageProtocolAndProxyDefaultsOrIsRejectedByPlatform()
+        using var handler = Assert.IsType<SocketsHttpHandler>(
+            HttpUtil.Instance.SetupCustomHttpHandler(config));
+        Assert.Equal(SslProtocolsExtensions.Tls13, handler.SslOptions.EnabledSslProtocols);
+        Assert.Equal(
+            new[] { TlsCipherSuite.TLS_AES_128_GCM_SHA256 },
+            handler.SslOptions.CipherSuitesPolicy.AllowedCipherSuites.ToArray());
+    }
+
+    [SFFact]
+    public void TestCipherOnlyPolicyPreservesStorageProtocolAndProxyDefaultsOrIsRejectedByPlatform()
+    {
+        var policy = TlsCipherPolicy.Parse("ECDHE-RSA-AES256-GCM-SHA384");
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            var policy = TlsCipherPolicy.Parse("ECDHE-RSA-AES256-GCM-SHA384");
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                var exception = Assert.Throws<SnowflakeDbException>(
-                    () => HttpUtil.CreateStorageHandler(
-                        SslProtocols.None,
-                        cipherPolicy: policy));
-                SnowflakeDbExceptionAssert.HasErrorCode(exception, SFError.TLS_CONFIGURATION_NOT_SUPPORTED);
-                return;
-            }
-
-            using var handler = Assert.IsType<SocketsHttpHandler>(
-                HttpUtil.CreateStorageHandler(
-                    SslProtocols.None,
-                    cipherPolicy: policy));
-            Assert.Equal(SslProtocols.None, handler.SslOptions.EnabledSslProtocols);
-            Assert.True(handler.UseProxy);
-            Assert.Equal(
-                new[] { TlsCipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 },
-                handler.SslOptions.CipherSuitesPolicy.AllowedCipherSuites.ToArray());
-        }
-
-        [SFFact]
-        public void TestCustomCrlValidationIsPreservedOnCipherHandler()
-        {
-            Skip.When(
-                RuntimeInformation.IsOSPlatform(OSPlatform.Windows),
-                "Windows rejects per-connection TLS cipher configuration.");
-            var policy = TlsCipherPolicy.Parse("TLS_AES_128_GCM_SHA256");
-            var config = new HttpClientConfig(
-                null,
-                new SFSessionRetryProperties(default, false, false, default, 7, true),
-                new SFSessionCRLProperties(CertRevocationCheckMode.Enabled, true, true, false, 10, 20971520),
-                20,
-                new SFSessionTLSProperties("tls12", "tls13", false, policy));
-
-            using var handler = Assert.IsType<SocketsHttpHandler>(
-                HttpUtil.Instance.SetupCustomHttpHandler(config));
-
-            Assert.NotNull(handler.SslOptions.RemoteCertificateValidationCallback);
-        }
-#else
-        [SFFact]
-        public void TestPolicyIsRejectedWhenTargetHasNoCipherSuiteApi()
-        {
-            var policy = TlsCipherPolicy.Parse("TLS_AES_128_GCM_SHA256");
             var exception = Assert.Throws<SnowflakeDbException>(
                 () => HttpUtil.CreateStorageHandler(
-                    SslProtocolsExtensions.Tls13,
+                    SslProtocols.None,
                     cipherPolicy: policy));
-
             SnowflakeDbExceptionAssert.HasErrorCode(exception, SFError.TLS_CONFIGURATION_NOT_SUPPORTED);
+            return;
         }
-#endif
+
+        using var handler = Assert.IsType<SocketsHttpHandler>(
+            HttpUtil.CreateStorageHandler(
+                SslProtocols.None,
+                cipherPolicy: policy));
+        Assert.Equal(SslProtocols.None, handler.SslOptions.EnabledSslProtocols);
+        Assert.True(handler.UseProxy);
+        Assert.Equal(
+            new[] { TlsCipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 },
+            handler.SslOptions.CipherSuitesPolicy.AllowedCipherSuites.ToArray());
     }
+
+    [SFFact]
+    public void TestCustomCrlValidationIsPreservedOnCipherHandler()
+    {
+        Skip.When(
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows),
+            "Windows rejects per-connection TLS cipher configuration.");
+        var policy = TlsCipherPolicy.Parse("TLS_AES_128_GCM_SHA256");
+        var config = new HttpClientConfig(
+            null,
+            new SFSessionRetryProperties(default, false, false, default, 7, true),
+            new SFSessionCRLProperties(CertRevocationCheckMode.Enabled, true, true, false, 10, 20971520),
+            20,
+            new SFSessionTLSProperties("tls12", "tls13", false, policy));
+
+        using var handler = Assert.IsType<SocketsHttpHandler>(
+            HttpUtil.Instance.SetupCustomHttpHandler(config));
+
+        Assert.NotNull(handler.SslOptions.RemoteCertificateValidationCallback);
+    }
+#else
+    [SFFact]
+    public void TestPolicyIsRejectedWhenTargetHasNoCipherSuiteApi()
+    {
+        var policy = TlsCipherPolicy.Parse("TLS_AES_128_GCM_SHA256");
+        var exception = Assert.Throws<SnowflakeDbException>(
+            () => HttpUtil.CreateStorageHandler(
+                SslProtocolsExtensions.Tls13,
+                cipherPolicy: policy));
+
+        SnowflakeDbExceptionAssert.HasErrorCode(exception, SFError.TLS_CONFIGURATION_NOT_SUPPORTED);
+    }
+#endif
 }

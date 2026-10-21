@@ -1,10 +1,9 @@
 using System;
 
-namespace Snowflake.Data.Core.Authenticator.Browser
+namespace Snowflake.Data.Core.Authenticator.Browser;
+
+internal interface IBrowserError
 {
-    internal interface IBrowserError
-    {
-        string GetBrowserError();
-        Exception GetException();
-    }
+    string GetBrowserError();
+    Exception GetException();
 }

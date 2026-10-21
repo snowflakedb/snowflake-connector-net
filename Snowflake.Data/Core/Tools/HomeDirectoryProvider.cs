@@ -1,28 +1,27 @@
 using Snowflake.Data.Log;
 using System;
 
-namespace Snowflake.Data.Core.Tools
-{
-    internal class HomeDirectoryProvider
-    {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<HomeDirectoryProvider>();
+namespace Snowflake.Data.Core.Tools;
 
-        public static string HomeDirectory(IEnvironmentFacade environmentFacade)
+internal class HomeDirectoryProvider
+{
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<HomeDirectoryProvider>();
+
+    public static string HomeDirectory(IEnvironmentFacade environmentFacade)
+    {
+        try
         {
-            try
+            var homeDirectory = environmentFacade.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            if (string.IsNullOrEmpty(homeDirectory) || homeDirectory.Equals("/"))
             {
-                var homeDirectory = environmentFacade.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                if (string.IsNullOrEmpty(homeDirectory) || homeDirectory.Equals("/"))
-                {
-                    return null;
-                }
-                return homeDirectory;
-            }
-            catch (Exception e)
-            {
-                s_logger.Error($"Error while trying to retrieve the home directory: {e}");
                 return null;
             }
+            return homeDirectory;
+        }
+        catch (Exception e)
+        {
+            s_logger.Error($"Error while trying to retrieve the home directory: {e}");
+            return null;
         }
     }
 }

@@ -3,64 +3,63 @@ using System.Data.Common;
 using Snowflake.Data.Core;
 using System.Data;
 
-namespace Snowflake.Data.Client
+namespace Snowflake.Data.Client;
+
+public class SnowflakeDbDataAdapter : DbDataAdapter, IDbDataAdapter
 {
-    public class SnowflakeDbDataAdapter : DbDataAdapter, IDbDataAdapter
+    private static readonly object EventRowUpdated = new object();
+    private static readonly object EventRowUpdating = new object();
+
+    private SnowflakeDbCommand _selectCommand;
+
+    public SnowflakeDbDataAdapter() : base()
     {
-        private static readonly object EventRowUpdated = new object();
-        private static readonly object EventRowUpdating = new object();
+        GC.SuppressFinalize(this);
+    }
 
-        private SnowflakeDbCommand _selectCommand;
+    public SnowflakeDbDataAdapter(SnowflakeDbCommand selectCommand) : this()
+    {
+        SelectCommand = selectCommand;
+    }
 
-        public SnowflakeDbDataAdapter() : base()
-        {
-            GC.SuppressFinalize(this);
-        }
+    public SnowflakeDbDataAdapter(string selectCommandText, SnowflakeDbConnection selectConnection) : this()
+    {
+        SelectCommand = new SnowflakeDbCommand(selectConnection);
+        SelectCommand.CommandText = selectCommandText;
+    }
 
-        public SnowflakeDbDataAdapter(SnowflakeDbCommand selectCommand) : this()
-        {
-            SelectCommand = selectCommand;
-        }
+    private SnowflakeDbDataAdapter(SnowflakeDbDataAdapter from) : base(from)
+    {
+        GC.SuppressFinalize(this);
+    }
 
-        public SnowflakeDbDataAdapter(string selectCommandText, SnowflakeDbConnection selectConnection) : this()
-        {
-            SelectCommand = new SnowflakeDbCommand(selectConnection);
-            SelectCommand.CommandText = selectCommandText;
-        }
+    IDbCommand IDbDataAdapter.DeleteCommand
+    {
+        get;
+        set;
+    }
 
-        private SnowflakeDbDataAdapter(SnowflakeDbDataAdapter from) : base(from)
-        {
-            GC.SuppressFinalize(this);
-        }
+    IDbCommand IDbDataAdapter.InsertCommand
+    {
+        get;
+        set;
+    }
 
-        IDbCommand IDbDataAdapter.DeleteCommand
-        {
-            get;
-            set;
-        }
+    new public SnowflakeDbCommand SelectCommand
+    {
+        get { return _selectCommand; }
+        set { _selectCommand = value; }
+    }
 
-        IDbCommand IDbDataAdapter.InsertCommand
-        {
-            get;
-            set;
-        }
+    IDbCommand IDbDataAdapter.SelectCommand
+    {
+        get { return _selectCommand; }
+        set { _selectCommand = (SnowflakeDbCommand)value; }
+    }
 
-        new public SnowflakeDbCommand SelectCommand
-        {
-            get { return _selectCommand; }
-            set { _selectCommand = value; }
-        }
-
-        IDbCommand IDbDataAdapter.SelectCommand
-        {
-            get { return _selectCommand; }
-            set { _selectCommand = (SnowflakeDbCommand)value; }
-        }
-
-        IDbCommand IDbDataAdapter.UpdateCommand
-        {
-            get;
-            set;
-        }
+    IDbCommand IDbDataAdapter.UpdateCommand
+    {
+        get;
+        set;
     }
 }

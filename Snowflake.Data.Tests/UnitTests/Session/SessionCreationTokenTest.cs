@@ -3,37 +3,36 @@ using Xunit;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
-namespace Snowflake.Data.Tests.UnitTests.Session
+namespace Snowflake.Data.Tests.UnitTests.Session;
+
+public class SessionCreationTokenTest
 {
-    public class SessionCreationTokenTest
+    private static readonly TimeSpan s_timeout30Seconds = TimeSpan.FromSeconds(30);
+
+    [SFFact]
+    public void TestTokenIsNotExpired()
     {
-        private static readonly TimeSpan s_timeout30Seconds = TimeSpan.FromSeconds(30);
+        // arrange
+        var token = new SessionCreationToken(s_timeout30Seconds);
 
-        [SFFact]
-        public void TestTokenIsNotExpired()
-        {
-            // arrange
-            var token = new SessionCreationToken(s_timeout30Seconds);
+        // act
+        var isExpired = token.IsExpired(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 
-            // act
-            var isExpired = token.IsExpired(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        // assert
+        Assert.False(isExpired);
+    }
 
-            // assert
-            Assert.False(isExpired);
-        }
+    [SFFact]
+    public void TestTokenIsExpired()
+    {
+        // arrange
+        var token = new SessionCreationToken(s_timeout30Seconds);
+        var timeout30SecondsAsMillis = (long)s_timeout30Seconds.TotalMilliseconds;
 
-        [SFFact]
-        public void TestTokenIsExpired()
-        {
-            // arrange
-            var token = new SessionCreationToken(s_timeout30Seconds);
-            var timeout30SecondsAsMillis = (long)s_timeout30Seconds.TotalMilliseconds;
+        // act
+        var isExpired = token.IsExpired(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + timeout30SecondsAsMillis + 1);
 
-            // act
-            var isExpired = token.IsExpired(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + timeout30SecondsAsMillis + 1);
-
-            // assert
-            Assert.True(isExpired);
-        }
+        // assert
+        Assert.True(isExpired);
     }
 }

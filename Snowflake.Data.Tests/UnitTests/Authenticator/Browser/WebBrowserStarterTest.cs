@@ -6,42 +6,41 @@ using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator.Browser;
 using Snowflake.Data.Tests.Util;
 
-namespace Snowflake.Data.Tests.UnitTests.Authenticator.Browser
+namespace Snowflake.Data.Tests.UnitTests.Authenticator.Browser;
+
+public class WebBrowserStarterTest
 {
-    public class WebBrowserStarterTest
+    [SFFact]
+    public void TestRunUrlInBrowser()
     {
-        [SFFact]
-        public void TestRunUrlInBrowser()
-        {
-            // arrange
-            var runner = new Mock<WebBrowserRunner>();
-            var webBrowserStarter = new WebBrowserStarter(runner.Object);
-            var validUrl = new Url("http://localhost:8001/endpoint1");
-            var uri = new Uri(validUrl.Value);
+        // arrange
+        var runner = new Mock<WebBrowserRunner>();
+        var webBrowserStarter = new WebBrowserStarter(runner.Object);
+        var validUrl = new Url("http://localhost:8001/endpoint1");
+        var uri = new Uri(validUrl.Value);
 
-            // act
-            webBrowserStarter.StartBrowser(validUrl);
+        // act
+        webBrowserStarter.StartBrowser(validUrl);
 
-            // assert
-            runner.Verify(r => r.Run(uri), Times.Once);
-        }
+        // assert
+        runner.Verify(r => r.Run(uri), Times.Once);
+    }
 
-        [SFTheory]
-        [InlineData("file:///home/user/index.html")]
-        [InlineData("http://localhost:8001/endpoint!")]
-        public void TestValidateUrl(string invalidUrl)
-        {
-            // arrange
-            var runner = new Mock<WebBrowserRunner>();
-            var webBrowserStarter = new WebBrowserStarter(runner.Object);
-            var url = new Url(invalidUrl);
+    [SFTheory]
+    [InlineData("file:///home/user/index.html")]
+    [InlineData("http://localhost:8001/endpoint!")]
+    public void TestValidateUrl(string invalidUrl)
+    {
+        // arrange
+        var runner = new Mock<WebBrowserRunner>();
+        var webBrowserStarter = new WebBrowserStarter(runner.Object);
+        var url = new Url(invalidUrl);
 
-            // act
-            var thrown = Assert.Throws<SnowflakeDbException>(() => webBrowserStarter.StartBrowser(url));
+        // act
+        var thrown = Assert.Throws<SnowflakeDbException>(() => webBrowserStarter.StartBrowser(url));
 
-            // assert
-            Assert.Equal(SFError.INVALID_BROWSER_URL.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
-            runner.Verify(r => r.Run(It.IsAny<Uri>()), Times.Never);
-        }
+        // assert
+        Assert.Equal(SFError.INVALID_BROWSER_URL.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
+        runner.Verify(r => r.Run(It.IsAny<Uri>()), Times.Never);
     }
 }

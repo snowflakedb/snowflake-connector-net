@@ -1,78 +1,77 @@
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
-namespace Snowflake.Data.Tests.UnitTests
+namespace Snowflake.Data.Tests.UnitTests;
+
+using Xunit;
+using Snowflake.Data.Configuration;
+using Snowflake.Data.Core;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+public sealed class ChunkDownloaderFactoryTest : IDisposable
 {
-    using Xunit;
-    using Snowflake.Data.Configuration;
-    using Snowflake.Data.Core;
-    using System;
-    using System.Collections.Generic;
-    using System.Threading;
-    public sealed class ChunkDownloaderFactoryTest : IDisposable
+    int ChunkDownloaderVersionDefault = SFConfiguration.Instance().GetChunkDownloaderVersion();
+
+    public void Dispose()
     {
-        int ChunkDownloaderVersionDefault = SFConfiguration.Instance().GetChunkDownloaderVersion();
+        SFConfiguration.Instance().ChunkDownloaderVersion = ChunkDownloaderVersionDefault; // Return to default version
+    }
 
-        public void Dispose()
+    private QueryExecResponseData mockQueryRequestData()
+    {
+        return new QueryExecResponseData
         {
-            SFConfiguration.Instance().ChunkDownloaderVersion = ChunkDownloaderVersionDefault; // Return to default version
+            rowSet = new string[,] { { } },
+            rowType = new List<ExecResponseRowType>(),
+            parameters = new List<NameValueParameter>(),
+            chunks = new List<ExecResponseChunk>{new ExecResponseChunk()
+            {
+                url = "fake",
+                uncompressedSize = 100,
+                rowCount = 1
+            }}
+        };
+    }
+
+    private SFResultSet mockSFResultSet(QueryExecResponseData responseData, CancellationToken token)
+    {
+        string connectionString = "user=user;password=password;account=account;";
+        SFSession session = new SFSession(connectionString, new SessionPropertiesContext());
+        List<NameValueParameter> list = new List<NameValueParameter>
+        {
+            new NameValueParameter { name = "CLIENT_PREFETCH_THREADS", value = "3" }
+        };
+        session.UpdateSessionParameterMap(list);
+
+        return new SFResultSet(responseData, new SFStatement(session), token);
+    }
+
+    [SFTheory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    public void TestGetDownloader(int chunkDownloaderVersion)
+    {
+        // Set configuration settings
+        SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
+
+        CancellationToken token = new CancellationToken();
+
+        if (chunkDownloaderVersion == 4)
+        {
+            Exception ex = Assert.Throws<Exception>(() => ChunkDownloaderFactory.GetDownloader(null, null, token));
+            Assert.Equal("Unsupported Chunk Downloader version specified in the SFConfiguration", ex.Message);
         }
-
-        private QueryExecResponseData mockQueryRequestData()
+        else
         {
-            return new QueryExecResponseData
-            {
-                rowSet = new string[,] { { } },
-                rowType = new List<ExecResponseRowType>(),
-                parameters = new List<NameValueParameter>(),
-                chunks = new List<ExecResponseChunk>{new ExecResponseChunk()
-                {
-                    url = "fake",
-                    uncompressedSize = 100,
-                    rowCount = 1
-                }}
-            };
-        }
+            QueryExecResponseData responseData = mockQueryRequestData();
+            SFResultSet resultSet = mockSFResultSet(responseData, token);
 
-        private SFResultSet mockSFResultSet(QueryExecResponseData responseData, CancellationToken token)
-        {
-            string connectionString = "user=user;password=password;account=account;";
-            SFSession session = new SFSession(connectionString, new SessionPropertiesContext());
-            List<NameValueParameter> list = new List<NameValueParameter>
-            {
-                new NameValueParameter { name = "CLIENT_PREFETCH_THREADS", value = "3" }
-            };
-            session.UpdateSessionParameterMap(list);
+            IChunkDownloader downloader = ChunkDownloaderFactory.GetDownloader(responseData, resultSet, token);
 
-            return new SFResultSet(responseData, new SFStatement(session), token);
-        }
-
-        [SFTheory]
-        [InlineData(1)]
-        [InlineData(2)]
-        [InlineData(3)]
-        [InlineData(4)]
-        public void TestGetDownloader(int chunkDownloaderVersion)
-        {
-            // Set configuration settings
-            SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
-
-            CancellationToken token = new CancellationToken();
-
-            if (chunkDownloaderVersion == 4)
-            {
-                Exception ex = Assert.Throws<Exception>(() => ChunkDownloaderFactory.GetDownloader(null, null, token));
-                Assert.Equal("Unsupported Chunk Downloader version specified in the SFConfiguration", ex.Message);
-            }
-            else
-            {
-                QueryExecResponseData responseData = mockQueryRequestData();
-                SFResultSet resultSet = mockSFResultSet(responseData, token);
-
-                IChunkDownloader downloader = ChunkDownloaderFactory.GetDownloader(responseData, resultSet, token);
-
-                Assert.True(downloader is SFBlockingChunkDownloaderV3);
-            }
+            Assert.True(downloader is SFBlockingChunkDownloaderV3);
         }
     }
 }

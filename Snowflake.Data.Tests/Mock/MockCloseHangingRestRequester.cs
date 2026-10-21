@@ -4,63 +4,62 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
 
-namespace Snowflake.Data.Tests.Mock
+namespace Snowflake.Data.Tests.Mock;
+
+internal class MockCloseHangingRestRequester : MockBaseRestRequester
 {
-    internal class MockCloseHangingRestRequester : MockBaseRestRequester
+    internal List<SFRestRequest> CloseRequests { get; } = new();
+
+    public override T Get<T>(IRestRequest request)
     {
-        internal List<SFRestRequest> CloseRequests { get; } = new();
+        return Task.Run(async () => await (GetAsync<T>(request, CancellationToken.None)).ConfigureAwait(false)).Result;
+    }
 
-        public override T Get<T>(IRestRequest request)
-        {
-            return Task.Run(async () => await (GetAsync<T>(request, CancellationToken.None)).ConfigureAwait(false)).Result;
-        }
+    public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+    {
+        return Task.FromResult<T>((T)(object)null);
+    }
 
-        public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<T>((T)(object)null);
-        }
+    public override T Post<T>(IRestRequest postRequest)
+    {
+        return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
+    }
 
-        public override T Post<T>(IRestRequest postRequest)
+    public override async Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
+    {
+        SFRestRequest sfRequest = (SFRestRequest)postRequest;
+        if (sfRequest.jsonBody is LoginRequest)
         {
-            return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
-        }
-
-        public override async Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
-        {
-            SFRestRequest sfRequest = (SFRestRequest)postRequest;
-            if (sfRequest.jsonBody is LoginRequest)
+            LoginResponse authnResponse = new LoginResponse
             {
-                LoginResponse authnResponse = new LoginResponse
+                data = new LoginResponseData()
                 {
-                    data = new LoginResponseData()
-                    {
-                        sessionId = "123456789",
-                        token = "session_token",
-                        masterToken = "master_token",
-                        authResponseSessionInfo = new SessionInfo(),
-                        nameValueParameter = new List<NameValueParameter>()
-                    },
-                    success = true
-                };
+                    sessionId = "123456789",
+                    token = "session_token",
+                    masterToken = "master_token",
+                    authResponseSessionInfo = new SessionInfo(),
+                    nameValueParameter = new List<NameValueParameter>()
+                },
+                success = true
+            };
 
-                // login request return success
-                return (T)(object)authnResponse;
-            }
-
-            if (sfRequest.Url.Query.StartsWith("?delete=true"))
-            {
-                var closeResponse = new CloseResponse()
-                {
-                    code = 390111,
-                    message = "Session no longer exists. New login required to access the service",
-                    success = false
-                };
-                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(false);
-                CloseRequests.Add(sfRequest);
-                return (T)(object)closeResponse;
-            }
-
-            throw new NotImplementedException();
+            // login request return success
+            return (T)(object)authnResponse;
         }
+
+        if (sfRequest.Url.Query.StartsWith("?delete=true"))
+        {
+            var closeResponse = new CloseResponse()
+            {
+                code = 390111,
+                message = "Session no longer exists. New login required to access the service",
+                success = false
+            };
+            await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(false);
+            CloseRequests.Add(sfRequest);
+            return (T)(object)closeResponse;
+        }
+
+        throw new NotImplementedException();
     }
 }

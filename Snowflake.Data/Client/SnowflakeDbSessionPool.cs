@@ -1,31 +1,30 @@
 using System;
 using Snowflake.Data.Core.Session;
 
-namespace Snowflake.Data.Client
+namespace Snowflake.Data.Client;
+
+public class SnowflakeDbSessionPool
 {
-    public class SnowflakeDbSessionPool
-    {
-        private readonly SessionPool _sessionPool;
+    private readonly SessionPool _sessionPool;
 
-        internal SnowflakeDbSessionPool(SessionPool sessionPool)
-            => _sessionPool = sessionPool ?? throw new NullReferenceException("SessionPool not provided!");
+    internal SnowflakeDbSessionPool(SessionPool sessionPool)
+        => _sessionPool = sessionPool ?? throw new NullReferenceException("SessionPool not provided!");
 
-        public bool GetPooling() => _sessionPool.GetPooling();
+    public bool GetPooling() => _sessionPool.GetPooling();
 
-        public int GetMinPoolSize() => _sessionPool.GetMinPoolSize();
+    public int GetMinPoolSize() => _sessionPool.GetMinPoolSize();
 
-        public int GetMaxPoolSize() => _sessionPool.GetMaxPoolSize();
+    public int GetMaxPoolSize() => _sessionPool.GetMaxPoolSize();
 
-        public int GetCurrentPoolSize() => _sessionPool.GetCurrentPoolSize();
+    public int GetCurrentPoolSize() => _sessionPool.GetCurrentPoolSize();
 
-        public long GetExpirationTimeout() => _sessionPool.GetTimeout();
+    public long GetExpirationTimeout() => _sessionPool.GetTimeout();
 
-        public long GetConnectionTimeout() => _sessionPool.GetConnectionTimeout();
+    public long GetConnectionTimeout() => _sessionPool.GetConnectionTimeout();
 
-        public long GetWaitForIdleSessionTimeout() => _sessionPool.GetWaitForIdleSessionTimeout();
+    public long GetWaitForIdleSessionTimeout() => _sessionPool.GetWaitForIdleSessionTimeout();
 
-        public void ClearPool() => _sessionPool.ClearSessions();
+    public void ClearPool() => _sessionPool.ClearSessions();
 
-        public ChangedSessionBehavior GetChangedSession() => _sessionPool.GetChangedSession();
-    }
+    public ChangedSessionBehavior GetChangedSession() => _sessionPool.GetChangedSession();
 }

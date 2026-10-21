@@ -4,49 +4,48 @@ using Xunit;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Tests.Util;
 
-namespace Snowflake.Data.Tests.UnitTests.Authenticator
+namespace Snowflake.Data.Tests.UnitTests.Authenticator;
+
+public class CodeVerifierTest
 {
-    public class CodeVerifierTest
+    [SFFact]
+    public void TestFailForTooShortCodeVerifier()
     {
-        [SFFact]
-        public void TestFailForTooShortCodeVerifier()
-        {
-            // act
-            var thrown = Assert.Throws<ArgumentException>(() => new CodeVerifier("shortText"));
+        // act
+        var thrown = Assert.Throws<ArgumentException>(() => new CodeVerifier("shortText"));
 
-            // assert
-            Assert.Contains("The code verifier must be at least 43 characters", thrown.Message);
-        }
+        // assert
+        Assert.Contains("The code verifier must be at least 43 characters", thrown.Message);
+    }
 
-        [SFFact]
-        public void TestFailForTooLongCodeVerifier()
-        {
-            // arrange
-            var longString = Enumerable.Range(1, 15)
-                .Select(x => "0123456789")
-                .Aggregate(string.Concat);
+    [SFFact]
+    public void TestFailForTooLongCodeVerifier()
+    {
+        // arrange
+        var longString = Enumerable.Range(1, 15)
+            .Select(x => "0123456789")
+            .Aggregate(string.Concat);
 
-            // act
-            var thrown = Assert.Throws<ArgumentException>(() => new CodeVerifier(longString));
+        // act
+        var thrown = Assert.Throws<ArgumentException>(() => new CodeVerifier(longString));
 
-            // assert
-            Assert.Contains("The code verifier must not be longer than 128 characters", thrown.Message);
-        }
+        // assert
+        Assert.Contains("The code verifier must not be longer than 128 characters", thrown.Message);
+    }
 
-        [SFFact]
-        public void TestSkipIllegalCharacters()
-        {
-            // arrange
-            var codeVerifier = Enumerable.Range(1, 5)
-                .Select(x => "0123456789")
-                .Aggregate(string.Concat);
-            var illegalCharacters = "!@%";
+    [SFFact]
+    public void TestSkipIllegalCharacters()
+    {
+        // arrange
+        var codeVerifier = Enumerable.Range(1, 5)
+            .Select(x => "0123456789")
+            .Aggregate(string.Concat);
+        var illegalCharacters = "!@%";
 
-            // act
-            var result = new CodeVerifier(codeVerifier + illegalCharacters);
+        // act
+        var result = new CodeVerifier(codeVerifier + illegalCharacters);
 
-            // assert
-            Assert.Equal(codeVerifier, result.Value);
-        }
+        // assert
+        Assert.Equal(codeVerifier, result.Value);
     }
 }

@@ -6,216 +6,215 @@ using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 using Xunit;
 
-namespace Snowflake.Data.Tests.UnitTests.Configuration
+namespace Snowflake.Data.Tests.UnitTests.Configuration;
+
+public class EasyLoggingConfigFinderTest
 {
-    public class EasyLoggingConfigFinderTest
+    private const string InputConfigFilePath = "input_config.json";
+    private const string EnvironmentalConfigFilePath = "environmental_config.json";
+    private const string HomeDirectory = "/home/user";
+    private const string DriverDirectory = ".";
+    private static readonly string s_driverConfigFilePath = Path.Combine(DriverDirectory, EasyLoggingConfigFinder.ClientConfigFileName);
+    private static readonly string s_homeConfigFilePath = Path.Combine(HomeDirectory, EasyLoggingConfigFinder.ClientConfigFileName);
+
+    [ThreadStatic]
+    private static Mock<FileOperations> t_fileOperations;
+
+    [ThreadStatic]
+    private static Mock<IEnvironmentFacade> t_environmentOperations;
+
+    [ThreadStatic]
+    private static EasyLoggingConfigFinder t_finder;
+
+    public EasyLoggingConfigFinderTest()
     {
-        private const string InputConfigFilePath = "input_config.json";
-        private const string EnvironmentalConfigFilePath = "environmental_config.json";
-        private const string HomeDirectory = "/home/user";
-        private const string DriverDirectory = ".";
-        private static readonly string s_driverConfigFilePath = Path.Combine(DriverDirectory, EasyLoggingConfigFinder.ClientConfigFileName);
-        private static readonly string s_homeConfigFilePath = Path.Combine(HomeDirectory, EasyLoggingConfigFinder.ClientConfigFileName);
+        t_fileOperations = new Mock<FileOperations>();
+        t_environmentOperations = new Mock<IEnvironmentFacade>();
+        t_finder = new EasyLoggingConfigFinder(t_fileOperations.Object, t_environmentOperations.Object);
+        MockHomeDirectory();
+        MockExecutionDirectory();
+    }
 
-        [ThreadStatic]
-        private static Mock<FileOperations> t_fileOperations;
+    [SFFact]
+    public void TestThatTakesFilePathFromTheInput()
+    {
+        // arrange
+        MockFileFromEnvironmentalVariable();
+        MockFileOnDriverPath();
+        MockFileOnHomePath();
 
-        [ThreadStatic]
-        private static Mock<IEnvironmentFacade> t_environmentOperations;
+        // act
+        var filePath = t_finder.FindConfigFilePath(InputConfigFilePath);
 
-        [ThreadStatic]
-        private static EasyLoggingConfigFinder t_finder;
+        // assert
+        Assert.Equal(InputConfigFilePath, filePath);
+        t_fileOperations.VerifyNoOtherCalls();
+        t_environmentOperations.VerifyNoOtherCalls();
+    }
 
-        public EasyLoggingConfigFinderTest()
-        {
-            t_fileOperations = new Mock<FileOperations>();
-            t_environmentOperations = new Mock<IEnvironmentFacade>();
-            t_finder = new EasyLoggingConfigFinder(t_fileOperations.Object, t_environmentOperations.Object);
-            MockHomeDirectory();
-            MockExecutionDirectory();
-        }
+    [SFTheory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void TestThatTakesFilePathFromEnvironmentVariableIfInputNotPresent(string inputFilePath)
+    {
+        // arrange
+        MockFileFromEnvironmentalVariable();
+        MockFileOnDriverPath();
+        MockFileOnHomePath();
 
-        [SFFact]
-        public void TestThatTakesFilePathFromTheInput()
-        {
-            // arrange
-            MockFileFromEnvironmentalVariable();
-            MockFileOnDriverPath();
-            MockFileOnHomePath();
+        // act
+        var filePath = t_finder.FindConfigFilePath(inputFilePath);
 
-            // act
-            var filePath = t_finder.FindConfigFilePath(InputConfigFilePath);
+        // assert
+        Assert.Equal(EnvironmentalConfigFilePath, filePath);
+    }
 
-            // assert
-            Assert.Equal(InputConfigFilePath, filePath);
-            t_fileOperations.VerifyNoOtherCalls();
-            t_environmentOperations.VerifyNoOtherCalls();
-        }
+    [SFFact]
+    public void TestThatTakesFilePathFromDriverLocationWhenNoInputParameterNorEnvironmentVariable()
+    {
+        // arrange
+        MockFileOnDriverPath();
+        MockFileOnHomePath();
 
-        [SFTheory]
-        [InlineData(null)]
-        [InlineData("")]
-        public void TestThatTakesFilePathFromEnvironmentVariableIfInputNotPresent(string inputFilePath)
-        {
-            // arrange
-            MockFileFromEnvironmentalVariable();
-            MockFileOnDriverPath();
-            MockFileOnHomePath();
+        // act
+        var filePath = t_finder.FindConfigFilePath(null);
 
-            // act
-            var filePath = t_finder.FindConfigFilePath(inputFilePath);
+        // assert
+        Assert.Equal(s_driverConfigFilePath, filePath);
+    }
 
-            // assert
-            Assert.Equal(EnvironmentalConfigFilePath, filePath);
-        }
+    [SFFact]
+    public void TestThatTakesFilePathFromHomeLocationWhenNoInputParamEnvironmentVarNorDriverLocation()
+    {
+        // arrange
+        MockFileOnHomePath();
 
-        [SFFact]
-        public void TestThatTakesFilePathFromDriverLocationWhenNoInputParameterNorEnvironmentVariable()
-        {
-            // arrange
-            MockFileOnDriverPath();
-            MockFileOnHomePath();
+        // act
+        var filePath = t_finder.FindConfigFilePath(null);
 
-            // act
-            var filePath = t_finder.FindConfigFilePath(null);
+        // assert
+        Assert.Equal(s_homeConfigFilePath, filePath);
+    }
 
-            // assert
-            Assert.Equal(s_driverConfigFilePath, filePath);
-        }
+    [SFFact]
+    public void TestThatTakesFilePathFromHomeDirectoryWhenNoOtherWaysPossible()
+    {
+        // arrange
+        MockFileOnHomePath();
 
-        [SFFact]
-        public void TestThatTakesFilePathFromHomeLocationWhenNoInputParamEnvironmentVarNorDriverLocation()
-        {
-            // arrange
-            MockFileOnHomePath();
+        // act
+        var filePath = t_finder.FindConfigFilePath(null);
 
-            // act
-            var filePath = t_finder.FindConfigFilePath(null);
+        // assert
+        Assert.Equal(s_homeConfigFilePath, filePath);
+    }
 
-            // assert
-            Assert.Equal(s_homeConfigFilePath, filePath);
-        }
+    [SFFact]
+    public void TestThatReturnsNullIfNoWayOfGettingTheFile()
+    {
+        // act
+        var filePath = t_finder.FindConfigFilePath(null);
 
-        [SFFact]
-        public void TestThatTakesFilePathFromHomeDirectoryWhenNoOtherWaysPossible()
-        {
-            // arrange
-            MockFileOnHomePath();
+        // assert
+        Assert.Null(filePath);
+    }
 
-            // act
-            var filePath = t_finder.FindConfigFilePath(null);
+    [SFFact]
+    public void TestThatDoesNotFailWhenSearchForOneOfDirectoriesFails()
+    {
+        // arrange
+        MockHomeDirectoryFails();
 
-            // assert
-            Assert.Equal(s_homeConfigFilePath, filePath);
-        }
+        // act
+        var filePath = t_finder.FindConfigFilePath(null);
 
-        [SFFact]
-        public void TestThatReturnsNullIfNoWayOfGettingTheFile()
-        {
-            // act
-            var filePath = t_finder.FindConfigFilePath(null);
+        // assert
+        Assert.Null(filePath);
+        t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
+    }
 
-            // assert
-            Assert.Null(filePath);
-        }
+    [SFFact]
+    public void TestThatDoesNotFailWhenHomeDirectoryReturnsNull()
+    {
+        // arrange
+        MockHomeDirectoryReturnsNull();
 
-        [SFFact]
-        public void TestThatDoesNotFailWhenSearchForOneOfDirectoriesFails()
-        {
-            // arrange
-            MockHomeDirectoryFails();
+        // act
+        var filePath = t_finder.FindConfigFilePath(null);
 
-            // act
-            var filePath = t_finder.FindConfigFilePath(null);
+        // assert
+        Assert.Null(filePath);
+        t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
+    }
 
-            // assert
-            Assert.Null(filePath);
-            t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
-        }
+    [SFFact]
+    public void TestThatDoesNotFailWhenHomeDirectoryDoesNotExist()
+    {
+        // arrange
+        MockFileOnHomePath();
+        MockFileOnHomePathDoesNotExist();
 
-        [SFFact]
-        public void TestThatDoesNotFailWhenHomeDirectoryReturnsNull()
-        {
-            // arrange
-            MockHomeDirectoryReturnsNull();
+        // act
+        var filePath = t_finder.FindConfigFilePath(null);
 
-            // act
-            var filePath = t_finder.FindConfigFilePath(null);
+        // assert
+        Assert.Null(filePath);
+        t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
+    }
 
-            // assert
-            Assert.Null(filePath);
-            t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
-        }
+    private static void MockHomeDirectory()
+    {
+        t_environmentOperations
+            .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            .Returns(HomeDirectory);
+    }
 
-        [SFFact]
-        public void TestThatDoesNotFailWhenHomeDirectoryDoesNotExist()
-        {
-            // arrange
-            MockFileOnHomePath();
-            MockFileOnHomePathDoesNotExist();
+    private static void MockHomeDirectoryFails()
+    {
+        t_environmentOperations
+            .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            .Throws(() => new Exception("No home directory"));
+    }
 
-            // act
-            var filePath = t_finder.FindConfigFilePath(null);
+    private static void MockExecutionDirectory()
+    {
+        t_environmentOperations
+            .Setup(e => e.GetExecutionDirectory())
+            .Returns(DriverDirectory);
+    }
 
-            // assert
-            Assert.Null(filePath);
-            t_environmentOperations.Verify(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile), Times.Once);
-        }
+    private static void MockFileOnHomePathDoesNotExist()
+    {
+        t_fileOperations
+            .Setup(f => f.Exists(s_homeConfigFilePath))
+            .Returns(false);
+    }
 
-        private static void MockHomeDirectory()
-        {
-            t_environmentOperations
-                .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
-                .Returns(HomeDirectory);
-        }
+    private static void MockHomeDirectoryReturnsNull()
+    {
+        t_environmentOperations
+            .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            .Returns((string)null);
+    }
 
-        private static void MockHomeDirectoryFails()
-        {
-            t_environmentOperations
-                .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
-                .Throws(() => new Exception("No home directory"));
-        }
+    private static void MockFileFromEnvironmentalVariable()
+    {
+        t_environmentOperations
+            .Setup(e => e.GetString(EnvVars.ClientConfigFile))
+            .Returns(EnvironmentalConfigFilePath);
+    }
 
-        private static void MockExecutionDirectory()
-        {
-            t_environmentOperations
-                .Setup(e => e.GetExecutionDirectory())
-                .Returns(DriverDirectory);
-        }
+    private static void MockFileOnDriverPath()
+    {
+        t_fileOperations
+            .Setup(f => f.Exists(s_driverConfigFilePath))
+            .Returns(true);
+    }
 
-        private static void MockFileOnHomePathDoesNotExist()
-        {
-            t_fileOperations
-                .Setup(f => f.Exists(s_homeConfigFilePath))
-                .Returns(false);
-        }
-
-        private static void MockHomeDirectoryReturnsNull()
-        {
-            t_environmentOperations
-                .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
-                .Returns((string)null);
-        }
-
-        private static void MockFileFromEnvironmentalVariable()
-        {
-            t_environmentOperations
-                .Setup(e => e.GetString(EnvVars.ClientConfigFile))
-                .Returns(EnvironmentalConfigFilePath);
-        }
-
-        private static void MockFileOnDriverPath()
-        {
-            t_fileOperations
-                .Setup(f => f.Exists(s_driverConfigFilePath))
-                .Returns(true);
-        }
-
-        private static void MockFileOnHomePath()
-        {
-            t_fileOperations
-                .Setup(f => f.Exists(s_homeConfigFilePath))
-                .Returns(true);
-        }
+    private static void MockFileOnHomePath()
+    {
+        t_fileOperations
+            .Setup(f => f.Exists(s_homeConfigFilePath))
+            .Returns(true);
     }
 }

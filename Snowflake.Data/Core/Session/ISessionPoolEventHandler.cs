@@ -1,15 +1,14 @@
-namespace Snowflake.Data.Core.Session
+namespace Snowflake.Data.Core.Session;
+
+internal interface ISessionPoolEventHandler
 {
-    internal interface ISessionPoolEventHandler
-    {
-        void OnNewSessionCreated(SessionPool sessionPool);
+    void OnNewSessionCreated(SessionPool sessionPool);
 
-        void OnWaitingForSessionStarted(SessionPool sessionPool);
+    void OnWaitingForSessionStarted(SessionPool sessionPool);
 
-        void OnWaitingForSessionStarted(SessionPool sessionPool, long millisLeft);
+    void OnWaitingForSessionStarted(SessionPool sessionPool, long millisLeft);
 
-        void OnWaitingForSessionSuccessful(SessionPool sessionPool);
+    void OnWaitingForSessionSuccessful(SessionPool sessionPool);
 
-        void OnSessionProvided(SessionPool sessionPool);
-    }
+    void OnSessionProvided(SessionPool sessionPool);
 }

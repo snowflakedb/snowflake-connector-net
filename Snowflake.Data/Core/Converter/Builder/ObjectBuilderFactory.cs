@@ -1,25 +1,24 @@
 using System;
 using Snowflake.Data.Client;
 
-namespace Snowflake.Data.Core.Converter.Builder
+namespace Snowflake.Data.Core.Converter.Builder;
+
+internal static class ObjectBuilderFactory
 {
-    internal static class ObjectBuilderFactory
+    public static IObjectBuilder Create(Type type, int fieldsCount, SnowflakeObjectConstructionMethod constructionMethod)
     {
-        public static IObjectBuilder Create(Type type, int fieldsCount, SnowflakeObjectConstructionMethod constructionMethod)
+        if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_NAMES)
         {
-            if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_NAMES)
-            {
-                return new ObjectBuilderByPropertyNames(type);
-            }
-            if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_ORDER)
-            {
-                return new ObjectBuilderByPropertyOrder(type);
-            }
-            if (constructionMethod == SnowflakeObjectConstructionMethod.CONSTRUCTOR)
-            {
-                return new ObjectBuilderByConstructor(type, fieldsCount);
-            }
-            throw new StructuredTypesReadingException("Unknown construction method");
+            return new ObjectBuilderByPropertyNames(type);
         }
+        if (constructionMethod == SnowflakeObjectConstructionMethod.PROPERTIES_ORDER)
+        {
+            return new ObjectBuilderByPropertyOrder(type);
+        }
+        if (constructionMethod == SnowflakeObjectConstructionMethod.CONSTRUCTOR)
+        {
+            return new ObjectBuilderByConstructor(type, fieldsCount);
+        }
+        throw new StructuredTypesReadingException("Unknown construction method");
     }
 }

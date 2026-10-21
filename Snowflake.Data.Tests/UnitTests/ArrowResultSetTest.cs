@@ -13,586 +13,585 @@ using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
-namespace Snowflake.Data.Tests.UnitTests
+namespace Snowflake.Data.Tests.UnitTests;
+
+public sealed class ArrowResultSetTest
 {
-    public sealed class ArrowResultSetTest
+    private const int RowCount = 10;
+    private const int ColumnIndex = 0;
+
+    private RecordBatch _recordBatch;
+    private ArrowResultSet _arrowResultSet;
+
+    public ArrowResultSetTest()
     {
-        private const int RowCount = 10;
-        private const int ColumnIndex = 0;
+        // by default generate Int32 values from 1 to RowCount
+        PrepareTestCase(SFDataType.FIXED, 0, Enumerable.Range(1, RowCount).ToArray());
+    }
 
-        private RecordBatch _recordBatch;
-        private ArrowResultSet _arrowResultSet;
+    [SFFact]
+    public void TestResultFormatIsArrow()
+    {
+        Assert.Equal(ResultFormat.ARROW, _arrowResultSet.ResultFormat);
+    }
 
-        public ArrowResultSetTest()
+    [SFFact]
+    public void TestNextReturnsFalseIfNoData()
+    {
+        var responseData = PrepareResponseData(_recordBatch, SFDataType.FIXED, 0);
+        var sfStatement = PrepareStatement();
+
+        // if there are no results int the response, rowserBaset64 is empty
+        responseData.rowsetBase64 = "";
+        var arrowResultSet = new ArrowResultSet(responseData, sfStatement, new CancellationToken());
+
+        Assert.False(arrowResultSet.Next());
+    }
+
+    [SFFact]
+    public void TestNextReturnsTrueUntilRowsExist()
+    {
+        for (var i = 0; i < RowCount; ++i)
         {
-            // by default generate Int32 values from 1 to RowCount
-            PrepareTestCase(SFDataType.FIXED, 0, Enumerable.Range(1, RowCount).ToArray());
+            Assert.True(_arrowResultSet.Next());
         }
+        Assert.False(_arrowResultSet.Next());
+    }
 
-        [SFFact]
-        public void TestResultFormatIsArrow()
+    [SFFact]
+    public async Task TestNextAsyncReturnsTrueUntilRowsExist()
+    {
+        for (var i = 0; i < RowCount; ++i)
         {
-            Assert.Equal(ResultFormat.ARROW, _arrowResultSet.ResultFormat);
+            Assert.True(await _arrowResultSet.NextAsync().ConfigureAwait(false));
         }
+        Assert.False(await _arrowResultSet.NextAsync().ConfigureAwait(false));
+    }
 
-        [SFFact]
-        public void TestNextReturnsFalseIfNoData()
+    [SFFact]
+    public void TestNextResultReturnsFalse()
+    {
+        Assert.False(_arrowResultSet.NextResult());
+    }
+
+    [SFFact]
+    public async Task TestNextResultAsyncReturnsFalse()
+    {
+        Assert.False(await _arrowResultSet.NextResultAsync(CancellationToken.None).ConfigureAwait(false));
+    }
+
+    [SFFact]
+    public void TestHasRowsReturnsTrueIfRowExists()
+    {
+        Assert.True(_arrowResultSet.HasRows());
+    }
+
+    [SFFact]
+    public void TestHasRowsReturnsFalseIfNoRows()
+    {
+        PrepareTestCase(SFDataType.FIXED, 0, new sbyte[] { });
+
+        Assert.False(_arrowResultSet.HasRows());
+    }
+
+    [SFFact]
+    public void TestRewindReturnsFalseBeforeFirstRow()
+    {
+        Assert.False(_arrowResultSet.Rewind());
+    }
+
+    [SFFact]
+    public void TestRewindReturnsFalseForFirstRow()
+    {
+        _arrowResultSet.Next(); // move to first row
+        Assert.False(_arrowResultSet.Rewind());
+    }
+
+    [SFFact]
+    public void TestRewindReturnsTrueForSecondRowAndMovesToFirstRow()
+    {
+        _arrowResultSet.Next(); // move to first row
+        _arrowResultSet.Next(); // move to second row
+        Assert.True(_arrowResultSet.Rewind());
+        Assert.False(_arrowResultSet.Rewind());
+    }
+
+    [SFFact]
+    public void TestRewindReturnsTrueForThirdRowAndMovesToFirstRow()
+    {
+        _arrowResultSet.Next(); // move to first row
+        _arrowResultSet.Next(); // move to second row
+        _arrowResultSet.Next(); // move to third row
+        Assert.True(_arrowResultSet.Rewind());
+        Assert.True(_arrowResultSet.Rewind());
+        Assert.False(_arrowResultSet.Rewind());
+    }
+
+    [SFFact]
+    public void TestGetValueReturnsNull()
+    {
+        var responseData = PrepareResponseData(ArrowResultChunkTest.RecordBatchWithNullValue, SFDataType.FIXED, 0);
+        var sfStatement = PrepareStatement();
+        var arrowResultSet = new ArrowResultSet(responseData, sfStatement, new CancellationToken());
+
+        arrowResultSet.Next();
+
+        Assert.True(arrowResultSet.IsDBNull(0));
+        Assert.Equal(DBNull.Value, arrowResultSet.GetValue(0));
+    }
+
+    [SFFact]
+    public void TestGetDecimal()
+    {
+        var testValues = new decimal[] { 0, 100, -100, Decimal.MaxValue, Decimal.MinValue };
+
+        TestGetNumber(testValues);
+    }
+
+    [SFFact]
+    public void TestGetNumber64()
+    {
+        var testValues = new long[] { 0, 100, -100, Int64.MaxValue, Int64.MinValue };
+
+        TestGetNumber(testValues);
+    }
+
+    [SFFact]
+    public void TestGetNumber32()
+    {
+        var testValues = new int[] { 0, 100, -100, Int32.MaxValue, Int32.MinValue };
+
+        TestGetNumber(testValues);
+    }
+
+    [SFFact]
+    public void TestGetNumber16()
+    {
+        var testValues = new short[] { 0, 100, -100, Int16.MaxValue, Int16.MinValue };
+
+        TestGetNumber(testValues);
+    }
+
+    [SFFact]
+    public void TestGetNumber8()
+    {
+        var testValues = new sbyte[] { 0, 127, -128 };
+
+        TestGetNumber(testValues);
+    }
+
+    private void TestGetNumber<T>(IEnumerable<T> testValues)
+    {
+        for (var scale = 0; scale <= 9; ++scale)
         {
-            var responseData = PrepareResponseData(_recordBatch, SFDataType.FIXED, 0);
-            var sfStatement = PrepareStatement();
-
-            // if there are no results int the response, rowserBaset64 is empty
-            responseData.rowsetBase64 = "";
-            var arrowResultSet = new ArrowResultSet(responseData, sfStatement, new CancellationToken());
-
-            Assert.False(arrowResultSet.Next());
-        }
-
-        [SFFact]
-        public void TestNextReturnsTrueUntilRowsExist()
-        {
-            for (var i = 0; i < RowCount; ++i)
-            {
-                Assert.True(_arrowResultSet.Next());
-            }
-            Assert.False(_arrowResultSet.Next());
-        }
-
-        [SFFact]
-        public async Task TestNextAsyncReturnsTrueUntilRowsExist()
-        {
-            for (var i = 0; i < RowCount; ++i)
-            {
-                Assert.True(await _arrowResultSet.NextAsync().ConfigureAwait(false));
-            }
-            Assert.False(await _arrowResultSet.NextAsync().ConfigureAwait(false));
-        }
-
-        [SFFact]
-        public void TestNextResultReturnsFalse()
-        {
-            Assert.False(_arrowResultSet.NextResult());
-        }
-
-        [SFFact]
-        public async Task TestNextResultAsyncReturnsFalse()
-        {
-            Assert.False(await _arrowResultSet.NextResultAsync(CancellationToken.None).ConfigureAwait(false));
-        }
-
-        [SFFact]
-        public void TestHasRowsReturnsTrueIfRowExists()
-        {
-            Assert.True(_arrowResultSet.HasRows());
-        }
-
-        [SFFact]
-        public void TestHasRowsReturnsFalseIfNoRows()
-        {
-            PrepareTestCase(SFDataType.FIXED, 0, new sbyte[] { });
-
-            Assert.False(_arrowResultSet.HasRows());
-        }
-
-        [SFFact]
-        public void TestRewindReturnsFalseBeforeFirstRow()
-        {
-            Assert.False(_arrowResultSet.Rewind());
-        }
-
-        [SFFact]
-        public void TestRewindReturnsFalseForFirstRow()
-        {
-            _arrowResultSet.Next(); // move to first row
-            Assert.False(_arrowResultSet.Rewind());
-        }
-
-        [SFFact]
-        public void TestRewindReturnsTrueForSecondRowAndMovesToFirstRow()
-        {
-            _arrowResultSet.Next(); // move to first row
-            _arrowResultSet.Next(); // move to second row
-            Assert.True(_arrowResultSet.Rewind());
-            Assert.False(_arrowResultSet.Rewind());
-        }
-
-        [SFFact]
-        public void TestRewindReturnsTrueForThirdRowAndMovesToFirstRow()
-        {
-            _arrowResultSet.Next(); // move to first row
-            _arrowResultSet.Next(); // move to second row
-            _arrowResultSet.Next(); // move to third row
-            Assert.True(_arrowResultSet.Rewind());
-            Assert.True(_arrowResultSet.Rewind());
-            Assert.False(_arrowResultSet.Rewind());
-        }
-
-        [SFFact]
-        public void TestGetValueReturnsNull()
-        {
-            var responseData = PrepareResponseData(ArrowResultChunkTest.RecordBatchWithNullValue, SFDataType.FIXED, 0);
-            var sfStatement = PrepareStatement();
-            var arrowResultSet = new ArrowResultSet(responseData, sfStatement, new CancellationToken());
-
-            arrowResultSet.Next();
-
-            Assert.True(arrowResultSet.IsDBNull(0));
-            Assert.Equal(DBNull.Value, arrowResultSet.GetValue(0));
-        }
-
-        [SFFact]
-        public void TestGetDecimal()
-        {
-            var testValues = new decimal[] { 0, 100, -100, Decimal.MaxValue, Decimal.MinValue };
-
-            TestGetNumber(testValues);
-        }
-
-        [SFFact]
-        public void TestGetNumber64()
-        {
-            var testValues = new long[] { 0, 100, -100, Int64.MaxValue, Int64.MinValue };
-
-            TestGetNumber(testValues);
-        }
-
-        [SFFact]
-        public void TestGetNumber32()
-        {
-            var testValues = new int[] { 0, 100, -100, Int32.MaxValue, Int32.MinValue };
-
-            TestGetNumber(testValues);
-        }
-
-        [SFFact]
-        public void TestGetNumber16()
-        {
-            var testValues = new short[] { 0, 100, -100, Int16.MaxValue, Int16.MinValue };
-
-            TestGetNumber(testValues);
-        }
-
-        [SFFact]
-        public void TestGetNumber8()
-        {
-            var testValues = new sbyte[] { 0, 127, -128 };
-
-            TestGetNumber(testValues);
-        }
-
-        private void TestGetNumber<T>(IEnumerable<T> testValues)
-        {
-            for (var scale = 0; scale <= 9; ++scale)
-            {
-                PrepareTestCase(SFDataType.FIXED, scale, testValues);
-
-                foreach (var testValue in testValues)
-                {
-                    _arrowResultSet.Next();
-
-                    var isLong = typeof(T) != typeof(decimal) && scale == 0;
-                    var expectedValue = Convert.ToDecimal(testValue) / (decimal)Math.Pow(10, scale);
-
-                    if (!isLong)
-                        Assert.Equal(expectedValue, _arrowResultSet.GetValue(ColumnIndex));
-
-                    Assert.Equal(expectedValue, _arrowResultSet.GetDecimal(ColumnIndex));
-                    Assert.Equal((double)expectedValue, _arrowResultSet.GetDouble(ColumnIndex));
-                    Assert.Equal((float)expectedValue, _arrowResultSet.GetFloat(ColumnIndex));
-
-                    if (typeof(T) == typeof(decimal))
-                        return;
-
-                    // get integer value
-                    var expectedInteger = (long)expectedValue;
-
-                    Assert.Equal(expectedInteger, _arrowResultSet.GetInt64(ColumnIndex));
-                    if (expectedInteger >= Int32.MinValue && expectedInteger <= Int32.MaxValue)
-                        Assert.Equal(expectedInteger, _arrowResultSet.GetInt32(ColumnIndex));
-                    else
-                        Assert.Throws<OverflowException>(() => _arrowResultSet.GetInt32(ColumnIndex));
-                    if (expectedInteger >= Int16.MinValue && expectedInteger <= Int16.MaxValue)
-                        Assert.Equal(expectedInteger, _arrowResultSet.GetInt16(ColumnIndex));
-                    else
-                        Assert.Throws<OverflowException>(() => _arrowResultSet.GetInt16(ColumnIndex));
-                    if (expectedInteger >= 0 && expectedInteger <= 255)
-                        Assert.Equal(expectedInteger, _arrowResultSet.GetByte(ColumnIndex));
-                    else
-                        Assert.Throws<OverflowException>(() => _arrowResultSet.GetByte(ColumnIndex));
-
-                    if (isLong)
-                        Assert.Equal(expectedInteger, _arrowResultSet.GetValue(ColumnIndex));
-                }
-            }
-        }
-
-        [SFFact]
-        public void TestGetBoolean()
-        {
-            var testValues = new bool[] { true, false };
-
-            PrepareTestCase(SFDataType.BOOLEAN, 0, testValues);
+            PrepareTestCase(SFDataType.FIXED, scale, testValues);
 
             foreach (var testValue in testValues)
             {
                 _arrowResultSet.Next();
-                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                Assert.Equal(testValue, _arrowResultSet.GetBoolean(ColumnIndex));
+
+                var isLong = typeof(T) != typeof(decimal) && scale == 0;
+                var expectedValue = Convert.ToDecimal(testValue) / (decimal)Math.Pow(10, scale);
+
+                if (!isLong)
+                    Assert.Equal(expectedValue, _arrowResultSet.GetValue(ColumnIndex));
+
+                Assert.Equal(expectedValue, _arrowResultSet.GetDecimal(ColumnIndex));
+                Assert.Equal((double)expectedValue, _arrowResultSet.GetDouble(ColumnIndex));
+                Assert.Equal((float)expectedValue, _arrowResultSet.GetFloat(ColumnIndex));
+
+                if (typeof(T) == typeof(decimal))
+                    return;
+
+                // get integer value
+                var expectedInteger = (long)expectedValue;
+
+                Assert.Equal(expectedInteger, _arrowResultSet.GetInt64(ColumnIndex));
+                if (expectedInteger >= Int32.MinValue && expectedInteger <= Int32.MaxValue)
+                    Assert.Equal(expectedInteger, _arrowResultSet.GetInt32(ColumnIndex));
+                else
+                    Assert.Throws<OverflowException>(() => _arrowResultSet.GetInt32(ColumnIndex));
+                if (expectedInteger >= Int16.MinValue && expectedInteger <= Int16.MaxValue)
+                    Assert.Equal(expectedInteger, _arrowResultSet.GetInt16(ColumnIndex));
+                else
+                    Assert.Throws<OverflowException>(() => _arrowResultSet.GetInt16(ColumnIndex));
+                if (expectedInteger >= 0 && expectedInteger <= 255)
+                    Assert.Equal(expectedInteger, _arrowResultSet.GetByte(ColumnIndex));
+                else
+                    Assert.Throws<OverflowException>(() => _arrowResultSet.GetByte(ColumnIndex));
+
+                if (isLong)
+                    Assert.Equal(expectedInteger, _arrowResultSet.GetValue(ColumnIndex));
             }
         }
+    }
 
-        [SFFact]
-        public void TestGetReal()
+    [SFFact]
+    public void TestGetBoolean()
+    {
+        var testValues = new bool[] { true, false };
+
+        PrepareTestCase(SFDataType.BOOLEAN, 0, testValues);
+
+        foreach (var testValue in testValues)
         {
-            var testValues = new double[] { 0, Double.MinValue, Double.MaxValue };
-
-            PrepareTestCase(SFDataType.REAL, 0, testValues);
-
-            foreach (var testValue in testValues)
-            {
-                _arrowResultSet.Next();
-                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                Assert.Equal(testValue, _arrowResultSet.GetDouble(ColumnIndex));
-            }
+            _arrowResultSet.Next();
+            Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+            Assert.Equal(testValue, _arrowResultSet.GetBoolean(ColumnIndex));
         }
+    }
 
-        [SFFact]
-        public void TestGetText()
+    [SFFact]
+    public void TestGetReal()
+    {
+        var testValues = new double[] { 0, Double.MinValue, Double.MaxValue };
+
+        PrepareTestCase(SFDataType.REAL, 0, testValues);
+
+        foreach (var testValue in testValues)
         {
-            var testValues = new string[]
-            {
-                "",
-                TestDataGenarator.StringWithUnicode
-            };
-
-            PrepareTestCase(SFDataType.TEXT, 0, testValues);
-
-            foreach (var testValue in testValues)
-            {
-                _arrowResultSet.Next();
-                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                Assert.Equal(testValue, _arrowResultSet.GetString(ColumnIndex));
-            }
+            _arrowResultSet.Next();
+            Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+            Assert.Equal(testValue, _arrowResultSet.GetDouble(ColumnIndex));
         }
+    }
 
-        [SFFact]
-        public void TestGetTextWithOneChar()
+    [SFFact]
+    public void TestGetText()
+    {
+        var testValues = new string[]
         {
-            char[] testValues;
+            "",
+            TestDataGenarator.StringWithUnicode
+        };
+
+        PrepareTestCase(SFDataType.TEXT, 0, testValues);
+
+        foreach (var testValue in testValues)
+        {
+            _arrowResultSet.Next();
+            Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+            Assert.Equal(testValue, _arrowResultSet.GetString(ColumnIndex));
+        }
+    }
+
+    [SFFact]
+    public void TestGetTextWithOneChar()
+    {
+        char[] testValues;
 
 #if NET462
             var charArr = TestDataGenarator.AsciiCodes.ToList();
             charArr.Add(TestDataGenarator.SnowflakeUnicode);
             testValues = charArr.ToArray();
 #else
-            testValues =
+        testValues =
             TestDataGenarator.AsciiCodes.ToCharArray()
                 .Append(TestDataGenarator.SnowflakeUnicode)
                 .ToArray();
 #endif
 
-            PrepareTestCase(SFDataType.TEXT, 0, testValues);
+        PrepareTestCase(SFDataType.TEXT, 0, testValues);
 
-            foreach (var testValue in testValues)
-            {
-                _arrowResultSet.Next();
-                Assert.Equal(testValue, _arrowResultSet.GetChar(ColumnIndex));
-            }
-        }
-
-        [SFFact]
-        public void TestGetArray()
+        foreach (var testValue in testValues)
         {
-            var testValues = new string[]
-            {
-                "",
-                TestDataGenarator.StringWithUnicode
-            };
-
-            PrepareTestCase(SFDataType.ARRAY, 0, testValues);
-
-            foreach (var testValue in testValues)
-            {
-                _arrowResultSet.Next();
-                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                char[] buffer = new char[1000];
-                var len = _arrowResultSet.GetChars(ColumnIndex, 0, buffer, 0, buffer.Length);
-                var str = new String(buffer, 0, (int)len);
-                Assert.Equal(testValue, str);
-                Assert.Equal(testValue.Length, str.Length);
-            }
+            _arrowResultSet.Next();
+            Assert.Equal(testValue, _arrowResultSet.GetChar(ColumnIndex));
         }
+    }
 
-        [SFFact]
-        public void TestGetBinary()
+    [SFFact]
+    public void TestGetArray()
+    {
+        var testValues = new string[]
         {
-            var testValues = new byte[][]
-            {
-                new byte[] { },
-                new byte[] { 0, 19, 33, 200, 10, 13, 255 }
-            };
+            "",
+            TestDataGenarator.StringWithUnicode
+        };
 
-            PrepareTestCase(SFDataType.BINARY, 0, testValues);
-            foreach (var testValue in testValues)
-            {
-                _arrowResultSet.Next();
-                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                byte[] buffer = new byte[100];
-                var len = _arrowResultSet.GetBytes(ColumnIndex, 0, buffer, 0, buffer.Length);
-                Assert.Equal(testValue.Length, len);
-                for (var j = 0; j < len; ++j)
-                    Assert.Equal(testValue[j], buffer[j]);
-            }
+        PrepareTestCase(SFDataType.ARRAY, 0, testValues);
+
+        foreach (var testValue in testValues)
+        {
+            _arrowResultSet.Next();
+            Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+            char[] buffer = new char[1000];
+            var len = _arrowResultSet.GetChars(ColumnIndex, 0, buffer, 0, buffer.Length);
+            var str = new String(buffer, 0, (int)len);
+            Assert.Equal(testValue, str);
+            Assert.Equal(testValue.Length, str.Length);
         }
+    }
 
-        [SFFact]
-        public void TestGetDate()
+    [SFFact]
+    public void TestGetBinary()
+    {
+        var testValues = new byte[][]
         {
-            var testValues = new DateTime[]
-            {
-                DateTime.Parse("2019-01-01"),
-                DateTime.Parse("0001-01-01"),
-                DateTime.Parse("9999-12-31")
-            };
+            new byte[] { },
+            new byte[] { 0, 19, 33, 200, 10, 13, 255 }
+        };
 
-            PrepareTestCase(SFDataType.DATE, 0, testValues);
+        PrepareTestCase(SFDataType.BINARY, 0, testValues);
+        foreach (var testValue in testValues)
+        {
+            _arrowResultSet.Next();
+            Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+            byte[] buffer = new byte[100];
+            var len = _arrowResultSet.GetBytes(ColumnIndex, 0, buffer, 0, buffer.Length);
+            Assert.Equal(testValue.Length, len);
+            for (var j = 0; j < len; ++j)
+                Assert.Equal(testValue[j], buffer[j]);
+        }
+    }
 
-            foreach (var testValue in testValues)
+    [SFFact]
+    public void TestGetDate()
+    {
+        var testValues = new DateTime[]
+        {
+            DateTime.Parse("2019-01-01"),
+            DateTime.Parse("0001-01-01"),
+            DateTime.Parse("9999-12-31")
+        };
+
+        PrepareTestCase(SFDataType.DATE, 0, testValues);
+
+        foreach (var testValue in testValues)
+        {
+            _arrowResultSet.Next();
+            Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+            Assert.Equal(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
+        }
+    }
+
+    [SFFact]
+    public void TestGetTime()
+    {
+        var testValues = new DateTime[]
+        {
+            DateTime.Parse("2019-01-01 12:12:12.1234567"),
+            DateTime.Parse("0001-01-01 00:00:00.0000000"),
+            DateTime.Parse("9999-12-31 23:59:59.9999999")
+        };
+
+        for (var scale = 0; scale <= 7; ++scale)
+        {
+            var values = ArrowResultChunkTest.TruncateValues(testValues, scale);
+            PrepareTestCase(SFDataType.TIME, scale, values);
+
+            foreach (var testValue in values)
             {
                 _arrowResultSet.Next();
                 Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
                 Assert.Equal(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
             }
         }
-
-        [SFFact]
-        public void TestGetTime()
-        {
-            var testValues = new DateTime[]
-            {
-                DateTime.Parse("2019-01-01 12:12:12.1234567"),
-                DateTime.Parse("0001-01-01 00:00:00.0000000"),
-                DateTime.Parse("9999-12-31 23:59:59.9999999")
-            };
-
-            for (var scale = 0; scale <= 7; ++scale)
-            {
-                var values = ArrowResultChunkTest.TruncateValues(testValues, scale);
-                PrepareTestCase(SFDataType.TIME, scale, values);
-
-                foreach (var testValue in values)
-                {
-                    _arrowResultSet.Next();
-                    Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                    Assert.Equal(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
-                }
-            }
-        }
-
-        [SFFact]
-        public void TestGetTimestampTz()
-        {
-            var testValues = new DateTimeOffset[]
-            {
-                DateTimeOffset.Parse("2019-01-01 12:12:12.1234567 +0500"),
-                DateTimeOffset.Parse("2019-01-01 12:12:12.1234567 -0500"),
-                DateTimeOffset.Parse("2019-01-01 12:12:12.1234567 +1400"),
-                DateTimeOffset.Parse("2019-01-01 12:12:12.1234567 -1400"),
-                DateTimeOffset.Parse("0001-01-01 00:00:00.0000000 +0000"),
-                DateTimeOffset.Parse("9999-12-31 23:59:59.9999999 +0000"),
-            };
-
-            for (var scale = 0; scale <= 9; ++scale)
-            {
-                var values = ArrowResultChunkTest.TruncateValues(testValues, scale);
-                PrepareTestCase(SFDataType.TIMESTAMP_TZ, scale, values);
-
-                foreach (var testValue in values)
-                {
-                    _arrowResultSet.Next();
-                    Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                }
-            }
-        }
-
-        [SFFact]
-        public void TestGetTimestampLtz()
-        {
-            var testValues = new DateTimeOffset[]
-            {
-                DateTimeOffset.Parse("2019-01-01 12:12:12.1234567").ToLocalTime(),
-                DateTimeOffset.Parse("0001-01-01 00:00:00.0000000 +0000").ToLocalTime(),
-                DateTimeOffset.Parse("9999-12-31 23:59:59.9999999 +0000").ToLocalTime(),
-            };
-
-            for (var scale = 0; scale <= 9; ++scale)
-            {
-                var values = ArrowResultChunkTest.TruncateValues(testValues, scale);
-                PrepareTestCase(SFDataType.TIMESTAMP_LTZ, scale, values);
-
-                foreach (var testValue in values)
-                {
-                    _arrowResultSet.Next();
-                    Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                }
-            }
-        }
-
-        [SFFact]
-        public void TestGetTimestampNtz()
-        {
-            var testValues = new DateTime[]
-            {
-                DateTime.Parse("2019-01-01 12:12:12.1234567"),
-                DateTime.Parse("0001-01-01 00:00:00.0000000"),
-                DateTime.Parse("9999-12-31 23:59:59.9999999")
-            };
-
-            for (var scale = 0; scale <= 9; ++scale)
-            {
-                var values = ArrowResultChunkTest.TruncateValues(testValues, scale);
-                PrepareTestCase(SFDataType.TIMESTAMP_NTZ, scale, values);
-
-                foreach (var testValue in values)
-                {
-                    _arrowResultSet.Next();
-                    Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
-                    Assert.Equal(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
-                }
-            }
-        }
-
-        [SFFact]
-        public void TestThrowsExceptionForResultSetWithUnknownSFDataType()
-        {
-            const string UnknownDataType = "FAKE_TYPE";
-            QueryExecResponseData responseData = new QueryExecResponseData()
-            {
-                rowType = new List<ExecResponseRowType>()
-                {
-                    new ExecResponseRowType
-                    {
-                        name = "name",
-                        type = UnknownDataType
-                    }
-                }
-            };
-
-            var exception = Assert.Throws<SnowflakeDbException>(() => new ArrowResultSet(responseData, PrepareStatement(), new CancellationToken()));
-            Assert.Contains($"Unknown column type: {UnknownDataType}", exception.Message);
-        }
-
-        [SFFact]
-        public void TestThrowsExceptionForResultSetWithUnknownNativeType()
-        {
-            QueryExecResponseData responseData = new QueryExecResponseData()
-            {
-                rowType = new List<ExecResponseRowType>()
-                {
-                    new ExecResponseRowType
-                    {
-                        name = "name",
-                        type = SFDataType.None.ToString()
-                    }
-                }
-            };
-
-            var exception = Assert.Throws<SnowflakeDbException>(() => new ArrowResultSet(responseData, PrepareStatement(), CancellationToken.None));
-            Assert.Contains($"Unknown column type: {nameof(SFDataType.None)}", exception.Message);
-        }
-
-        private void PrepareTestCase(SFDataType sfType, long scale, object values)
-        {
-            _recordBatch = ArrowResultChunkTest.PrepareRecordBatch(sfType, scale, values);
-            var responseData = PrepareResponseData(_recordBatch, sfType, scale);
-            var sfStatement = PrepareStatement();
-
-            _arrowResultSet = new ArrowResultSet(responseData, sfStatement, CancellationToken.None);
-        }
-
-        private QueryExecResponseData PrepareResponseData(RecordBatch recordBatch, SFDataType sfType, long scale)
-        {
-            return new QueryExecResponseData
-            {
-                rowType = recordBatch.Schema.FieldsList
-                    .Select(col =>
-                        new ExecResponseRowType
-                        {
-                            name = col.Name,
-                            type = sfType.ToString(),
-                            scale = scale
-                        }).ToList(),
-                parameters = new List<NameValueParameter>(),
-                chunks = null,
-                queryResultFormat = ResultFormat.ARROW,
-                rowsetBase64 = ConvertToBase64String(recordBatch)
-            };
-        }
-
-        private string ConvertToBase64String(RecordBatch recordBatch)
-        {
-            if (recordBatch == null)
-                return "";
-
-            using (var stream = new MemoryStream())
-            {
-                using (var writer = new ArrowStreamWriter(stream, recordBatch.Schema))
-                {
-                    writer.WriteRecordBatch(recordBatch);
-                    writer.WriteEnd();
-                }
-                return Convert.ToBase64String(stream.ToArray());
-            }
-        }
-
-        [SFFact]
-        public void TestConstructorUpdatesQueryContextCache()
-        {
-            var recordBatch = ArrowResultChunkTest.PrepareRecordBatch(SFDataType.FIXED, 0, new int[] { 1 });
-            var responseData = PrepareResponseData(recordBatch, SFDataType.FIXED, 0);
-            var queryContext = new ResponseQueryContext
-            {
-                Entries =
-                [
-                    new()
-                    {
-                        Id = 42,
-                        ReadTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                        Priority = 1,
-                        Context = "test_context"
-                    }
-                ]
-            };
-            responseData.QueryContext = queryContext;
-            var session = new SFSession("user=user;password=password;account=account;", new SessionPropertiesContext());
-            var sfStatement = new SFStatement(session);
-
-            _ = new ArrowResultSet(responseData, sfStatement, CancellationToken.None);
-
-            var cachedContext = session.GetQueryContextRequest();
-            Assert.NotNull(cachedContext);
-            Assert.Single(cachedContext.Entries);
-            Assert.Equal(42, cachedContext.Entries[0].Id);
-        }
-
-        [SFFact]
-        public void TestConstructorHandlesNullQueryContext()
-        {
-            var recordBatch = ArrowResultChunkTest.PrepareRecordBatch(SFDataType.FIXED, 0, new int[] { 1 });
-            var responseData = PrepareResponseData(recordBatch, SFDataType.FIXED, 0);
-            responseData.QueryContext = null;
-            var sfStatement = PrepareStatement();
-
-            var exception = Record.Exception(() => new ArrowResultSet(responseData, sfStatement, CancellationToken.None));
-
-            Assert.Null(exception);
-        }
-
-        private SFStatement PrepareStatement()
-        {
-            SFSession session = new SFSession("user=user;password=password;account=account;", new SessionPropertiesContext());
-            return new SFStatement(session);
-        }
-
     }
+
+    [SFFact]
+    public void TestGetTimestampTz()
+    {
+        var testValues = new DateTimeOffset[]
+        {
+            DateTimeOffset.Parse("2019-01-01 12:12:12.1234567 +0500"),
+            DateTimeOffset.Parse("2019-01-01 12:12:12.1234567 -0500"),
+            DateTimeOffset.Parse("2019-01-01 12:12:12.1234567 +1400"),
+            DateTimeOffset.Parse("2019-01-01 12:12:12.1234567 -1400"),
+            DateTimeOffset.Parse("0001-01-01 00:00:00.0000000 +0000"),
+            DateTimeOffset.Parse("9999-12-31 23:59:59.9999999 +0000"),
+        };
+
+        for (var scale = 0; scale <= 9; ++scale)
+        {
+            var values = ArrowResultChunkTest.TruncateValues(testValues, scale);
+            PrepareTestCase(SFDataType.TIMESTAMP_TZ, scale, values);
+
+            foreach (var testValue in values)
+            {
+                _arrowResultSet.Next();
+                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+            }
+        }
+    }
+
+    [SFFact]
+    public void TestGetTimestampLtz()
+    {
+        var testValues = new DateTimeOffset[]
+        {
+            DateTimeOffset.Parse("2019-01-01 12:12:12.1234567").ToLocalTime(),
+            DateTimeOffset.Parse("0001-01-01 00:00:00.0000000 +0000").ToLocalTime(),
+            DateTimeOffset.Parse("9999-12-31 23:59:59.9999999 +0000").ToLocalTime(),
+        };
+
+        for (var scale = 0; scale <= 9; ++scale)
+        {
+            var values = ArrowResultChunkTest.TruncateValues(testValues, scale);
+            PrepareTestCase(SFDataType.TIMESTAMP_LTZ, scale, values);
+
+            foreach (var testValue in values)
+            {
+                _arrowResultSet.Next();
+                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+            }
+        }
+    }
+
+    [SFFact]
+    public void TestGetTimestampNtz()
+    {
+        var testValues = new DateTime[]
+        {
+            DateTime.Parse("2019-01-01 12:12:12.1234567"),
+            DateTime.Parse("0001-01-01 00:00:00.0000000"),
+            DateTime.Parse("9999-12-31 23:59:59.9999999")
+        };
+
+        for (var scale = 0; scale <= 9; ++scale)
+        {
+            var values = ArrowResultChunkTest.TruncateValues(testValues, scale);
+            PrepareTestCase(SFDataType.TIMESTAMP_NTZ, scale, values);
+
+            foreach (var testValue in values)
+            {
+                _arrowResultSet.Next();
+                Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
+                Assert.Equal(testValue, _arrowResultSet.GetDateTime(ColumnIndex));
+            }
+        }
+    }
+
+    [SFFact]
+    public void TestThrowsExceptionForResultSetWithUnknownSFDataType()
+    {
+        const string UnknownDataType = "FAKE_TYPE";
+        QueryExecResponseData responseData = new QueryExecResponseData()
+        {
+            rowType = new List<ExecResponseRowType>()
+            {
+                new ExecResponseRowType
+                {
+                    name = "name",
+                    type = UnknownDataType
+                }
+            }
+        };
+
+        var exception = Assert.Throws<SnowflakeDbException>(() => new ArrowResultSet(responseData, PrepareStatement(), new CancellationToken()));
+        Assert.Contains($"Unknown column type: {UnknownDataType}", exception.Message);
+    }
+
+    [SFFact]
+    public void TestThrowsExceptionForResultSetWithUnknownNativeType()
+    {
+        QueryExecResponseData responseData = new QueryExecResponseData()
+        {
+            rowType = new List<ExecResponseRowType>()
+            {
+                new ExecResponseRowType
+                {
+                    name = "name",
+                    type = SFDataType.None.ToString()
+                }
+            }
+        };
+
+        var exception = Assert.Throws<SnowflakeDbException>(() => new ArrowResultSet(responseData, PrepareStatement(), CancellationToken.None));
+        Assert.Contains($"Unknown column type: {nameof(SFDataType.None)}", exception.Message);
+    }
+
+    private void PrepareTestCase(SFDataType sfType, long scale, object values)
+    {
+        _recordBatch = ArrowResultChunkTest.PrepareRecordBatch(sfType, scale, values);
+        var responseData = PrepareResponseData(_recordBatch, sfType, scale);
+        var sfStatement = PrepareStatement();
+
+        _arrowResultSet = new ArrowResultSet(responseData, sfStatement, CancellationToken.None);
+    }
+
+    private QueryExecResponseData PrepareResponseData(RecordBatch recordBatch, SFDataType sfType, long scale)
+    {
+        return new QueryExecResponseData
+        {
+            rowType = recordBatch.Schema.FieldsList
+                .Select(col =>
+                    new ExecResponseRowType
+                    {
+                        name = col.Name,
+                        type = sfType.ToString(),
+                        scale = scale
+                    }).ToList(),
+            parameters = new List<NameValueParameter>(),
+            chunks = null,
+            queryResultFormat = ResultFormat.ARROW,
+            rowsetBase64 = ConvertToBase64String(recordBatch)
+        };
+    }
+
+    private string ConvertToBase64String(RecordBatch recordBatch)
+    {
+        if (recordBatch == null)
+            return "";
+
+        using (var stream = new MemoryStream())
+        {
+            using (var writer = new ArrowStreamWriter(stream, recordBatch.Schema))
+            {
+                writer.WriteRecordBatch(recordBatch);
+                writer.WriteEnd();
+            }
+            return Convert.ToBase64String(stream.ToArray());
+        }
+    }
+
+    [SFFact]
+    public void TestConstructorUpdatesQueryContextCache()
+    {
+        var recordBatch = ArrowResultChunkTest.PrepareRecordBatch(SFDataType.FIXED, 0, new int[] { 1 });
+        var responseData = PrepareResponseData(recordBatch, SFDataType.FIXED, 0);
+        var queryContext = new ResponseQueryContext
+        {
+            Entries =
+            [
+                new()
+                {
+                    Id = 42,
+                    ReadTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    Priority = 1,
+                    Context = "test_context"
+                }
+            ]
+        };
+        responseData.QueryContext = queryContext;
+        var session = new SFSession("user=user;password=password;account=account;", new SessionPropertiesContext());
+        var sfStatement = new SFStatement(session);
+
+        _ = new ArrowResultSet(responseData, sfStatement, CancellationToken.None);
+
+        var cachedContext = session.GetQueryContextRequest();
+        Assert.NotNull(cachedContext);
+        Assert.Single(cachedContext.Entries);
+        Assert.Equal(42, cachedContext.Entries[0].Id);
+    }
+
+    [SFFact]
+    public void TestConstructorHandlesNullQueryContext()
+    {
+        var recordBatch = ArrowResultChunkTest.PrepareRecordBatch(SFDataType.FIXED, 0, new int[] { 1 });
+        var responseData = PrepareResponseData(recordBatch, SFDataType.FIXED, 0);
+        responseData.QueryContext = null;
+        var sfStatement = PrepareStatement();
+
+        var exception = Record.Exception(() => new ArrowResultSet(responseData, sfStatement, CancellationToken.None));
+
+        Assert.Null(exception);
+    }
+
+    private SFStatement PrepareStatement()
+    {
+        SFSession session = new SFSession("user=user;password=password;account=account;", new SessionPropertiesContext());
+        return new SFStatement(session);
+    }
+
 }

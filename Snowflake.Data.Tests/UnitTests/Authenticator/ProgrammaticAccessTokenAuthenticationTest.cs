@@ -10,133 +10,132 @@ using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
-namespace Snowflake.Data.Tests.UnitTests.Authenticator
+namespace Snowflake.Data.Tests.UnitTests.Authenticator;
+
+[CollectionDefinition(nameof(ProgrammaticAccessTokenAuthenticationTestFixture), DisableParallelization = true)]
+public sealed class ProgrammaticAccessTokenAuthenticationTestFixture : ICollectionFixture<ProgrammaticAccessTokenAuthenticationTestFixture.Fixture>
 {
-    [CollectionDefinition(nameof(ProgrammaticAccessTokenAuthenticationTestFixture), DisableParallelization = true)]
-    public sealed class ProgrammaticAccessTokenAuthenticationTestFixture : ICollectionFixture<ProgrammaticAccessTokenAuthenticationTestFixture.Fixture>
+    public sealed class Fixture : IDisposable
     {
-        public sealed class Fixture : IDisposable
+        internal readonly WiremockRunner Runner;
+
+        public Fixture()
         {
-            internal readonly WiremockRunner Runner;
+            Runner = WiremockRunner.NewWiremock();
+        }
 
-            public Fixture()
-            {
-                Runner = WiremockRunner.NewWiremock();
-            }
-
-            public void Dispose()
-            {
-                Runner.Stop();
-            }
+        public void Dispose()
+        {
+            Runner.Stop();
         }
     }
+}
 
-    [Collection(nameof(ProgrammaticAccessTokenAuthenticationTestFixture))]
-    public class ProgrammaticAccessTokenAuthenticationTest
+[Collection(nameof(ProgrammaticAccessTokenAuthenticationTestFixture))]
+public class ProgrammaticAccessTokenAuthenticationTest
+{
+    private readonly ProgrammaticAccessTokenAuthenticationTestFixture.Fixture _fixture;
+    private static readonly string s_patMappingPath = Path.Combine("wiremock", "PAT");
+    private static readonly string s_successfulPatFlowMappingPath = Path.Combine(s_patMappingPath, "successful_flow.json");
+    private static readonly string s_invalidPatFlowMappingPath = Path.Combine(s_patMappingPath, "invalid_pat_token.json");
+
+    private const string MasterToken = "master token";
+    private const string SessionToken = "session token";
+    private const string SessionId = "1172562260498";
+    private const string User = "MOCK_USERNAME";
+    private const string Account = "MOCK_ACCOUNT_NAME";
+    private const string Token = "MOCK_TOKEN";
+
+    public ProgrammaticAccessTokenAuthenticationTest(ProgrammaticAccessTokenAuthenticationTestFixture.Fixture fixture)
     {
-        private readonly ProgrammaticAccessTokenAuthenticationTestFixture.Fixture _fixture;
-        private static readonly string s_patMappingPath = Path.Combine("wiremock", "PAT");
-        private static readonly string s_successfulPatFlowMappingPath = Path.Combine(s_patMappingPath, "successful_flow.json");
-        private static readonly string s_invalidPatFlowMappingPath = Path.Combine(s_patMappingPath, "invalid_pat_token.json");
+        _fixture = fixture;
+        _fixture.Runner.ResetMapping();
+    }
 
-        private const string MasterToken = "master token";
-        private const string SessionToken = "session token";
-        private const string SessionId = "1172562260498";
-        private const string User = "MOCK_USERNAME";
-        private const string Account = "MOCK_ACCOUNT_NAME";
-        private const string Token = "MOCK_TOKEN";
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestSuccessfulPatAuthentication()
+    {
+        // arrange
+        _fixture.Runner.AddMappings(s_successfulPatFlowMappingPath);
+        var session = PrepareSession();
 
-        public ProgrammaticAccessTokenAuthenticationTest(ProgrammaticAccessTokenAuthenticationTestFixture.Fixture fixture)
-        {
-            _fixture = fixture;
-            _fixture.Runner.ResetMapping();
-        }
+        // act
+        session.Open();
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestSuccessfulPatAuthentication()
-        {
-            // arrange
-            _fixture.Runner.AddMappings(s_successfulPatFlowMappingPath);
-            var session = PrepareSession();
+        // assert
+        AssertSessionSuccessfullyCreated(session);
+    }
 
-            // act
-            session.Open();
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public async Task TestSuccessfulPatAuthenticationAsync()
+    {
+        // arrange
+        _fixture.Runner.AddMappings(s_successfulPatFlowMappingPath);
+        var session = PrepareSession();
 
-            // assert
-            AssertSessionSuccessfullyCreated(session);
-        }
+        // act
+        await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public async Task TestSuccessfulPatAuthenticationAsync()
-        {
-            // arrange
-            _fixture.Runner.AddMappings(s_successfulPatFlowMappingPath);
-            var session = PrepareSession();
+        // assert
+        AssertSessionSuccessfullyCreated(session);
+    }
 
-            // act
-            await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestInvalidPatAuthentication()
+    {
+        // arrange
+        _fixture.Runner.AddMappings(s_invalidPatFlowMappingPath);
+        var session = PrepareSession();
 
-            // assert
-            AssertSessionSuccessfullyCreated(session);
-        }
+        // act
+        var thrown = Assert.Throws<SnowflakeDbException>(() => session.Open());
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestInvalidPatAuthentication()
-        {
-            // arrange
-            _fixture.Runner.AddMappings(s_invalidPatFlowMappingPath);
-            var session = PrepareSession();
+        // assert
+        Assert.Contains("Programmatic access token is invalid.", thrown.Message);
+    }
 
-            // act
-            var thrown = Assert.Throws<SnowflakeDbException>(() => session.Open());
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public async Task TestInvalidPatAuthenticationAsync()
+    {
+        // arrange
+        _fixture.Runner.AddMappings(s_invalidPatFlowMappingPath);
+        var session = PrepareSession();
 
-            // assert
-            Assert.Contains("Programmatic access token is invalid.", thrown.Message);
-        }
+        // act
+        var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None)).ConfigureAwait(false);
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public async Task TestInvalidPatAuthenticationAsync()
-        {
-            // arrange
-            _fixture.Runner.AddMappings(s_invalidPatFlowMappingPath);
-            var session = PrepareSession();
+        // assert
+        Assert.Contains("Programmatic access token is invalid.", thrown.Message);
+    }
 
-            // act
-            var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None)).ConfigureAwait(false);
+    private SFSession PrepareSession()
+    {
+        var connectionString = GetPatConnectionString();
+        var sessionContext = new SessionPropertiesContext();
+        return new SFSession(connectionString, sessionContext);
+    }
 
-            // assert
-            Assert.Contains("Programmatic access token is invalid.", thrown.Message);
-        }
+    private string GetPatConnectionString()
+    {
+        var authenticator = "programmatic_access_token";
+        var db = "testDb";
+        var role = "ANALYST";
+        var warehouse = "testWarehouse";
+        var host = WiremockRunner.Host;
+        var port = WiremockRunner.DefaultHttpPort;
+        var scheme = "http";
 
-        private SFSession PrepareSession()
-        {
-            var connectionString = GetPatConnectionString();
-            var sessionContext = new SessionPropertiesContext();
-            return new SFSession(connectionString, sessionContext);
-        }
+        return new StringBuilder()
+            .Append($"authenticator={authenticator};account={Account};user={User};")
+            .Append($"db={db};role={role};warehouse={warehouse};host={host};port={port};scheme={scheme};")
+            .Append($"token={Token}")
+            .ToString();
+    }
 
-        private string GetPatConnectionString()
-        {
-            var authenticator = "programmatic_access_token";
-            var db = "testDb";
-            var role = "ANALYST";
-            var warehouse = "testWarehouse";
-            var host = WiremockRunner.Host;
-            var port = WiremockRunner.DefaultHttpPort;
-            var scheme = "http";
-
-            return new StringBuilder()
-                .Append($"authenticator={authenticator};account={Account};user={User};")
-                .Append($"db={db};role={role};warehouse={warehouse};host={host};port={port};scheme={scheme};")
-                .Append($"token={Token}")
-                .ToString();
-        }
-
-        private void AssertSessionSuccessfullyCreated(SFSession session)
-        {
-            Assert.Equal(SessionId, session.sessionId);
-            Assert.Equal(MasterToken, session.masterToken);
-            Assert.Equal(SessionToken, session.sessionToken);
-        }
+    private void AssertSessionSuccessfullyCreated(SFSession session)
+    {
+        Assert.Equal(SessionId, session.sessionId);
+        Assert.Equal(MasterToken, session.masterToken);
+        Assert.Equal(SessionToken, session.sessionToken);
     }
 }

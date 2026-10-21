@@ -1,13 +1,12 @@
-namespace Snowflake.Data.Core.Session
+namespace Snowflake.Data.Core.Session;
+
+internal interface ISessionCreationTokenCounter
 {
-    internal interface ISessionCreationTokenCounter
-    {
-        SessionCreationToken NewToken();
+    SessionCreationToken NewToken();
 
-        void RemoveToken(SessionCreationToken creationToken);
+    void RemoveToken(SessionCreationToken creationToken);
 
-        int Count();
+    int Count();
 
-        void Reset();
-    }
+    void Reset();
 }

@@ -1,11 +1,10 @@
 using System.Collections.Generic;
 
-namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
+namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity;
+
+internal class WorkloadIdentityAttestationData
 {
-    internal class WorkloadIdentityAttestationData
-    {
-        public AttestationProvider Provider { get; set; }
-        public string Credential { get; set; }
-        public Dictionary<string, string> UserIdentifierComponents { get; set; }
-    }
+    public AttestationProvider Provider { get; set; }
+    public string Credential { get; set; }
+    public Dictionary<string, string> UserIdentifierComponents { get; set; }
 }

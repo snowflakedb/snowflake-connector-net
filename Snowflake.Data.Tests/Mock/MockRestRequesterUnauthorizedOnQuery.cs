@@ -6,57 +6,56 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
 
-namespace Snowflake.Data.Tests.Mock
+namespace Snowflake.Data.Tests.Mock;
+
+internal class MockRestRequesterUnauthorizedOnQuery : MockBaseRestRequester
 {
-    internal class MockRestRequesterUnauthorizedOnQuery : MockBaseRestRequester
+    public override T Post<T>(IRestRequest postRequest)
     {
-        public override T Post<T>(IRestRequest postRequest)
-        {
-            return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None).ConfigureAwait(false)).Result;
-        }
+        return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None).ConfigureAwait(false)).Result;
+    }
 
-        public override Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
+    public override Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
+    {
+        var sfRequest = (SFRestRequest)postRequest;
+        if (sfRequest.jsonBody is LoginRequest)
         {
-            var sfRequest = (SFRestRequest)postRequest;
-            if (sfRequest.jsonBody is LoginRequest)
+            var authnResponse = new LoginResponse
             {
-                var authnResponse = new LoginResponse
+                data = new LoginResponseData()
                 {
-                    data = new LoginResponseData()
-                    {
-                        token = "session_token",
-                        masterToken = "master_token",
-                        authResponseSessionInfo = new SessionInfo(),
-                        nameValueParameter = new List<NameValueParameter>()
-                    },
-                    success = true
-                };
-                return Task.FromResult((T)(object)authnResponse);
-            }
-
-            if (sfRequest.jsonBody is QueryRequest)
-            {
-                var ex = new HttpRequestException("Response status code does not indicate success: 401 (Unauthorized).");
-                ex.Data[RestRequester.HttpStatusCodeDataKey] = (int)HttpStatusCode.Unauthorized;
-                throw ex;
-            }
-
-            if (sfRequest.jsonBody == null && typeof(T) == typeof(CloseResponse))
-            {
-                return Task.FromResult((T)(object)new CloseResponse { success = true });
-            }
-
-            return Task.FromResult((T)(object)null);
+                    token = "session_token",
+                    masterToken = "master_token",
+                    authResponseSessionInfo = new SessionInfo(),
+                    nameValueParameter = new List<NameValueParameter>()
+                },
+                success = true
+            };
+            return Task.FromResult((T)(object)authnResponse);
         }
 
-        public override T Get<T>(IRestRequest request)
+        if (sfRequest.jsonBody is QueryRequest)
         {
-            return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None).ConfigureAwait(false)).Result;
+            var ex = new HttpRequestException("Response status code does not indicate success: 401 (Unauthorized).");
+            ex.Data[RestRequester.HttpStatusCodeDataKey] = (int)HttpStatusCode.Unauthorized;
+            throw ex;
         }
 
-        public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+        if (sfRequest.jsonBody == null && typeof(T) == typeof(CloseResponse))
         {
-            return Task.FromResult((T)(object)null);
+            return Task.FromResult((T)(object)new CloseResponse { success = true });
         }
+
+        return Task.FromResult((T)(object)null);
+    }
+
+    public override T Get<T>(IRestRequest request)
+    {
+        return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None).ConfigureAwait(false)).Result;
+    }
+
+    public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+    {
+        return Task.FromResult((T)(object)null);
     }
 }

@@ -1,7 +1,6 @@
-namespace Snowflake.Data.Core.Session
+namespace Snowflake.Data.Core.Session;
+
+internal interface ISessionFactory
 {
-    internal interface ISessionFactory
-    {
-        SFSession NewSession(string connectionString, SessionPropertiesContext sessionContext);
-    }
+    SFSession NewSession(string connectionString, SessionPropertiesContext sessionContext);
 }

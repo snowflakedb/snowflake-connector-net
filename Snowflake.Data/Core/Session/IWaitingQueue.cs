@@ -1,19 +1,18 @@
 using System.Threading;
 
-namespace Snowflake.Data.Core.Session
+namespace Snowflake.Data.Core.Session;
+
+internal interface IWaitingQueue
 {
-    internal interface IWaitingQueue
-    {
-        bool Wait(int millisecondsTimeout, CancellationToken cancellationToken);
+    bool Wait(int millisecondsTimeout, CancellationToken cancellationToken);
 
-        void OnResourceIncrease();
+    void OnResourceIncrease();
 
-        bool IsAnyoneWaiting();
+    bool IsAnyoneWaiting();
 
-        int WaitingCount();
+    int WaitingCount();
 
-        bool IsWaitingEnabled();
+    bool IsWaitingEnabled();
 
-        void Reset();
-    }
+    void Reset();
 }

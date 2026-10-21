@@ -4,49 +4,48 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
 
-namespace Snowflake.Data.Tests.Mock
+namespace Snowflake.Data.Tests.Mock;
+
+internal class MockLoginStoringRestRequester : MockBaseRestRequester
 {
-    internal class MockLoginStoringRestRequester : MockBaseRestRequester
+    internal List<LoginRequest> LoginRequests { get; } = new();
+
+    public override T Get<T>(IRestRequest request)
     {
-        internal List<LoginRequest> LoginRequests { get; } = new();
+        return Task.Run(async () => await (GetAsync<T>(request, CancellationToken.None)).ConfigureAwait(false)).Result;
+    }
 
-        public override T Get<T>(IRestRequest request)
-        {
-            return Task.Run(async () => await (GetAsync<T>(request, CancellationToken.None)).ConfigureAwait(false)).Result;
-        }
+    public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+    {
+        return Task.FromResult<T>((T)(object)null);
+    }
 
-        public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<T>((T)(object)null);
-        }
+    public override T Post<T>(IRestRequest postRequest)
+    {
+        return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
+    }
 
-        public override T Post<T>(IRestRequest postRequest)
+    public override Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
+    {
+        SFRestRequest sfRequest = (SFRestRequest)postRequest;
+        if (sfRequest.jsonBody is LoginRequest)
         {
-            return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
-        }
-
-        public override Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
-        {
-            SFRestRequest sfRequest = (SFRestRequest)postRequest;
-            if (sfRequest.jsonBody is LoginRequest)
+            LoginRequests.Add((LoginRequest)sfRequest.jsonBody);
+            LoginResponse authnResponse = new LoginResponse
             {
-                LoginRequests.Add((LoginRequest)sfRequest.jsonBody);
-                LoginResponse authnResponse = new LoginResponse
+                data = new LoginResponseData()
                 {
-                    data = new LoginResponseData()
-                    {
-                        token = "session_token",
-                        masterToken = "master_token",
-                        authResponseSessionInfo = new SessionInfo(),
-                        nameValueParameter = new List<NameValueParameter>()
-                    },
-                    success = true
-                };
+                    token = "session_token",
+                    masterToken = "master_token",
+                    authResponseSessionInfo = new SessionInfo(),
+                    nameValueParameter = new List<NameValueParameter>()
+                },
+                success = true
+            };
 
-                // login request return success
-                return Task.FromResult<T>((T)(object)authnResponse);
-            }
-            throw new NotImplementedException();
+            // login request return success
+            return Task.FromResult<T>((T)(object)authnResponse);
         }
+        throw new NotImplementedException();
     }
 }

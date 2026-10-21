@@ -9,131 +9,130 @@ using Newtonsoft.Json.Linq;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 
-namespace Snowflake.Data.Configuration
+namespace Snowflake.Data.Configuration;
+
+internal class EasyLoggingConfigParser
 {
-    internal class EasyLoggingConfigParser
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EasyLoggingConfigParser>();
+
+    private readonly UnixOperations _unixOperations;
+
+    public static readonly EasyLoggingConfigParser Instance = new EasyLoggingConfigParser(UnixOperations.Instance);
+
+    internal EasyLoggingConfigParser(UnixOperations unixOperations)
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EasyLoggingConfigParser>();
+        _unixOperations = unixOperations;
+    }
 
-        private readonly UnixOperations _unixOperations;
+    internal EasyLoggingConfigParser() : this(UnixOperations.Instance) { }
 
-        public static readonly EasyLoggingConfigParser Instance = new EasyLoggingConfigParser(UnixOperations.Instance);
+    public virtual ClientConfig Parse(string filePath)
+    {
+        var configFile = TryToReadFile(filePath);
+        return configFile == null ? null : TryToParseFile(configFile);
+    }
 
-        internal EasyLoggingConfigParser(UnixOperations unixOperations)
+    private string TryToReadFile(string filePath)
+    {
+        if (string.IsNullOrEmpty(filePath))
         {
-            _unixOperations = unixOperations;
+            return null;
         }
-
-        internal EasyLoggingConfigParser() : this(UnixOperations.Instance) { }
-
-        public virtual ClientConfig Parse(string filePath)
+        try
         {
-            var configFile = TryToReadFile(filePath);
-            return configFile == null ? null : TryToParseFile(configFile);
+            return FileOperations.Instance.ReadAllText(filePath, CheckIfValidPermissions);
         }
-
-        private string TryToReadFile(string filePath)
+        catch (Exception e)
         {
-            if (string.IsNullOrEmpty(filePath))
-            {
-                return null;
-            }
+            var errorMessage = $"Finding easy logging configuration failed: {e.Message}";
+            s_logger.Error(errorMessage, e);
+            throw new Exception(errorMessage);
+        }
+    }
+
+    private ClientConfig TryToParseFile(string fileContent)
+    {
+        try
+        {
+            var config = JsonConvert.DeserializeObject<ClientConfig>(fileContent);
+            Validate(config);
+            CheckForUnknownFields(fileContent);
+            return config;
+        }
+        catch (Exception e)
+        {
+            var errorMessage = "Parsing easy logging configuration failed";
+            s_logger.Error(errorMessage, e);
+            throw new Exception(errorMessage);
+        }
+    }
+
+    private void Validate(ClientConfig config)
+    {
+        if (config.CommonProps.LogLevel != null)
+        {
+            EasyLoggingLogLevelExtensions.From(config.CommonProps.LogLevel);
+        }
+        if (config.Dotnet?.LogFileUnixPermissions != null)
+        {
+            int parsedPermissions;
             try
             {
-                return FileOperations.Instance.ReadAllText(filePath, CheckIfValidPermissions);
+                parsedPermissions = Convert.ToInt32(config.Dotnet.LogFileUnixPermissions);
             }
-            catch (Exception e)
+            catch
             {
-                var errorMessage = $"Finding easy logging configuration failed: {e.Message}";
-                s_logger.Error(errorMessage, e);
+                var errorMessage = $"Invalid LogFileUnixPermissions value type: '{config.Dotnet.LogFileUnixPermissions}'. Value should be between 000-777";
+                s_logger.Error(errorMessage);
+                throw new Exception(errorMessage);
+            }
+            if (parsedPermissions < 0 || parsedPermissions > 777)
+            {
+                var errorMessage = $"LogFileUnixPermissions '{config.Dotnet.LogFileUnixPermissions}' is out of valid range (000–777)";
+                s_logger.Error(errorMessage);
                 throw new Exception(errorMessage);
             }
         }
+    }
 
-        private ClientConfig TryToParseFile(string fileContent)
+    private void CheckForUnknownFields(string fileContent)
+    {
+        // Parse the specified config file and get the key-value pairs from the "common" section
+        List<string> knownProperties = typeof(ClientConfigCommonProps).GetProperties()
+            .Select(property => property.GetCustomAttribute<JsonPropertyAttribute>().PropertyName)
+            .ToList();
+
+        JObject.Parse(fileContent).GetValue("common", StringComparison.OrdinalIgnoreCase)?
+            .Cast<JProperty>()
+            .Where(property => !knownProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
+            .ToList()
+            .ForEach(unknownKey => s_logger.Warn($"Unknown field from config: {unknownKey.Name}"));
+    }
+
+    private void CheckIfValidPermissions(UnixStream stream)
+    {
+        // Check user ownership of file
+        if (stream.OwnerUserId != _unixOperations.GetCurrentUserId())
         {
-            try
-            {
-                var config = JsonConvert.DeserializeObject<ClientConfig>(fileContent);
-                Validate(config);
-                CheckForUnknownFields(fileContent);
-                return config;
-            }
-            catch (Exception e)
-            {
-                var errorMessage = "Parsing easy logging configuration failed";
-                s_logger.Error(errorMessage, e);
-                throw new Exception(errorMessage);
-            }
+            var errorMessage = $"Error due to user not having ownership of the config file";
+            s_logger.Error(errorMessage);
+            throw new SecurityException(errorMessage);
         }
 
-        private void Validate(ClientConfig config)
+        // Check group ownership of file
+        if (stream.OwnerGroupId != _unixOperations.GetCurrentGroupId())
         {
-            if (config.CommonProps.LogLevel != null)
-            {
-                EasyLoggingLogLevelExtensions.From(config.CommonProps.LogLevel);
-            }
-            if (config.Dotnet?.LogFileUnixPermissions != null)
-            {
-                int parsedPermissions;
-                try
-                {
-                    parsedPermissions = Convert.ToInt32(config.Dotnet.LogFileUnixPermissions);
-                }
-                catch
-                {
-                    var errorMessage = $"Invalid LogFileUnixPermissions value type: '{config.Dotnet.LogFileUnixPermissions}'. Value should be between 000-777";
-                    s_logger.Error(errorMessage);
-                    throw new Exception(errorMessage);
-                }
-                if (parsedPermissions < 0 || parsedPermissions > 777)
-                {
-                    var errorMessage = $"LogFileUnixPermissions '{config.Dotnet.LogFileUnixPermissions}' is out of valid range (000–777)";
-                    s_logger.Error(errorMessage);
-                    throw new Exception(errorMessage);
-                }
-            }
+            var errorMessage = $"Error due to group not having ownership of the config file";
+            s_logger.Error(errorMessage);
+            throw new SecurityException(errorMessage);
         }
 
-        private void CheckForUnknownFields(string fileContent)
+        // Check if others have permissions to modify the file and fail if so
+        if (_unixOperations.CheckFileHasAnyOfPermissions(stream.FileAccessPermissions, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite))
         {
-            // Parse the specified config file and get the key-value pairs from the "common" section
-            List<string> knownProperties = typeof(ClientConfigCommonProps).GetProperties()
-                .Select(property => property.GetCustomAttribute<JsonPropertyAttribute>().PropertyName)
-                .ToList();
-
-            JObject.Parse(fileContent).GetValue("common", StringComparison.OrdinalIgnoreCase)?
-                .Cast<JProperty>()
-                .Where(property => !knownProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
-                .ToList()
-                .ForEach(unknownKey => s_logger.Warn($"Unknown field from config: {unknownKey.Name}"));
-        }
-
-        private void CheckIfValidPermissions(UnixStream stream)
-        {
-            // Check user ownership of file
-            if (stream.OwnerUserId != _unixOperations.GetCurrentUserId())
-            {
-                var errorMessage = $"Error due to user not having ownership of the config file";
-                s_logger.Error(errorMessage);
-                throw new SecurityException(errorMessage);
-            }
-
-            // Check group ownership of file
-            if (stream.OwnerGroupId != _unixOperations.GetCurrentGroupId())
-            {
-                var errorMessage = $"Error due to group not having ownership of the config file";
-                s_logger.Error(errorMessage);
-                throw new SecurityException(errorMessage);
-            }
-
-            // Check if others have permissions to modify the file and fail if so
-            if (_unixOperations.CheckFileHasAnyOfPermissions(stream.FileAccessPermissions, FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite))
-            {
-                var errorMessage = $"Error due to other users having permission to modify the config file";
-                s_logger.Error(errorMessage);
-                throw new SecurityException(errorMessage);
-            }
+            var errorMessage = $"Error due to other users having permission to modify the config file";
+            s_logger.Error(errorMessage);
+            throw new SecurityException(errorMessage);
         }
     }
 }

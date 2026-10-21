@@ -8,84 +8,83 @@ using Org.BouncyCastle.X509;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.Tools;
 
-namespace Snowflake.Data.Core.Revocation
+namespace Snowflake.Data.Core.Revocation;
+
+internal class CrlParser
 {
-    internal class CrlParser
+    private readonly TimeSpan _crlCacheValidityTime;
+    private readonly TimeSpan _crlCacheRemovalDelay;
+
+    public CrlParser(IEnvironmentFacade environmentFacade)
     {
-        private readonly TimeSpan _crlCacheValidityTime;
-        private readonly TimeSpan _crlCacheRemovalDelay;
+        var validityDays = environmentFacade.GetInt(EnvVars.CrlValidityTime);
+        _crlCacheValidityTime = TimeSpan.FromDays(validityDays);
 
-        public CrlParser(IEnvironmentFacade environmentFacade)
+        var cacheRemovalDelayDays = environmentFacade.GetInt(EnvVars.CrlCacheRemovalDelay);
+        _crlCacheRemovalDelay = TimeSpan.FromDays(cacheRemovalDelayDays);
+    }
+
+    internal CrlParser(TimeSpan crlCacheValidityTime, TimeSpan crlCacheRemovalDelay)
+    {
+        _crlCacheValidityTime = crlCacheValidityTime;
+        _crlCacheRemovalDelay = crlCacheRemovalDelay;
+    }
+
+    internal TimeSpan GetCacheValidityTime() => _crlCacheValidityTime;
+
+    internal TimeSpan GetCleanupInterval() => _crlCacheRemovalDelay;
+
+    public Crl Parse(byte[] bytes, DateTime now)
+    {
+        var crlParser = new X509CrlParser();
+        var parsedCrl = crlParser.ReadCrl(bytes);
+        if (parsedCrl == null)
+            return null;
+        var crl = Create(parsedCrl, now);
+        return crl;
+    }
+
+    public Crl Create(X509Crl crl, DateTime now)
+    {
+        var revokedCertificates = crl.GetRevokedCertificates()?.Select(cert => ConvertToHexadecimalString(cert.SerialNumber)) ?? [];
+        var revokedCertificatesSet = new HashSet<string>(revokedCertificates, StringComparer.OrdinalIgnoreCase);
+        return new Crl
         {
-            var validityDays = environmentFacade.GetInt(EnvVars.CrlValidityTime);
-            _crlCacheValidityTime = TimeSpan.FromDays(validityDays);
+            DownloadTime = now,
+            ThisUpdate = crl.ThisUpdate,
+            NextUpdate = crl.NextUpdate,
+            IssuerName = crl.IssuerDN.ToString(),
+            IssuerNameRawData = crl.IssuerDN.GetEncoded(),
+            IssuerDistributionPoints = ReadIdpFromCrl(crl),
+            RevokedCertificates = revokedCertificatesSet,
+            BouncyCastleCrl = crl
+        };
+    }
 
-            var cacheRemovalDelayDays = environmentFacade.GetInt(EnvVars.CrlCacheRemovalDelay);
-            _crlCacheRemovalDelay = TimeSpan.FromDays(cacheRemovalDelayDays);
-        }
+    private string[] ReadIdpFromCrl(X509Crl crl)
+    {
+        var idpExtension = crl.GetExtensionValue(X509Extensions.IssuingDistributionPoint);
+        if (idpExtension == null)
+            return Array.Empty<string>();
+        var idpAsAsnObject = Asn1Object.FromByteArray(idpExtension.GetOctets());
+        var idp = IssuingDistributionPoint.GetInstance(idpAsAsnObject);
+        var distributionPoints = (GeneralNames)idp.DistributionPoint?.Name;
+        if (distributionPoints == null)
+            return Array.Empty<string>();
+        var names = distributionPoints.GetNames().Select(n => n.Name.ToString()).ToArray();
+        return names;
+    }
 
-        internal CrlParser(TimeSpan crlCacheValidityTime, TimeSpan crlCacheRemovalDelay)
-        {
-            _crlCacheValidityTime = crlCacheValidityTime;
-            _crlCacheRemovalDelay = crlCacheRemovalDelay;
-        }
-
-        internal TimeSpan GetCacheValidityTime() => _crlCacheValidityTime;
-
-        internal TimeSpan GetCleanupInterval() => _crlCacheRemovalDelay;
-
-        public Crl Parse(byte[] bytes, DateTime now)
-        {
-            var crlParser = new X509CrlParser();
-            var parsedCrl = crlParser.ReadCrl(bytes);
-            if (parsedCrl == null)
-                return null;
-            var crl = Create(parsedCrl, now);
-            return crl;
-        }
-
-        public Crl Create(X509Crl crl, DateTime now)
-        {
-            var revokedCertificates = crl.GetRevokedCertificates()?.Select(cert => ConvertToHexadecimalString(cert.SerialNumber)) ?? [];
-            var revokedCertificatesSet = new HashSet<string>(revokedCertificates, StringComparer.OrdinalIgnoreCase);
-            return new Crl
-            {
-                DownloadTime = now,
-                ThisUpdate = crl.ThisUpdate,
-                NextUpdate = crl.NextUpdate,
-                IssuerName = crl.IssuerDN.ToString(),
-                IssuerNameRawData = crl.IssuerDN.GetEncoded(),
-                IssuerDistributionPoints = ReadIdpFromCrl(crl),
-                RevokedCertificates = revokedCertificatesSet,
-                BouncyCastleCrl = crl
-            };
-        }
-
-        private string[] ReadIdpFromCrl(X509Crl crl)
-        {
-            var idpExtension = crl.GetExtensionValue(X509Extensions.IssuingDistributionPoint);
-            if (idpExtension == null)
-                return Array.Empty<string>();
-            var idpAsAsnObject = Asn1Object.FromByteArray(idpExtension.GetOctets());
-            var idp = IssuingDistributionPoint.GetInstance(idpAsAsnObject);
-            var distributionPoints = (GeneralNames)idp.DistributionPoint?.Name;
-            if (distributionPoints == null)
-                return Array.Empty<string>();
-            var names = distributionPoints.GetNames().Select(n => n.Name.ToString()).ToArray();
-            return names;
-        }
-
-        internal string ConvertToHexadecimalString(BigInteger value)
-        {
-            var bytes = value.ToByteArray();
-            var hexString =
+    internal string ConvertToHexadecimalString(BigInteger value)
+    {
+        var bytes = value.ToByteArray();
+        var hexString =
 #if NET8_0_OR_GREATER
-                Convert.ToHexString(bytes)
+            Convert.ToHexString(bytes)
 #else
                 BitConverter.ToString(bytes).Replace("-", string.Empty)
 #endif
                 .ToUpper();
-            return hexString;
-        }
+        return hexString;
     }
 }

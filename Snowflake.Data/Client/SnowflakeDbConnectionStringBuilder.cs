@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Text;
 
-namespace Snowflake.Data.Client
+namespace Snowflake.Data.Client;
+
+public class SnowflakeDbConnectionStringBuilder : DbConnectionStringBuilder
 {
-    public class SnowflakeDbConnectionStringBuilder : DbConnectionStringBuilder
-    {
-    }
 }

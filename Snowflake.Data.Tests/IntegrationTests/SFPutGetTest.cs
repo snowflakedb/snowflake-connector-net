@@ -13,879 +13,878 @@ using TaskOrValueTask = System.Threading.Tasks.ValueTask;
 using TaskOrValueTask = System.Threading.Tasks.Task;
 #endif
 
-namespace Snowflake.Data.Tests.IntegrationTests
+namespace Snowflake.Data.Tests.IntegrationTests;
+
+using Xunit;
+using System;
+using System.Threading;
+using System.IO;
+using System.Linq;
+using Snowflake.Data.Client;
+using Snowflake.Data.Core;
+using Snowflake.Data.Core.FileTransfer;
+
+public sealed class SFPutGetTestFixture : IDisposable
 {
-    using Xunit;
-    using System;
-    using System.Threading;
-    using System.IO;
-    using System.Linq;
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Core;
-    using Snowflake.Data.Core.FileTransfer;
+    internal string OutputDirectory { get; }
 
-    public sealed class SFPutGetTestFixture : IDisposable
+    public SFPutGetTestFixture()
     {
-        internal string OutputDirectory { get; }
+        OutputDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(OutputDirectory);
+    }
 
-        public SFPutGetTestFixture()
-        {
-            OutputDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-            Directory.CreateDirectory(OutputDirectory);
-        }
+    public void Dispose()
+    {
+        Directory.Delete(OutputDirectory, true);
+    }
+}
 
-        public void Dispose()
+public class SFPutGetTest : SFBaseTestAsync, IClassFixture<SFPutGetTestFixture>, IDisposable
+{
+    private readonly SFBaseTestAsyncFixture _fixture;
+
+    public SFPutGetTest(SFBaseTestAsyncFixture fixture, SFPutGetTestFixture fixture2) : base(fixture)
+    {
+        _fixture = fixture;
+        s_outputDirectory = fixture2.OutputDirectory;
+        InitializeAsync().GetAwaiter().GetResult();
+    }
+
+    private const long NumberOfRows = 4;
+    private static readonly string[] s_colName = { "C1", "C2", "C3" };
+    private static readonly string[] s_colData = { "FIRST", "SECOND", "THIRD" };
+    private string s_outputDirectory;
+
+    private string t_schemaName;
+    private string t_tableName;
+    private string t_stageName;
+    private string t_stageNameSse; // server side encryption without client side encryption
+    private string t_fileName;
+    private string t_outputFileName;
+    private string t_inputFilePath;
+    private string t_outputFilePath;
+    private string t_internalStagePath;
+    private StageType t_stageType;
+    private string t_sourceCompressionType;
+    private string t_destCompressionType;
+    private bool t_autoCompress;
+    private List<string> t_filesToDelete;
+
+    public enum StageType
+    {
+        USER,
+        TABLE,
+        NAMED
+    }
+
+    public void Dispose()
+    {
+        DisposeAsync().GetAwaiter().GetResult();
+    }
+
+    [SFFact(RetriesCount = RetriesCount.Thrice)]
+    public async Task TestPutFileAsteriskWildcard()
+    {
+        var absolutePathPrefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
+        var files = new List<string> {
+            $"{absolutePathPrefix}_one.csv",
+            $"{absolutePathPrefix}_two.csv",
+            $"{absolutePathPrefix}_three.csv"
+        };
+        PrepareFileData(files);
+
+        // Set the PUT query variables
+        t_inputFilePath = $"{absolutePathPrefix}*";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
-            Directory.Delete(OutputDirectory, true);
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            PutFile(conn);
+            VerifyFilesAreUploaded(conn, files, t_internalStagePath);
         }
     }
 
-    public class SFPutGetTest : SFBaseTestAsync, IClassFixture<SFPutGetTestFixture>, IDisposable
+    [SFFact]
+    public async Task TestPutFileAsteriskWildcardWithExtension()
     {
-        private readonly SFBaseTestAsyncFixture _fixture;
+        var absolutePathPrefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
+        var files = new List<string> {
+            $"{absolutePathPrefix}_one.csv",
+            $"{absolutePathPrefix}_two.csv",
+            $"{absolutePathPrefix}_three.csv"
+        };
+        PrepareFileData(files);
+        // Create file with the same name structure but with a different extension
+        PrepareFileData($"{absolutePathPrefix}_four.txt");
 
-        public SFPutGetTest(SFBaseTestAsyncFixture fixture, SFPutGetTestFixture fixture2) : base(fixture)
+        // Set the PUT query variables
+        t_inputFilePath = $"{absolutePathPrefix}*.csv";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
-            _fixture = fixture;
-            s_outputDirectory = fixture2.OutputDirectory;
-            InitializeAsync().GetAwaiter().GetResult();
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            PutFile(conn);
+            VerifyFilesAreUploaded(conn, files, t_internalStagePath);
         }
+    }
 
-        private const long NumberOfRows = 4;
-        private static readonly string[] s_colName = { "C1", "C2", "C3" };
-        private static readonly string[] s_colData = { "FIRST", "SECOND", "THIRD" };
-        private string s_outputDirectory;
+    [SFFact(RetriesCount = RetriesCount.Thrice)]
+    public async Task TestPutFileQuestionMarkWildcard()
+    {
+        var absolutePathPrefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
+        var files = new List<string> {
+            $"{absolutePathPrefix}_1.csv",
+            $"{absolutePathPrefix}_2.csv",
+            $"{absolutePathPrefix}_3.csv"
+        };
+        PrepareFileData(files);
+        // Create file which should be omitted during the transfer
+        PrepareFileData($"{absolutePathPrefix}_four.csv");
 
-        private string t_schemaName;
-        private string t_tableName;
-        private string t_stageName;
-        private string t_stageNameSse; // server side encryption without client side encryption
-        private string t_fileName;
-        private string t_outputFileName;
-        private string t_inputFilePath;
-        private string t_outputFilePath;
-        private string t_internalStagePath;
-        private StageType t_stageType;
-        private string t_sourceCompressionType;
-        private string t_destCompressionType;
-        private bool t_autoCompress;
-        private List<string> t_filesToDelete;
+        // Set the PUT query variables
+        t_inputFilePath = $"{absolutePathPrefix}_?.csv";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
-        public enum StageType
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
-            USER,
-            TABLE,
-            NAMED
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            PutFile(conn);
+            VerifyFilesAreUploaded(conn, files, t_internalStagePath);
         }
+    }
 
-        public void Dispose()
+    [SFFact]
+    public async Task TestPutFileRelativePathWithoutDirectory()
+    {
+        // Set the PUT query variables
+        t_inputFilePath = $"{Guid.NewGuid()}_1.csv";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+        PrepareFileData(t_inputFilePath);
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
-            DisposeAsync().GetAwaiter().GetResult();
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            PutFile(conn);
+            VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
         }
+    }
 
-        [SFFact(RetriesCount = RetriesCount.Thrice)]
-        public async Task TestPutFileAsteriskWildcard()
+    [SFTheory]
+    [InlineData("GET")]
+    [InlineData("PUT")]
+    public async Task TestPutGetOnClosedConnectionThrowsWithoutQueryId(string command)
+    {
+        t_inputFilePath = "unexisting_file.csv";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+        // Act
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
-            var absolutePathPrefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
-            var files = new List<string> {
-                $"{absolutePathPrefix}_one.csv",
-                $"{absolutePathPrefix}_two.csv",
-                $"{absolutePathPrefix}_three.csv"
-            };
-            PrepareFileData(files);
+            // await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false); // intentionally closed
+            var snowflakeDbException = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await ProcessFileAsync(command, conn).ConfigureAwait(false)).ConfigureAwait(false);
+            Assert.NotNull(snowflakeDbException);
+            Assert.Null(snowflakeDbException.QueryId);
+            SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
+        }
+    }
 
-            // Set the PUT query variables
-            t_inputFilePath = $"{absolutePathPrefix}*";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+    [SFFact]
+    public async Task TestGetNonExistentFileReturnsFalseAndDoesNotThrow()
+    {
+        t_inputFilePath = "non_existent_file.csv";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
+        // Act
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
+        {
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            var sql = $"GET {t_internalStagePath}/{t_fileName} file://{s_outputDirectory}";
+            using (var command = conn.CreateCommand())
             {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                PutFile(conn);
-                VerifyFilesAreUploaded(conn, files, t_internalStagePath);
+                command.CommandText = sql;
+                var reader = command.ExecuteReader();
+                Assert.False(await reader.ReadAsync().ConfigureAwait(false));
             }
         }
+    }
 
-        [SFFact]
-        public async Task TestPutFileAsteriskWildcardWithExtension()
+    [SFFact]
+    public async Task TestPutNonExistentFileThrowsWithQueryId()
+    {
+        t_inputFilePath = "non_existent_file.csv";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+        // Act
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
-            var absolutePathPrefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
-            var files = new List<string> {
-                $"{absolutePathPrefix}_one.csv",
-                $"{absolutePathPrefix}_two.csv",
-                $"{absolutePathPrefix}_three.csv"
-            };
-            PrepareFileData(files);
-            // Create file with the same name structure but with a different extension
-            PrepareFileData($"{absolutePathPrefix}_four.txt");
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
+            Assert.NotNull(snowflakeDbException);
+            Assert.NotNull(snowflakeDbException.QueryId);
+            SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.IO_ERROR_ON_GETPUT_COMMAND);
+        }
+    }
 
-            // Set the PUT query variables
-            t_inputFilePath = $"{absolutePathPrefix}*.csv";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+    [SFFact]
+    public async Task TestPutFileProvidesQueryIdOnFailure()
+    {
+        // Arrange
+        // Set the PUT query variables but do not create a file
+        t_inputFilePath = "unexisting_file.csv";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                PutFile(conn);
-                VerifyFilesAreUploaded(conn, files, t_internalStagePath);
-            }
+        // Act
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
+        {
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
+            var queryId = snowflakeDbException.QueryId;
+
+            // Assert
+            Assert.NotEmpty(queryId);
+            Guid.Parse(queryId);
+            SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.IO_ERROR_ON_GETPUT_COMMAND);
+        }
+    }
+
+    [SFFact]
+    public async Task TestPutFileWithSyntaxErrorProvidesQueryIdOnFailure()
+    {
+        // Arrange
+        // Set the PUT query variables but do not create a file
+        t_inputFilePath = "unexisting_file.csv SOME CODE FORCING SYNTAX ERROR";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+        // Act
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
+        {
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
+            var queryId = snowflakeDbException.QueryId;
+
+            // Assert
+            Assert.NotEmpty(queryId);
+            Guid.Parse(queryId);
+            Assert.Equal(1003, snowflakeDbException.ErrorCode);
+            Assert.Null(snowflakeDbException.InnerException);
+        }
+    }
+
+    [SFFact]
+    public async Task TestPutFileProvidesQueryIdOnSuccess()
+    {
+        // Arrange
+        // Set the PUT query variables
+        t_inputFilePath = $"{Guid.NewGuid()}_1.csv";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+        PrepareFileData(t_inputFilePath);
+
+        // Act
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
+        {
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            var queryId = PutFile(conn);
+
+            // Assert
+            Assert.NotNull(queryId);
+            Guid.Parse(queryId);
+            VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
+        }
+    }
+
+    [SFFact]
+    public async Task TestPutFileRelativePathWithDirectory()
+    {
+        var guid = Guid.NewGuid();
+        var relativePath = $"{guid}";
+        Directory.CreateDirectory(relativePath);
+
+        // Set the PUT query variables
+        t_inputFilePath = $"{relativePath}{Path.DirectorySeparatorChar}{guid}_1.csv";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+        PrepareFileData(t_inputFilePath);
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
+        {
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            PutFile(conn);
+            VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
+        }
+    }
+
+    [SFFact]
+    public async Task TestPutFileRelativePathAsteriskWildcard()
+    {
+        var relativePath = $"{Guid.NewGuid()}";
+        var files = new List<string> {
+            $"{relativePath}_one.csv",
+            $"{relativePath}_two.csv",
+            $"{relativePath}_three.csv"
+        };
+        PrepareFileData(files);
+
+        // Set the PUT query variables
+        t_inputFilePath = $"{relativePath}*";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
+        {
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            PutFile(conn);
+            VerifyFilesAreUploaded(conn, files, t_internalStagePath);
+        }
+    }
+
+    [SFFact(SkipCondition.SkipOnCloudGCP)]
+    // presigned url is enabled on CI so we need to disable the test
+    // it should be enabled when downscoped credential is the default option
+    public async Task TestPutFileWithoutOverwriteFlagSkipsSecondUpload()
+    {
+        // Set the PUT query variables
+        t_inputFilePath = $"{Guid.NewGuid()}.csv";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+        PrepareFileData(t_inputFilePath);
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
+        {
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            PutFile(conn, expectedStatus: ResultStatus.UPLOADED);
+            VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
+            PutFile(conn, expectedStatus: ResultStatus.SKIPPED);
+        }
+    }
+
+    [SFFact]
+    public async Task TestPutFileWithOverwriteFlagRunsSecondUpload()
+    {
+        var overwriteAttribute = "OVERWRITE=TRUE";
+
+        // Set the PUT query variables
+        t_inputFilePath = $"{Guid.NewGuid()}.csv";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+        PrepareFileData(t_inputFilePath);
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
+        {
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            PutFile(conn, overwriteAttribute, expectedStatus: ResultStatus.UPLOADED);
+            VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
+            PutFile(conn, overwriteAttribute, expectedStatus: ResultStatus.UPLOADED);
+        }
+    }
+
+    [SFFact]
+    public async Task TestPutDirectoryAsteriskWildcard()
+    {
+        // Prepare the data files to be copied
+        var guid = Guid.NewGuid();
+        var path = $"{Path.GetTempPath()}{guid}";
+        var files = new List<string>();
+        for (var i = 0; i < 3; i++)
+        {
+            var filePath = $"{path}_{i}";
+            Directory.CreateDirectory(filePath);
+            var fullPath = $"{filePath}{Path.DirectorySeparatorChar}{guid}_{i}_file.csv";
+            PrepareFileData(fullPath);
+            files.Add(fullPath);
         }
 
-        [SFFact(RetriesCount = RetriesCount.Thrice)]
-        public async Task TestPutFileQuestionMarkWildcard()
+        // Set the PUT query variables
+        t_inputFilePath = $"{path}*{Path.DirectorySeparatorChar}*";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
-            var absolutePathPrefix = $"{Path.GetTempPath()}{Guid.NewGuid()}";
-            var files = new List<string> {
-                $"{absolutePathPrefix}_1.csv",
-                $"{absolutePathPrefix}_2.csv",
-                $"{absolutePathPrefix}_3.csv"
-            };
-            PrepareFileData(files);
-            // Create file which should be omitted during the transfer
-            PrepareFileData($"{absolutePathPrefix}_four.csv");
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            PutFile(conn);
+            VerifyFilesAreUploaded(conn, files, t_internalStagePath);
+        }
+    }
 
-            // Set the PUT query variables
-            t_inputFilePath = $"{absolutePathPrefix}_?.csv";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                PutFile(conn);
-                VerifyFilesAreUploaded(conn, files, t_internalStagePath);
-            }
+    [SFFact]
+    public async Task TestPutDirectoryQuestionMarkWildcard()
+    {
+        // Prepare the data files to be copied
+        var guid = Guid.NewGuid();
+        var path = $"{Path.GetTempPath()}{guid}";
+        var files = new List<string>();
+        for (var i = 0; i < 3; i++)
+        {
+            var filePath = $"{path}_{i}";
+            Directory.CreateDirectory(filePath);
+            var fullPath = $"{filePath}{Path.DirectorySeparatorChar}{guid}_{i}_file.csv";
+            PrepareFileData(fullPath);
+            files.Add(fullPath);
         }
 
-        [SFFact]
-        public async Task TestPutFileRelativePathWithoutDirectory()
+        // Set the PUT query variables
+        t_inputFilePath = $"{path}_?{Path.DirectorySeparatorChar}{guid}_?_file.csv";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
-            // Set the PUT query variables
-            t_inputFilePath = $"{Guid.NewGuid()}_1.csv";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            PutFile(conn);
+            VerifyFilesAreUploaded(conn, files, t_internalStagePath);
+        }
+    }
 
-            PrepareFileData(t_inputFilePath);
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                PutFile(conn);
-                VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
-            }
+    [SFFact]
+    public async Task TestPutDirectoryMixedWildcard()
+    {
+        // Prepare the data files to be copied
+        var guid = Guid.NewGuid();
+        var path = $"{Path.GetTempPath()}{guid}";
+        var files = new List<string>();
+        for (var i = 0; i < 3; i++)
+        {
+            var filePath = $"{path}_{i}";
+            Directory.CreateDirectory(filePath);
+            var fullPath = $"{filePath}{Path.DirectorySeparatorChar}{guid}_{i}_file.csv";
+            PrepareFileData(fullPath);
+            files.Add(fullPath);
         }
 
-        [SFTheory]
-        [InlineData("GET")]
-        [InlineData("PUT")]
-        public async Task TestPutGetOnClosedConnectionThrowsWithoutQueryId(string command)
-        {
-            t_inputFilePath = "unexisting_file.csv";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+        // Set the PUT query variables
+        t_inputFilePath = $"{path}_*{Path.DirectorySeparatorChar}{guid}_?_file.csv";
+        t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
 
-            // Act
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                // await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false); // intentionally closed
-                var snowflakeDbException = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await ProcessFileAsync(command, conn).ConfigureAwait(false)).ConfigureAwait(false);
-                Assert.NotNull(snowflakeDbException);
-                Assert.Null(snowflakeDbException.QueryId);
-                SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
-            }
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
+        {
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            PutFile(conn);
+            VerifyFilesAreUploaded(conn, files, t_internalStagePath);
         }
+    }
 
-        [SFFact]
-        public async Task TestGetNonExistentFileReturnsFalseAndDoesNotThrow()
+    [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(PutGetCommandTestCases))]
+    public async Task TestPutGetCommand(
+        string sourceFileCompressionType,
+        StageType stageType,
+        string stagePath,
+        bool autoCompress)
+    {
+        PrepareTest(sourceFileCompressionType, stageType, stagePath, autoCompress);
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
-            t_inputFilePath = "non_existent_file.csv";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
-
-            // Act
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                var sql = $"GET {t_internalStagePath}/{t_fileName} file://{s_outputDirectory}";
-                using (var command = conn.CreateCommand())
-                {
-                    command.CommandText = sql;
-                    var reader = command.ExecuteReader();
-                    Assert.False(await reader.ReadAsync().ConfigureAwait(false));
-                }
-            }
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            PutFile(conn);
+            await CopyIntoTableAsync(conn).ConfigureAwait(false);
+            await GetFileAsync(conn).ConfigureAwait(false);
         }
+    }
 
-        [SFFact]
-        public async Task TestPutNonExistentFileThrowsWithQueryId()
+    [SFTheory, MemberData(nameof(PutGetCommandForNamedStageWithoutClientSideEncryptionTestCases))]
+    public async Task TestPutGetCommandForNamedStageWithoutClientSideEncryption(
+        string sourceFileCompressionType,
+        string stagePath,
+        bool autoCompress)
+    {
+        PrepareTest(sourceFileCompressionType, StageType.NAMED, stagePath, autoCompress, false);
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
-            t_inputFilePath = "non_existent_file.csv";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
-
-            // Act
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
-                Assert.NotNull(snowflakeDbException);
-                Assert.NotNull(snowflakeDbException.QueryId);
-                SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.IO_ERROR_ON_GETPUT_COMMAND);
-            }
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            PutFile(conn);
+            await CopyIntoTableAsync(conn).ConfigureAwait(false);
+            await GetFileAsync(conn).ConfigureAwait(false);
         }
+    }
 
-        [SFFact]
-        public async Task TestPutFileProvidesQueryIdOnFailure()
+    // Test small file upload/download with GCS_USE_DOWNSCOPED_CREDENTIAL set to true
+    [SFTheory(SkipCondition.SkipOnCloudAWS | SkipCondition.SkipOnCloudAzure), MemberData(nameof(PutGetGcsDownscopedCredentialTestCases))]
+    public async Task TestPutGetGcsDownscopedCredential(
+        StageType stageType,
+        string stagePath)
+    {
+        PrepareTest(null, stageType, stagePath, false);
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString + ";GCS_USE_DOWNSCOPED_CREDENTIAL=true"))
         {
-            // Arrange
-            // Set the PUT query variables but do not create a file
-            t_inputFilePath = "unexisting_file.csv";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            // Act
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
-                var queryId = snowflakeDbException.QueryId;
-
-                // Assert
-                Assert.NotEmpty(queryId);
-                Guid.Parse(queryId);
-                SnowflakeDbExceptionAssert.HasErrorCode(snowflakeDbException, SFError.IO_ERROR_ON_GETPUT_COMMAND);
-            }
+            PutFile(conn);
+            await CopyIntoTableAsync(conn).ConfigureAwait(false);
+            await GetFileAsync(conn).ConfigureAwait(false);
         }
+    }
 
-        [SFFact]
-        public async Task TestPutFileWithSyntaxErrorProvidesQueryIdOnFailure()
+    [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(PutGetFileWithSpaceAndSingleQuoteTestCases))]
+    public async Task TestPutGetFileWithSpaceAndSingleQuote(
+        StageType stageType,
+        string stagePath)
+    {
+        PrepareTest(null, stageType, stagePath, false, true, true);
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
-            // Arrange
-            // Set the PUT query variables but do not create a file
-            t_inputFilePath = "unexisting_file.csv SOME CODE FORCING SYNTAX ERROR";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
-
-            // Act
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                var snowflakeDbException = Assert.Throws<SnowflakeDbException>(() => PutFile(conn));
-                var queryId = snowflakeDbException.QueryId;
-
-                // Assert
-                Assert.NotEmpty(queryId);
-                Guid.Parse(queryId);
-                Assert.Equal(1003, snowflakeDbException.ErrorCode);
-                Assert.Null(snowflakeDbException.InnerException);
-            }
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            PutFile(conn, "", ResultStatus.UPLOADED, true);
+            await CopyIntoTableAsync(conn, true).ConfigureAwait(false);
+            await GetFileAsync(conn, true).ConfigureAwait(false);
         }
+    }
 
-        [SFFact]
-        public async Task TestPutFileProvidesQueryIdOnSuccess()
-        {
-            // Arrange
-            // Set the PUT query variables
-            t_inputFilePath = $"{Guid.NewGuid()}_1.csv";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
-            PrepareFileData(t_inputFilePath);
-
-            // Act
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                var queryId = PutFile(conn);
-
-                // Assert
-                Assert.NotNull(queryId);
-                Guid.Parse(queryId);
-                VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
-            }
-        }
-
-        [SFFact]
-        public async Task TestPutFileRelativePathWithDirectory()
-        {
-            var guid = Guid.NewGuid();
-            var relativePath = $"{guid}";
-            Directory.CreateDirectory(relativePath);
-
-            // Set the PUT query variables
-            t_inputFilePath = $"{relativePath}{Path.DirectorySeparatorChar}{guid}_1.csv";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
-
-            PrepareFileData(t_inputFilePath);
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                PutFile(conn);
-                VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
-            }
-        }
-
-        [SFFact]
-        public async Task TestPutFileRelativePathAsteriskWildcard()
-        {
-            var relativePath = $"{Guid.NewGuid()}";
-            var files = new List<string> {
-                $"{relativePath}_one.csv",
-                $"{relativePath}_two.csv",
-                $"{relativePath}_three.csv"
-            };
-            PrepareFileData(files);
-
-            // Set the PUT query variables
-            t_inputFilePath = $"{relativePath}*";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                PutFile(conn);
-                VerifyFilesAreUploaded(conn, files, t_internalStagePath);
-            }
-        }
-
-        [SFFact(SkipCondition.SkipOnCloudGCP)]
-        // presigned url is enabled on CI so we need to disable the test
-        // it should be enabled when downscoped credential is the default option
-        public async Task TestPutFileWithoutOverwriteFlagSkipsSecondUpload()
-        {
-            // Set the PUT query variables
-            t_inputFilePath = $"{Guid.NewGuid()}.csv";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
-
-            PrepareFileData(t_inputFilePath);
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                PutFile(conn, expectedStatus: ResultStatus.UPLOADED);
-                VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
-                PutFile(conn, expectedStatus: ResultStatus.SKIPPED);
-            }
-        }
-
-        [SFFact]
-        public async Task TestPutFileWithOverwriteFlagRunsSecondUpload()
-        {
-            var overwriteAttribute = "OVERWRITE=TRUE";
-
-            // Set the PUT query variables
-            t_inputFilePath = $"{Guid.NewGuid()}.csv";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
-
-            PrepareFileData(t_inputFilePath);
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                PutFile(conn, overwriteAttribute, expectedStatus: ResultStatus.UPLOADED);
-                VerifyFilesAreUploaded(conn, new List<string> { t_inputFilePath }, t_internalStagePath);
-                PutFile(conn, overwriteAttribute, expectedStatus: ResultStatus.UPLOADED);
-            }
-        }
-
-        [SFFact]
-        public async Task TestPutDirectoryAsteriskWildcard()
-        {
-            // Prepare the data files to be copied
-            var guid = Guid.NewGuid();
-            var path = $"{Path.GetTempPath()}{guid}";
-            var files = new List<string>();
-            for (var i = 0; i < 3; i++)
-            {
-                var filePath = $"{path}_{i}";
-                Directory.CreateDirectory(filePath);
-                var fullPath = $"{filePath}{Path.DirectorySeparatorChar}{guid}_{i}_file.csv";
-                PrepareFileData(fullPath);
-                files.Add(fullPath);
-            }
-
-            // Set the PUT query variables
-            t_inputFilePath = $"{path}*{Path.DirectorySeparatorChar}*";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                PutFile(conn);
-                VerifyFilesAreUploaded(conn, files, t_internalStagePath);
-            }
-        }
-
-        [SFFact]
-        public async Task TestPutDirectoryQuestionMarkWildcard()
-        {
-            // Prepare the data files to be copied
-            var guid = Guid.NewGuid();
-            var path = $"{Path.GetTempPath()}{guid}";
-            var files = new List<string>();
-            for (var i = 0; i < 3; i++)
-            {
-                var filePath = $"{path}_{i}";
-                Directory.CreateDirectory(filePath);
-                var fullPath = $"{filePath}{Path.DirectorySeparatorChar}{guid}_{i}_file.csv";
-                PrepareFileData(fullPath);
-                files.Add(fullPath);
-            }
-
-            // Set the PUT query variables
-            t_inputFilePath = $"{path}_?{Path.DirectorySeparatorChar}{guid}_?_file.csv";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                PutFile(conn);
-                VerifyFilesAreUploaded(conn, files, t_internalStagePath);
-            }
-        }
-
-        [SFFact]
-        public async Task TestPutDirectoryMixedWildcard()
-        {
-            // Prepare the data files to be copied
-            var guid = Guid.NewGuid();
-            var path = $"{Path.GetTempPath()}{guid}";
-            var files = new List<string>();
-            for (var i = 0; i < 3; i++)
-            {
-                var filePath = $"{path}_{i}";
-                Directory.CreateDirectory(filePath);
-                var fullPath = $"{filePath}{Path.DirectorySeparatorChar}{guid}_{i}_file.csv";
-                PrepareFileData(fullPath);
-                files.Add(fullPath);
-            }
-
-            // Set the PUT query variables
-            t_inputFilePath = $"{path}_*{Path.DirectorySeparatorChar}{guid}_?_file.csv";
-            t_internalStagePath = $"@{t_schemaName}.{t_stageName}";
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                PutFile(conn);
-                VerifyFilesAreUploaded(conn, files, t_internalStagePath);
-            }
-        }
-
-        [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(PutGetCommandTestCases))]
-        public async Task TestPutGetCommand(
-            string sourceFileCompressionType,
-            StageType stageType,
-            string stagePath,
-            bool autoCompress)
-        {
-            PrepareTest(sourceFileCompressionType, stageType, stagePath, autoCompress);
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                PutFile(conn);
-                await CopyIntoTableAsync(conn).ConfigureAwait(false);
-                await GetFileAsync(conn).ConfigureAwait(false);
-            }
-        }
-
-        [SFTheory, MemberData(nameof(PutGetCommandForNamedStageWithoutClientSideEncryptionTestCases))]
-        public async Task TestPutGetCommandForNamedStageWithoutClientSideEncryption(
-            string sourceFileCompressionType,
-            string stagePath,
-            bool autoCompress)
-        {
-            PrepareTest(sourceFileCompressionType, StageType.NAMED, stagePath, autoCompress, false);
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                PutFile(conn);
-                await CopyIntoTableAsync(conn).ConfigureAwait(false);
-                await GetFileAsync(conn).ConfigureAwait(false);
-            }
-        }
-
-        // Test small file upload/download with GCS_USE_DOWNSCOPED_CREDENTIAL set to true
-        [SFTheory(SkipCondition.SkipOnCloudAWS | SkipCondition.SkipOnCloudAzure), MemberData(nameof(PutGetGcsDownscopedCredentialTestCases))]
-        public async Task TestPutGetGcsDownscopedCredential(
-            StageType stageType,
-            string stagePath)
-        {
-            PrepareTest(null, stageType, stagePath, false);
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString + ";GCS_USE_DOWNSCOPED_CREDENTIAL=true"))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-
-                PutFile(conn);
-                await CopyIntoTableAsync(conn).ConfigureAwait(false);
-                await GetFileAsync(conn).ConfigureAwait(false);
-            }
-        }
-
-        [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(PutGetFileWithSpaceAndSingleQuoteTestCases))]
-        public async Task TestPutGetFileWithSpaceAndSingleQuote(
-            StageType stageType,
-            string stagePath)
-        {
-            PrepareTest(null, stageType, stagePath, false, true, true);
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                PutFile(conn, "", ResultStatus.UPLOADED, true);
-                await CopyIntoTableAsync(conn, true).ConfigureAwait(false);
-                await GetFileAsync(conn, true).ConfigureAwait(false);
-            }
-        }
-
-        public static IEnumerable<object[]> PutGetCommandTestCases()
-        {
-            var compressionTypes = new[] { "none", "gzip", "bzip2", "brotli", "deflate", "raw_deflate", "zstd" };
-            var stageTypes = (StageType[])Enum.GetValues(typeof(StageType));
-            var stagePaths = new[] { "", "/TEST_PATH", "/DEEP/TEST_PATH" };
-            foreach (var compressionType in compressionTypes)
-                foreach (var stageType in stageTypes)
-                    foreach (var stagePath in stagePaths)
-                        foreach (var autoCompress in new[] { false, true })
-                            yield return new object[] { compressionType, stageType, stagePath, autoCompress };
-        }
-
-        public static IEnumerable<object[]> PutGetCommandForNamedStageWithoutClientSideEncryptionTestCases()
-        {
-            var compressionTypes = new[] { "none", "gzip" };
-            var stagePaths = new[] { "", "/DEEP/TEST_PATH" };
-            foreach (var compressionType in compressionTypes)
+    public static IEnumerable<object[]> PutGetCommandTestCases()
+    {
+        var compressionTypes = new[] { "none", "gzip", "bzip2", "brotli", "deflate", "raw_deflate", "zstd" };
+        var stageTypes = (StageType[])Enum.GetValues(typeof(StageType));
+        var stagePaths = new[] { "", "/TEST_PATH", "/DEEP/TEST_PATH" };
+        foreach (var compressionType in compressionTypes)
+            foreach (var stageType in stageTypes)
                 foreach (var stagePath in stagePaths)
                     foreach (var autoCompress in new[] { false, true })
-                        yield return new object[] { compressionType, stagePath, autoCompress };
-        }
+                        yield return new object[] { compressionType, stageType, stagePath, autoCompress };
+    }
 
-        public static IEnumerable<object[]> PutGetFileWithSpaceAndSingleQuoteTestCases()
+    public static IEnumerable<object[]> PutGetCommandForNamedStageWithoutClientSideEncryptionTestCases()
+    {
+        var compressionTypes = new[] { "none", "gzip" };
+        var stagePaths = new[] { "", "/DEEP/TEST_PATH" };
+        foreach (var compressionType in compressionTypes)
+            foreach (var stagePath in stagePaths)
+                foreach (var autoCompress in new[] { false, true })
+                    yield return new object[] { compressionType, stagePath, autoCompress };
+    }
+
+    public static IEnumerable<object[]> PutGetFileWithSpaceAndSingleQuoteTestCases()
+    {
+        var stageTypes = (StageType[])Enum.GetValues(typeof(StageType));
+        foreach (var stageType in stageTypes)
+            yield return new object[] { stageType, "/STAGE PATH WITH SPACE" };
+    }
+
+    public static IEnumerable<object[]> PutGetGcsDownscopedCredentialTestCases()
+    {
+        var stageTypes = (StageType[])Enum.GetValues(typeof(StageType));
+        var stagePaths = new[] { "", "/TEST_PATH" };
+        foreach (var stageType in stageTypes)
+            foreach (var stagePath in stagePaths)
+                yield return new object[] { stageType, stagePath };
+    }
+
+    private void PrepareTest(string sourceFileCompressionType, StageType stageType, string stagePath,
+        bool autoCompress, bool clientEncryption = true, bool makeFilePathWithSpace = false)
+    {
+        t_stageType = stageType;
+        t_sourceCompressionType = sourceFileCompressionType;
+        t_autoCompress = autoCompress;
+        // Prepare temp file name with specified file extension
+        t_fileName = Guid.NewGuid() + ".csv" +
+                     (t_autoCompress ? SFFileCompressionTypes.LookUpByName(t_sourceCompressionType).FileExtension : "");
+        var sourceFolderWithSpace = $"{Guid.NewGuid()} source file path with space";
+        var inputPathBase = makeFilePathWithSpace ?
+            Path.Combine(s_outputDirectory, sourceFolderWithSpace) :
+            Path.GetTempPath();
+        t_inputFilePath = Path.Combine(inputPathBase, t_fileName);
+
+        if (IsCompressedByTheDriver())
         {
-            var stageTypes = (StageType[])Enum.GetValues(typeof(StageType));
-            foreach (var stageType in stageTypes)
-                yield return new object[] { stageType, "/STAGE PATH WITH SPACE" };
+            t_destCompressionType = "gzip";
+            t_outputFileName = $"{t_fileName}.gz";
         }
-
-        public static IEnumerable<object[]> PutGetGcsDownscopedCredentialTestCases()
+        else
         {
-            var stageTypes = (StageType[])Enum.GetValues(typeof(StageType));
-            var stagePaths = new[] { "", "/TEST_PATH" };
-            foreach (var stageType in stageTypes)
-                foreach (var stagePath in stagePaths)
-                    yield return new object[] { stageType, stagePath };
+            t_destCompressionType = t_sourceCompressionType;
+            t_outputFileName = t_fileName;
         }
-
-        private void PrepareTest(string sourceFileCompressionType, StageType stageType, string stagePath,
-            bool autoCompress, bool clientEncryption = true, bool makeFilePathWithSpace = false)
+        var destinationFolderWithSpace = $"{Guid.NewGuid()} destination file path with space";
+        var outputPathBase = makeFilePathWithSpace ?
+            Path.Combine(s_outputDirectory, destinationFolderWithSpace) :
+            s_outputDirectory;
+        t_outputFilePath = Path.Combine(outputPathBase, t_outputFileName);
+        if (makeFilePathWithSpace)
         {
-            t_stageType = stageType;
-            t_sourceCompressionType = sourceFileCompressionType;
-            t_autoCompress = autoCompress;
-            // Prepare temp file name with specified file extension
-            t_fileName = Guid.NewGuid() + ".csv" +
-                        (t_autoCompress ? SFFileCompressionTypes.LookUpByName(t_sourceCompressionType).FileExtension : "");
-            var sourceFolderWithSpace = $"{Guid.NewGuid()} source file path with space";
-            var inputPathBase = makeFilePathWithSpace ?
-                Path.Combine(s_outputDirectory, sourceFolderWithSpace) :
-                Path.GetTempPath();
-            t_inputFilePath = Path.Combine(inputPathBase, t_fileName);
+            Directory.CreateDirectory(inputPathBase);
+            Directory.CreateDirectory(outputPathBase);
+        }
+        t_filesToDelete.Add(t_outputFilePath);
+        PrepareFileData(t_inputFilePath);
 
-            if (IsCompressedByTheDriver())
+        // Prepare stage name
+        switch (t_stageType)
+        {
+            case StageType.USER:
+                t_internalStagePath = $"@~{stagePath}";
+                break;
+            case StageType.TABLE:
+                t_internalStagePath = $"@{t_schemaName}.%{t_tableName}{stagePath}";
+                break;
+            case StageType.NAMED:
+                t_internalStagePath = clientEncryption
+                    ? $"@{t_schemaName}.{t_stageName}{stagePath}"
+                    : $"@{t_schemaName}.{t_stageNameSse}{stagePath}";
+                break;
+        }
+    }
+
+    private bool IsCompressedByTheDriver()
+    {
+        return t_sourceCompressionType == "none" && t_autoCompress;
+    }
+
+    // PUT - upload file from local directory to the stage
+    string PutFile(
+        SnowflakeDbConnection conn,
+        String additionalAttribute = "",
+        ResultStatus expectedStatus = ResultStatus.UPLOADED,
+        bool encloseInSingleQuotes = false)
+    {
+        string queryId;
+        using (var command = conn.CreateCommand())
+        {
+            // Prepare PUT query
+            var putQuery = encloseInSingleQuotes ?
+                $"PUT 'file://{t_inputFilePath.Replace("\\", "/")}' '{t_internalStagePath}'" :
+                $"PUT file://{t_inputFilePath} {t_internalStagePath}";
+            putQuery += $" AUTO_COMPRESS={(t_autoCompress ? "TRUE" : "FALSE")}" + $" {additionalAttribute}";
+            // Upload file
+            command.CommandText = putQuery;
+            var reader = command.ExecuteReader();
+            try
             {
-                t_destCompressionType = "gzip";
-                t_outputFileName = $"{t_fileName}.gz";
+                Assert.True(reader.Read());
+            }
+            catch (SnowflakeDbException e)
+            {
+                // to make sure in a failure case command was set properly with a failed QueryId
+                Assert.Equal(e.QueryId, ((SnowflakeDbCommand)command).GetQueryId());
+                throw;
+            }
+            // Checking query id when reader succeeded
+            queryId = ((SnowflakeDbDataReader)reader).GetQueryId();
+            // Checking if query Id is provided on the command level as well
+            Assert.Equal(queryId, ((SnowflakeDbCommand)command).GetQueryId());
+            // Check file status
+            Assert.Equal(expectedStatus.ToString(),
+                reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+            // Check source and destination compression type
+            if (t_autoCompress)
+            {
+                Assert.Equal(t_sourceCompressionType,
+                    reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
+                Assert.Equal(t_destCompressionType,
+                    reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
             }
             else
             {
-                t_destCompressionType = t_sourceCompressionType;
-                t_outputFileName = t_fileName;
+                Assert.Equal(SFFileCompressionTypes.NONE.Name,
+                    reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
+                Assert.Equal(SFFileCompressionTypes.NONE.Name,
+                    reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
             }
-            var destinationFolderWithSpace = $"{Guid.NewGuid()} destination file path with space";
-            var outputPathBase = makeFilePathWithSpace ?
-                Path.Combine(s_outputDirectory, destinationFolderWithSpace) :
-                s_outputDirectory;
-            t_outputFilePath = Path.Combine(outputPathBase, t_outputFileName);
-            if (makeFilePathWithSpace)
-            {
-                Directory.CreateDirectory(inputPathBase);
-                Directory.CreateDirectory(outputPathBase);
-            }
-            t_filesToDelete.Add(t_outputFilePath);
-            PrepareFileData(t_inputFilePath);
+            Assert.Null(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails));
+        }
+        return queryId;
+    }
 
-            // Prepare stage name
+    // COPY INTO - Copy data from the stage into temp table
+    private async Task CopyIntoTableAsync(SnowflakeDbConnection conn, bool encloseInSingleQuotes = false)
+    {
+        using (var command = conn.CreateCommand())
+        {
             switch (t_stageType)
             {
-                case StageType.USER:
-                    t_internalStagePath = $"@~{stagePath}";
-                    break;
                 case StageType.TABLE:
-                    t_internalStagePath = $"@{t_schemaName}.%{t_tableName}{stagePath}";
+                    command.CommandText = $"COPY INTO {t_schemaName}.{t_tableName}";
                     break;
-                case StageType.NAMED:
-                    t_internalStagePath = clientEncryption
-                        ? $"@{t_schemaName}.{t_stageName}{stagePath}"
-                        : $"@{t_schemaName}.{t_stageNameSse}{stagePath}";
+                default:
+                    command.CommandText = encloseInSingleQuotes ?
+                        $"COPY INTO {t_schemaName}.{t_tableName} FROM '{t_internalStagePath}/{t_fileName}'" :
+                        $"COPY INTO {t_schemaName}.{t_tableName} FROM {t_internalStagePath}/{t_fileName}";
                     break;
             }
-        }
 
-        private bool IsCompressedByTheDriver()
-        {
-            return t_sourceCompressionType == "none" && t_autoCompress;
-        }
+            await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-        // PUT - upload file from local directory to the stage
-        string PutFile(
-            SnowflakeDbConnection conn,
-            String additionalAttribute = "",
-            ResultStatus expectedStatus = ResultStatus.UPLOADED,
-            bool encloseInSingleQuotes = false)
-        {
-            string queryId;
-            using (var command = conn.CreateCommand())
+            // Check contents are correct
+            command.CommandText = $"SELECT * FROM {t_schemaName}.{t_tableName}";
+            var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (reader.Read())
             {
-                // Prepare PUT query
-                var putQuery = encloseInSingleQuotes ?
-                    $"PUT 'file://{t_inputFilePath.Replace("\\", "/")}' '{t_internalStagePath}'" :
-                    $"PUT file://{t_inputFilePath} {t_internalStagePath}";
-                putQuery += $" AUTO_COMPRESS={(t_autoCompress ? "TRUE" : "FALSE")}" + $" {additionalAttribute}";
-                // Upload file
-                command.CommandText = putQuery;
-                var reader = command.ExecuteReader();
-                try
+                for (var i = 0; i < s_colData.Length; i++)
                 {
-                    Assert.True(reader.Read());
+                    Assert.Equal(reader.GetString(i), s_colData[i]);
                 }
-                catch (SnowflakeDbException e)
-                {
-                    // to make sure in a failure case command was set properly with a failed QueryId
-                    Assert.Equal(e.QueryId, ((SnowflakeDbCommand)command).GetQueryId());
-                    throw;
-                }
-                // Checking query id when reader succeeded
-                queryId = ((SnowflakeDbDataReader)reader).GetQueryId();
-                // Checking if query Id is provided on the command level as well
-                Assert.Equal(queryId, ((SnowflakeDbCommand)command).GetQueryId());
-                // Check file status
-                Assert.Equal(expectedStatus.ToString(),
-                    reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
-                // Check source and destination compression type
-                if (t_autoCompress)
-                {
-                    Assert.Equal(t_sourceCompressionType,
-                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-                    Assert.Equal(t_destCompressionType,
-                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
-                }
-                else
-                {
-                    Assert.Equal(SFFileCompressionTypes.NONE.Name,
-                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType));
-                    Assert.Equal(SFFileCompressionTypes.NONE.Name,
-                        reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType));
-                }
-                Assert.Null(reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails));
             }
-            return queryId;
-        }
 
-        // COPY INTO - Copy data from the stage into temp table
-        private async Task CopyIntoTableAsync(SnowflakeDbConnection conn, bool encloseInSingleQuotes = false)
+            // Check row count is correct
+            command.CommandText = $"SELECT COUNT(*) FROM {t_schemaName}.{t_tableName}";
+            Assert.Equal(NumberOfRows, (long)await command.ExecuteScalarAsync().ConfigureAwait(false));
+        }
+    }
+
+    // GET - Download from the stage into local directory
+    private async Task GetFileAsync(DbConnection conn, bool encloseInSingleQuotes = false)
+    {
+        using (var command = conn.CreateCommand())
         {
+            // Prepare GET query
+            var getQuery = encloseInSingleQuotes ?
+                $"GET '{t_internalStagePath}/{t_fileName}' 'file://{Path.GetDirectoryName(t_outputFilePath).Replace("\\", "/")}'" :
+                $"GET {t_internalStagePath}/{t_fileName} file://{s_outputDirectory}";
+
+            // Download file
+            command.CommandText = getQuery;
+            var reader = command.ExecuteReader();
+            Assert.True(reader.Read());
+
+            // Check file status
+            Assert.Equal(ResultStatus.DOWNLOADED.ToString(),
+                reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+
+            // Check file contents
+            foreach (var line in ReadOutputFileLines())
+            {
+                if (string.IsNullOrEmpty(line)) continue;
+                var values = line.Split(',');
+
+                for (var i = 0; i < s_colData.Length; i++)
+                {
+                    Assert.Equal(s_colData[i], values[i]);
+                }
+            }
+        }
+    }
+
+    private async Task ProcessFileAsync(String command, SnowflakeDbConnection connection)
+    {
+        switch (command)
+        {
+            case "GET":
+                await GetFileAsync(connection).ConfigureAwait(false);
+                break;
+            case "PUT":
+                PutFile(connection);
+                break;
+        }
+    }
+
+    private string[] ReadOutputFileLines()
+    {
+        using (var outputStream = File.OpenRead(t_outputFilePath))
+        {
+            using (var processedOutputStream = IsCompressedByTheDriver() ? Unzip(outputStream) : outputStream)
+            {
+                return splitLines(processedOutputStream);
+            }
+        }
+    }
+
+    private static Stream Unzip(Stream stream)
+    {
+        using (var decompressingStream = new GZipStream(stream, CompressionMode.Decompress))
+        {
+            var decompressedStream = new MemoryStream();
+            decompressingStream.CopyTo(decompressedStream);
+            return decompressedStream;
+        }
+    }
+
+    private static string[] splitLines(Stream stream)
+    {
+        var bytes = new byte[stream.Length];
+        stream.Position = 0;
+        var readBytes = stream.Read(bytes, 0, (int)stream.Length);
+        Assert.Equal(stream.Length, readBytes);
+        return Encoding.UTF8.GetString(bytes).Split('\n');
+    }
+
+    private void PrepareFileData(string file)
+    {
+        // Prepare csv raw data and write to temp files
+        var rawDataRow = string.Join(",", s_colData) + "\n";
+        var rawData = string.Concat(Enumerable.Repeat(rawDataRow, (int)NumberOfRows));
+
+        using (var stream = FileOperations.Instance.Create(file))
+        using (var writer = new StreamWriter(stream))
+        {
+            writer.Write(rawData);
+        }
+        t_filesToDelete.Add(file);
+    }
+
+    private void PrepareFileData(List<string> files)
+    {
+        files.ForEach(PrepareFileData);
+    }
+
+    private static void VerifyFilesAreUploaded(DbConnection conn, ICollection<string> files, string stage)
+    {
+        // Verify that all files have been uploaded
+        using (var cmd = conn.CreateCommand())
+        {
+            var command = $"LIST {stage}";
+            cmd.CommandText = command;
+            var dbDataReader = cmd.ExecuteReader();
+            var dt = new DataTable();
+            dt.Load(dbDataReader);
+            Assert.Equal(files.Count, dt.Rows.Count);
+        }
+    }
+
+    private async TaskOrValueTask DisposeAsync()
+    {
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
+        {
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             using (var command = conn.CreateCommand())
             {
-                switch (t_stageType)
-                {
-                    case StageType.TABLE:
-                        command.CommandText = $"COPY INTO {t_schemaName}.{t_tableName}";
-                        break;
-                    default:
-                        command.CommandText = encloseInSingleQuotes ?
-                            $"COPY INTO {t_schemaName}.{t_tableName} FROM '{t_internalStagePath}/{t_fileName}'" :
-                            $"COPY INTO {t_schemaName}.{t_tableName} FROM {t_internalStagePath}/{t_fileName}";
-                        break;
-                }
-
+                // Drop temp stage
+                command.CommandText = $"DROP STAGE IF EXISTS {t_schemaName}.{t_stageName}";
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // Check contents are correct
-                command.CommandText = $"SELECT * FROM {t_schemaName}.{t_tableName}";
-                var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
-                while (reader.Read())
-                {
-                    for (var i = 0; i < s_colData.Length; i++)
-                    {
-                        Assert.Equal(reader.GetString(i), s_colData[i]);
-                    }
-                }
-
-                // Check row count is correct
-                command.CommandText = $"SELECT COUNT(*) FROM {t_schemaName}.{t_tableName}";
-                Assert.Equal(NumberOfRows, (long)await command.ExecuteScalarAsync().ConfigureAwait(false));
+                // Drop temp table
+                command.CommandText = $"DROP TABLE IF EXISTS {t_schemaName}.{t_tableName}";
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
             }
         }
 
-        // GET - Download from the stage into local directory
-        private async Task GetFileAsync(DbConnection conn, bool encloseInSingleQuotes = false)
+        // Delete temp files if necessary
+        if (t_filesToDelete != null)
         {
+            foreach (var file in t_filesToDelete)
+            {
+                File.Delete(file);
+            }
+        }
+    }
+
+    private async TaskOrValueTask InitializeAsync()
+    {
+        // Base object's names on on worker thread id
+        var suffix = Guid.NewGuid().ToString("N");
+
+        t_schemaName = _fixture.testConfig.schema;
+        t_tableName = $"TABLE_{suffix}";
+        t_stageName = $"STAGE_{suffix}";
+        t_stageNameSse = $"STAGE_{suffix}_SSE";
+        t_filesToDelete = new List<string>();
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
+        {
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             using (var command = conn.CreateCommand())
             {
-                // Prepare GET query
-                var getQuery = encloseInSingleQuotes ?
-                    $"GET '{t_internalStagePath}/{t_fileName}' 'file://{Path.GetDirectoryName(t_outputFilePath).Replace("\\", "/")}'" :
-                    $"GET {t_internalStagePath}/{t_fileName} file://{s_outputDirectory}";
+                // Create temp table
+                var columnNamesWithTypes = string.Join(",", s_colName.Select(col => col + " STRING"));
+                command.CommandText = $"CREATE OR REPLACE TABLE {t_schemaName}.{t_tableName} ({columnNamesWithTypes})";
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // Download file
-                command.CommandText = getQuery;
-                var reader = command.ExecuteReader();
-                Assert.True(reader.Read());
+                // Create temp stage
+                command.CommandText = $"CREATE OR REPLACE STAGE {t_schemaName}.{t_stageName}";
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // Check file status
-                Assert.Equal(ResultStatus.DOWNLOADED.ToString(),
-                    reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
-
-                // Check file contents
-                foreach (var line in ReadOutputFileLines())
-                {
-                    if (string.IsNullOrEmpty(line)) continue;
-                    var values = line.Split(',');
-
-                    for (var i = 0; i < s_colData.Length; i++)
-                    {
-                        Assert.Equal(s_colData[i], values[i]);
-                    }
-                }
-            }
-        }
-
-        private async Task ProcessFileAsync(String command, SnowflakeDbConnection connection)
-        {
-            switch (command)
-            {
-                case "GET":
-                    await GetFileAsync(connection).ConfigureAwait(false);
-                    break;
-                case "PUT":
-                    PutFile(connection);
-                    break;
-            }
-        }
-
-        private string[] ReadOutputFileLines()
-        {
-            using (var outputStream = File.OpenRead(t_outputFilePath))
-            {
-                using (var processedOutputStream = IsCompressedByTheDriver() ? Unzip(outputStream) : outputStream)
-                {
-                    return splitLines(processedOutputStream);
-                }
-            }
-        }
-
-        private static Stream Unzip(Stream stream)
-        {
-            using (var decompressingStream = new GZipStream(stream, CompressionMode.Decompress))
-            {
-                var decompressedStream = new MemoryStream();
-                decompressingStream.CopyTo(decompressedStream);
-                return decompressedStream;
-            }
-        }
-
-        private static string[] splitLines(Stream stream)
-        {
-            var bytes = new byte[stream.Length];
-            stream.Position = 0;
-            var readBytes = stream.Read(bytes, 0, (int)stream.Length);
-            Assert.Equal(stream.Length, readBytes);
-            return Encoding.UTF8.GetString(bytes).Split('\n');
-        }
-
-        private void PrepareFileData(string file)
-        {
-            // Prepare csv raw data and write to temp files
-            var rawDataRow = string.Join(",", s_colData) + "\n";
-            var rawData = string.Concat(Enumerable.Repeat(rawDataRow, (int)NumberOfRows));
-
-            using (var stream = FileOperations.Instance.Create(file))
-            using (var writer = new StreamWriter(stream))
-            {
-                writer.Write(rawData);
-            }
-            t_filesToDelete.Add(file);
-        }
-
-        private void PrepareFileData(List<string> files)
-        {
-            files.ForEach(PrepareFileData);
-        }
-
-        private static void VerifyFilesAreUploaded(DbConnection conn, ICollection<string> files, string stage)
-        {
-            // Verify that all files have been uploaded
-            using (var cmd = conn.CreateCommand())
-            {
-                var command = $"LIST {stage}";
-                cmd.CommandText = command;
-                var dbDataReader = cmd.ExecuteReader();
-                var dt = new DataTable();
-                dt.Load(dbDataReader);
-                Assert.Equal(files.Count, dt.Rows.Count);
-            }
-        }
-
-        private async TaskOrValueTask DisposeAsync()
-        {
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                using (var command = conn.CreateCommand())
-                {
-                    // Drop temp stage
-                    command.CommandText = $"DROP STAGE IF EXISTS {t_schemaName}.{t_stageName}";
-                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
-
-                    // Drop temp table
-                    command.CommandText = $"DROP TABLE IF EXISTS {t_schemaName}.{t_tableName}";
-                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
-                }
-            }
-
-            // Delete temp files if necessary
-            if (t_filesToDelete != null)
-            {
-                foreach (var file in t_filesToDelete)
-                {
-                    File.Delete(file);
-                }
-            }
-        }
-
-        private async TaskOrValueTask InitializeAsync()
-        {
-            // Base object's names on on worker thread id
-            var suffix = Guid.NewGuid().ToString("N");
-
-            t_schemaName = _fixture.testConfig.schema;
-            t_tableName = $"TABLE_{suffix}";
-            t_stageName = $"STAGE_{suffix}";
-            t_stageNameSse = $"STAGE_{suffix}_SSE";
-            t_filesToDelete = new List<string>();
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                using (var command = conn.CreateCommand())
-                {
-                    // Create temp table
-                    var columnNamesWithTypes = string.Join(",", s_colName.Select(col => col + " STRING"));
-                    command.CommandText = $"CREATE OR REPLACE TABLE {t_schemaName}.{t_tableName} ({columnNamesWithTypes})";
-                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
-
-                    // Create temp stage
-                    command.CommandText = $"CREATE OR REPLACE STAGE {t_schemaName}.{t_stageName}";
-                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
-
-                    // Create temp stage without client side encryption
-                    command.CommandText = $"CREATE OR REPLACE STAGE {t_schemaName}.{t_stageNameSse} ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE')";
-                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
-                }
+                // Create temp stage without client side encryption
+                command.CommandText = $"CREATE OR REPLACE STAGE {t_schemaName}.{t_stageNameSse} ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE')";
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
             }
         }
     }

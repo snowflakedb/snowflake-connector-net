@@ -2,43 +2,42 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 
-namespace Snowflake.Data.Core.Authenticator.Browser
+namespace Snowflake.Data.Core.Authenticator.Browser;
+
+internal class WebListenerStarter
 {
-    internal class WebListenerStarter
+    public static WebListenerStarter Instance = new WebListenerStarter();
+
+    public virtual HttpListener StartHttpListener(string url)
     {
-        public static WebListenerStarter Instance = new WebListenerStarter();
+        return StartHttpListener(new[] { url });
+    }
 
-        public virtual HttpListener StartHttpListener(string url)
+    public virtual HttpListener StartHttpListener(string[] urls)
+    {
+        var listener = new HttpListener();
+        try
         {
-            return StartHttpListener(new[] { url });
-        }
-
-        public virtual HttpListener StartHttpListener(string[] urls)
-        {
-            var listener = new HttpListener();
-            try
+            foreach (var url in urls)
             {
-                foreach (var url in urls)
-                {
-                    listener.Prefixes.Add(url);
-                }
-                listener.Start();
+                listener.Prefixes.Add(url);
             }
-            catch (Exception)
-            {
-                ((IDisposable)listener).Dispose();
-                throw;
-            }
-            return listener;
-        }
-
-        public virtual int GetRandomUnusedPort()
-        {
-            var listener = new TcpListener(IPAddress.Loopback, 0);
             listener.Start();
-            var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-            listener.Stop();
-            return port;
         }
+        catch (Exception)
+        {
+            ((IDisposable)listener).Dispose();
+            throw;
+        }
+        return listener;
+    }
+
+    public virtual int GetRandomUnusedPort()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        listener.Stop();
+        return port;
     }
 }

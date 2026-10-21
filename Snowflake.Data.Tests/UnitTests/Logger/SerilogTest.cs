@@ -3,36 +3,35 @@ using Xunit;
 using Serilog;
 using Serilog.Extensions.Logging;
 
-namespace Snowflake.Data.Tests.UnitTests.Logger
+namespace Snowflake.Data.Tests.UnitTests.Logger;
+
+[CollectionDefinition(nameof(SerilogTestCollection), DisableParallelization = true)]
+public sealed class SerilogTestCollection : ICollectionFixture<SerilogTestFixture> { }
+
+public sealed class SerilogTestFixture
+{ }
+
+[Collection(nameof(SerilogTestCollection))]
+public sealed class SerilogTest : LoggerTest, IClassFixture<SerilogTestFixture>
 {
-    [CollectionDefinition(nameof(SerilogTestCollection), DisableParallelization = true)]
-    public sealed class SerilogTestCollection : ICollectionFixture<SerilogTestFixture> { }
+    private const string SerilogFileName = "test_serilog.log";
+    private readonly Serilog.Core.Logger _serilogLogger;
 
-    public sealed class SerilogTestFixture
-    { }
-
-    [Collection(nameof(SerilogTestCollection))]
-    public sealed class SerilogTest : LoggerTest, IClassFixture<SerilogTestFixture>
+    public SerilogTest()
     {
-        private const string SerilogFileName = "test_serilog.log";
-        private readonly Serilog.Core.Logger _serilogLogger;
+        _logFile = SerilogFileName;
 
-        public SerilogTest()
-        {
-            _logFile = SerilogFileName;
+        _serilogLogger = new LoggerConfiguration()
+            .MinimumLevel.Verbose()
+            .WriteTo.File(SerilogFileName, flushToDiskInterval: TimeSpan.Zero)
+            .CreateLogger();
 
-            _serilogLogger = new LoggerConfiguration()
-                .MinimumLevel.Verbose()
-                .WriteTo.File(SerilogFileName, flushToDiskInterval: TimeSpan.Zero)
-                .CreateLogger();
+        _customLogger = new SerilogLoggerFactory(_serilogLogger).CreateLogger("SerilogTest");
+    }
 
-            _customLogger = new SerilogLoggerFactory(_serilogLogger).CreateLogger("SerilogTest");
-        }
-
-        public override void Dispose()
-        {
-            _serilogLogger.Dispose(); // Release the file handle before base.Dispose() deletes the file
-            base.Dispose();
-        }
+    public override void Dispose()
+    {
+        _serilogLogger.Dispose(); // Release the file handle before base.Dispose() deletes the file
+        base.Dispose();
     }
 }

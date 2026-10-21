@@ -1,8 +1,7 @@
-namespace Snowflake.Data.Core.Session
+namespace Snowflake.Data.Core.Session;
+
+internal enum ConnectionPoolType
 {
-    internal enum ConnectionPoolType
-    {
-        SingleConnectionCache,
-        MultipleConnectionPool
-    }
+    SingleConnectionCache,
+    MultipleConnectionPool
 }

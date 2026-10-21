@@ -1,9 +1,8 @@
 using System;
 
-namespace Snowflake.Data.Core.Authenticator.Browser
+namespace Snowflake.Data.Core.Authenticator.Browser;
+
+internal interface IWebBrowserRunner
 {
-    internal interface IWebBrowserRunner
-    {
-        void Run(Uri uri);
-    }
+    void Run(Uri uri);
 }

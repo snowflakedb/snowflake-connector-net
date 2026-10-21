@@ -1,13 +1,12 @@
-namespace Snowflake.Data.Core.Session
+namespace Snowflake.Data.Core.Session;
+
+internal interface ICounter
 {
-    internal interface ICounter
-    {
-        int Count();
+    int Count();
 
-        void Increase();
+    void Increase();
 
-        void Decrease();
+    void Decrease();
 
-        void Reset();
-    }
+    void Reset();
 }

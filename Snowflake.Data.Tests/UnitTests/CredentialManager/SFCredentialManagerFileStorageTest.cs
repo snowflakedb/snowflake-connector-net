@@ -7,103 +7,102 @@ using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 using Xunit;
 
-namespace Snowflake.Data.Tests.UnitTests.CredentialManager
+namespace Snowflake.Data.Tests.UnitTests.CredentialManager;
+
+public class SFCredentialManagerFileStorageTest
 {
-    public class SFCredentialManagerFileStorageTest
+    private const string SnowflakeCacheLocation = "/Users/snowflake/cache";
+    private const string CommonCacheLocation = "/Users/snowflake/.cache";
+    private const string HomeLocation = "/Users/snowflake";
+
+    [ThreadStatic]
+    private static Mock<IEnvironmentFacade> t_environmentOperations;
+
+    public SFCredentialManagerFileStorageTest()
     {
-        private const string SnowflakeCacheLocation = "/Users/snowflake/cache";
-        private const string CommonCacheLocation = "/Users/snowflake/.cache";
-        private const string HomeLocation = "/Users/snowflake";
+        t_environmentOperations = new Mock<IEnvironmentFacade>();
+    }
 
-        [ThreadStatic]
-        private static Mock<IEnvironmentFacade> t_environmentOperations;
+    [SFFact]
+    public void TestChooseLocationFromSnowflakeCacheEnvironmentVariable()
+    {
+        // arrange
+        MockSnowflakeCacheEnvironmentVariable();
+        MockCommonCacheEnvironmentVariable();
+        MockHomeLocation();
 
-        public SFCredentialManagerFileStorageTest()
-        {
-            t_environmentOperations = new Mock<IEnvironmentFacade>();
-        }
+        // act
+        var fileStorage = new SFCredentialManagerFileStorage(t_environmentOperations.Object);
 
-        [SFFact]
-        public void TestChooseLocationFromSnowflakeCacheEnvironmentVariable()
-        {
-            // arrange
-            MockSnowflakeCacheEnvironmentVariable();
-            MockCommonCacheEnvironmentVariable();
-            MockHomeLocation();
+        // assert
+        AssertFileStorageForLocation(SnowflakeCacheLocation, fileStorage);
+    }
 
-            // act
-            var fileStorage = new SFCredentialManagerFileStorage(t_environmentOperations.Object);
+    [SFFact]
+    public void TestChooseLocationFromCommonCacheEnvironmentVariable()
+    {
+        // arrange
+        MockCommonCacheEnvironmentVariable();
+        MockHomeLocation();
+        var expectedLocation = Path.Combine(CommonCacheLocation, SFCredentialManagerFileStorage.CredentialCacheDirName);
 
-            // assert
-            AssertFileStorageForLocation(SnowflakeCacheLocation, fileStorage);
-        }
+        // act
+        var fileStorage = new SFCredentialManagerFileStorage(t_environmentOperations.Object);
 
-        [SFFact]
-        public void TestChooseLocationFromCommonCacheEnvironmentVariable()
-        {
-            // arrange
-            MockCommonCacheEnvironmentVariable();
-            MockHomeLocation();
-            var expectedLocation = Path.Combine(CommonCacheLocation, SFCredentialManagerFileStorage.CredentialCacheDirName);
+        // assert
+        AssertFileStorageForLocation(expectedLocation, fileStorage);
+    }
 
-            // act
-            var fileStorage = new SFCredentialManagerFileStorage(t_environmentOperations.Object);
+    [SFFact]
+    public void TestChooseLocationFromHomeFolder()
+    {
+        // arrange
+        MockHomeLocation();
+        var expectedLocation = Path.Combine(HomeLocation, SFCredentialManagerFileStorage.CommonCacheDirectoryName, SFCredentialManagerFileStorage.CredentialCacheDirName);
 
-            // assert
-            AssertFileStorageForLocation(expectedLocation, fileStorage);
-        }
+        // act
+        var fileStorage = new SFCredentialManagerFileStorage(t_environmentOperations.Object);
 
-        [SFFact]
-        public void TestChooseLocationFromHomeFolder()
-        {
-            // arrange
-            MockHomeLocation();
-            var expectedLocation = Path.Combine(HomeLocation, SFCredentialManagerFileStorage.CommonCacheDirectoryName, SFCredentialManagerFileStorage.CredentialCacheDirName);
+        // assert
+        AssertFileStorageForLocation(expectedLocation, fileStorage);
+    }
 
-            // act
-            var fileStorage = new SFCredentialManagerFileStorage(t_environmentOperations.Object);
+    [SFFact]
+    public void TestFailWhenLocationCannotBeIdentified()
+    {
+        // act
+        var thrown = Assert.Throws<Exception>(() => new SFCredentialManagerFileStorage(t_environmentOperations.Object));
 
-            // assert
-            AssertFileStorageForLocation(expectedLocation, fileStorage);
-        }
+        // assert
+        Assert.Contains(thrown.Message, "Unable to identify credential cache directory");
+    }
 
-        [SFFact]
-        public void TestFailWhenLocationCannotBeIdentified()
-        {
-            // act
-            var thrown = Assert.Throws<Exception>(() => new SFCredentialManagerFileStorage(t_environmentOperations.Object));
+    private void AssertFileStorageForLocation(string directory, SFCredentialManagerFileStorage fileStorage)
+    {
+        Assert.NotNull(fileStorage);
+        Assert.Equal(directory, fileStorage.JsonCacheDirectory);
+        Assert.Equal(Path.Combine(directory, SFCredentialManagerFileStorage.CredentialCacheFileName), fileStorage.JsonCacheFilePath);
+        Assert.Equal(Path.Combine(directory, SFCredentialManagerFileStorage.CredentialCacheLockName), fileStorage.JsonCacheLockPath);
+    }
 
-            // assert
-            Assert.Contains(thrown.Message, "Unable to identify credential cache directory");
-        }
+    private void MockSnowflakeCacheEnvironmentVariable()
+    {
+        t_environmentOperations
+            .Setup(e => e.GetString(EnvVars.TemporaryCredentialDir))
+            .Returns(SnowflakeCacheLocation);
+    }
 
-        private void AssertFileStorageForLocation(string directory, SFCredentialManagerFileStorage fileStorage)
-        {
-            Assert.NotNull(fileStorage);
-            Assert.Equal(directory, fileStorage.JsonCacheDirectory);
-            Assert.Equal(Path.Combine(directory, SFCredentialManagerFileStorage.CredentialCacheFileName), fileStorage.JsonCacheFilePath);
-            Assert.Equal(Path.Combine(directory, SFCredentialManagerFileStorage.CredentialCacheLockName), fileStorage.JsonCacheLockPath);
-        }
+    private void MockCommonCacheEnvironmentVariable()
+    {
+        t_environmentOperations
+            .Setup(e => e.GetString(EnvVars.CommonCacheDirectory))
+            .Returns(CommonCacheLocation);
+    }
 
-        private void MockSnowflakeCacheEnvironmentVariable()
-        {
-            t_environmentOperations
-                .Setup(e => e.GetString(EnvVars.TemporaryCredentialDir))
-                .Returns(SnowflakeCacheLocation);
-        }
-
-        private void MockCommonCacheEnvironmentVariable()
-        {
-            t_environmentOperations
-                .Setup(e => e.GetString(EnvVars.CommonCacheDirectory))
-                .Returns(CommonCacheLocation);
-        }
-
-        private void MockHomeLocation()
-        {
-            t_environmentOperations
-                .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
-                .Returns(HomeLocation);
-        }
+    private void MockHomeLocation()
+    {
+        t_environmentOperations
+            .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))
+            .Returns(HomeLocation);
     }
 }

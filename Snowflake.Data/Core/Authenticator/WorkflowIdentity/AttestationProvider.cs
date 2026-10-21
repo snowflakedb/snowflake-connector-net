@@ -1,10 +1,9 @@
-namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity
+namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity;
+
+internal enum AttestationProvider
 {
-    internal enum AttestationProvider
-    {
-        AWS,
-        AZURE,
-        GCP,
-        OIDC
-    }
+    AWS,
+    AZURE,
+    GCP,
+    OIDC
 }

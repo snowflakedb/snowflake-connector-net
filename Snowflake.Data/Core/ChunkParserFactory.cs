@@ -3,31 +3,30 @@ using System.IO;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Log;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core;
+
+internal class ChunkParserFactory : IChunkParserFactory
 {
-    internal class ChunkParserFactory : IChunkParserFactory
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ChunkParserFactory>();
+    public static IChunkParserFactory Instance = new ChunkParserFactory();
+
+    public IChunkParser GetParser(ResultFormat resultFormat, Stream stream)
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ChunkParserFactory>();
-        public static IChunkParserFactory Instance = new ChunkParserFactory();
+        if (resultFormat == ResultFormat.ARROW)
+            return new ArrowChunkParser(stream);
 
-        public IChunkParser GetParser(ResultFormat resultFormat, Stream stream)
+        switch (SFConfiguration.Instance().GetChunkParserVersion())
         {
-            if (resultFormat == ResultFormat.ARROW)
-                return new ArrowChunkParser(stream);
-
-            switch (SFConfiguration.Instance().GetChunkParserVersion())
-            {
-                case 1:
-                    s_logger.Warn("V1 version of ChunkParser is deprecated. Using the V3 version.");
-                    return new ReusableChunkParser(stream);
-                case 2:
-                    s_logger.Warn("V2 version of ChunkParser is deprecated. Using the V3 version.");
-                    return new ReusableChunkParser(stream);
-                case 3:
-                    return new ReusableChunkParser(stream);
-                default:
-                    throw new Exception("Unsupported Chunk Parser version specified in the SFConfiguration");
-            }
+            case 1:
+                s_logger.Warn("V1 version of ChunkParser is deprecated. Using the V3 version.");
+                return new ReusableChunkParser(stream);
+            case 2:
+                s_logger.Warn("V2 version of ChunkParser is deprecated. Using the V3 version.");
+                return new ReusableChunkParser(stream);
+            case 3:
+                return new ReusableChunkParser(stream);
+            default:
+                throw new Exception("Unsupported Chunk Parser version specified in the SFConfiguration");
         }
     }
 }

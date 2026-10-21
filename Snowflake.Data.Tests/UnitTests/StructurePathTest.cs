@@ -2,96 +2,95 @@ using Xunit;
 using Snowflake.Data.Core.Converter;
 using Snowflake.Data.Tests.Util;
 
-namespace Snowflake.Data.Tests.UnitTests
+namespace Snowflake.Data.Tests.UnitTests;
+
+public class StructurePathTest
 {
-    public class StructurePathTest
+    [SFFact]
+    public void TestRootPath()
     {
-        [SFFact]
-        public void TestRootPath()
-        {
-            // act
-            var value = new StructurePath().ToString();
+        // act
+        var value = new StructurePath().ToString();
 
-            // assert
-            Assert.Equal("$", value);
-        }
+        // assert
+        Assert.Equal("$", value);
+    }
 
-        [SFFact]
-        public void TestAddPropertyIndex()
-        {
-            // arrange
-            var path = new StructurePath();
+    [SFFact]
+    public void TestAddPropertyIndex()
+    {
+        // arrange
+        var path = new StructurePath();
 
-            // act
-            var value = path.WithPropertyIndex(2);
+        // act
+        var value = path.WithPropertyIndex(2);
 
-            // assert
-            Assert.Equal("$[2]", value.ToString());
-        }
+        // assert
+        Assert.Equal("$[2]", value.ToString());
+    }
 
-        [SFFact]
-        public void TestAddPropertyIndexToComplexPath()
-        {
-            // arrange
-            var path = new StructurePath().WithPropertyIndex(2);
+    [SFFact]
+    public void TestAddPropertyIndexToComplexPath()
+    {
+        // arrange
+        var path = new StructurePath().WithPropertyIndex(2);
 
-            // act
-            var value = path.WithPropertyIndex(1);
+        // act
+        var value = path.WithPropertyIndex(1);
 
-            // assert
-            Assert.Equal("$[2][1]", value.ToString());
-        }
+        // assert
+        Assert.Equal("$[2][1]", value.ToString());
+    }
 
-        [SFFact]
-        public void TestAddArrayIndex()
-        {
-            // arrange
-            var path = new StructurePath();
+    [SFFact]
+    public void TestAddArrayIndex()
+    {
+        // arrange
+        var path = new StructurePath();
 
-            // act
-            var value = path.WithArrayIndex(2);
+        // act
+        var value = path.WithArrayIndex(2);
 
-            // assert
-            Assert.Equal("$[2]", value.ToString());
-        }
+        // assert
+        Assert.Equal("$[2]", value.ToString());
+    }
 
-        [SFFact]
-        public void TestAddArrayIndexToComplexPath()
-        {
-            // arrange
-            var path = new StructurePath().WithArrayIndex(2);
+    [SFFact]
+    public void TestAddArrayIndexToComplexPath()
+    {
+        // arrange
+        var path = new StructurePath().WithArrayIndex(2);
 
-            // act
-            var value = path.WithArrayIndex(1);
+        // act
+        var value = path.WithArrayIndex(1);
 
-            // assert
-            Assert.Equal("$[2][1]", value.ToString());
-        }
+        // assert
+        Assert.Equal("$[2][1]", value.ToString());
+    }
 
-        [SFFact]
-        public void TestAddMapIndex()
-        {
-            // arrange
-            var path = new StructurePath();
+    [SFFact]
+    public void TestAddMapIndex()
+    {
+        // arrange
+        var path = new StructurePath();
 
-            // act
-            var value = path.WithMapIndex(2);
+        // act
+        var value = path.WithMapIndex(2);
 
-            // assert
-            Assert.Equal("$[2]", value.ToString());
-        }
+        // assert
+        Assert.Equal("$[2]", value.ToString());
+    }
 
-        [SFFact]
-        public void TestAddMapIndexToComplexPath()
-        {
-            // arrange
-            var path = new StructurePath().WithMapIndex(2);
+    [SFFact]
+    public void TestAddMapIndexToComplexPath()
+    {
+        // arrange
+        var path = new StructurePath().WithMapIndex(2);
 
-            // act
-            var value = path.WithMapIndex(1);
+        // act
+        var value = path.WithMapIndex(1);
 
-            // assert
-            Assert.Equal("$[2][1]", value.ToString());
-        }
+        // assert
+        Assert.Equal("$[2][1]", value.ToString());
     }
 }

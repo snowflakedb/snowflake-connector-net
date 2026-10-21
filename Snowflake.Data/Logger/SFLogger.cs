@@ -1,32 +1,31 @@
 using System;
 
-namespace Snowflake.Data.Log
+namespace Snowflake.Data.Log;
+
+internal interface SFLogger
 {
-    internal interface SFLogger
-    {
-        bool IsTraceEnabled();
+    bool IsTraceEnabled();
 
-        bool IsDebugEnabled();
+    bool IsDebugEnabled();
 
-        bool IsInfoEnabled();
+    bool IsInfoEnabled();
 
-        bool IsWarnEnabled();
+    bool IsWarnEnabled();
 
-        bool IsErrorEnabled();
+    bool IsErrorEnabled();
 
-        void Trace(string msg, Exception ex = null);
+    void Trace(string msg, Exception ex = null);
 
-        void Debug(string msg, Exception ex = null);
+    void Debug(string msg, Exception ex = null);
 
-        void Info(string msg, Exception ex = null);
+    void Info(string msg, Exception ex = null);
 
-        void Warn(string msg, Exception ex = null);
+    void Warn(string msg, Exception ex = null);
 
-        void Error(string msg, Exception ex = null);
-    }
+    void Error(string msg, Exception ex = null);
+}
 
-    internal enum LoggingEvent
-    {
-        OFF, TRACE, DEBUG, INFO, WARN, ERROR
-    }
+internal enum LoggingEvent
+{
+    OFF, TRACE, DEBUG, INFO, WARN, ERROR
 }

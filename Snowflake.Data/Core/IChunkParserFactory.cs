@@ -1,9 +1,8 @@
 using System.IO;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core;
+
+internal interface IChunkParserFactory
 {
-    internal interface IChunkParserFactory
-    {
-        IChunkParser GetParser(ResultFormat resultFormat, Stream stream);
-    }
+    IChunkParser GetParser(ResultFormat resultFormat, Stream stream);
 }

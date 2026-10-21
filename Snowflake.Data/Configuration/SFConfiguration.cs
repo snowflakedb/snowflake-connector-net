@@ -1,33 +1,32 @@
 using System;
 
-namespace Snowflake.Data.Configuration
+namespace Snowflake.Data.Configuration;
+
+public class SFConfiguration
 {
-    public class SFConfiguration
+    public int ChunkDownloaderVersion;
+    public int ChunkParserVersion;
+
+    private SFConfiguration()
     {
-        public int ChunkDownloaderVersion;
-        public int ChunkParserVersion;
+        ChunkDownloaderVersion = 3;
+        ChunkParserVersion = 3;
+    }
 
-        private SFConfiguration()
-        {
-            ChunkDownloaderVersion = 3;
-            ChunkParserVersion = 3;
-        }
+    private readonly static SFConfiguration Config = new SFConfiguration();
 
-        private readonly static SFConfiguration Config = new SFConfiguration();
+    public static SFConfiguration Instance()
+    {
+        return Config;
+    }
 
-        public static SFConfiguration Instance()
-        {
-            return Config;
-        }
+    public int GetChunkParserVersion()
+    {
+        return ChunkParserVersion;
+    }
 
-        public int GetChunkParserVersion()
-        {
-            return ChunkParserVersion;
-        }
-
-        public int GetChunkDownloaderVersion()
-        {
-            return ChunkDownloaderVersion;
-        }
+    public int GetChunkDownloaderVersion()
+    {
+        return ChunkDownloaderVersion;
     }
 }

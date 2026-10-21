@@ -1,13 +1,12 @@
 using System;
 
-namespace Snowflake.Data.Core.Converter.Builder
+namespace Snowflake.Data.Core.Converter.Builder;
+
+internal interface IObjectBuilder
 {
-    internal interface IObjectBuilder
-    {
-        void BuildPart(object value);
+    void BuildPart(object value);
 
-        Type MoveNext(string sfPropertyName);
+    Type MoveNext(string sfPropertyName);
 
-        object Build();
-    }
+    object Build();
 }

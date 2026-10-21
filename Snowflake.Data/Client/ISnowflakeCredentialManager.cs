@@ -1,11 +1,10 @@
-namespace Snowflake.Data.Client
+namespace Snowflake.Data.Client;
+
+public interface ISnowflakeCredentialManager
 {
-    public interface ISnowflakeCredentialManager
-    {
-        string GetCredentials(string key);
+    string GetCredentials(string key);
 
-        void RemoveCredentials(string key);
+    void RemoveCredentials(string key);
 
-        void SaveCredentials(string key, string token);
-    }
+    void SaveCredentials(string key, string token);
 }

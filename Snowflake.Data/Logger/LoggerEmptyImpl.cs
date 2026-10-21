@@ -1,23 +1,22 @@
 using Microsoft.Extensions.Logging;
 using System;
 
-namespace Snowflake.Data.Log
+namespace Snowflake.Data.Log;
+
+class LoggerEmptyImpl : ILogger
 {
-    class LoggerEmptyImpl : ILogger
+    IDisposable ILogger.BeginScope<TState>(TState state)
     {
-        IDisposable ILogger.BeginScope<TState>(TState state)
-        {
-            throw new NotImplementedException();
-        }
+        throw new NotImplementedException();
+    }
 
-        bool ILogger.IsEnabled(LogLevel logLevel)
-        {
-            return false;
-        }
+    bool ILogger.IsEnabled(LogLevel logLevel)
+    {
+        return false;
+    }
 
-        void ILogger.Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
-        {
-            return;
-        }
+    void ILogger.Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+    {
+        return;
     }
 }

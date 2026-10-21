@@ -1,10 +1,9 @@
-namespace Snowflake.Data.Core.Revocation
+namespace Snowflake.Data.Core.Revocation;
+
+internal enum CertRevocationCheckMode
 {
-    internal enum CertRevocationCheckMode
-    {
-        Disabled,
-        Enabled,
-        Advisory,
-        Native
-    }
+    Disabled,
+    Enabled,
+    Advisory,
+    Native
 }

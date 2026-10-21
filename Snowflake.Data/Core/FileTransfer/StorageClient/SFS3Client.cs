@@ -15,161 +15,161 @@ using Amazon.Runtime.Internal;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Tools;
 
-namespace Snowflake.Data.Core.FileTransfer.StorageClient
+namespace Snowflake.Data.Core.FileTransfer.StorageClient;
+
+/// <summary>
+/// The S3 client used to transfer files to the remote S3 storage.
+/// </summary>
+class SFS3Client : ISFRemoteStorageClient
 {
     /// <summary>
-    /// The S3 client used to transfer files to the remote S3 storage.
+    /// The metadata of the S3 file.
     /// </summary>
-    class SFS3Client : ISFRemoteStorageClient
+    internal class S3Metadata
     {
-        /// <summary>
-        /// The metadata of the S3 file.
-        /// </summary>
-        internal class S3Metadata
-        {
-            public string HTTP_HEADER_CONTENT_TYPE { get; set; }
-            public string SFC_DIGEST { get; set; }
-            public string AMZ_IV { get; set; }
-            public string AMZ_KEY { get; set; }
-            public string AMZ_MATDESC { get; set; }
+        public string HTTP_HEADER_CONTENT_TYPE { get; set; }
+        public string SFC_DIGEST { get; set; }
+        public string AMZ_IV { get; set; }
+        public string AMZ_KEY { get; set; }
+        public string AMZ_MATDESC { get; set; }
 
+    }
+
+    /// <summary>
+    /// The metadata header keys.
+    /// </summary>
+    private const string AMZ_META_PREFIX = "x-amz-meta-";
+    internal const string AMZ_IV = "x-amz-iv";
+    internal const string AMZ_KEY = "x-amz-key";
+    internal const string AMZ_MATDESC = "x-amz-matdesc";
+    internal const string SFC_DIGEST = "sfc-digest";
+
+    /// <summary>
+    /// The status of the request.
+    /// </summary>
+    internal const string EXPIRED_TOKEN = "ExpiredToken";
+    internal const string NO_SUCH_KEY = "NoSuchKey";
+
+    /// <summary>
+    /// The application header type.
+    /// </summary>
+    private const string HTTP_HEADER_VALUE_OCTET_STREAM = "application/octet-stream";
+
+    /// <summary>
+    /// The attribute in the credential map containing the aws access key.
+    /// </summary>
+    private static readonly string AWS_KEY_ID = "AWS_KEY_ID";
+
+    /// <summary>
+    /// The attribute in the credential map containing the aws secret key id.
+    /// </summary>
+    private static readonly string AWS_SECRET_KEY = "AWS_SECRET_KEY";
+
+    /// <summary>
+    /// The attribute in the credential map containing the aws token.
+    /// </summary>
+    private static readonly string AWS_TOKEN = "AWS_TOKEN";
+
+    /// <summary>
+    /// The logger.
+    /// </summary>
+    private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFS3Client>();
+
+    /// <summary>
+    /// The underlying S3 client.
+    /// </summary>
+    private AmazonS3Client S3Client;
+
+    /// <summary>
+    /// S3 client without client-side encryption.
+    /// </summary>
+    /// <param name="stageInfo">The command stage info.</param>
+    public SFS3Client(
+        PutGetStageInfo stageInfo,
+        int maxRetry,
+        int parallel,
+        ProxyCredentials proxyCredentials,
+        SslProtocols tlsProtocols = SslProtocols.None,
+        bool tlsProtocolsExplicitlyRequested = false)
+    {
+        Logger.Debug("Setting up a new AWS client ");
+
+        // Get the key id and secret key from the response
+        stageInfo.stageCredentials.TryGetValue(AWS_KEY_ID, out var awsAccessKeyId);
+        stageInfo.stageCredentials.TryGetValue(AWS_SECRET_KEY, out var awsSecretAccessKey);
+
+        AmazonS3Config clientConfig;
+
+        if (proxyCredentials != null)
+        {
+            clientConfig = new AmazonS3Config()
+            {
+                ProxyHost = proxyCredentials.ProxyHost,
+                ProxyPort = proxyCredentials.ProxyPort,
+                ProxyCredentials = new NetworkCredential(proxyCredentials.ProxyUser, proxyCredentials.ProxyPassword)
+            };
+        }
+        else
+        {
+            clientConfig = new AmazonS3Config();
         }
 
-        /// <summary>
-        /// The metadata header keys.
-        /// </summary>
-        private const string AMZ_META_PREFIX = "x-amz-meta-";
-        internal const string AMZ_IV = "x-amz-iv";
-        internal const string AMZ_KEY = "x-amz-key";
-        internal const string AMZ_MATDESC = "x-amz-matdesc";
-        internal const string SFC_DIGEST = "sfc-digest";
+        SetCommonClientConfig(
+            clientConfig,
+            stageInfo.region,
+            stageInfo.endPoint,
+            maxRetry,
+            parallel);
 
-        /// <summary>
-        /// The status of the request.
-        /// </summary>
-        internal const string EXPIRED_TOKEN = "ExpiredToken";
-        internal const string NO_SUCH_KEY = "NoSuchKey";
+        ApplyTlsProtocols(clientConfig, tlsProtocols, proxyCredentials, tlsProtocolsExplicitlyRequested);
 
-        /// <summary>
-        /// The application header type.
-        /// </summary>
-        private const string HTTP_HEADER_VALUE_OCTET_STREAM = "application/octet-stream";
-
-        /// <summary>
-        /// The attribute in the credential map containing the aws access key.
-        /// </summary>
-        private static readonly string AWS_KEY_ID = "AWS_KEY_ID";
-
-        /// <summary>
-        /// The attribute in the credential map containing the aws secret key id.
-        /// </summary>
-        private static readonly string AWS_SECRET_KEY = "AWS_SECRET_KEY";
-
-        /// <summary>
-        /// The attribute in the credential map containing the aws token.
-        /// </summary>
-        private static readonly string AWS_TOKEN = "AWS_TOKEN";
-
-        /// <summary>
-        /// The logger.
-        /// </summary>
-        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFS3Client>();
-
-        /// <summary>
-        /// The underlying S3 client.
-        /// </summary>
-        private AmazonS3Client S3Client;
-
-        /// <summary>
-        /// S3 client without client-side encryption.
-        /// </summary>
-        /// <param name="stageInfo">The command stage info.</param>
-        public SFS3Client(
-            PutGetStageInfo stageInfo,
-            int maxRetry,
-            int parallel,
-            ProxyCredentials proxyCredentials,
-            SslProtocols tlsProtocols = SslProtocols.None,
-            bool tlsProtocolsExplicitlyRequested = false)
+        // Get the AWS token value and create the S3 client
+        if (stageInfo.stageCredentials.TryGetValue(AWS_TOKEN, out var awsSessionToken))
         {
-            Logger.Debug("Setting up a new AWS client ");
-
-            // Get the key id and secret key from the response
-            stageInfo.stageCredentials.TryGetValue(AWS_KEY_ID, out var awsAccessKeyId);
-            stageInfo.stageCredentials.TryGetValue(AWS_SECRET_KEY, out var awsSecretAccessKey);
-
-            AmazonS3Config clientConfig;
-
-            if (proxyCredentials != null)
-            {
-                clientConfig = new AmazonS3Config()
-                {
-                    ProxyHost = proxyCredentials.ProxyHost,
-                    ProxyPort = proxyCredentials.ProxyPort,
-                    ProxyCredentials = new NetworkCredential(proxyCredentials.ProxyUser, proxyCredentials.ProxyPassword)
-                };
-            }
-            else
-            {
-                clientConfig = new AmazonS3Config();
-            }
-
-            SetCommonClientConfig(
-                clientConfig,
-                stageInfo.region,
-                stageInfo.endPoint,
-                maxRetry,
-                parallel);
-
-            ApplyTlsProtocols(clientConfig, tlsProtocols, proxyCredentials, tlsProtocolsExplicitlyRequested);
-
-            // Get the AWS token value and create the S3 client
-            if (stageInfo.stageCredentials.TryGetValue(AWS_TOKEN, out var awsSessionToken))
-            {
-                S3Client = new AmazonS3Client(
-                    awsAccessKeyId,
-                    awsSecretAccessKey,
-                    awsSessionToken,
-                    clientConfig);
-            }
-            else
-            {
-                S3Client = new AmazonS3Client(awsAccessKeyId, awsSecretAccessKey, clientConfig);
-            }
+            S3Client = new AmazonS3Client(
+                awsAccessKeyId,
+                awsSecretAccessKey,
+                awsSessionToken,
+                clientConfig);
         }
-
-        internal SFS3Client(
-            PutGetStageInfo stageInfo,
-            int maxRetry,
-            int parallel,
-            ProxyCredentials proxyCredentials,
-            AmazonS3Client amazonS3ClientMock) : this(stageInfo, maxRetry, parallel, proxyCredentials)
+        else
         {
-            // Inject the mock S3Client
-            S3Client = amazonS3ClientMock;
+            S3Client = new AmazonS3Client(awsAccessKeyId, awsSecretAccessKey, clientConfig);
         }
+    }
 
-        /// <summary>
-        /// AmazonS3Config carries no TLS setting, so the requested protocols can only be applied by
-        /// supplying the HttpClient. The factory also reapplies the proxy, which the SDK stops
-        /// reading from the config once a factory is set.
-        ///
-        /// On .NET Framework the AWS SDK runs on its HttpWebRequest pipeline and exposes no
-        /// HttpClientFactory at all, so there is nothing to inject there. Rather than let the
-        /// transfer run on the protocols chosen by the OS, it is rejected - the same choice the
-        /// connection itself makes in HttpUtil.
-        /// </summary>
-        private static void ApplyTlsProtocols(AmazonS3Config clientConfig, SslProtocols tlsProtocols, ProxyCredentials proxyCredentials,
-            bool tlsProtocolsExplicitlyRequested)
+    internal SFS3Client(
+        PutGetStageInfo stageInfo,
+        int maxRetry,
+        int parallel,
+        ProxyCredentials proxyCredentials,
+        AmazonS3Client amazonS3ClientMock) : this(stageInfo, maxRetry, parallel, proxyCredentials)
+    {
+        // Inject the mock S3Client
+        S3Client = amazonS3ClientMock;
+    }
+
+    /// <summary>
+    /// AmazonS3Config carries no TLS setting, so the requested protocols can only be applied by
+    /// supplying the HttpClient. The factory also reapplies the proxy, which the SDK stops
+    /// reading from the config once a factory is set.
+    ///
+    /// On .NET Framework the AWS SDK runs on its HttpWebRequest pipeline and exposes no
+    /// HttpClientFactory at all, so there is nothing to inject there. Rather than let the
+    /// transfer run on the protocols chosen by the OS, it is rejected - the same choice the
+    /// connection itself makes in HttpUtil.
+    /// </summary>
+    private static void ApplyTlsProtocols(AmazonS3Config clientConfig, SslProtocols tlsProtocols, ProxyCredentials proxyCredentials,
+        bool tlsProtocolsExplicitlyRequested)
+    {
+        var cipherPolicy = TlsCipherPolicy.FromEnvironment();
+        // Nothing was asked for, so the SDK keeps its own transport untouched. Note that the
+        // effective protocols always carry the MINTLS/MAXTLS defaults and are therefore never
+        // SslProtocols.None - only the connection string can tell a request from a default.
+        if (!tlsProtocolsExplicitlyRequested && cipherPolicy == null)
         {
-            var cipherPolicy = TlsCipherPolicy.FromEnvironment();
-            // Nothing was asked for, so the SDK keeps its own transport untouched. Note that the
-            // effective protocols always carry the MINTLS/MAXTLS defaults and are therefore never
-            // SslProtocols.None - only the connection string can tell a request from a default.
-            if (!tlsProtocolsExplicitlyRequested && cipherPolicy == null)
-            {
-                return;
-            }
+            return;
+        }
 
 #if NETFRAMEWORK
             if (cipherPolicy != null)
@@ -179,479 +179,478 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             throw TlsProtocolsNotSupported(tlsProtocols, null);
 #else
-            try
-            {
-                SetTlsConfiguredHttpClientFactory(
-                    clientConfig,
-                    tlsProtocolsExplicitlyRequested ? tlsProtocols : SslProtocols.None,
-                    proxyCredentials);
-            }
-            // The netstandard2.0 build of this driver can also be loaded on .NET Framework, where
-            // NuGet resolves the AWS net472 assets which carry no HttpClientFactory. The type then
-            // fails to load, and the reference sits in its own method so that this is catchable.
-            catch (Exception exception) when (exception is TypeLoadException || exception is MissingMemberException)
-            {
-                if (cipherPolicy != null)
-                {
-                    throw cipherPolicy.Unsupported(
-                        "the AWS SDK transport available on this runtime does not expose per-connection TLS cipher configuration.",
-                        exception);
-                }
-                throw TlsProtocolsNotSupported(tlsProtocols, exception);
-            }
-#endif
+        try
+        {
+            SetTlsConfiguredHttpClientFactory(
+                clientConfig,
+                tlsProtocolsExplicitlyRequested ? tlsProtocols : SslProtocols.None,
+                proxyCredentials);
         }
+        // The netstandard2.0 build of this driver can also be loaded on .NET Framework, where
+        // NuGet resolves the AWS net472 assets which carry no HttpClientFactory. The type then
+        // fails to load, and the reference sits in its own method so that this is catchable.
+        catch (Exception exception) when (exception is TypeLoadException || exception is MissingMemberException)
+        {
+            if (cipherPolicy != null)
+            {
+                throw cipherPolicy.Unsupported(
+                    "the AWS SDK transport available on this runtime does not expose per-connection TLS cipher configuration.",
+                    exception);
+            }
+            throw TlsProtocolsNotSupported(tlsProtocols, exception);
+        }
+#endif
+    }
 
 #if !NETFRAMEWORK
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void SetTlsConfiguredHttpClientFactory(AmazonS3Config clientConfig, SslProtocols tlsProtocols,
-            ProxyCredentials proxyCredentials)
-        {
-            clientConfig.HttpClientFactory = new TlsConfiguredAwsHttpClientFactory(tlsProtocols, proxyCredentials);
-        }
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void SetTlsConfiguredHttpClientFactory(AmazonS3Config clientConfig, SslProtocols tlsProtocols,
+        ProxyCredentials proxyCredentials)
+    {
+        clientConfig.HttpClientFactory = new TlsConfiguredAwsHttpClientFactory(tlsProtocols, proxyCredentials);
+    }
 #endif
 
-        private static SnowflakeDbException TlsProtocolsNotSupported(SslProtocols tlsProtocols, Exception cause) =>
-            HttpUtil.TlsProtocolsNotSupported(tlsProtocols,
-                "the AWS SDK available on this runtime offers no configurable HTTP transport for stage transfers.", cause);
+    private static SnowflakeDbException TlsProtocolsNotSupported(SslProtocols tlsProtocols, Exception cause) =>
+        HttpUtil.TlsProtocolsNotSupported(tlsProtocols,
+            "the AWS SDK available on this runtime offers no configurable HTTP transport for stage transfers.", cause);
 
-        /// <summary>
-        /// Extract the bucket name and path from the stage location.
-        /// </summary>
-        /// <param name="stageLocation">The command stage location.</param>
-        /// <returns>The remote location of the S3 file.</returns>
-        public RemoteLocation ExtractBucketNameAndPath(string stageLocation)
+    /// <summary>
+    /// Extract the bucket name and path from the stage location.
+    /// </summary>
+    /// <param name="stageLocation">The command stage location.</param>
+    /// <returns>The remote location of the S3 file.</returns>
+    public RemoteLocation ExtractBucketNameAndPath(string stageLocation)
+    {
+        // Expand '~' and '~user' expressions
+        //if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        //{
+        //    stageLocation = Path.GetFullPath(stageLocation);
+        //}
+
+        var bucketName = stageLocation;
+        var s3path = "";
+
+        // Split stage location as bucket name and path
+        if (stageLocation.Contains("/"))
         {
-            // Expand '~' and '~user' expressions
-            //if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            //{
-            //    stageLocation = Path.GetFullPath(stageLocation);
-            //}
+            bucketName = stageLocation.Substring(0, stageLocation.IndexOf('/'));
 
-            var bucketName = stageLocation;
-            var s3path = "";
-
-            // Split stage location as bucket name and path
-            if (stageLocation.Contains("/"))
+            s3path = stageLocation.Substring(stageLocation.IndexOf('/') + 1,
+                stageLocation.Length - stageLocation.IndexOf('/') - 1);
+            if (s3path != null && !s3path.EndsWith("/"))
             {
-                bucketName = stageLocation.Substring(0, stageLocation.IndexOf('/'));
-
-                s3path = stageLocation.Substring(stageLocation.IndexOf('/') + 1,
-                    stageLocation.Length - stageLocation.IndexOf('/') - 1);
-                if (s3path != null && !s3path.EndsWith("/"))
-                {
-                    s3path += '/';
-                }
-            }
-
-            return new RemoteLocation()
-            {
-                bucket = bucketName,
-                key = s3path
-            };
-        }
-
-        /// <summary>
-        /// Get the file header.
-        /// </summary>
-        /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <returns>The file header of the S3 file.</returns>
-        public FileHeader GetFileHeader(SFFileMetadata fileMetadata)
-        {
-            var SFS3Client = (SFS3Client)fileMetadata.client;
-            var client = SFS3Client.S3Client;
-
-            var request = GetFileHeaderRequest(fileMetadata);
-
-            try
-            {
-                var taskAwaiter = client.GetObjectMetadataAsync(request).GetAwaiter();
-                var response = taskAwaiter.GetResult();
-                return HandleFileHeaderResponse(ref fileMetadata, response);
-            }
-            catch (Exception ex)
-            {
-                HandleFileHeaderErr(ex, fileMetadata);
-                return null;
+                s3path += '/';
             }
         }
 
-        /// <summary>
-        /// Get the file header.
-        /// </summary>
-        /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>The file header of the S3 file.</returns>
-        public async Task<FileHeader> GetFileHeaderAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+        return new RemoteLocation()
         {
-            var SFS3Client = (SFS3Client)fileMetadata.client;
-            var client = SFS3Client.S3Client;
+            bucket = bucketName,
+            key = s3path
+        };
+    }
 
-            var request = GetFileHeaderRequest(fileMetadata);
+    /// <summary>
+    /// Get the file header.
+    /// </summary>
+    /// <param name="fileMetadata">The S3 file metadata.</param>
+    /// <returns>The file header of the S3 file.</returns>
+    public FileHeader GetFileHeader(SFFileMetadata fileMetadata)
+    {
+        var SFS3Client = (SFS3Client)fileMetadata.client;
+        var client = SFS3Client.S3Client;
 
-            try
-            {
-                var response = await client.GetObjectMetadataAsync(request, cancellationToken).ConfigureAwait(false);
-                return HandleFileHeaderResponse(ref fileMetadata, response);
-            }
-            catch (Exception ex)
-            {
-                HandleFileHeaderErr(ex, fileMetadata); // S3 throws the AmazonS3Exception on async calls
-                return null;
-            }
+        var request = GetFileHeaderRequest(fileMetadata);
+
+        try
+        {
+            var taskAwaiter = client.GetObjectMetadataAsync(request).GetAwaiter();
+            var response = taskAwaiter.GetResult();
+            return HandleFileHeaderResponse(ref fileMetadata, response);
+        }
+        catch (Exception ex)
+        {
+            HandleFileHeaderErr(ex, fileMetadata);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Get the file header.
+    /// </summary>
+    /// <param name="fileMetadata">The S3 file metadata.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The file header of the S3 file.</returns>
+    public async Task<FileHeader> GetFileHeaderAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+    {
+        var SFS3Client = (SFS3Client)fileMetadata.client;
+        var client = SFS3Client.S3Client;
+
+        var request = GetFileHeaderRequest(fileMetadata);
+
+        try
+        {
+            var response = await client.GetObjectMetadataAsync(request, cancellationToken).ConfigureAwait(false);
+            return HandleFileHeaderResponse(ref fileMetadata, response);
+        }
+        catch (Exception ex)
+        {
+            HandleFileHeaderErr(ex, fileMetadata); // S3 throws the AmazonS3Exception on async calls
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Get the file header.
+    /// </summary>
+    /// <param name="client">The Amazon S3 client.</param>
+    /// <param name="fileMetadata">The S3 file metadata.</param>
+    /// <returns>The file header request.</returns>
+    private GetObjectMetadataRequest GetFileHeaderRequest(SFFileMetadata fileMetadata)
+    {
+        var stageInfo = fileMetadata.stageInfo;
+        var location = ExtractBucketNameAndPath(stageInfo.location);
+
+        // Create the S3 request object
+        var request = new GetObjectMetadataRequest
+        {
+            BucketName = location.bucket,
+            Key = $"{location.key}{fileMetadata.RemoteFileName()}"
+        };
+        return request;
+    }
+
+    /// <summary>
+    /// Get the file header.
+    /// </summary>
+    /// <param name="fileMetadata">The S3 file metadata.</param>
+    /// <param name="response">The Amazon S3 response.</param>
+    /// <returns>The file header of the S3 file.</returns>
+    internal FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, GetObjectMetadataResponse response)
+    {
+        // Update the result status of the file metadata
+        fileMetadata.resultStatus = nameof(ResultStatus.UPLOADED);
+
+        var encryptionMetadata = new SFEncryptionMetadata
+        {
+            iv = GetMetadataCaseInsensitive(response.Metadata, AMZ_IV),
+            key = GetMetadataCaseInsensitive(response.Metadata, AMZ_KEY),
+            matDesc = GetMetadataCaseInsensitive(response.Metadata, AMZ_MATDESC)
+        };
+
+        return new FileHeader
+        {
+            digest = GetMetadataCaseInsensitive(response.Metadata, SFC_DIGEST),
+            contentLength = response.ContentLength,
+            encryptionMetadata = encryptionMetadata
+        };
+    }
+
+    private string GetMetadataCaseInsensitive(MetadataCollection metadataCollection, string metadataKey)
+    {
+        var value = metadataCollection[metadataKey];
+        if (value != null)
+            return value;
+        if (string.IsNullOrEmpty(metadataKey))
+            return null;
+        var keysCaseInsensitive = metadataCollection.Keys
+            .Where(key => $"x-amz-meta-{metadataKey}".Equals(key, StringComparison.OrdinalIgnoreCase));
+        return keysCaseInsensitive.Any() ? metadataCollection[keysCaseInsensitive.First()] : null;
+    }
+
+    /// <summary>
+    /// Set the client configuration common to both client with and without client-side
+    /// encryption.
+    /// </summary>
+    /// <param name="clientConfig">The client config to update.</param>
+    /// <param name="region">The region if any.</param>
+    /// <param name="endpoint">The endpoint if any.</param>
+    internal static void SetCommonClientConfig(
+        AmazonS3Config clientConfig,
+        string region,
+        string endpoint,
+        int maxRetry,
+        int parallel)
+    {
+        // Always return a regional URL
+        clientConfig.USEast1RegionalEndpointValue = S3UsEast1RegionalEndpointValue.Regional;
+        if (!string.IsNullOrEmpty(region))
+        {
+            var regionEndpoint = RegionEndpoint.GetBySystemName(region);
+            clientConfig.RegionEndpoint = regionEndpoint;
         }
 
-        /// <summary>
-        /// Get the file header.
-        /// </summary>
-        /// <param name="client">The Amazon S3 client.</param>
-        /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <returns>The file header request.</returns>
-        private GetObjectMetadataRequest GetFileHeaderRequest(SFFileMetadata fileMetadata)
+        // If a specific endpoint is specified use this
+        if (!string.IsNullOrEmpty(endpoint))
         {
-            var stageInfo = fileMetadata.stageInfo;
-            var location = ExtractBucketNameAndPath(stageInfo.location);
-
-            // Create the S3 request object
-            var request = new GetObjectMetadataRequest
+            var start = endpoint.IndexOf('[');
+            var end = endpoint.IndexOf(']');
+            if (start > -1 && end > -1 && end > start)
             {
-                BucketName = location.bucket,
-                Key = $"{location.key}{fileMetadata.RemoteFileName()}"
-            };
-            return request;
+                endpoint = endpoint.Substring(start + 1, end - start - 1);
+            }
+
+            if (!endpoint.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                endpoint = "https://" + endpoint;
+            }
+
+            clientConfig.ServiceURL = endpoint;
+        }
+        // The region information used to determine the endpoint for the service.
+        // RegionEndpoint and ServiceURL are mutually exclusive properties.
+        // If both stageInfo.endPoint and stageInfo.region have a value, the endPoint takes precedence
+        else if (!string.IsNullOrEmpty(region))
+        {
+            var regionEndpoint = RegionEndpoint.GetBySystemName(region);
+            clientConfig.RegionEndpoint = regionEndpoint;
         }
 
-        /// <summary>
-        /// Get the file header.
-        /// </summary>
-        /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <param name="response">The Amazon S3 response.</param>
-        /// <returns>The file header of the S3 file.</returns>
-        internal FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, GetObjectMetadataResponse response)
+        // Unavailable for .net framework 4.6
+        //clientConfig.MaxConnectionsPerServer = parallel;
+        clientConfig.MaxErrorRetry = maxRetry;
+    }
+
+    /// <summary>
+    /// Upload the file to the S3 location.
+    /// </summary>
+    /// <param name="fileMetadata">The S3 file metadata.</param>
+    /// <param name="fileBytesStream">The file bytes to upload.</param>
+    /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
+    public void UploadFile(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
+    {
+        // Get the client
+        var sfS3Client = (SFS3Client)fileMetadata.client;
+        var client = sfS3Client.S3Client;
+        var putObjectRequest = GetPutObjectRequest(fileMetadata, fileBytesStream, encryptionMetadata);
+
+        try
         {
-            // Update the result status of the file metadata
-            fileMetadata.resultStatus = nameof(ResultStatus.UPLOADED);
-
-            var encryptionMetadata = new SFEncryptionMetadata
-            {
-                iv = GetMetadataCaseInsensitive(response.Metadata, AMZ_IV),
-                key = GetMetadataCaseInsensitive(response.Metadata, AMZ_KEY),
-                matDesc = GetMetadataCaseInsensitive(response.Metadata, AMZ_MATDESC)
-            };
-
-            return new FileHeader
-            {
-                digest = GetMetadataCaseInsensitive(response.Metadata, SFC_DIGEST),
-                contentLength = response.ContentLength,
-                encryptionMetadata = encryptionMetadata
-            };
+            _ = client.PutObjectAsync(putObjectRequest).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            HandleUploadFileErr(ex, fileMetadata);
+            return;
         }
 
-        private string GetMetadataCaseInsensitive(MetadataCollection metadataCollection, string metadataKey)
+        fileMetadata.destFileSize = fileMetadata.uploadSize;
+        fileMetadata.resultStatus = nameof(ResultStatus.UPLOADED);
+    }
+
+    /// <summary>
+    /// Upload the file to the S3 location.
+    /// </summary>
+    /// <param name="fileMetadata">The S3 file metadata.</param>
+    /// <param name="fileBytesStream">The file bytes to upload.</param>
+    /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
+    public async Task UploadFileAsync(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
+    {
+        // Get the client
+        var sfS3Client = (SFS3Client)fileMetadata.client;
+        var client = sfS3Client.S3Client;
+        var putObjectRequest = GetPutObjectRequest(fileMetadata, fileBytesStream, encryptionMetadata);
+
+        try
         {
-            var value = metadataCollection[metadataKey];
-            if (value != null)
-                return value;
-            if (string.IsNullOrEmpty(metadataKey))
-                return null;
-            var keysCaseInsensitive = metadataCollection.Keys
-                .Where(key => $"x-amz-meta-{metadataKey}".Equals(key, StringComparison.OrdinalIgnoreCase));
-            return keysCaseInsensitive.Any() ? metadataCollection[keysCaseInsensitive.First()] : null;
+            // Issue the POST/PUT request
+            await client.PutObjectAsync(putObjectRequest, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            HandleUploadFileErr(ex, fileMetadata);
+            return;
         }
 
-        /// <summary>
-        /// Set the client configuration common to both client with and without client-side
-        /// encryption.
-        /// </summary>
-        /// <param name="clientConfig">The client config to update.</param>
-        /// <param name="region">The region if any.</param>
-        /// <param name="endpoint">The endpoint if any.</param>
-        internal static void SetCommonClientConfig(
-            AmazonS3Config clientConfig,
-            string region,
-            string endpoint,
-            int maxRetry,
-            int parallel)
+        fileMetadata.destFileSize = fileMetadata.uploadSize;
+        fileMetadata.resultStatus = nameof(ResultStatus.UPLOADED);
+    }
+
+    /// <summary>
+    /// Upload the file to the S3 location.
+    /// </summary>
+    /// <param name="fileMetadata">The S3 file metadata.</param>
+    /// <param name="fileBytesStream">The file bytes to upload.</param>
+    /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
+    /// <returns>The Put Object request.</returns>
+    private PutObjectRequest GetPutObjectRequest(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
+    {
+        var stageInfo = fileMetadata.stageInfo;
+        var location = ExtractBucketNameAndPath(stageInfo.location);
+
+        // Create S3 PUT request
+        fileBytesStream.Position = 0;
+        var putObjectRequest = new PutObjectRequest
         {
-            // Always return a regional URL
-            clientConfig.USEast1RegionalEndpointValue = S3UsEast1RegionalEndpointValue.Regional;
-            if (!string.IsNullOrEmpty(region))
-            {
-                var regionEndpoint = RegionEndpoint.GetBySystemName(region);
-                clientConfig.RegionEndpoint = regionEndpoint;
-            }
+            BucketName = location.bucket,
+            Key = location.key + fileMetadata.destFileName,
+            InputStream = fileBytesStream,
+            ContentType = HTTP_HEADER_VALUE_OCTET_STREAM
+        };
 
-            // If a specific endpoint is specified use this
-            if (!string.IsNullOrEmpty(endpoint))
-            {
-                var start = endpoint.IndexOf('[');
-                var end = endpoint.IndexOf(']');
-                if (start > -1 && end > -1 && end > start)
-                {
-                    endpoint = endpoint.Substring(start + 1, end - start - 1);
-                }
-
-                if (!endpoint.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-                {
-                    endpoint = "https://" + endpoint;
-                }
-
-                clientConfig.ServiceURL = endpoint;
-            }
-            // The region information used to determine the endpoint for the service.
-            // RegionEndpoint and ServiceURL are mutually exclusive properties.
-            // If both stageInfo.endPoint and stageInfo.region have a value, the endPoint takes precedence
-            else if (!string.IsNullOrEmpty(region))
-            {
-                var regionEndpoint = RegionEndpoint.GetBySystemName(region);
-                clientConfig.RegionEndpoint = regionEndpoint;
-            }
-
-            // Unavailable for .net framework 4.6
-            //clientConfig.MaxConnectionsPerServer = parallel;
-            clientConfig.MaxErrorRetry = maxRetry;
+        if (stageInfo.isClientSideEncrypted)
+        {
+            // Populate the S3 Request Metadata
+            putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_IV, encryptionMetadata.iv);
+            putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_KEY, encryptionMetadata.key);
+            putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_MATDESC, encryptionMetadata.matDesc);
         }
 
-        /// <summary>
-        /// Upload the file to the S3 location.
-        /// </summary>
-        /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <param name="fileBytesStream">The file bytes to upload.</param>
-        /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public void UploadFile(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
+        return putObjectRequest;
+    }
+
+    /// <summary>
+    /// Download the file to the local location.
+    /// </summary>
+    /// <param name="fileMetadata">The S3 file metadata.</param>
+    /// <param name="fullDstPath">The local location to store downloaded file into.</param>
+    /// <param name="maxConcurrency">Number of max concurrency.</param>
+    public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
+    {
+        // Get the client
+        var sfS3Client = (SFS3Client)fileMetadata.client;
+        var client = sfS3Client.S3Client;
+        var getObjectRequest = GetGetObjectRequest(fileMetadata);
+
+        try
         {
-            // Get the client
-            var sfS3Client = (SFS3Client)fileMetadata.client;
-            var client = sfS3Client.S3Client;
-            var putObjectRequest = GetPutObjectRequest(fileMetadata, fileBytesStream, encryptionMetadata);
+            var taskAwaiter = client.GetObjectAsync(getObjectRequest).GetAwaiter();
 
-            try
-            {
-                _ = client.PutObjectAsync(putObjectRequest).GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                HandleUploadFileErr(ex, fileMetadata);
-                return;
-            }
-
-            fileMetadata.destFileSize = fileMetadata.uploadSize;
-            fileMetadata.resultStatus = nameof(ResultStatus.UPLOADED);
+            using var response = taskAwaiter.GetResult();
+            using var fileStream = FileOperations.Instance.Create(fullDstPath);
+            response.ResponseStream.CopyTo(fileStream);
+        }
+        catch (Exception ex)
+        {
+            HandleDownloadFileErr(ex, fileMetadata);
+            return;
         }
 
-        /// <summary>
-        /// Upload the file to the S3 location.
-        /// </summary>
-        /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <param name="fileBytesStream">The file bytes to upload.</param>
-        /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public async Task UploadFileAsync(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata, CancellationToken cancellationToken)
+        fileMetadata.resultStatus = nameof(ResultStatus.DOWNLOADED);
+    }
+
+    /// <summary>
+    /// Download the file to the local location.
+    /// </summary>
+    /// <param name="fileMetadata">The S3 file metadata.</param>
+    /// <param name="fullDstPath">The local location to store downloaded file into.</param>
+    /// <param name="maxConcurrency">Number of max concurrency.</param>
+    public async Task DownloadFileAsync(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency, CancellationToken cancellationToken)
+    {
+        // Get the client
+        var SFS3Client = (SFS3Client)fileMetadata.client;
+        var client = SFS3Client.S3Client;
+        var getObjectRequest = GetGetObjectRequest(fileMetadata);
+
+        try
         {
-            // Get the client
-            var sfS3Client = (SFS3Client)fileMetadata.client;
-            var client = sfS3Client.S3Client;
-            var putObjectRequest = GetPutObjectRequest(fileMetadata, fileBytesStream, encryptionMetadata);
-
-            try
-            {
-                // Issue the POST/PUT request
-                await client.PutObjectAsync(putObjectRequest, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                HandleUploadFileErr(ex, fileMetadata);
-                return;
-            }
-
-            fileMetadata.destFileSize = fileMetadata.uploadSize;
-            fileMetadata.resultStatus = nameof(ResultStatus.UPLOADED);
+            // Issue the GET request
+            using var response = await client.GetObjectAsync(getObjectRequest, cancellationToken).ConfigureAwait(false);
+            using var fileStream = FileOperations.Instance.Create(fullDstPath);
+            response.ResponseStream.CopyTo(fileStream);
+        }
+        catch (Exception ex)
+        {
+            HandleDownloadFileErr(ex, fileMetadata);
+            return;
         }
 
-        /// <summary>
-        /// Upload the file to the S3 location.
-        /// </summary>
-        /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <param name="fileBytesStream">The file bytes to upload.</param>
-        /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        /// <returns>The Put Object request.</returns>
-        private PutObjectRequest GetPutObjectRequest(SFFileMetadata fileMetadata, Stream fileBytesStream, SFEncryptionMetadata encryptionMetadata)
+        fileMetadata.resultStatus = nameof(ResultStatus.DOWNLOADED);
+    }
+
+    private GetObjectRequest GetGetObjectRequest(SFFileMetadata fileMetadata)
+    {
+        var stageInfo = fileMetadata.stageInfo;
+        var location = ExtractBucketNameAndPath(stageInfo.location);
+
+        // Create S3 GET request
+        return new GetObjectRequest
         {
-            var stageInfo = fileMetadata.stageInfo;
-            var location = ExtractBucketNameAndPath(stageInfo.location);
+            BucketName = location.bucket,
+            Key = $"{location.key}{fileMetadata.srcFileName}",
+        };
+    }
 
-            // Create S3 PUT request
-            fileBytesStream.Position = 0;
-            var putObjectRequest = new PutObjectRequest
-            {
-                BucketName = location.bucket,
-                Key = location.key + fileMetadata.destFileName,
-                InputStream = fileBytesStream,
-                ContentType = HTTP_HEADER_VALUE_OCTET_STREAM
-            };
+    /// <summary>
+    /// Handle file header error.
+    /// </summary>
+    /// <param name="ex">Exception from file header.</param>
+    /// <param name="fileMetadata">The file metadata.</param>
+    private static void HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
+    {
+        Logger.Error($"Failed to get file header: {ex.Message}");
 
-            if (stageInfo.isClientSideEncrypted)
-            {
-                // Populate the S3 Request Metadata
-                putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_IV, encryptionMetadata.iv);
-                putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_KEY, encryptionMetadata.key);
-                putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_MATDESC, encryptionMetadata.matDesc);
-            }
-
-            return putObjectRequest;
-        }
-
-        /// <summary>
-        /// Download the file to the local location.
-        /// </summary>
-        /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <param name="fullDstPath">The local location to store downloaded file into.</param>
-        /// <param name="maxConcurrency">Number of max concurrency.</param>
-        public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
+        fileMetadata.resultStatus = ex switch
         {
-            // Get the client
-            var sfS3Client = (SFS3Client)fileMetadata.client;
-            var client = sfS3Client.S3Client;
-            var getObjectRequest = GetGetObjectRequest(fileMetadata);
-
-            try
+            AmazonS3Exception exAws => exAws.ErrorCode switch
             {
-                var taskAwaiter = client.GetObjectAsync(getObjectRequest).GetAwaiter();
-
-                using var response = taskAwaiter.GetResult();
-                using var fileStream = FileOperations.Instance.Create(fullDstPath);
-                response.ResponseStream.CopyTo(fileStream);
-            }
-            catch (Exception ex)
-            {
-                HandleDownloadFileErr(ex, fileMetadata);
-                return;
-            }
-
-            fileMetadata.resultStatus = nameof(ResultStatus.DOWNLOADED);
-        }
-
-        /// <summary>
-        /// Download the file to the local location.
-        /// </summary>
-        /// <param name="fileMetadata">The S3 file metadata.</param>
-        /// <param name="fullDstPath">The local location to store downloaded file into.</param>
-        /// <param name="maxConcurrency">Number of max concurrency.</param>
-        public async Task DownloadFileAsync(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency, CancellationToken cancellationToken)
-        {
-            // Get the client
-            var SFS3Client = (SFS3Client)fileMetadata.client;
-            var client = SFS3Client.S3Client;
-            var getObjectRequest = GetGetObjectRequest(fileMetadata);
-
-            try
-            {
-                // Issue the GET request
-                using var response = await client.GetObjectAsync(getObjectRequest, cancellationToken).ConfigureAwait(false);
-                using var fileStream = FileOperations.Instance.Create(fullDstPath);
-                response.ResponseStream.CopyTo(fileStream);
-            }
-            catch (Exception ex)
-            {
-                HandleDownloadFileErr(ex, fileMetadata);
-                return;
-            }
-
-            fileMetadata.resultStatus = nameof(ResultStatus.DOWNLOADED);
-        }
-
-        private GetObjectRequest GetGetObjectRequest(SFFileMetadata fileMetadata)
-        {
-            var stageInfo = fileMetadata.stageInfo;
-            var location = ExtractBucketNameAndPath(stageInfo.location);
-
-            // Create S3 GET request
-            return new GetObjectRequest
-            {
-                BucketName = location.bucket,
-                Key = $"{location.key}{fileMetadata.srcFileName}",
-            };
-        }
-
-        /// <summary>
-        /// Handle file header error.
-        /// </summary>
-        /// <param name="ex">Exception from file header.</param>
-        /// <param name="fileMetadata">The file metadata.</param>
-        private static void HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
-        {
-            Logger.Error($"Failed to get file header: {ex.Message}");
-
-            fileMetadata.resultStatus = ex switch
-            {
-                AmazonS3Exception exAws => exAws.ErrorCode switch
-                {
-                    EXPIRED_TOKEN or nameof(HttpStatusCode.BadRequest) => nameof(ResultStatus.RENEW_TOKEN),
-                    NO_SUCH_KEY or nameof(HttpStatusCode.NotFound) => nameof(ResultStatus.NOT_FOUND_FILE),
-                    _ => nameof(ResultStatus.ERROR)
-                },
+                EXPIRED_TOKEN or nameof(HttpStatusCode.BadRequest) => nameof(ResultStatus.RENEW_TOKEN),
+                NO_SUCH_KEY or nameof(HttpStatusCode.NotFound) => nameof(ResultStatus.NOT_FOUND_FILE),
                 _ => nameof(ResultStatus.ERROR)
-            };
-        }
+            },
+            _ => nameof(ResultStatus.ERROR)
+        };
+    }
 
-        /// <summary>
-        /// Handle file upload error.
-        /// </summary>
-        /// <param name="ex">Exception from file header.</param>
-        /// <param name="fileMetadata">The file metadata.</param>
-        private static void HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
+    /// <summary>
+    /// Handle file upload error.
+    /// </summary>
+    /// <param name="ex">Exception from file header.</param>
+    /// <param name="fileMetadata">The file metadata.</param>
+    private static void HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
+    {
+        Logger.Error("Failed to upload file: " + ex.Message);
+
+        switch (ex)
         {
-            Logger.Error("Failed to upload file: " + ex.Message);
+            case AmazonS3Exception exAws:
+                if (exAws.ErrorCode == EXPIRED_TOKEN)
+                {
+                    fileMetadata.resultStatus = nameof(ResultStatus.RENEW_TOKEN);
+                }
+                else
+                {
+                    fileMetadata.lastError = exAws;
+                    fileMetadata.resultStatus = nameof(ResultStatus.NEED_RETRY);
+                }
+                break;
 
-            switch (ex)
-            {
-                case AmazonS3Exception exAws:
-                    if (exAws.ErrorCode == EXPIRED_TOKEN)
-                    {
+            case Exception exOther:
+                fileMetadata.lastError = exOther;
+                fileMetadata.resultStatus = nameof(ResultStatus.NEED_RETRY);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Handle file download error.
+    /// </summary>
+    /// <param name="ex">Exception from file header.</param>
+    /// <param name="fileMetadata">The file metadata.</param>
+    private static void HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
+    {
+        Logger.Error($"Failed to download file: {ex.Message}");
+
+        switch (ex)
+        {
+            case AmazonS3Exception exAws:
+                switch (exAws.ErrorCode)
+                {
+                    case EXPIRED_TOKEN:
                         fileMetadata.resultStatus = nameof(ResultStatus.RENEW_TOKEN);
-                    }
-                    else
-                    {
+                        break;
+                    default:
                         fileMetadata.lastError = exAws;
                         fileMetadata.resultStatus = nameof(ResultStatus.NEED_RETRY);
-                    }
-                    break;
+                        break;
+                }
+                break;
 
-                case Exception exOther:
-                    fileMetadata.lastError = exOther;
-                    fileMetadata.resultStatus = nameof(ResultStatus.NEED_RETRY);
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Handle file download error.
-        /// </summary>
-        /// <param name="ex">Exception from file header.</param>
-        /// <param name="fileMetadata">The file metadata.</param>
-        private static void HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
-        {
-            Logger.Error($"Failed to download file: {ex.Message}");
-
-            switch (ex)
-            {
-                case AmazonS3Exception exAws:
-                    switch (exAws.ErrorCode)
-                    {
-                        case EXPIRED_TOKEN:
-                            fileMetadata.resultStatus = nameof(ResultStatus.RENEW_TOKEN);
-                            break;
-                        default:
-                            fileMetadata.lastError = exAws;
-                            fileMetadata.resultStatus = nameof(ResultStatus.NEED_RETRY);
-                            break;
-                    }
-                    break;
-
-                case { } exOther:
-                    fileMetadata.lastError = exOther;
-                    fileMetadata.resultStatus = nameof(ResultStatus.NEED_RETRY);
-                    break;
-            }
+            case { } exOther:
+                fileMetadata.lastError = exOther;
+                fileMetadata.resultStatus = nameof(ResultStatus.NEED_RETRY);
+                break;
         }
     }
 }

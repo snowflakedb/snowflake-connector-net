@@ -3,54 +3,53 @@ using System.Collections.Concurrent;
 using System.Linq;
 using Snowflake.Data.Log;
 
-namespace Snowflake.Data.Core.Revocation
+namespace Snowflake.Data.Core.Revocation;
+
+internal class MemoryCrlCache : ICrlCache
 {
-    internal class MemoryCrlCache : ICrlCache
+    private readonly ConcurrentDictionary<string, Crl> _cache = new ConcurrentDictionary<string, Crl>();
+
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<MemoryCrlCache>();
+
+    private readonly TimeSpan _cacheValidityTime;
+
+    internal MemoryCrlCache(TimeSpan cacheValidityTime)
     {
-        private readonly ConcurrentDictionary<string, Crl> _cache = new ConcurrentDictionary<string, Crl>();
+        _cacheValidityTime = cacheValidityTime;
+    }
 
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<MemoryCrlCache>();
-
-        private readonly TimeSpan _cacheValidityTime;
-
-        internal MemoryCrlCache(TimeSpan cacheValidityTime)
+    public Crl Get(string crlUrl)
+    {
+        if (_cache.TryGetValue(crlUrl, out var crl))
         {
-            _cacheValidityTime = cacheValidityTime;
+            return crl;
+        }
+        return null;
+    }
+
+    public void Set(string crlUrl, Crl crl)
+    {
+        s_logger.Debug($"Updating in memory crl cache for crl url: {crlUrl}");
+        _cache.AddOrUpdate(crlUrl, crl, (key, oldValue) => crl);
+    }
+
+    public void Cleanup()
+    {
+        var now = DateTime.UtcNow;
+        var keysToRemove = _cache
+            .Where(entry => entry.Value.NeedsReplacement(now, _cacheValidityTime))
+            .Select(entry => entry.Key)
+            .ToList();
+
+        foreach (var key in keysToRemove)
+        {
+            _cache.TryRemove(key, out _);
+            s_logger.Debug($"Removing in-memory CRL cache entry for {key}");
         }
 
-        public Crl Get(string crlUrl)
+        if (keysToRemove.Count > 0)
         {
-            if (_cache.TryGetValue(crlUrl, out var crl))
-            {
-                return crl;
-            }
-            return null;
-        }
-
-        public void Set(string crlUrl, Crl crl)
-        {
-            s_logger.Debug($"Updating in memory crl cache for crl url: {crlUrl}");
-            _cache.AddOrUpdate(crlUrl, crl, (key, oldValue) => crl);
-        }
-
-        public void Cleanup()
-        {
-            var now = DateTime.UtcNow;
-            var keysToRemove = _cache
-                .Where(entry => entry.Value.NeedsReplacement(now, _cacheValidityTime))
-                .Select(entry => entry.Key)
-                .ToList();
-
-            foreach (var key in keysToRemove)
-            {
-                _cache.TryRemove(key, out _);
-                s_logger.Debug($"Removing in-memory CRL cache entry for {key}");
-            }
-
-            if (keysToRemove.Count > 0)
-            {
-                s_logger.Info($"Removed {keysToRemove.Count} expired/stale entries from in-memory CRL cache");
-            }
+            s_logger.Info($"Removed {keysToRemove.Count} expired/stale entries from in-memory CRL cache");
         }
     }
 }

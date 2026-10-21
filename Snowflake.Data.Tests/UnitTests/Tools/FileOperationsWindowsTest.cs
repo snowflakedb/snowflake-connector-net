@@ -6,83 +6,81 @@ using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 using static Snowflake.Data.Tests.UnitTests.Configuration.EasyLoggingConfigGenerator;
 
-namespace Snowflake.Data.Tests.UnitTests.Tools
+namespace Snowflake.Data.Tests.UnitTests.Tools;
+
+public class FileOperationsWindowsTest : IDisposable
 {
-    public class FileOperationsWindowsTest : IDisposable
+    public FileOperationsWindowsTest()
     {
-        public FileOperationsWindowsTest()
+        Before();
+    }
+
+    private static FileOperations s_fileOperations;
+    private static readonly string s_relativeWorkingDirectory = $"file_operations_test_{Path.GetRandomFileName()}";
+    private static readonly string s_workingDirectory = Path.Combine(TempUtil.GetTempPath(), s_relativeWorkingDirectory);
+    private static readonly string s_content = "random text";
+
+    private static void Before()
+    {
+        if (!Directory.Exists(s_workingDirectory))
         {
-            Before();
+            Directory.CreateDirectory(s_workingDirectory);
         }
 
-        private static FileOperations s_fileOperations;
-        private static readonly string s_relativeWorkingDirectory = $"file_operations_test_{Path.GetRandomFileName()}";
-        private static readonly string s_workingDirectory = Path.Combine(TempUtil.GetTempPath(), s_relativeWorkingDirectory);
-        private static readonly string s_content = "random text";
+        s_fileOperations = new FileOperations();
+    }
 
-        private static void Before()
-        {
-            if (!Directory.Exists(s_workingDirectory))
-            {
-                Directory.CreateDirectory(s_workingDirectory);
-            }
+    private static void After()
+    {
+        Directory.Delete(s_workingDirectory, true);
+    }
 
-            s_fileOperations = new FileOperations();
-        }
+    [SFFact(SkipCondition.RunOnlyOnWindows)]
+    public void TestReadAllTextOnWindows()
+    {
+        var filePath = CreateConfigTempFile(s_workingDirectory, s_content);
 
-        private static void After()
-        {
-            Directory.Delete(s_workingDirectory, true);
-        }
+        // act
+        var result = s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
 
-        [SFFact(SkipCondition.RunOnlyOnWindows)]
-        public void TestReadAllTextOnWindows()
-        {
-            var filePath = CreateConfigTempFile(s_workingDirectory, s_content);
+        // assert
+        Assert.Equal(s_content, result);
+    }
 
-            // act
-            var result = s_fileOperations.ReadAllText(filePath, TomlConnectionBuilder.ValidateFilePermissions);
+    [SFFact(SkipCondition.RunOnlyOnWindows)]
+    public void TestFileCopyOnWindows()
+    {
+        // arrange
+        var srcFilePath = Path.Combine(s_workingDirectory, "src_file");
+        var dstFilePath = Path.Combine(s_workingDirectory, "dst_file");
+        File.WriteAllText(srcFilePath, s_content);
 
-            // assert
-            Assert.Equal(s_content, result);
-        }
+        // act
+        s_fileOperations.CopyFile(srcFilePath, dstFilePath);
 
-        [SFFact(SkipCondition.RunOnlyOnWindows)]
-        public void TestFileCopyOnWindows()
-        {
-            // arrange
-            var srcFilePath = Path.Combine(s_workingDirectory, "src_file");
-            var dstFilePath = Path.Combine(s_workingDirectory, "dst_file");
-            File.WriteAllText(srcFilePath, s_content);
+        // assert
+        Assert.True(File.Exists(dstFilePath));
+        Assert.Equal(s_content, File.ReadAllText(dstFilePath));
+    }
 
-            // act
-            s_fileOperations.CopyFile(srcFilePath, dstFilePath);
+    [SFFact(SkipCondition.RunOnlyOnWindows)]
+    public void TestFileCopyOverwritesExistingDestination()
+    {
+        // arrange
+        var srcFilePath = Path.Combine(s_workingDirectory, "src_overwrite");
+        var dstFilePath = Path.Combine(s_workingDirectory, "dst_overwrite");
+        File.WriteAllText(srcFilePath, s_content);
+        File.WriteAllText(dstFilePath, "old content");
 
-            // assert
-            Assert.True(File.Exists(dstFilePath));
-            Assert.Equal(s_content, File.ReadAllText(dstFilePath));
-        }
+        // act
+        s_fileOperations.CopyFile(srcFilePath, dstFilePath);
 
-        [SFFact(SkipCondition.RunOnlyOnWindows)]
-        public void TestFileCopyOverwritesExistingDestination()
-        {
-            // arrange
-            var srcFilePath = Path.Combine(s_workingDirectory, "src_overwrite");
-            var dstFilePath = Path.Combine(s_workingDirectory, "dst_overwrite");
-            File.WriteAllText(srcFilePath, s_content);
-            File.WriteAllText(dstFilePath, "old content");
+        // assert
+        Assert.Equal(s_content, File.ReadAllText(dstFilePath));
+    }
 
-            // act
-            s_fileOperations.CopyFile(srcFilePath, dstFilePath);
-
-            // assert
-            Assert.Equal(s_content, File.ReadAllText(dstFilePath));
-        }
-
-        public void Dispose()
-        {
-            After();
-        }
+    public void Dispose()
+    {
+        After();
     }
 }
-

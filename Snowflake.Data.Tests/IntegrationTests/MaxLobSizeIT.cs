@@ -19,459 +19,458 @@ ValueTask;
 Task;
 #endif
 
-namespace Snowflake.Data.Tests.IntegrationTests
+namespace Snowflake.Data.Tests.IntegrationTests;
+
+public sealed class MaxLobSizeITTestFixture : SFBaseTestAsyncFixture
 {
-    public sealed class MaxLobSizeITTestFixture : SFBaseTestAsyncFixture
+    internal readonly string OutputDirectory;
+
+    public MaxLobSizeITTestFixture()
     {
-        internal readonly string OutputDirectory;
+        // Create temp output directory for downloaded files
+        OutputDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(OutputDirectory);
+    }
 
-        public MaxLobSizeITTestFixture()
-        {
-            // Create temp output directory for downloaded files
-            OutputDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-            Directory.CreateDirectory(OutputDirectory);
-        }
+    public override TaskOrValueTask DisposeAsync()
+    {
+        // Delete temp output directory and downloaded files
+        Directory.Delete(OutputDirectory, true);
+        return base.DisposeAsync();
+    }
+}
 
-        public override TaskOrValueTask DisposeAsync()
+public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSizeITTestFixture>
+{
+    private readonly SFBaseTestAsyncFixture _fixture;
+
+    private ResultFormat _resultFormat;
+    private readonly string _outputDirectory;
+
+    //private const int MaxLobSize = (128 * 1024 * 1024); // new max LOB size
+    private const int MaxLobSize = (16 * 1024 * 1024); // current max LOB size
+    private const int MediumSize = (MaxLobSize / 4);
+    private const int OriginSize = (MediumSize / 2);
+    private const int LobRandomRange = 100000 + 1; // range to use for generating random numbers (0 - 100000)
+
+    private static readonly string[] s_colName = { "C1", "C2", "C3" };
+    private static AsyncLocal<string> t_tableName = new();
+    private static AsyncLocal<string> t_insertQuery = new();
+    private static AsyncLocal<string> t_positionalBindingInsertQuery = new();
+    private static AsyncLocal<string> t_namedBindingInsertQuery = new();
+    private static AsyncLocal<string> t_selectQuery = new();
+    private static AsyncLocal<string> t_fileName = new();
+    private static AsyncLocal<string> t_inputFilePath = new();
+    private static AsyncLocal<string> t_outputFilePath = new();
+    private static AsyncLocal<List<string>> t_filesToDelete = new();
+    private static AsyncLocal<string[]> t_colData = new();
+
+    public MaxLobSizeIT(MaxLobSizeITTestFixture maxLobeFixture) : base(maxLobeFixture)
+    {
+        _fixture = maxLobeFixture;
+        _outputDirectory = maxLobeFixture.OutputDirectory;
+        var threadSuffix = Guid.NewGuid().ToString("N");
+
+        t_tableName.Value = $"LOB_TABLE_{threadSuffix}";
+        var tableNameWithColumns = $"{t_tableName.Value}({string.Join(", ", s_colName.Select(col => col))})";
+        t_insertQuery.Value = $"INSERT INTO {tableNameWithColumns} VALUES ";
+        t_positionalBindingInsertQuery.Value = $"INSERT INTO {tableNameWithColumns} VALUES (?, ?, ?)";
+        t_namedBindingInsertQuery.Value = $"INSERT INTO {tableNameWithColumns} VALUES (:1, :2, :3)";
+        t_selectQuery.Value = $"SELECT * FROM {t_tableName.Value}";
+        t_filesToDelete.Value = new List<string>();
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
-            // Delete temp output directory and downloaded files
-            Directory.Delete(OutputDirectory, true);
-            return base.DisposeAsync();
+            conn.Open();
+            using (var command = conn.CreateCommand())
+            {
+                // Create temp table
+                var columnNamesWithTypes = $"{s_colName[0]} VARCHAR({MaxLobSize}), {s_colName[1]} VARCHAR({MaxLobSize}), {s_colName[2]} INT";
+                command.CommandText = $"CREATE OR REPLACE TABLE {t_tableName.Value} ({columnNamesWithTypes})";
+                command.ExecuteNonQuery();
+            }
         }
     }
 
-    public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSizeITTestFixture>
+    public void Dispose()
     {
-        private readonly SFBaseTestAsyncFixture _fixture;
-
-        private ResultFormat _resultFormat;
-        private readonly string _outputDirectory;
-
-        //private const int MaxLobSize = (128 * 1024 * 1024); // new max LOB size
-        private const int MaxLobSize = (16 * 1024 * 1024); // current max LOB size
-        private const int MediumSize = (MaxLobSize / 4);
-        private const int OriginSize = (MediumSize / 2);
-        private const int LobRandomRange = 100000 + 1; // range to use for generating random numbers (0 - 100000)
-
-        private static readonly string[] s_colName = { "C1", "C2", "C3" };
-        private static AsyncLocal<string> t_tableName = new();
-        private static AsyncLocal<string> t_insertQuery = new();
-        private static AsyncLocal<string> t_positionalBindingInsertQuery = new();
-        private static AsyncLocal<string> t_namedBindingInsertQuery = new();
-        private static AsyncLocal<string> t_selectQuery = new();
-        private static AsyncLocal<string> t_fileName = new();
-        private static AsyncLocal<string> t_inputFilePath = new();
-        private static AsyncLocal<string> t_outputFilePath = new();
-        private static AsyncLocal<List<string>> t_filesToDelete = new();
-        private static AsyncLocal<string[]> t_colData = new();
-
-        public MaxLobSizeIT(MaxLobSizeITTestFixture maxLobeFixture) : base(maxLobeFixture)
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
-            _fixture = maxLobeFixture;
-            _outputDirectory = maxLobeFixture.OutputDirectory;
-            var threadSuffix = Guid.NewGuid().ToString("N");
-
-            t_tableName.Value = $"LOB_TABLE_{threadSuffix}";
-            var tableNameWithColumns = $"{t_tableName.Value}({string.Join(", ", s_colName.Select(col => col))})";
-            t_insertQuery.Value = $"INSERT INTO {tableNameWithColumns} VALUES ";
-            t_positionalBindingInsertQuery.Value = $"INSERT INTO {tableNameWithColumns} VALUES (?, ?, ?)";
-            t_namedBindingInsertQuery.Value = $"INSERT INTO {tableNameWithColumns} VALUES (:1, :2, :3)";
-            t_selectQuery.Value = $"SELECT * FROM {t_tableName.Value}";
-            t_filesToDelete.Value = new List<string>();
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                conn.Open();
-                using (var command = conn.CreateCommand())
-                {
-                    // Create temp table
-                    var columnNamesWithTypes = $"{s_colName[0]} VARCHAR({MaxLobSize}), {s_colName[1]} VARCHAR({MaxLobSize}), {s_colName[2]} INT";
-                    command.CommandText = $"CREATE OR REPLACE TABLE {t_tableName.Value} ({columnNamesWithTypes})";
-                    command.ExecuteNonQuery();
-                }
-            }
-        }
-
-        public void Dispose()
-        {
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                conn.OpenAsync(CancellationToken.None);
-                using (var command = conn.CreateCommand())
-                {
-                    // Drop temp table
-                    command.CommandText = $"DROP TABLE IF EXISTS {t_tableName.Value}";
-                    command.ExecuteNonQueryAsync();
-                }
-            }
-
-            if (t_filesToDelete != null)
-            {
-                foreach (var file in t_filesToDelete.Value)
-                {
-                    File.Delete(file);
-                }
-            }
-        }
-
-        [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(SelectOnSpecifiedSizeTestCases))]
-        public async Task TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
-        {
-            // arrange
-            _resultFormat = resultFormat;
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
-                using (var command = conn.CreateCommand())
-                {
-                    // act
-                    command.CommandText = $"SELECT RANDSTR({size}, 124)";
-                    string row = (string)await command.ExecuteScalarAsync(CancellationToken).ConfigureAwait(false);
-
-                    // assert
-                    Assert.Equal(size, row.Length);
-                }
-            }
-        }
-
-
-        [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(LiteralInsertTestCases))]
-        public async Task TestLiteralInsert(ResultFormat resultFormat, int lobSize)
-        {
-            // arrange
-            _resultFormat = resultFormat;
-            var c1 = GenerateRandomString(lobSize);
-            var c2 = GenerateRandomString(lobSize);
-            var c3 = new Random().Next(LobRandomRange);
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
-
-                using (var command = conn.CreateCommand())
-                {
-                    // act
-                    command.CommandText = $"{t_insertQuery.Value} ('{c1}', '{c2}', '{c3}')";
-                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
-
-                    command.CommandText = t_selectQuery.Value;
-                    var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
-
-                    // assert
-                    Assert.True(reader.Read());
-                    Assert.Equal(c1, reader.GetString(0));
-                    Assert.Equal(c2, reader.GetString(1));
-                    Assert.Equal(c3, reader.GetInt64(2));
-                    CheckColumnMetadata(reader);
-                }
-            }
-        }
-
-        [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(PositionalInsertTestCases))]
-        public async Task TestPositionalInsert(ResultFormat resultFormat, int lobSize)
-        {
-            // arrange
-            _resultFormat = resultFormat;
-            var c1 = GenerateRandomString(lobSize);
-            var c2 = GenerateRandomString(lobSize);
-            var c3 = new Random().Next(LobRandomRange);
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
-
-                using (var command = conn.CreateCommand())
-                {
-                    // act
-                    command.CommandText = $"{t_positionalBindingInsertQuery.Value}";
-
-                    var p1 = command.CreateParameter();
-                    p1.ParameterName = "1";
-                    p1.DbType = DbType.String;
-                    p1.Value = c1;
-                    command.Parameters.Add(p1);
-
-                    var p2 = command.CreateParameter();
-                    p2.ParameterName = "2";
-                    p2.DbType = DbType.String;
-                    p2.Value = c2;
-                    command.Parameters.Add(p2);
-
-                    var p3 = command.CreateParameter();
-                    p3.ParameterName = "3";
-                    p3.DbType = DbType.UInt32;
-                    p3.Value = c3;
-                    command.Parameters.Add(p3);
-
-                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
-
-                    command.CommandText = t_selectQuery.Value;
-                    var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
-
-                    // assert
-                    Assert.True(reader.Read());
-                    Assert.Equal(c1, reader.GetString(0));
-                    Assert.Equal(c2, reader.GetString(1));
-                    Assert.Equal(c3, reader.GetInt64(2));
-                    CheckColumnMetadata(reader);
-                }
-            }
-        }
-
-
-        [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(NamedInsertTestCases))]
-        public async Task TestNamedInsert(ResultFormat resultFormat, int lobSize)
-        {
-            // arrange
-            _resultFormat = resultFormat;
-            var c1 = GenerateRandomString(lobSize);
-            var c2 = GenerateRandomString(lobSize);
-            var c3 = new Random().Next(LobRandomRange);
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
-
-                using (var command = conn.CreateCommand())
-                {
-                    // act
-                    command.CommandText = $"{t_namedBindingInsertQuery.Value}";
-
-                    var p1 = command.CreateParameter();
-                    p1.ParameterName = "1";
-                    p1.DbType = DbType.String;
-                    p1.Value = c1;
-                    command.Parameters.Add(p1);
-
-                    var p2 = command.CreateParameter();
-                    p2.ParameterName = "2";
-                    p2.DbType = DbType.String;
-                    p2.Value = c2;
-                    command.Parameters.Add(p2);
-
-                    var p3 = command.CreateParameter();
-                    p3.ParameterName = "3";
-                    p3.DbType = DbType.UInt32;
-                    p3.Value = c3;
-                    command.Parameters.Add(p3);
-
-                    await command.ExecuteNonQueryAsync().ConfigureAwait(false);
-
-                    command.CommandText = t_selectQuery.Value;
-                    var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
-
-                    // assert
-                    Assert.True(reader.Read());
-                    Assert.Equal(c1, reader.GetString(0));
-                    Assert.Equal(c2, reader.GetString(1));
-                    Assert.Equal(c3, reader.GetInt64(2));
-                    CheckColumnMetadata(reader);
-                }
-            }
-        }
-
-        [SFTheory(SkipCondition.SkipOnJenkins, retriesCount: RetriesCount.Thrice), MemberData(nameof(PutGetCommandTestCases))]
-        public async Task TestPutGetCommand(ResultFormat resultFormat, int lobSize)
-        {
-            // arrange
-            _resultFormat = resultFormat;
-            var c1 = GenerateRandomString(lobSize);
-            var c2 = GenerateRandomString(lobSize);
-            var c3 = new Random().Next(LobRandomRange);
-            t_colData.Value = new string[] { c1, c2, c3.ToString() };
-
-            PrepareTest();
-
-            using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
-            {
-                await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
-
-                await PutFile(conn).ConfigureAwait(false);
-                await CopyIntoTableAsync(conn).ConfigureAwait(false);
-                await GetFileAsync(conn).ConfigureAwait(false);
-            }
-        }
-
-        static IEnumerable<int> LobSizeTestCases = new[]
-        {
-            OriginSize,
-            MediumSize,
-            MaxLobSize
-        };
-
-        static IEnumerable<ResultFormat> ResultFormats => new[]
-            { ResultFormat.ARROW, ResultFormat.JSON };
-
-        static IEnumerable<object[]> CombinedTestCases(string baseTestName)
-        {
-            foreach (var resultFormat in ResultFormats)
-            {
-                foreach (var lobSize in LobSizeTestCases)
-                {
-                    yield return new object[] { resultFormat, lobSize };
-                }
-            }
-        }
-
-        public static IEnumerable<object[]> SelectOnSpecifiedSizeTestCases() =>
-            CombinedTestCases(nameof(TestSelectOnSpecifiedSize));
-
-        public static IEnumerable<object[]> LiteralInsertTestCases() =>
-            CombinedTestCases(nameof(TestLiteralInsert));
-
-        public static IEnumerable<object[]> PositionalInsertTestCases() =>
-            CombinedTestCases(nameof(TestPositionalInsert));
-
-        public static IEnumerable<object[]> NamedInsertTestCases() =>
-            CombinedTestCases(nameof(TestNamedInsert));
-
-        public static IEnumerable<object[]> PutGetCommandTestCases() =>
-            CombinedTestCases(nameof(TestPutGetCommand));
-
-        void PrepareTest()
-        {
-            t_fileName.Value = $"{Guid.NewGuid()}.csv";
-            t_inputFilePath.Value = Path.GetTempPath() + t_fileName.Value;
-
-            var data = $"{t_colData.Value[0]},{t_colData.Value[1]},{t_colData.Value[2]}";
-            using (var stream = FileOperations.Instance.Create(t_inputFilePath.Value))
-            using (var writer = new StreamWriter(stream))
-            {
-                writer.Write(data);
-            }
-
-            t_outputFilePath.Value = $@"{_outputDirectory}/{t_fileName.Value}";
-            t_filesToDelete.Value.Add(t_inputFilePath.Value);
-            t_filesToDelete.Value.Add(t_outputFilePath.Value);
-        }
-
-        async Task PutFile(SnowflakeDbConnection conn)
-        {
+            conn.OpenAsync(CancellationToken.None);
             using (var command = conn.CreateCommand())
             {
-                // arrange
-                command.CommandText = $"PUT file://{t_inputFilePath.Value} @%{t_tableName.Value} AUTO_COMPRESS=FALSE";
+                // Drop temp table
+                command.CommandText = $"DROP TABLE IF EXISTS {t_tableName.Value}";
+                command.ExecuteNonQueryAsync();
+            }
+        }
 
+        if (t_filesToDelete != null)
+        {
+            foreach (var file in t_filesToDelete.Value)
+            {
+                File.Delete(file);
+            }
+        }
+    }
+
+    [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(SelectOnSpecifiedSizeTestCases))]
+    public async Task TestSelectOnSpecifiedSize(ResultFormat resultFormat, int size)
+    {
+        // arrange
+        _resultFormat = resultFormat;
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
+        {
+            await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
+            using (var command = conn.CreateCommand())
+            {
                 // act
-                var reader = command.ExecuteReader();
+                command.CommandText = $"SELECT RANDSTR({size}, 124)";
+                string row = (string)await command.ExecuteScalarAsync(CancellationToken).ConfigureAwait(false);
 
                 // assert
-                Assert.True(await reader.ReadAsync().ConfigureAwait(false));
-                Assert.Equal(ResultStatus.UPLOADED.ToString(),
-                    reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+                Assert.Equal(size, row.Length);
             }
         }
+    }
 
-        private async Task CopyIntoTableAsync(SnowflakeDbConnection conn)
+
+    [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(LiteralInsertTestCases))]
+    public async Task TestLiteralInsert(ResultFormat resultFormat, int lobSize)
+    {
+        // arrange
+        _resultFormat = resultFormat;
+        var c1 = GenerateRandomString(lobSize);
+        var c2 = GenerateRandomString(lobSize);
+        var c3 = new Random().Next(LobRandomRange);
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
+
             using (var command = conn.CreateCommand())
             {
-                // arrange
-                command.CommandText = $"COPY INTO {t_tableName.Value}";
-
                 // act
+                command.CommandText = $"{t_insertQuery.Value} ('{c1}', '{c2}', '{c3}')";
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                // arrange
-                command.CommandText = $"SELECT * FROM {t_tableName.Value}";
-
-                // act
+                command.CommandText = t_selectQuery.Value;
                 var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
 
                 // assert
-                Assert.True(await reader.ReadAsync().ConfigureAwait(false));
-                AssertOnColData(reader, 0);
-                AssertOnColData(reader, 1);
-                AssertOnColData(reader, 2);
+                Assert.True(reader.Read());
+                Assert.Equal(c1, reader.GetString(0));
+                Assert.Equal(c2, reader.GetString(1));
+                Assert.Equal(c3, reader.GetInt64(2));
                 CheckColumnMetadata(reader);
             }
         }
+    }
 
-        private static void AssertOnColData(DbDataReader reader, int index)
-        {
-            var actual = reader.GetString(index);
-            var substringLength = t_colData.Value[index].Length > 20 ? 20 : t_colData.Value[index].Length;
-            Assert.True(t_colData.Value[index] == actual, $"Expected strings to be equal. Expected: '{t_colData.Value[index].Substring(0, substringLength)}' [...], got '{actual}' instead.");
-        }
+    [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(PositionalInsertTestCases))]
+    public async Task TestPositionalInsert(ResultFormat resultFormat, int lobSize)
+    {
+        // arrange
+        _resultFormat = resultFormat;
+        var c1 = GenerateRandomString(lobSize);
+        var c2 = GenerateRandomString(lobSize);
+        var c3 = new Random().Next(LobRandomRange);
 
-        private async Task GetFileAsync(DbConnection conn)
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
+
             using (var command = conn.CreateCommand())
             {
-                // arrange
-                command.CommandText = $"GET @%{t_tableName.Value}/{t_fileName.Value} file://{_outputDirectory}";
-
                 // act
-                var reader = command.ExecuteReader();
+                command.CommandText = $"{t_positionalBindingInsertQuery.Value}";
 
-                // assert
-                Assert.True(await reader.ReadAsync().ConfigureAwait(false));
-                Assert.Equal(ResultStatus.DOWNLOADED.ToString(),
-                    reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+                var p1 = command.CreateParameter();
+                p1.ParameterName = "1";
+                p1.DbType = DbType.String;
+                p1.Value = c1;
+                command.Parameters.Add(p1);
 
-                // arrange
-                var content = File.ReadAllText(t_outputFilePath.Value).Split(',');
+                var p2 = command.CreateParameter();
+                p2.ParameterName = "2";
+                p2.DbType = DbType.String;
+                p2.Value = c2;
+                command.Parameters.Add(p2);
 
-                // assert
-                Assert.Equal(t_colData.Value[0], content[0]);
-                Assert.Equal(t_colData.Value[1], content[1]);
-                Assert.Equal(t_colData.Value[2], content[2]);
-            }
-        }
+                var p3 = command.CreateParameter();
+                p3.ParameterName = "3";
+                p3.DbType = DbType.UInt32;
+                p3.Value = c3;
+                command.Parameters.Add(p3);
 
-        private async Task AlterSessionSettingsAsync(SnowflakeDbConnection conn)
-        {
-            using (var command = conn.CreateCommand())
-            {
-                // Alter session result format
-                command.CommandText = $"ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = {_resultFormat}";
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                //// Alter session max lob
-                //command.CommandText = "ALTER SESSION SET FEATURE_INCREASED_MAX_LOB_SIZE_IN_MEMORY = 'ENABLED'";
-                //await command.ExecuteNonQueryAsync();
-                //command.CommandText = "alter session set ALLOW_LARGE_LOBS_IN_EXTERNAL_SCAN = true";
-                //await command.ExecuteNonQueryAsync();
+                command.CommandText = t_selectQuery.Value;
+                var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+
+                // assert
+                Assert.True(reader.Read());
+                Assert.Equal(c1, reader.GetString(0));
+                Assert.Equal(c2, reader.GetString(1));
+                Assert.Equal(c3, reader.GetInt64(2));
+                CheckColumnMetadata(reader);
             }
         }
+    }
 
-        private void CheckColumnMetadata(DbDataReader reader)
+
+    [SFTheory(SkipCondition.SkipOnJenkins), MemberData(nameof(NamedInsertTestCases))]
+    public async Task TestNamedInsert(ResultFormat resultFormat, int lobSize)
+    {
+        // arrange
+        _resultFormat = resultFormat;
+        var c1 = GenerateRandomString(lobSize);
+        var c2 = GenerateRandomString(lobSize);
+        var c3 = new Random().Next(LobRandomRange);
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
-            var dataTable = reader.GetSchemaTable();
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
 
-            DataRow row = dataTable.Rows[0];
-            Assert.Equal(s_colName[0], row[SchemaTableColumn.ColumnName]);
-            Assert.Equal(0, row[SchemaTableColumn.ColumnOrdinal]);
-            Assert.Equal(MaxLobSize, row[SchemaTableColumn.ColumnSize]);
-            Assert.Equal(SFDataType.TEXT, (SFDataType)row[SchemaTableColumn.ProviderType]);
+            using (var command = conn.CreateCommand())
+            {
+                // act
+                command.CommandText = $"{t_namedBindingInsertQuery.Value}";
 
-            row = dataTable.Rows[1];
-            Assert.Equal(s_colName[1], row[SchemaTableColumn.ColumnName]);
-            Assert.Equal(1, row[SchemaTableColumn.ColumnOrdinal]);
-            Assert.Equal(MaxLobSize, row[SchemaTableColumn.ColumnSize]);
-            Assert.Equal(SFDataType.TEXT, (SFDataType)row[SchemaTableColumn.ProviderType]);
+                var p1 = command.CreateParameter();
+                p1.ParameterName = "1";
+                p1.DbType = DbType.String;
+                p1.Value = c1;
+                command.Parameters.Add(p1);
 
-            row = dataTable.Rows[2];
-            Assert.Equal(s_colName[2], row[SchemaTableColumn.ColumnName]);
-            Assert.Equal(2, row[SchemaTableColumn.ColumnOrdinal]);
-            Assert.Equal(0, row[SchemaTableColumn.ColumnSize]);
-            Assert.Equal(SFDataType.FIXED, (SFDataType)row[SchemaTableColumn.ProviderType]);
+                var p2 = command.CreateParameter();
+                p2.ParameterName = "2";
+                p2.DbType = DbType.String;
+                p2.Value = c2;
+                command.Parameters.Add(p2);
+
+                var p3 = command.CreateParameter();
+                p3.ParameterName = "3";
+                p3.DbType = DbType.UInt32;
+                p3.Value = c3;
+                command.Parameters.Add(p3);
+
+                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                command.CommandText = t_selectQuery.Value;
+                var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+
+                // assert
+                Assert.True(reader.Read());
+                Assert.Equal(c1, reader.GetString(0));
+                Assert.Equal(c2, reader.GetString(1));
+                Assert.Equal(c3, reader.GetInt64(2));
+                CheckColumnMetadata(reader);
+            }
+        }
+    }
+
+    [SFTheory(SkipCondition.SkipOnJenkins, retriesCount: RetriesCount.Thrice), MemberData(nameof(PutGetCommandTestCases))]
+    public async Task TestPutGetCommand(ResultFormat resultFormat, int lobSize)
+    {
+        // arrange
+        _resultFormat = resultFormat;
+        var c1 = GenerateRandomString(lobSize);
+        var c2 = GenerateRandomString(lobSize);
+        var c3 = new Random().Next(LobRandomRange);
+        t_colData.Value = new string[] { c1, c2, c3.ToString() };
+
+        PrepareTest();
+
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
+        {
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
+
+            await PutFile(conn).ConfigureAwait(false);
+            await CopyIntoTableAsync(conn).ConfigureAwait(false);
+            await GetFileAsync(conn).ConfigureAwait(false);
+        }
+    }
+
+    static IEnumerable<int> LobSizeTestCases = new[]
+    {
+        OriginSize,
+        MediumSize,
+        MaxLobSize
+    };
+
+    static IEnumerable<ResultFormat> ResultFormats => new[]
+        { ResultFormat.ARROW, ResultFormat.JSON };
+
+    static IEnumerable<object[]> CombinedTestCases(string baseTestName)
+    {
+        foreach (var resultFormat in ResultFormats)
+        {
+            foreach (var lobSize in LobSizeTestCases)
+            {
+                yield return new object[] { resultFormat, lobSize };
+            }
+        }
+    }
+
+    public static IEnumerable<object[]> SelectOnSpecifiedSizeTestCases() =>
+        CombinedTestCases(nameof(TestSelectOnSpecifiedSize));
+
+    public static IEnumerable<object[]> LiteralInsertTestCases() =>
+        CombinedTestCases(nameof(TestLiteralInsert));
+
+    public static IEnumerable<object[]> PositionalInsertTestCases() =>
+        CombinedTestCases(nameof(TestPositionalInsert));
+
+    public static IEnumerable<object[]> NamedInsertTestCases() =>
+        CombinedTestCases(nameof(TestNamedInsert));
+
+    public static IEnumerable<object[]> PutGetCommandTestCases() =>
+        CombinedTestCases(nameof(TestPutGetCommand));
+
+    void PrepareTest()
+    {
+        t_fileName.Value = $"{Guid.NewGuid()}.csv";
+        t_inputFilePath.Value = Path.GetTempPath() + t_fileName.Value;
+
+        var data = $"{t_colData.Value[0]},{t_colData.Value[1]},{t_colData.Value[2]}";
+        using (var stream = FileOperations.Instance.Create(t_inputFilePath.Value))
+        using (var writer = new StreamWriter(stream))
+        {
+            writer.Write(data);
         }
 
-        private static string GenerateRandomString(int sizeInBytes)
-        {
-            int bufferSize = sizeInBytes / 2;
-            Random rand = new Random();
-            Byte[] bytes = new Byte[bufferSize];
-            rand.NextBytes(bytes);
+        t_outputFilePath.Value = $@"{_outputDirectory}/{t_fileName.Value}";
+        t_filesToDelete.Value.Add(t_inputFilePath.Value);
+        t_filesToDelete.Value.Add(t_outputFilePath.Value);
+    }
 
-            // Convert to hex and remove the '-' character for the correct string length
-            return BitConverter.ToString(bytes).Replace("-", "");
+    async Task PutFile(SnowflakeDbConnection conn)
+    {
+        using (var command = conn.CreateCommand())
+        {
+            // arrange
+            command.CommandText = $"PUT file://{t_inputFilePath.Value} @%{t_tableName.Value} AUTO_COMPRESS=FALSE";
+
+            // act
+            var reader = command.ExecuteReader();
+
+            // assert
+            Assert.True(await reader.ReadAsync().ConfigureAwait(false));
+            Assert.Equal(ResultStatus.UPLOADED.ToString(),
+                reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
         }
+    }
+
+    private async Task CopyIntoTableAsync(SnowflakeDbConnection conn)
+    {
+        using (var command = conn.CreateCommand())
+        {
+            // arrange
+            command.CommandText = $"COPY INTO {t_tableName.Value}";
+
+            // act
+            await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+            // arrange
+            command.CommandText = $"SELECT * FROM {t_tableName.Value}";
+
+            // act
+            var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+
+            // assert
+            Assert.True(await reader.ReadAsync().ConfigureAwait(false));
+            AssertOnColData(reader, 0);
+            AssertOnColData(reader, 1);
+            AssertOnColData(reader, 2);
+            CheckColumnMetadata(reader);
+        }
+    }
+
+    private static void AssertOnColData(DbDataReader reader, int index)
+    {
+        var actual = reader.GetString(index);
+        var substringLength = t_colData.Value[index].Length > 20 ? 20 : t_colData.Value[index].Length;
+        Assert.True(t_colData.Value[index] == actual, $"Expected strings to be equal. Expected: '{t_colData.Value[index].Substring(0, substringLength)}' [...], got '{actual}' instead.");
+    }
+
+    private async Task GetFileAsync(DbConnection conn)
+    {
+        using (var command = conn.CreateCommand())
+        {
+            // arrange
+            command.CommandText = $"GET @%{t_tableName.Value}/{t_fileName.Value} file://{_outputDirectory}";
+
+            // act
+            var reader = command.ExecuteReader();
+
+            // assert
+            Assert.True(await reader.ReadAsync().ConfigureAwait(false));
+            Assert.Equal(ResultStatus.DOWNLOADED.ToString(),
+                reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
+
+            // arrange
+            var content = File.ReadAllText(t_outputFilePath.Value).Split(',');
+
+            // assert
+            Assert.Equal(t_colData.Value[0], content[0]);
+            Assert.Equal(t_colData.Value[1], content[1]);
+            Assert.Equal(t_colData.Value[2], content[2]);
+        }
+    }
+
+    private async Task AlterSessionSettingsAsync(SnowflakeDbConnection conn)
+    {
+        using (var command = conn.CreateCommand())
+        {
+            // Alter session result format
+            command.CommandText = $"ALTER SESSION SET DOTNET_QUERY_RESULT_FORMAT = {_resultFormat}";
+            await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+            //// Alter session max lob
+            //command.CommandText = "ALTER SESSION SET FEATURE_INCREASED_MAX_LOB_SIZE_IN_MEMORY = 'ENABLED'";
+            //await command.ExecuteNonQueryAsync();
+            //command.CommandText = "alter session set ALLOW_LARGE_LOBS_IN_EXTERNAL_SCAN = true";
+            //await command.ExecuteNonQueryAsync();
+        }
+    }
+
+    private void CheckColumnMetadata(DbDataReader reader)
+    {
+        var dataTable = reader.GetSchemaTable();
+
+        DataRow row = dataTable.Rows[0];
+        Assert.Equal(s_colName[0], row[SchemaTableColumn.ColumnName]);
+        Assert.Equal(0, row[SchemaTableColumn.ColumnOrdinal]);
+        Assert.Equal(MaxLobSize, row[SchemaTableColumn.ColumnSize]);
+        Assert.Equal(SFDataType.TEXT, (SFDataType)row[SchemaTableColumn.ProviderType]);
+
+        row = dataTable.Rows[1];
+        Assert.Equal(s_colName[1], row[SchemaTableColumn.ColumnName]);
+        Assert.Equal(1, row[SchemaTableColumn.ColumnOrdinal]);
+        Assert.Equal(MaxLobSize, row[SchemaTableColumn.ColumnSize]);
+        Assert.Equal(SFDataType.TEXT, (SFDataType)row[SchemaTableColumn.ProviderType]);
+
+        row = dataTable.Rows[2];
+        Assert.Equal(s_colName[2], row[SchemaTableColumn.ColumnName]);
+        Assert.Equal(2, row[SchemaTableColumn.ColumnOrdinal]);
+        Assert.Equal(0, row[SchemaTableColumn.ColumnSize]);
+        Assert.Equal(SFDataType.FIXED, (SFDataType)row[SchemaTableColumn.ProviderType]);
+    }
+
+    private static string GenerateRandomString(int sizeInBytes)
+    {
+        int bufferSize = sizeInBytes / 2;
+        Random rand = new Random();
+        Byte[] bytes = new Byte[bufferSize];
+        rand.NextBytes(bytes);
+
+        // Convert to hex and remove the '-' character for the correct string length
+        return BitConverter.ToString(bytes).Replace("-", "");
     }
 }

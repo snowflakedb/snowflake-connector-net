@@ -1,9 +1,8 @@
-namespace Snowflake.Data.Core.Revocation
+namespace Snowflake.Data.Core.Revocation;
+
+internal enum CertRevocationCheckResult
 {
-    internal enum CertRevocationCheckResult
-    {
-        CertUnrevoked,
-        CertRevoked,
-        CertError
-    }
+    CertUnrevoked,
+    CertRevoked,
+    CertError
 }

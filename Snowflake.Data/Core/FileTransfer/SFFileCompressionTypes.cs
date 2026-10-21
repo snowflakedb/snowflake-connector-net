@@ -4,256 +4,255 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Snowflake.Data.Core.FileTransfer
+namespace Snowflake.Data.Core.FileTransfer;
+
+internal class SFFileCompressionTypes
 {
-    internal class SFFileCompressionTypes
+    private const byte MAX_MAGIC_BYTES = 4;
+
+    private static readonly byte[] GZIP_MAGIC = new byte[] { 0x1f, 0x8b };
+    private const string GZIP_NAME = "gzip";
+    private const string GZIP_EXTENSION = ".gz";
+
+    private static readonly byte[] DEFLATE_MAGIC_LOW = new byte[] { 0x78, 0x01 };
+    private static readonly byte[] DEFLATE_MAGIC_DEFAULT = new byte[] { 0x78, 0x9c };
+    private static readonly byte[] DEFLATE_MAGIC_BEST = new byte[] { 0x78, 0xda };
+    private const string DEFLATE_NAME = "deflate";
+    private const string DEFLATE_EXTENSION = ".deflate";
+
+    private const string RAW_DEFLATE_NAME = "raw_deflate";
+    private const string RAW_DEFLATE_EXTENSION = ".raw_deflate";
+
+    private static readonly byte[] BZIP2_MAGIC = new byte[] { 0x42, 0x5a };
+    private const string BZIP2_NAME = "bzip2";
+    private const string BZIP2_EXTENSION = ".bz2";
+
+    private static readonly byte[] ZSTD_MAGIC = new byte[] { 0x28, 0xb5, 0x2f, 0xfd };
+    private const string ZSTD_NAME = "zstd";
+    private const string ZSTD_EXTENSION = ".zst";
+
+    private static readonly byte[] BROTLI_MAGIC = new byte[] { 0xce, 0xb2, 0xcf, 0x81 };
+    private const string BROTLI_NAME = "brotli";
+    private const string BROTLI_EXTENSION = ".br";
+
+    private const string LZIP_NAME = "lzip";
+    private const string LZIP_EXTENSION = ".lz";
+
+    private const string LZMA_NAME = "lzma";
+    private const string LZMA_EXTENSION = ".lzma";
+
+    private const string LZO_NAME = "lzop";
+    private const string LZO_EXTENSION = ".lzo";
+
+    private const string XZ_NAME = "xz";
+    private const string XZ_EXTENSION = ".xz";
+
+    private const string COMPRESS_NAME = "compress";
+    private const string COMPRESS_EXTENSION = ".Z";
+
+    private static readonly byte[] PARQUET_MAGIC = new byte[] { 0x50, 0x41, 0x52, 0x31 };
+    private const string PARQUET_NAME = "parquet";
+    private const string PARQUET_EXTENSION = ".parquet";
+
+    private static readonly byte[] ORC_MAGIC = new byte[] { 0x4f, 0x52, 0x43 };
+    private const string ORC_NAME = "orc";
+    private const string ORC_EXTENSION = ".orc";
+
+    private const string NONE_NAME = "none";
+    private const string NONE_EXTENSION = "";
+
+    private static readonly byte[][] gzip_magics = new[] { GZIP_MAGIC };
+    private static readonly byte[][] deflate_magics =
+        new[] { DEFLATE_MAGIC_LOW, DEFLATE_MAGIC_DEFAULT, DEFLATE_MAGIC_BEST };
+    private static readonly byte[][] bzip2_magics = new[] { BZIP2_MAGIC };
+    private static readonly byte[][] orc_magics = new[] { ORC_MAGIC };
+    private static readonly byte[][] parquet_magics = new[] { PARQUET_MAGIC };
+    private static readonly byte[][] zstd_magics = new[] { ZSTD_MAGIC };
+    private static readonly byte[][] brotli_magics = new[] { BROTLI_MAGIC };
+
+    public record struct SFFileCompressionType(
+        string FileExtension,
+        string Name,
+        byte[][] MagicNumbers,
+        short MagicBytes,
+        bool IsSupported)
     {
-        private const byte MAX_MAGIC_BYTES = 4;
-
-        private static readonly byte[] GZIP_MAGIC = new byte[] { 0x1f, 0x8b };
-        private const string GZIP_NAME = "gzip";
-        private const string GZIP_EXTENSION = ".gz";
-
-        private static readonly byte[] DEFLATE_MAGIC_LOW = new byte[] { 0x78, 0x01 };
-        private static readonly byte[] DEFLATE_MAGIC_DEFAULT = new byte[] { 0x78, 0x9c };
-        private static readonly byte[] DEFLATE_MAGIC_BEST = new byte[] { 0x78, 0xda };
-        private const string DEFLATE_NAME = "deflate";
-        private const string DEFLATE_EXTENSION = ".deflate";
-
-        private const string RAW_DEFLATE_NAME = "raw_deflate";
-        private const string RAW_DEFLATE_EXTENSION = ".raw_deflate";
-
-        private static readonly byte[] BZIP2_MAGIC = new byte[] { 0x42, 0x5a };
-        private const string BZIP2_NAME = "bzip2";
-        private const string BZIP2_EXTENSION = ".bz2";
-
-        private static readonly byte[] ZSTD_MAGIC = new byte[] { 0x28, 0xb5, 0x2f, 0xfd };
-        private const string ZSTD_NAME = "zstd";
-        private const string ZSTD_EXTENSION = ".zst";
-
-        private static readonly byte[] BROTLI_MAGIC = new byte[] { 0xce, 0xb2, 0xcf, 0x81 };
-        private const string BROTLI_NAME = "brotli";
-        private const string BROTLI_EXTENSION = ".br";
-
-        private const string LZIP_NAME = "lzip";
-        private const string LZIP_EXTENSION = ".lz";
-
-        private const string LZMA_NAME = "lzma";
-        private const string LZMA_EXTENSION = ".lzma";
-
-        private const string LZO_NAME = "lzop";
-        private const string LZO_EXTENSION = ".lzo";
-
-        private const string XZ_NAME = "xz";
-        private const string XZ_EXTENSION = ".xz";
-
-        private const string COMPRESS_NAME = "compress";
-        private const string COMPRESS_EXTENSION = ".Z";
-
-        private static readonly byte[] PARQUET_MAGIC = new byte[] { 0x50, 0x41, 0x52, 0x31 };
-        private const string PARQUET_NAME = "parquet";
-        private const string PARQUET_EXTENSION = ".parquet";
-
-        private static readonly byte[] ORC_MAGIC = new byte[] { 0x4f, 0x52, 0x43 };
-        private const string ORC_NAME = "orc";
-        private const string ORC_EXTENSION = ".orc";
-
-        private const string NONE_NAME = "none";
-        private const string NONE_EXTENSION = "";
-
-        private static readonly byte[][] gzip_magics = new[] { GZIP_MAGIC };
-        private static readonly byte[][] deflate_magics =
-            new[] { DEFLATE_MAGIC_LOW, DEFLATE_MAGIC_DEFAULT, DEFLATE_MAGIC_BEST };
-        private static readonly byte[][] bzip2_magics = new[] { BZIP2_MAGIC };
-        private static readonly byte[][] orc_magics = new[] { ORC_MAGIC };
-        private static readonly byte[][] parquet_magics = new[] { PARQUET_MAGIC };
-        private static readonly byte[][] zstd_magics = new[] { ZSTD_MAGIC };
-        private static readonly byte[][] brotli_magics = new[] { BROTLI_MAGIC };
-
-        public record struct SFFileCompressionType(
-            string FileExtension,
-            string Name,
-            byte[][] MagicNumbers,
-            short MagicBytes,
-            bool IsSupported)
+        public SFFileCompressionType(
+            string fileExtension,
+            string name,
+            bool isSupported) : this(fileExtension, name, null, 0, isSupported)
         {
-            public SFFileCompressionType(
-                string fileExtension,
-                string name,
-                bool isSupported) : this(fileExtension, name, null, 0, isSupported)
-            {
-            }
-
-            /// <summary>
-            /// Check if the given header matches the magic number for this compression type
-            /// </summary>
-            /// <param name="header"></param>
-            /// <returns></returns>
-            public bool matchMagicNumber(byte[] header)
-            {
-                if (MagicNumbers is { Length: > 0 })
-                    foreach (byte[] m in MagicNumbers)
-                        if (m != null && header != null && m.Length > 0 && header.Length > 0)
-                            if (new ReadOnlySpan<byte>(m).SequenceEqual(new ReadOnlySpan<byte>(header, 0, m.Length)))
-                                return true;
-
-                return false;
-            }
         }
 
-        public static readonly SFFileCompressionType GZIP =
-            new SFFileCompressionType(GZIP_EXTENSION, GZIP_NAME, gzip_magics, 2, true);
-
-        public static readonly SFFileCompressionType DEFLATE =
-            new SFFileCompressionType(DEFLATE_EXTENSION, DEFLATE_NAME, deflate_magics, 2, true);
-
-        public static readonly SFFileCompressionType RAW_DEFLATE =
-            new SFFileCompressionType(RAW_DEFLATE_EXTENSION, RAW_DEFLATE_NAME, true);
-
-        public static readonly SFFileCompressionType BZIP2 =
-            new SFFileCompressionType(BZIP2_EXTENSION, BZIP2_NAME, bzip2_magics, 2, true);
-
-        public static readonly SFFileCompressionType ZSTD =
-            new SFFileCompressionType(ZSTD_EXTENSION, ZSTD_NAME, zstd_magics, 4, true);
-
-        public static readonly SFFileCompressionType BROTLI =
-            new SFFileCompressionType(BROTLI_EXTENSION, BROTLI_NAME, brotli_magics, 4, true);
-
-        public static readonly SFFileCompressionType ORC =
-            new SFFileCompressionType(ORC_EXTENSION, ORC_NAME, orc_magics, 3, true);
-
-        public static readonly SFFileCompressionType PARQUET =
-            new SFFileCompressionType(PARQUET_EXTENSION, PARQUET_NAME, parquet_magics, 4, true);
-
-        public static readonly SFFileCompressionType LZIP =
-            new SFFileCompressionType(LZIP_EXTENSION, LZIP_NAME, false);
-
-        public static readonly SFFileCompressionType LZMA =
-            new SFFileCompressionType(LZMA_EXTENSION, LZMA_NAME, false);
-
-        public static readonly SFFileCompressionType LZO =
-            new SFFileCompressionType(LZO_EXTENSION, LZO_NAME, false);
-
-        public static readonly SFFileCompressionType XZ =
-            new SFFileCompressionType(XZ_EXTENSION, XZ_NAME, false);
-
-        public static readonly SFFileCompressionType COMPRESS =
-            new SFFileCompressionType(COMPRESS_EXTENSION, COMPRESS_NAME, false);
-
-        public static readonly SFFileCompressionType NONE =
-            new SFFileCompressionType(NONE_EXTENSION, NONE_NAME, true);
-
-
-        static readonly IReadOnlyList<SFFileCompressionType> compressionTypes =
-            new List<SFFileCompressionType> {
-                GZIP,
-                DEFLATE,
-                RAW_DEFLATE,
-                BZIP2,
-                ZSTD,
-                BROTLI,
-                LZIP,
-                LZMA,
-                LZO,
-                XZ,
-                COMPRESS,
-                ORC,
-                PARQUET
-            };
-
-
         /// <summary>
-        /// Guess the compression type of in-memory stream by reading its magic bytes.
-        /// The stream position is reset to the beginning (offset = 0) after reading.
+        /// Check if the given header matches the magic number for this compression type
         /// </summary>
-        /// <returns>The detected compression type, or <see cref="NONE"/> if unrecognized.</returns>
-        public static SFFileCompressionType GuessCompressionType(Stream stream)
+        /// <param name="header"></param>
+        /// <returns></returns>
+        public bool matchMagicNumber(byte[] header)
         {
-            if (stream.Length < MAX_MAGIC_BYTES)
-                return NONE;
+            if (MagicNumbers is { Length: > 0 })
+                foreach (byte[] m in MagicNumbers)
+                    if (m != null && header != null && m.Length > 0 && header.Length > 0)
+                        if (new ReadOnlySpan<byte>(m).SequenceEqual(new ReadOnlySpan<byte>(header, 0, m.Length)))
+                            return true;
 
-            // read first 4 bytes to determine compression type
-            var header = new byte[MAX_MAGIC_BYTES];
+            return false;
+        }
+    }
+
+    public static readonly SFFileCompressionType GZIP =
+        new SFFileCompressionType(GZIP_EXTENSION, GZIP_NAME, gzip_magics, 2, true);
+
+    public static readonly SFFileCompressionType DEFLATE =
+        new SFFileCompressionType(DEFLATE_EXTENSION, DEFLATE_NAME, deflate_magics, 2, true);
+
+    public static readonly SFFileCompressionType RAW_DEFLATE =
+        new SFFileCompressionType(RAW_DEFLATE_EXTENSION, RAW_DEFLATE_NAME, true);
+
+    public static readonly SFFileCompressionType BZIP2 =
+        new SFFileCompressionType(BZIP2_EXTENSION, BZIP2_NAME, bzip2_magics, 2, true);
+
+    public static readonly SFFileCompressionType ZSTD =
+        new SFFileCompressionType(ZSTD_EXTENSION, ZSTD_NAME, zstd_magics, 4, true);
+
+    public static readonly SFFileCompressionType BROTLI =
+        new SFFileCompressionType(BROTLI_EXTENSION, BROTLI_NAME, brotli_magics, 4, true);
+
+    public static readonly SFFileCompressionType ORC =
+        new SFFileCompressionType(ORC_EXTENSION, ORC_NAME, orc_magics, 3, true);
+
+    public static readonly SFFileCompressionType PARQUET =
+        new SFFileCompressionType(PARQUET_EXTENSION, PARQUET_NAME, parquet_magics, 4, true);
+
+    public static readonly SFFileCompressionType LZIP =
+        new SFFileCompressionType(LZIP_EXTENSION, LZIP_NAME, false);
+
+    public static readonly SFFileCompressionType LZMA =
+        new SFFileCompressionType(LZMA_EXTENSION, LZMA_NAME, false);
+
+    public static readonly SFFileCompressionType LZO =
+        new SFFileCompressionType(LZO_EXTENSION, LZO_NAME, false);
+
+    public static readonly SFFileCompressionType XZ =
+        new SFFileCompressionType(XZ_EXTENSION, XZ_NAME, false);
+
+    public static readonly SFFileCompressionType COMPRESS =
+        new SFFileCompressionType(COMPRESS_EXTENSION, COMPRESS_NAME, false);
+
+    public static readonly SFFileCompressionType NONE =
+        new SFFileCompressionType(NONE_EXTENSION, NONE_NAME, true);
+
+
+    static readonly IReadOnlyList<SFFileCompressionType> compressionTypes =
+        new List<SFFileCompressionType> {
+            GZIP,
+            DEFLATE,
+            RAW_DEFLATE,
+            BZIP2,
+            ZSTD,
+            BROTLI,
+            LZIP,
+            LZMA,
+            LZO,
+            XZ,
+            COMPRESS,
+            ORC,
+            PARQUET
+        };
+
+
+    /// <summary>
+    /// Guess the compression type of in-memory stream by reading its magic bytes.
+    /// The stream position is reset to the beginning (offset = 0) after reading.
+    /// </summary>
+    /// <returns>The detected compression type, or <see cref="NONE"/> if unrecognized.</returns>
+    public static SFFileCompressionType GuessCompressionType(Stream stream)
+    {
+        if (stream.Length < MAX_MAGIC_BYTES)
+            return NONE;
+
+        // read first 4 bytes to determine compression type
+        var header = new byte[MAX_MAGIC_BYTES];
 #if NET9_0_OR_GREATER
             stream.ReadExactly(header, 0, header.Length);
 #else
-            stream.Read(header, 0, header.Length);
+        stream.Read(header, 0, header.Length);
 #endif
-            stream.Position = 0;
+        stream.Position = 0;
 
-            var compType = compressionTypes.FirstOrDefault(x => x.matchMagicNumber(header));
-            return compType == default ? NONE : compType;
-        }
+        var compType = compressionTypes.FirstOrDefault(x => x.matchMagicNumber(header));
+        return compType == default ? NONE : compType;
+    }
 
-        public static SFFileCompressionType GuessCompressionType(string filePath)
+    public static SFFileCompressionType GuessCompressionType(string filePath)
+    {
+        // read first 4 bytes to determine compression type
+        var header = new byte[MAX_MAGIC_BYTES];
+        using (var fs = File.OpenRead(filePath))
         {
-            // read first 4 bytes to determine compression type
-            var header = new byte[MAX_MAGIC_BYTES];
-            using (var fs = File.OpenRead(filePath))
-            {
 #if NET9_0_OR_GREATER
                 fs.ReadExactly(header, 0, header.Length);
 #else
-                fs.Read(header, 0, header.Length);
+            fs.Read(header, 0, header.Length);
 #endif
+        }
+
+        foreach (var compType in compressionTypes)
+        {
+            if (!compType.matchMagicNumber(header))
+                continue;
+
+            // Found the compression type for this file
+            var extension = Path.GetExtension(filePath);
+            if (!string.IsNullOrEmpty(extension) &&
+                string.Equals(BROTLI.FileExtension, extension, StringComparison.OrdinalIgnoreCase))
+            {
+                return BROTLI;
             }
 
-            foreach (var compType in compressionTypes)
+            return compType;
+        }
+
+        // Couldn't find a match, last fallback using the file name extension
+        return LookUpByFileExtension(new FileInfo(filePath).Extension);
+    }
+
+    public static SFFileCompressionType LookUpByFileExtension(string fileExtension)
+    {
+        if (!fileExtension.StartsWith("."))
+        {
+            fileExtension = "." + fileExtension;
+        }
+        foreach (SFFileCompressionType compType in compressionTypes)
+        {
+            if (compType.FileExtension.Equals(fileExtension, StringComparison.InvariantCultureIgnoreCase))
             {
-                if (!compType.matchMagicNumber(header))
-                    continue;
-
-                // Found the compression type for this file
-                var extension = Path.GetExtension(filePath);
-                if (!string.IsNullOrEmpty(extension) &&
-                    string.Equals(BROTLI.FileExtension, extension, StringComparison.OrdinalIgnoreCase))
-                {
-                    return BROTLI;
-                }
-
                 return compType;
             }
-
-            // Couldn't find a match, last fallback using the file name extension
-            return LookUpByFileExtension(new FileInfo(filePath).Extension);
         }
+        return NONE;
+    }
 
-        public static SFFileCompressionType LookUpByFileExtension(string fileExtension)
+    /// <summary>
+    /// Lookup the compression type base on the given type name.
+    /// </summary>
+    /// <param name="name">The type name to lookup</param>
+    /// <returns>The corresponding SFFileCompressionType if supported, None if no match</returns>
+    public static SFFileCompressionType LookUpByName(string name)
+    {
+        if (name.StartsWith("."))
         {
-            if (!fileExtension.StartsWith("."))
-            {
-                fileExtension = "." + fileExtension;
-            }
-            foreach (SFFileCompressionType compType in compressionTypes)
-            {
-                if (compType.FileExtension.Equals(fileExtension, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return compType;
-                }
-            }
-            return NONE;
+            name = name.Substring(1);
         }
-
-        /// <summary>
-        /// Lookup the compression type base on the given type name.
-        /// </summary>
-        /// <param name="name">The type name to lookup</param>
-        /// <returns>The corresponding SFFileCompressionType if supported, None if no match</returns>
-        public static SFFileCompressionType LookUpByName(string name)
+        foreach (SFFileCompressionType compType in compressionTypes)
         {
-            if (name.StartsWith("."))
+            if (compType.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
             {
-                name = name.Substring(1);
+                return compType;
             }
-            foreach (SFFileCompressionType compType in compressionTypes)
-            {
-                if (compType.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return compType;
-                }
-            }
-
-            return NONE;
         }
+
+        return NONE;
     }
 }

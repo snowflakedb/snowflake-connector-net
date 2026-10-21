@@ -1,9 +1,8 @@
-namespace Snowflake.Data.Core.Revocation
+namespace Snowflake.Data.Core.Revocation;
+
+internal enum ChainRevocationCheckResult
 {
-    internal enum ChainRevocationCheckResult
-    {
-        ChainUnrevoked,
-        ChainRevoked,
-        ChainError,
-    }
+    ChainUnrevoked,
+    ChainRevoked,
+    ChainError,
 }

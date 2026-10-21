@@ -1,11 +1,10 @@
 using System;
 
-namespace Snowflake.Data.Core.Converter
+namespace Snowflake.Data.Core.Converter;
+
+internal class StructuredTypesReadingException : Exception
 {
-    internal class StructuredTypesReadingException : Exception
+    public StructuredTypesReadingException(string message) : base(message)
     {
-        public StructuredTypesReadingException(string message) : base(message)
-        {
-        }
     }
 }

@@ -1,20 +1,19 @@
 using System;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core;
+
+public enum ResultFormat
 {
-    public enum ResultFormat
-    {
-        JSON,
-        ARROW
-    }
+    JSON,
+    ARROW
+}
 
-    internal interface IResultChunk
-    {
-        [Obsolete("ExtractCell with rowIndex is deprecated", false)]
-        UTF8Buffer ExtractCell(int rowIndex, int columnIndex);
+internal interface IResultChunk
+{
+    [Obsolete("ExtractCell with rowIndex is deprecated", false)]
+    UTF8Buffer ExtractCell(int rowIndex, int columnIndex);
 
-        int GetRowCount();
+    int GetRowCount();
 
-        int GetChunkIndex();
-    }
+    int GetChunkIndex();
 }

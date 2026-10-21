@@ -12,375 +12,374 @@ using Snowflake.Data.Core.Authenticator.WorkflowIdentity;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Tests.Util;
 
-namespace Snowflake.Data.Tests.UnitTests.Authenticator
+namespace Snowflake.Data.Tests.UnitTests.Authenticator;
+
+[CollectionDefinition(nameof(WorkflowIdentityFederationAuthenticatorAzureTestFixture), DisableParallelization = true)]
+public sealed class WorkflowIdentityFederationAuthenticatorAzureTestFixture : ICollectionFixture<WorkflowIdentityFederationAuthenticatorAzureTestFixture.Fixture>
 {
-    [CollectionDefinition(nameof(WorkflowIdentityFederationAuthenticatorAzureTestFixture), DisableParallelization = true)]
-    public sealed class WorkflowIdentityFederationAuthenticatorAzureTestFixture : ICollectionFixture<WorkflowIdentityFederationAuthenticatorAzureTestFixture.Fixture>
+    public sealed class Fixture : IDisposable
     {
-        public sealed class Fixture : IDisposable
+        internal readonly WiremockRunner Runner;
+
+        public Fixture()
         {
-            internal readonly WiremockRunner Runner;
+            Runner = WiremockRunner.NewWiremock();
+        }
 
-            public Fixture()
-            {
-                Runner = WiremockRunner.NewWiremock();
-            }
-
-            public void Dispose()
-            {
-                Runner.Stop();
-            }
+        public void Dispose()
+        {
+            Runner.Stop();
         }
     }
+}
 
-    [Collection(nameof(WorkflowIdentityFederationAuthenticatorAzureTestFixture))]
-    public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadIdentityFederationAuthenticatorTest
+[Collection(nameof(WorkflowIdentityFederationAuthenticatorAzureTestFixture))]
+public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadIdentityFederationAuthenticatorTest
+{
+    private static readonly string s_wifAzureMappingPath = Path.Combine(s_wifMappingPath, "Azure");
+    private static readonly string s_wifAzureBasicSuccessfulMapping = Path.Combine(s_wifAzureMappingPath, "successful_flow_basic.json");
+    private static readonly string s_wifAzureBasicWithClientIdSuccessfulMapping = Path.Combine(s_wifAzureMappingPath, "successful_flow_basic_with_client_id.json");
+    private static readonly string s_wifAzureFunctionsSuccessfulMappingPath = Path.Combine(s_wifAzureMappingPath, "successful_flow_azure_functions.json");
+    private static readonly string s_wifAzureFunctionsNoClientIdSuccessfulMappingPath = Path.Combine(s_wifAzureMappingPath, "successful_flow_azure_functions_no_client_id.json");
+    private static readonly string s_azureIdentityEndpoint = $"{s_wiremockUrl}/metadata/identity/endpoint/from/env";
+    private static readonly string s_azureIdentityHeader = "some-identity-header-from-env";
+    private static readonly string s_azureManagedClientId = "managed-client-id-from-env";
+    private static readonly string s_customEntraResource = "api://1111111-2222-3333-44444-55555555";
+    internal static readonly string s_JWTAccessToken = "eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NiIsImtpZCI6Ijk0ZGI4N2NiMjdmNjdjZDA1Zjk5OTlkZjMwNjg1NmQ4In0.eyJhdWQiOiJhcGkxIiwiaXNzIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvZmExNWQ2OTItZTljNy00NDYwLWE3NDMtMjlmMjk1MjIyMjkvIiwic3ViIjoiNzcyMTNFMzAtRThDQi00NTk1LUIxQjYtNUYwNTBFODMwOEZEIiwiZXhwIjoxNzQ0NzE2MDUxLCJpYXQiOjE3NDQ3MTI0NTEsImp0aSI6Ijg3MTMzNzcwMDk0MTZmYmFhNDM0MmFkMjMxZGUwMDBkIn0.C5jTYoybRs5YF5GvPgoDq4WK5U9-gDzh_N3IPaqEBI0IifdYSWpKQ72v3UISnVpp7Fc46C-ZC8kijUGe3IU9zA"; // pragma: allowlist secret
+    internal static readonly string s_TokenSubject = "77213E30-E8CB-4595-B1B6-5F050E8308FD";
+    internal static readonly string s_TokenIssuer = "https://sts.windows.net/fa15d692-e9c7-4460-a743-29f29522229/";
+    private static readonly string s_JWTAccessTokenV2 = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhcGk6Ly9mZDNmNzUzYi1lZWQzLTQ2MmMtYjZhNy1hNGI1YmI2NTBhYWQiLCJleHAiOjE3NDQ3MTYwNTEsImlhdCI6MTc0NDcxMjQ1MSwiaXNzIjoiaHR0cHM6Ly9sb2dpbi5taWNyb3NvZnRvbmxpbmUuY29tL2ZhMTVkNjkyLWU5YzctNDQ2MC1hNzQzLTI5ZjI5NTIyMjI5LyIsImp0aSI6Ijg3MTMzNzcwMDk0MTZmYmFhNDM0MmFkMjMxZGUwMDBkIiwic3ViIjoiNzcyMTNFMzAtRThDQi00NTk1LUIxQjYtNUYwNTBFODMwOEZEIn0.5mAlEPkzHLR7YbllpKgk-8ZEd88XfzA15DUK8u1rLWs"; // pragma: allowlist secret
+    private static readonly string s_TokenIssuerV2 = "https://login.microsoftonline.com/fa15d692-e9c7-4460-a743-29f29522229/";
+    private static readonly string s_clientIdReplacement = "%CLIENT_ID%";
+    private static readonly string s_entraResourceReplacement = "%ENTRA_RESOURCE%";
+    private static readonly string s_identityHeaderReplacement = "%IDENTITY_HEADER%";
+
+    private readonly WorkflowIdentityFederationAuthenticatorAzureTestFixture.Fixture _fixture;
+
+    public WorkflowIdentityFederationAuthenticatorAzureTest(WorkflowIdentityFederationAuthenticatorAzureTestFixture.Fixture fixture)
     {
-        private static readonly string s_wifAzureMappingPath = Path.Combine(s_wifMappingPath, "Azure");
-        private static readonly string s_wifAzureBasicSuccessfulMapping = Path.Combine(s_wifAzureMappingPath, "successful_flow_basic.json");
-        private static readonly string s_wifAzureBasicWithClientIdSuccessfulMapping = Path.Combine(s_wifAzureMappingPath, "successful_flow_basic_with_client_id.json");
-        private static readonly string s_wifAzureFunctionsSuccessfulMappingPath = Path.Combine(s_wifAzureMappingPath, "successful_flow_azure_functions.json");
-        private static readonly string s_wifAzureFunctionsNoClientIdSuccessfulMappingPath = Path.Combine(s_wifAzureMappingPath, "successful_flow_azure_functions_no_client_id.json");
-        private static readonly string s_azureIdentityEndpoint = $"{s_wiremockUrl}/metadata/identity/endpoint/from/env";
-        private static readonly string s_azureIdentityHeader = "some-identity-header-from-env";
-        private static readonly string s_azureManagedClientId = "managed-client-id-from-env";
-        private static readonly string s_customEntraResource = "api://1111111-2222-3333-44444-55555555";
-        internal static readonly string s_JWTAccessToken = "eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NiIsImtpZCI6Ijk0ZGI4N2NiMjdmNjdjZDA1Zjk5OTlkZjMwNjg1NmQ4In0.eyJhdWQiOiJhcGkxIiwiaXNzIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvZmExNWQ2OTItZTljNy00NDYwLWE3NDMtMjlmMjk1MjIyMjkvIiwic3ViIjoiNzcyMTNFMzAtRThDQi00NTk1LUIxQjYtNUYwNTBFODMwOEZEIiwiZXhwIjoxNzQ0NzE2MDUxLCJpYXQiOjE3NDQ3MTI0NTEsImp0aSI6Ijg3MTMzNzcwMDk0MTZmYmFhNDM0MmFkMjMxZGUwMDBkIn0.C5jTYoybRs5YF5GvPgoDq4WK5U9-gDzh_N3IPaqEBI0IifdYSWpKQ72v3UISnVpp7Fc46C-ZC8kijUGe3IU9zA"; // pragma: allowlist secret
-        internal static readonly string s_TokenSubject = "77213E30-E8CB-4595-B1B6-5F050E8308FD";
-        internal static readonly string s_TokenIssuer = "https://sts.windows.net/fa15d692-e9c7-4460-a743-29f29522229/";
-        private static readonly string s_JWTAccessTokenV2 = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhcGk6Ly9mZDNmNzUzYi1lZWQzLTQ2MmMtYjZhNy1hNGI1YmI2NTBhYWQiLCJleHAiOjE3NDQ3MTYwNTEsImlhdCI6MTc0NDcxMjQ1MSwiaXNzIjoiaHR0cHM6Ly9sb2dpbi5taWNyb3NvZnRvbmxpbmUuY29tL2ZhMTVkNjkyLWU5YzctNDQ2MC1hNzQzLTI5ZjI5NTIyMjI5LyIsImp0aSI6Ijg3MTMzNzcwMDk0MTZmYmFhNDM0MmFkMjMxZGUwMDBkIiwic3ViIjoiNzcyMTNFMzAtRThDQi00NTk1LUIxQjYtNUYwNTBFODMwOEZEIn0.5mAlEPkzHLR7YbllpKgk-8ZEd88XfzA15DUK8u1rLWs"; // pragma: allowlist secret
-        private static readonly string s_TokenIssuerV2 = "https://login.microsoftonline.com/fa15d692-e9c7-4460-a743-29f29522229/";
-        private static readonly string s_clientIdReplacement = "%CLIENT_ID%";
-        private static readonly string s_entraResourceReplacement = "%ENTRA_RESOURCE%";
-        private static readonly string s_identityHeaderReplacement = "%IDENTITY_HEADER%";
+        _fixture = fixture;
+        _fixture.Runner.ResetMapping();
+    }
 
-        private readonly WorkflowIdentityFederationAuthenticatorAzureTestFixture.Fixture _fixture;
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestSuccessfulAzureAuthorization()
+    {
+        // arrange
+        AddAzureBasicWiremockMappings();
+        SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AZURE, s_JWTAccessToken);
+        var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
 
-        public WorkflowIdentityFederationAuthenticatorAzureTest(WorkflowIdentityFederationAuthenticatorAzureTestFixture.Fixture fixture)
+        // act
+        session.Open();
+
+        // assert
+        AssertSessionSuccessfullyCreated(session);
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public async Task TestSuccessfulAzureAuthorizationAsync()
+    {
+        // arrange
+        AddAzureBasicWiremockMappings();
+        SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AZURE, s_JWTAccessToken);
+        var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
+
+        // act
+        await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // assert
+        AssertSessionSuccessfullyCreated(session);
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestSuccessfulAzureAttestation()
+    {
+        // arrange
+        AddAzureBasicWiremockMappings();
+        var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
+        var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+
+        // act
+        var attestation = authenticator.CreateAttestation();
+
+        // assert
+        Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+        Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+        Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+        AssertExtensions.NotEmptyString(attestation.Credential);
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestSuccessfulAzureAttestationWithClientId()
+    {
+        // arrange
+        AddAzureBasicWithClientIdWiremockMappings();
+        var session = PrepareSessionForAzure(null, ConfigureIdentityClientId);
+        var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+
+        // act
+        var attestation = authenticator.CreateAttestation();
+
+        // assert
+        Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+        Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+        Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+        AssertExtensions.NotEmptyString(attestation.Credential);
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestSuccessfulAzureAttestationWithV2Issuer()
+    {
+        // arrange
+        AddAzureBasicV2IssuerWiremockMappings();
+        var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
+        var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+
+        // act
+        var attestation = authenticator.CreateAttestation();
+
+        // assert
+        Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+        Assert.Equal(s_TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
+        Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+        AssertExtensions.NotEmptyString(attestation.Credential);
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestFailForUnparsableTokenAttestation()
+    {
+        AddAzureUnparsableTokenWiremockMappings();
+        var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
+        var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+
+        // act
+        var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
+
+        // assert
+        SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
+        Assert.Contains("Retrieving attestation for AZURE failed. Reading of the token failed.", thrown.Message);
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestSuccessfulAzureFunctionsAttestations()
+    {
+        // arrange
+        AddAzureFunctionsWiremockMappings();
+        var session = PrepareSessionForAzure(null, e =>
         {
-            _fixture = fixture;
-            _fixture.Runner.ResetMapping();
-        }
+            ConfigureIdentityEndpoint(e);
+            ConfigureIdentityHeader(e);
+            ConfigureIdentityClientId(e);
+        });
+        var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestSuccessfulAzureAuthorization()
+        // act
+        var attestation = authenticator.CreateAttestation();
+
+        // assert
+        Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+        Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+        Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+        AssertExtensions.NotEmptyString(attestation.Credential);
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestSuccessfulAzureFunctionsAttestationWithoutClientId()
+    {
+        // arrange
+        AddAzureFunctionsWithoutClientIdWiremockMappings();
+        var session = PrepareSessionForAzure(null, e =>
         {
-            // arrange
-            AddAzureBasicWiremockMappings();
-            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AZURE, s_JWTAccessToken);
-            var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
+            ConfigureIdentityEndpoint(e);
+            ConfigureIdentityHeader(e);
+        });
+        var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
-            // act
-            session.Open();
+        // act
+        var attestation = authenticator.CreateAttestation();
 
-            // assert
-            AssertSessionSuccessfullyCreated(session);
-        }
+        // assert
+        Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+        Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+        Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+        AssertExtensions.NotEmptyString(attestation.Credential);
+    }
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public async Task TestSuccessfulAzureAuthorizationAsync()
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestSuccessfulAzureFunctionsAttestationWithCustomEntraResource()
+    {
+        // arrange
+        AddAzureFunctionsWithCustomEntraResourceWiremockMappings();
+        var session = PrepareSessionForAzure($"workload_identity_entra_resource={s_customEntraResource};", e =>
         {
-            // arrange
-            AddAzureBasicWiremockMappings();
-            SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AZURE, s_JWTAccessToken);
-            var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
+            ConfigureIdentityEndpoint(e);
+            ConfigureIdentityHeader(e);
+            ConfigureIdentityClientId(e);
+        });
+        var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
-            // act
-            await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+        // act
+        var attestation = authenticator.CreateAttestation();
 
-            // assert
-            AssertSessionSuccessfullyCreated(session);
-        }
+        // assert
+        Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+        Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+        Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+        AssertExtensions.NotEmptyString(attestation.Credential);
+    }
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestSuccessfulAzureAttestation()
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestFailAzureFunctionsAttestationWithoutIdentityHeader()
+    {
+        // arrange
+        AddAzureFunctionsWiremockMappings();
+        var session = PrepareSessionForAzure(null, e =>
         {
-            // arrange
-            AddAzureBasicWiremockMappings();
-            var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+            ConfigureIdentityEndpoint(e);
+            ConfigureIdentityClientId(e);
+        });
+        var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
-            // act
-            var attestation = authenticator.CreateAttestation();
+        // act
+        var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
 
-            // assert
-            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
-            Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
-            AssertExtensions.NotEmptyString(attestation.Credential);
-        }
+        // assert
+        SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
+        Assert.Contains("Retrieving attestation for AZURE failed. Managed identity is not enabled on this Azure function.", thrown.Message);
+    }
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestSuccessfulAzureAttestationWithClientId()
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestSuccessfulAzureFunctionsAttestationWithV2IssuerAuthentication()
+    {
+        // arrange
+        AddAzureFunctionsWithV2IssuerWiremockMappings();
+        var session = PrepareSessionForAzure(null, e =>
         {
-            // arrange
-            AddAzureBasicWithClientIdWiremockMappings();
-            var session = PrepareSessionForAzure(null, ConfigureIdentityClientId);
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+            ConfigureIdentityEndpoint(e);
+            ConfigureIdentityHeader(e);
+            ConfigureIdentityClientId(e);
+        });
+        var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
-            // act
-            var attestation = authenticator.CreateAttestation();
+        // act
+        var attestation = authenticator.CreateAttestation();
 
-            // assert
-            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
-            Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
-            AssertExtensions.NotEmptyString(attestation.Credential);
-        }
+        // assert
+        Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
+        Assert.Equal(s_TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
+        Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+        AssertExtensions.NotEmptyString(attestation.Credential);
+    }
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestSuccessfulAzureAttestationWithV2Issuer()
-        {
-            // arrange
-            AddAzureBasicV2IssuerWiremockMappings();
-            var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+    private void AddAzureBasicWiremockMappings() => AddAzureBasicWiremockMappings(_fixture.Runner);
 
-            // act
-            var attestation = authenticator.CreateAttestation();
+    internal static void AddAzureBasicWiremockMappings(WiremockRunner runner) =>
+        runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
+            new StringTransformations()
+                .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
+                .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
+        );
 
-            // assert
-            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
-            Assert.Equal(s_TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
-            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
-            AssertExtensions.NotEmptyString(attestation.Credential);
-        }
+    private void AddAzureBasicV2IssuerWiremockMappings() =>
+        _fixture.Runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
+            new StringTransformations()
+                .ThenTransform(s_accessTokenReplacement, s_JWTAccessTokenV2)
+                .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
+        );
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestFailForUnparsableTokenAttestation()
-        {
-            AddAzureUnparsableTokenWiremockMappings();
-            var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+    private void AddAzureUnparsableTokenWiremockMappings() =>
+        _fixture.Runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
+            new StringTransformations()
+                .ThenTransform(s_accessTokenReplacement, "unparsable.token")
+                .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
+        );
 
-            // act
-            var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
+    private void AddAzureFunctionsWiremockMappings() =>
+        _fixture.Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
+            new StringTransformations()
+                .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
+                .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
+                .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
+                .ThenTransform(s_identityHeaderReplacement, s_azureIdentityHeader)
+        );
 
-            // assert
-            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
-            Assert.Contains("Retrieving attestation for AZURE failed. Reading of the token failed.", thrown.Message);
-        }
+    private void AddAzureFunctionsWithV2IssuerWiremockMappings() =>
+        _fixture.Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
+            new StringTransformations()
+                .ThenTransform(s_accessTokenReplacement, s_JWTAccessTokenV2)
+                .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
+                .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
+                .ThenTransform(s_identityHeaderReplacement, s_azureIdentityHeader)
+        );
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestSuccessfulAzureFunctionsAttestations()
-        {
-            // arrange
-            AddAzureFunctionsWiremockMappings();
-            var session = PrepareSessionForAzure(null, e =>
-            {
-                ConfigureIdentityEndpoint(e);
-                ConfigureIdentityHeader(e);
-                ConfigureIdentityClientId(e);
-            });
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+    private void AddAzureFunctionsWithCustomEntraResourceWiremockMappings() =>
+        _fixture.Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
+            new StringTransformations()
+                .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
+                .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
+                .ThenTransform(s_entraResourceReplacement, s_customEntraResource)
+                .ThenTransform(s_identityHeaderReplacement, s_azureIdentityHeader)
+        );
 
-            // act
-            var attestation = authenticator.CreateAttestation();
+    private void AddAzureFunctionsWithoutClientIdWiremockMappings() =>
+        _fixture.Runner.AddMappings(s_wifAzureFunctionsNoClientIdSuccessfulMappingPath,
+            new StringTransformations()
+                .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
+                .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
+                .ThenTransform(s_identityHeaderReplacement, s_azureIdentityHeader)
+        );
 
-            // assert
-            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
-            Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
-            AssertExtensions.NotEmptyString(attestation.Credential);
-        }
+    private void AddAzureBasicWithClientIdWiremockMappings() =>
+        _fixture.Runner.AddMappings(s_wifAzureBasicWithClientIdSuccessfulMapping,
+            new StringTransformations()
+                .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
+                .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
+                .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
+        );
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestSuccessfulAzureFunctionsAttestationWithoutClientId()
-        {
-            // arrange
-            AddAzureFunctionsWithoutClientIdWiremockMappings();
-            var session = PrepareSessionForAzure(null, e =>
-            {
-                ConfigureIdentityEndpoint(e);
-                ConfigureIdentityHeader(e);
-            });
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestFailAzureAttestationWhenImpersonationIsUsed()
+    {
+        // arrange
+        var session = PrepareSessionForAzure("workload_impersonation_path=some/impersonation/path;", NoEnvironmentSetup);
+        var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
-            // act
-            var attestation = authenticator.CreateAttestation();
+        // act
+        var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
 
-            // assert
-            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
-            Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
-            AssertExtensions.NotEmptyString(attestation.Credential);
-        }
+        // assert
+        SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
+        Assert.Contains("Impersonation is not supported for Azure workload identity provider", thrown.Message);
+    }
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestSuccessfulAzureFunctionsAttestationWithCustomEntraResource()
-        {
-            // arrange
-            AddAzureFunctionsWithCustomEntraResourceWiremockMappings();
-            var session = PrepareSessionForAzure($"workload_identity_entra_resource={s_customEntraResource};", e =>
-            {
-                ConfigureIdentityEndpoint(e);
-                ConfigureIdentityHeader(e);
-                ConfigureIdentityClientId(e);
-            });
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
+    private SFSession PrepareSessionForAzure(string connectionStringSuffix,
+        Action<Mock<IEnvironmentFacade>> environmentOperationsConfigurator) =>
+        PrepareSession(
+            AttestationProvider.AZURE,
+            connectionStringSuffix,
+            environmentOperationsConfigurator,
+            SetupSystemTime,
+            SetupAwsSdkDisabled);
 
-            // act
-            var attestation = authenticator.CreateAttestation();
+    private void ConfigureIdentityEndpoint(Mock<IEnvironmentFacade> environmentOperations)
+    {
+        environmentOperations
+            .Setup(e => e.GetString(EnvVars.WifEndpoint))
+            .Returns(s_azureIdentityEndpoint);
+    }
 
-            // assert
-            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
-            Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
-            AssertExtensions.NotEmptyString(attestation.Credential);
-        }
+    private void ConfigureIdentityHeader(Mock<IEnvironmentFacade> environmentOperations)
+    {
+        environmentOperations
+            .Setup(e => e.GetString(EnvVars.WifHeader))
+            .Returns(s_azureIdentityHeader);
+    }
 
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestFailAzureFunctionsAttestationWithoutIdentityHeader()
-        {
-            // arrange
-            AddAzureFunctionsWiremockMappings();
-            var session = PrepareSessionForAzure(null, e =>
-            {
-                ConfigureIdentityEndpoint(e);
-                ConfigureIdentityClientId(e);
-            });
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
-
-            // act
-            var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
-
-            // assert
-            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
-            Assert.Contains("Retrieving attestation for AZURE failed. Managed identity is not enabled on this Azure function.", thrown.Message);
-        }
-
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestSuccessfulAzureFunctionsAttestationWithV2IssuerAuthentication()
-        {
-            // arrange
-            AddAzureFunctionsWithV2IssuerWiremockMappings();
-            var session = PrepareSessionForAzure(null, e =>
-            {
-                ConfigureIdentityEndpoint(e);
-                ConfigureIdentityHeader(e);
-                ConfigureIdentityClientId(e);
-            });
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
-
-            // act
-            var attestation = authenticator.CreateAttestation();
-
-            // assert
-            Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
-            Assert.Equal(s_TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
-            Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
-            AssertExtensions.NotEmptyString(attestation.Credential);
-        }
-
-        private void AddAzureBasicWiremockMappings() => AddAzureBasicWiremockMappings(_fixture.Runner);
-
-        internal static void AddAzureBasicWiremockMappings(WiremockRunner runner) =>
-            runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
-                new StringTransformations()
-                    .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
-                    .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
-            );
-
-        private void AddAzureBasicV2IssuerWiremockMappings() =>
-            _fixture.Runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
-                new StringTransformations()
-                    .ThenTransform(s_accessTokenReplacement, s_JWTAccessTokenV2)
-                    .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
-            );
-
-        private void AddAzureUnparsableTokenWiremockMappings() =>
-            _fixture.Runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
-                new StringTransformations()
-                    .ThenTransform(s_accessTokenReplacement, "unparsable.token")
-                    .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
-            );
-
-        private void AddAzureFunctionsWiremockMappings() =>
-            _fixture.Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
-                new StringTransformations()
-                    .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
-                    .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
-                    .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
-                    .ThenTransform(s_identityHeaderReplacement, s_azureIdentityHeader)
-            );
-
-        private void AddAzureFunctionsWithV2IssuerWiremockMappings() =>
-            _fixture.Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
-                new StringTransformations()
-                    .ThenTransform(s_accessTokenReplacement, s_JWTAccessTokenV2)
-                    .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
-                    .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
-                    .ThenTransform(s_identityHeaderReplacement, s_azureIdentityHeader)
-            );
-
-        private void AddAzureFunctionsWithCustomEntraResourceWiremockMappings() =>
-            _fixture.Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
-                new StringTransformations()
-                    .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
-                    .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
-                    .ThenTransform(s_entraResourceReplacement, s_customEntraResource)
-                    .ThenTransform(s_identityHeaderReplacement, s_azureIdentityHeader)
-            );
-
-        private void AddAzureFunctionsWithoutClientIdWiremockMappings() =>
-            _fixture.Runner.AddMappings(s_wifAzureFunctionsNoClientIdSuccessfulMappingPath,
-                new StringTransformations()
-                    .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
-                    .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
-                    .ThenTransform(s_identityHeaderReplacement, s_azureIdentityHeader)
-            );
-
-        private void AddAzureBasicWithClientIdWiremockMappings() =>
-            _fixture.Runner.AddMappings(s_wifAzureBasicWithClientIdSuccessfulMapping,
-                new StringTransformations()
-                    .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
-                    .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
-                    .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
-            );
-
-        [SFFact(SkipCondition.SkipOnJenkins)]
-        public void TestFailAzureAttestationWhenImpersonationIsUsed()
-        {
-            // arrange
-            var session = PrepareSessionForAzure("workload_impersonation_path=some/impersonation/path;", NoEnvironmentSetup);
-            var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
-
-            // act
-            var thrown = Assert.Throws<SnowflakeDbException>(() => authenticator.CreateAttestation());
-
-            // assert
-            SnowflakeDbExceptionAssert.HasErrorCode(thrown, SFError.WIF_ATTESTATION_ERROR);
-            Assert.Contains("Impersonation is not supported for Azure workload identity provider", thrown.Message);
-        }
-
-        private SFSession PrepareSessionForAzure(string connectionStringSuffix,
-            Action<Mock<IEnvironmentFacade>> environmentOperationsConfigurator) =>
-            PrepareSession(
-                AttestationProvider.AZURE,
-                connectionStringSuffix,
-                environmentOperationsConfigurator,
-                SetupSystemTime,
-                SetupAwsSdkDisabled);
-
-        private void ConfigureIdentityEndpoint(Mock<IEnvironmentFacade> environmentOperations)
-        {
-            environmentOperations
-                .Setup(e => e.GetString(EnvVars.WifEndpoint))
-                .Returns(s_azureIdentityEndpoint);
-        }
-
-        private void ConfigureIdentityHeader(Mock<IEnvironmentFacade> environmentOperations)
-        {
-            environmentOperations
-                .Setup(e => e.GetString(EnvVars.WifHeader))
-                .Returns(s_azureIdentityHeader);
-        }
-
-        private void ConfigureIdentityClientId(Mock<IEnvironmentFacade> environmentOperations)
-        {
-            environmentOperations
-                .Setup(e => e.GetString(EnvVars.WifClientId))
-                .Returns(s_azureManagedClientId);
-        }
+    private void ConfigureIdentityClientId(Mock<IEnvironmentFacade> environmentOperations)
+    {
+        environmentOperations
+            .Setup(e => e.GetString(EnvVars.WifClientId))
+            .Returns(s_azureManagedClientId);
     }
 }

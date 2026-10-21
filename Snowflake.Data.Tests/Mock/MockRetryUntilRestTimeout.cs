@@ -5,35 +5,33 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core.Extensions;
 
-namespace Snowflake.Data.Tests.Mock
+namespace Snowflake.Data.Tests.Mock;
+
+internal sealed class MockRetryUntilRestTimeoutRestRequester : RestRequester, IMockRestRequester
 {
-    internal sealed class MockRetryUntilRestTimeoutRestRequester : RestRequester, IMockRestRequester
+    private readonly bool _forceTimeoutAlsoForLoginRequests;
+
+    public MockRetryUntilRestTimeoutRestRequester(bool forceTimeoutAlsoForLoginRequests = true) : base(null)
     {
-        private readonly bool _forceTimeoutAlsoForLoginRequests;
+        _forceTimeoutAlsoForLoginRequests = forceTimeoutAlsoForLoginRequests;
+    }
 
-        public MockRetryUntilRestTimeoutRestRequester(bool forceTimeoutAlsoForLoginRequests = true) : base(null)
+    public void setHttpClient(HttpClient httpClient)
+    {
+        HttpClient = httpClient;
+    }
+
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,
+        TimeSpan restTimeout,
+        CancellationToken externalCancellationToken,
+        string sid = "")
+    {
+        if (_forceTimeoutAlsoForLoginRequests || !message.RequestUri.AbsolutePath.Equals(RestPath.SF_LOGIN_PATH))
         {
-            _forceTimeoutAlsoForLoginRequests = forceTimeoutAlsoForLoginRequests;
+            // Override the http timeout and set to 1ms to force all http request to timeout and retry
+            message.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromTicks(0));
         }
 
-        public void setHttpClient(HttpClient httpClient)
-        {
-            HttpClient = httpClient;
-        }
-
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,
-                                                              TimeSpan restTimeout,
-                                                              CancellationToken externalCancellationToken,
-                                                              string sid = "")
-        {
-            if (_forceTimeoutAlsoForLoginRequests || !message.RequestUri.AbsolutePath.Equals(RestPath.SF_LOGIN_PATH))
-            {
-                // Override the http timeout and set to 1ms to force all http request to timeout and retry
-                message.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromTicks(0));
-            }
-
-            return await base.SendAsync(message, restTimeout, externalCancellationToken).ConfigureAwait(false);
-        }
+        return await base.SendAsync(message, restTimeout, externalCancellationToken).ConfigureAwait(false);
     }
 }
-

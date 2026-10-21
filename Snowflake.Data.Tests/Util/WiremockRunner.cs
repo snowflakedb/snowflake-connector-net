@@ -11,283 +11,282 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Snowflake.Data.Log;
 
-namespace Snowflake.Data.Tests.Util
+namespace Snowflake.Data.Tests.Util;
+
+public interface IWiremockRunner : IDisposable
 {
-    public interface IWiremockRunner : IDisposable
+    string WiremockBaseHttpUrl { get; }
+    string WiremockBaseHttpsUrl { get; }
+    void Stop();
+    void ResetMapping();
+    Task ResetMappingAsync();
+    void AddMappings(string file, StringTransformations transformations = null);
+    Task<List<JToken>> GetWiremockRequestsToAsync(string urlPath, string method);
+}
+
+internal class WiremockRunner : IWiremockRunner
+{
+    internal const int DefaultHttpsPort = 1443;
+    internal const int DefaultHttpPort = 1080;
+    private const int MaxRetries = 50;
+    private const int RetryInterval = 200;
+    private const int WarmupTime = 1000;
+    private const string WiremockVersion = "3.11.0";
+    private const string WiremockJarFileSha256 = "85f47eecd54ddf6aa275c9a3ceaf8e200cad30d26b529a706dd55e3bf3a4787e"; // pragma: allowlist secret
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WiremockRunner>();
+    private static readonly string s_userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+    private static readonly string s_wiremockPath = Path.Combine(s_userProfilePath, ".m2", "repository", "org", "wiremock", "wiremock-standalone", WiremockVersion);
+    private static readonly string s_wiremockJar = $"wiremock-standalone-{WiremockVersion}.jar";
+    private static readonly string s_wiremockJarPath = Path.Combine(s_wiremockPath, s_wiremockJar);
+    private static readonly string s_wiremockOptions = $"--root-dir {Path.Combine(s_userProfilePath, ".wiremock")} " +
+                                                       "--enable-browser-proxying " +
+                                                       "--proxy-pass-through false " +
+                                                       "--https-keystore ./wiremock/ca-cert.jks " +
+                                                       "--ca-keystore ./wiremock/ca-cert.jks";
+    private static readonly string s_wiremockUrl =
+        $"https://repo1.maven.org/maven2/org/wiremock/wiremock-standalone/{WiremockVersion}/wiremock-standalone-{WiremockVersion}.jar";
+
+    private HttpClient HttpClient => _overriddenClient ?? s_httpClient2;
+    private readonly HttpClient _overriddenClient;
+    private static readonly HttpClient s_httpClient2 = new();
+    private static readonly object s_lock = new();
+
+    internal const string Host = "127.0.0.1";
+    private int HttpsPort { get; }
+    private int HttpPort { get; }
+    public bool IsAvailable { get; private set; }
+
+    public string WiremockBaseHttpsUrl => $"https://{Host}:{HttpsPort}";
+    public string WiremockBaseHttpUrl => $"http://{Host}:{HttpPort}";
+    private Process _process;
+
+    private WiremockRunner(int httpsPort, int httpPort, HttpClient httpClient = null)
     {
-        string WiremockBaseHttpUrl { get; }
-        string WiremockBaseHttpsUrl { get; }
-        void Stop();
-        void ResetMapping();
-        Task ResetMappingAsync();
-        void AddMappings(string file, StringTransformations transformations = null);
-        Task<List<JToken>> GetWiremockRequestsToAsync(string urlPath, string method);
+        HttpsPort = httpsPort;
+        HttpPort = httpPort;
+        IsAvailable = false;
+        _overriddenClient = httpClient;
     }
 
-    internal class WiremockRunner : IWiremockRunner
+    ~WiremockRunner()
     {
-        internal const int DefaultHttpsPort = 1443;
-        internal const int DefaultHttpPort = 1080;
-        private const int MaxRetries = 50;
-        private const int RetryInterval = 200;
-        private const int WarmupTime = 1000;
-        private const string WiremockVersion = "3.11.0";
-        private const string WiremockJarFileSha256 = "85f47eecd54ddf6aa275c9a3ceaf8e200cad30d26b529a706dd55e3bf3a4787e"; // pragma: allowlist secret
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WiremockRunner>();
-        private static readonly string s_userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        private static readonly string s_wiremockPath = Path.Combine(s_userProfilePath, ".m2", "repository", "org", "wiremock", "wiremock-standalone", WiremockVersion);
-        private static readonly string s_wiremockJar = $"wiremock-standalone-{WiremockVersion}.jar";
-        private static readonly string s_wiremockJarPath = Path.Combine(s_wiremockPath, s_wiremockJar);
-        private static readonly string s_wiremockOptions = $"--root-dir {Path.Combine(s_userProfilePath, ".wiremock")} " +
-                                                           "--enable-browser-proxying " +
-                                                           "--proxy-pass-through false " +
-                                                           "--https-keystore ./wiremock/ca-cert.jks " +
-                                                           "--ca-keystore ./wiremock/ca-cert.jks";
-        private static readonly string s_wiremockUrl =
-            $"https://repo1.maven.org/maven2/org/wiremock/wiremock-standalone/{WiremockVersion}/wiremock-standalone-{WiremockVersion}.jar";
+        Stop();
+    }
 
-        private HttpClient HttpClient => _overriddenClient ?? s_httpClient2;
-        private readonly HttpClient _overriddenClient;
-        private static readonly HttpClient s_httpClient2 = new();
-        private static readonly object s_lock = new();
+    public static WiremockRunner NewWiremock(string[] mappingFiles = null, int httpsPort = DefaultHttpsPort, int httpPort = DefaultHttpPort, HttpClient httpClient = null)
+    {
+        s_logger.Debug($"Starting Wiremock on host: {Host}, https port: {httpsPort}, http port: {httpPort}");
+        var runner = new WiremockRunner(httpsPort, httpPort, httpClient);
+        runner.Start();
 
-        internal const string Host = "127.0.0.1";
-        private int HttpsPort { get; }
-        private int HttpPort { get; }
-        public bool IsAvailable { get; private set; }
-
-        public string WiremockBaseHttpsUrl => $"https://{Host}:{HttpsPort}";
-        public string WiremockBaseHttpUrl => $"http://{Host}:{HttpPort}";
-        private Process _process;
-
-        private WiremockRunner(int httpsPort, int httpPort, HttpClient httpClient = null)
+        s_logger.Debug("Waiting for Wiremock startup...");
+        var retries = 0;
+        while (retries < MaxRetries)
         {
-            HttpsPort = httpsPort;
-            HttpPort = httpPort;
-            IsAvailable = false;
-            _overriddenClient = httpClient;
-        }
-
-        ~WiremockRunner()
-        {
-            Stop();
-        }
-
-        public static WiremockRunner NewWiremock(string[] mappingFiles = null, int httpsPort = DefaultHttpsPort, int httpPort = DefaultHttpPort, HttpClient httpClient = null)
-        {
-            s_logger.Debug($"Starting Wiremock on host: {Host}, https port: {httpsPort}, http port: {httpPort}");
-            var runner = new WiremockRunner(httpsPort, httpPort, httpClient);
-            runner.Start();
-
-            s_logger.Debug("Waiting for Wiremock startup...");
-            var retries = 0;
-            while (retries < MaxRetries)
+            if (runner.CheckIfResponds())
             {
-                if (runner.CheckIfResponds())
+                runner.IsAvailable = true;
+                s_logger.Debug($"Wiremock started on host: {Host}, https port: {httpsPort}, http port: {httpPort}");
+
+                if (mappingFiles != null)
                 {
-                    runner.IsAvailable = true;
-                    s_logger.Debug($"Wiremock started on host: {Host}, https port: {httpsPort}, http port: {httpPort}");
-
-                    if (mappingFiles != null)
+                    foreach (var mappingFile in mappingFiles)
                     {
-                        foreach (var mappingFile in mappingFiles)
-                        {
-                            runner.AddMappings(mappingFile);
-                        }
+                        runner.AddMappings(mappingFile);
                     }
-
-                    return runner;
                 }
-                retries++;
-                httpsPort++;
-                httpPort++;
-                Thread.Sleep(RetryInterval);
+
+                return runner;
             }
-
-            runner.Stop();
-            throw new Exception("Unable to start Wiremock. Response check retries exceeded.");
+            retries++;
+            httpsPort++;
+            httpPort++;
+            Thread.Sleep(RetryInterval);
         }
 
-        public void Dispose()
-        {
-            Stop();
-        }
+        runner.Stop();
+        throw new Exception("Unable to start Wiremock. Response check retries exceeded.");
+    }
 
-        public async Task<List<JToken>> GetWiremockRequestsToAsync(string urlPath, string method)
+    public void Dispose()
+    {
+        Stop();
+    }
+
+    public async Task<List<JToken>> GetWiremockRequestsToAsync(string urlPath, string method)
+    {
+        var requestBody = JObject.FromObject(new
         {
-            var requestBody = JObject.FromObject(new
+            urlPathPattern = $"{urlPath}.*",
+            method
+        }).ToString();
+
+        var response = await HttpClient.PostAsync($"{WiremockBaseHttpUrl}/__admin/requests/find",
+            new StringContent(requestBody, Encoding.UTF8, "application/json")).ConfigureAwait(false);
+
+        var json = JObject.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
+        return (json["requests"] as JArray)?.ToList() ?? new List<JToken>();
+    }
+
+    private bool CheckIfResponds()
+    {
+        var wiremockUri = new Uri(WiremockBaseHttpUrl + "/__admin/mappings");
+        s_logger.Debug($"Checking if Wiremock responds on: {wiremockUri}");
+        try
+        {
+            var response = Task.Run(async () => await HttpClient.GetAsync(wiremockUri, CancellationToken.None).ConfigureAwait(false)).Result;
+            s_logger.Debug($"Wiremock responded with status code: {response.StatusCode}");
+
+            return response.IsSuccessStatusCode;
+        }
+        catch (AggregateException)
+        {
+            return false;
+        }
+    }
+
+    private void Start()
+    {
+        DownloadWiremockIfRequired();
+        var javaArgs = $"-jar {Path.Combine(s_wiremockPath, s_wiremockJar)} --port {HttpPort} --https-port {HttpsPort} {s_wiremockOptions}";
+        s_logger.Debug($"Running command: java {javaArgs}");
+        try
+        {
+            _process = new Process
             {
-                urlPathPattern = $"{urlPath}.*",
-                method
-            }).ToString();
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "java",
+                    Arguments = javaArgs,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                }
+            };
+            _process.Start();
 
-            var response = await HttpClient.PostAsync($"{WiremockBaseHttpUrl}/__admin/requests/find",
-                new StringContent(requestBody, Encoding.UTF8, "application/json")).ConfigureAwait(false);
-
-            var json = JObject.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
-            return (json["requests"] as JArray)?.ToList() ?? new List<JToken>();
+            // Let it warmup for a moment to catch any exception during startup
+            Thread.Sleep(WarmupTime);
+            if (_process is { HasExited: true })
+            {
+                throw new Exception($"Process is not running. Output: {_process.StandardError.ReadToEnd()}");
+            }
         }
-
-        private bool CheckIfResponds()
+        catch (Exception e)
         {
-            var wiremockUri = new Uri(WiremockBaseHttpUrl + "/__admin/mappings");
-            s_logger.Debug($"Checking if Wiremock responds on: {wiremockUri}");
+            s_logger.Error($"Unable to start Wiremock: {e.Message}");
+            throw;
+        }
+    }
+
+    public void Stop()
+    {
+        if (_process != null && !_process.HasExited)
+        {
             try
             {
-                var response = Task.Run(async () => await HttpClient.GetAsync(wiremockUri, CancellationToken.None).ConfigureAwait(false)).Result;
-                s_logger.Debug($"Wiremock responded with status code: {response.StatusCode}");
-
-                return response.IsSuccessStatusCode;
+                _process.Kill();
             }
-            catch (AggregateException)
+            catch (InvalidOperationException)
             {
-                return false;
+                // Process already exited, ignore
             }
+            _process = null;
         }
+        IsAvailable = false;
+    }
 
-        private void Start()
-        {
-            DownloadWiremockIfRequired();
-            var javaArgs = $"-jar {Path.Combine(s_wiremockPath, s_wiremockJar)} --port {HttpPort} --https-port {HttpsPort} {s_wiremockOptions}";
-            s_logger.Debug($"Running command: java {javaArgs}");
-            try
-            {
-                _process = new Process
-                {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = "java",
-                        Arguments = javaArgs,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                    }
-                };
-                _process.Start();
+    public async Task ResetMappingAsync()
+    {
+        var response = await HttpClient.PostAsync(WiremockBaseHttpUrl + "/__admin/reset", null).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+        response = await HttpClient.DeleteAsync($"{WiremockBaseHttpUrl}/__admin/requests").ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+    }
 
-                // Let it warmup for a moment to catch any exception during startup
-                Thread.Sleep(WarmupTime);
-                if (_process is { HasExited: true })
-                {
-                    throw new Exception($"Process is not running. Output: {_process.StandardError.ReadToEnd()}");
-                }
-            }
-            catch (Exception e)
-            {
-                s_logger.Error($"Unable to start Wiremock: {e.Message}");
-                throw;
-            }
-        }
+    public void ResetMapping() => ResetMappingAsync().GetAwaiter().GetResult();
 
-        public void Stop()
-        {
-            if (_process != null && !_process.HasExited)
-            {
-                try
-                {
-                    _process.Kill();
-                }
-                catch (InvalidOperationException)
-                {
-                    // Process already exited, ignore
-                }
-                _process = null;
-            }
-            IsAvailable = false;
-        }
-
-        public async Task ResetMappingAsync()
-        {
-            var response = await HttpClient.PostAsync(WiremockBaseHttpUrl + "/__admin/reset", null).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-            response = await HttpClient.DeleteAsync($"{WiremockBaseHttpUrl}/__admin/requests").ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-        }
-
-        public void ResetMapping() => ResetMappingAsync().GetAwaiter().GetResult();
-
-        public void AddMappings(string file, StringTransformations transformations = null)
-        {
-            s_logger.Debug($"Adding wiremock mappings from {file}");
-            var fileContent = File.ReadAllText(file);
-            var transformedContent = (transformations ?? StringTransformations.NoTransformationsInstance)
-                .Transform(fileContent)
-                .Replace("'", "\'");
-            var payload = new StringContent(transformedContent, Encoding.UTF8, "application/json");
-            var response = Task.Run(async () => await HttpClient.PostAsync(
+    public void AddMappings(string file, StringTransformations transformations = null)
+    {
+        s_logger.Debug($"Adding wiremock mappings from {file}");
+        var fileContent = File.ReadAllText(file);
+        var transformedContent = (transformations ?? StringTransformations.NoTransformationsInstance)
+            .Transform(fileContent)
+            .Replace("'", "\'");
+        var payload = new StringContent(transformedContent, Encoding.UTF8, "application/json");
+        var response = Task.Run(async () => await HttpClient.PostAsync(
                 WiremockBaseHttpUrl + "/__admin/mappings/import",
                 payload).ConfigureAwait(false)
-            ).Result;
+        ).Result;
 
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"Unable to add Wiremock mapping. Response status code: {response.StatusCode}");
-            }
-
-            s_logger.Debug($"Wiremock mappings added from {file}");
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception($"Unable to add Wiremock mapping. Response status code: {response.StatusCode}");
         }
 
-        private void DownloadWiremockIfRequired()
+        s_logger.Debug($"Wiremock mappings added from {file}");
+    }
+
+    private void DownloadWiremockIfRequired()
+    {
+        lock (s_lock)
         {
-            lock (s_lock)
+            if (File.Exists(s_wiremockJarPath))
+            {
+                if (CheckFileSHA256(s_wiremockJarPath, WiremockJarFileSha256))
+                {
+                    s_logger.Debug($"Wiremock v{WiremockVersion} exists.");
+                    return;
+                }
+                else
+                {
+                    s_logger.Debug($"Wiremock v{WiremockVersion} exists but is corrupted. Deleting and downloading again.");
+                    File.Delete(s_wiremockJarPath);
+                }
+            }
+
+            try
+            {
+                s_logger.Debug($"Wiremock v{WiremockVersion} not found. Starting download.");
+                Directory.CreateDirectory(s_wiremockPath);
+                var response = HttpClient.GetAsync($"{s_wiremockUrl}");
+                Task.Run(async () => await response.Result.Content.CopyToAsync(new FileStream(s_wiremockJarPath, FileMode.CreateNew)).ConfigureAwait(false)).Wait();
+                s_logger.Debug($"Wiremock v{WiremockVersion} has been downloaded into {s_wiremockPath}.");
+            }
+            catch (Exception)
             {
                 if (File.Exists(s_wiremockJarPath))
                 {
-                    if (CheckFileSHA256(s_wiremockJarPath, WiremockJarFileSha256))
-                    {
-                        s_logger.Debug($"Wiremock v{WiremockVersion} exists.");
-                        return;
-                    }
-                    else
-                    {
-                        s_logger.Debug($"Wiremock v{WiremockVersion} exists but is corrupted. Deleting and downloading again.");
-                        File.Delete(s_wiremockJarPath);
-                    }
+                    File.Delete(s_wiremockJarPath);
                 }
 
-                try
-                {
-                    s_logger.Debug($"Wiremock v{WiremockVersion} not found. Starting download.");
-                    Directory.CreateDirectory(s_wiremockPath);
-                    var response = HttpClient.GetAsync($"{s_wiremockUrl}");
-                    Task.Run(async () => await response.Result.Content.CopyToAsync(new FileStream(s_wiremockJarPath, FileMode.CreateNew)).ConfigureAwait(false)).Wait();
-                    s_logger.Debug($"Wiremock v{WiremockVersion} has been downloaded into {s_wiremockPath}.");
-                }
-                catch (Exception)
-                {
-                    if (File.Exists(s_wiremockJarPath))
-                    {
-                        File.Delete(s_wiremockJarPath);
-                    }
-
-                    throw;
-                }
-            }
-        }
-
-        private static bool CheckFileSHA256(string filePath, string expectedShaValue)
-        {
-            byte[] bytes;
-            try
-            {
-                bytes = File.ReadAllBytes(filePath);
-            }
-            catch (IOException exception)
-            {
-                if (exception.Message.Contains("The process cannot access the file") &&
-                    exception.Message.Contains("because it is being used by another process"))
-                {
-                    s_logger.Debug("Could not read wiremock jar file content because it was used by another process. Assuming the file is not corrupted.");
-                    return true;
-                }
                 throw;
             }
-            using (var sha256Encoder = SHA256.Create())
+        }
+    }
+
+    private static bool CheckFileSHA256(string filePath, string expectedShaValue)
+    {
+        byte[] bytes;
+        try
+        {
+            bytes = File.ReadAllBytes(filePath);
+        }
+        catch (IOException exception)
+        {
+            if (exception.Message.Contains("The process cannot access the file") &&
+                exception.Message.Contains("because it is being used by another process"))
             {
-                byte[] sha256Hash = sha256Encoder.ComputeHash(bytes);
-                var hash = BitConverter.ToString(sha256Hash).Replace("-", string.Empty);
-                return expectedShaValue.Equals(hash, StringComparison.OrdinalIgnoreCase);
+                s_logger.Debug("Could not read wiremock jar file content because it was used by another process. Assuming the file is not corrupted.");
+                return true;
             }
+            throw;
+        }
+        using (var sha256Encoder = SHA256.Create())
+        {
+            byte[] sha256Hash = sha256Encoder.ComputeHash(bytes);
+            var hash = BitConverter.ToString(sha256Hash).Replace("-", string.Empty);
+            return expectedShaValue.Equals(hash, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

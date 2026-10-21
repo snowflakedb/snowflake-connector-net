@@ -8,107 +8,106 @@ using System.Threading.Tasks;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;
 
-namespace Snowflake.Data.Tests.Mock
+namespace Snowflake.Data.Tests.Mock;
+
+class MockSnowflakeDbConnection : SnowflakeDbConnection
 {
-    class MockSnowflakeDbConnection : SnowflakeDbConnection
+    private readonly Func<SFSession, IAuthenticator> _authenticatorFactory;
+    private SFLogger logger = SFLoggerFactory.GetLogger<MockSnowflakeDbConnection>();
+
+    private readonly IMockRestRequester _restRequester;
+
+    public MockSnowflakeDbConnection(IMockRestRequester requester)
     {
-        private readonly Func<SFSession, IAuthenticator> _authenticatorFactory;
-        private SFLogger logger = SFLoggerFactory.GetLogger<MockSnowflakeDbConnection>();
+        _restRequester = requester;
+    }
 
-        private readonly IMockRestRequester _restRequester;
+    public MockSnowflakeDbConnection(Func<SFSession, IAuthenticator> authenticatorFactory) : this()
+    {
+        _authenticatorFactory = authenticatorFactory;
+    }
 
-        public MockSnowflakeDbConnection(IMockRestRequester requester)
+    public MockSnowflakeDbConnection()
+    {
+        // Default requester
+        _restRequester = new MockRetryUntilRestTimeoutRestRequester();
+    }
+
+    public override void Open()
+    {
+        logger.Debug("Open Connection.");
+        SetMockSession();
+        try
         {
-            _restRequester = requester;
+            SfSession.Open();
         }
-
-        public MockSnowflakeDbConnection(Func<SFSession, IAuthenticator> authenticatorFactory) : this()
+        catch (Exception e)
         {
-            _authenticatorFactory = authenticatorFactory;
+            // Otherwise when Dispose() is called, the close request would timeout.
+            _connectionState = System.Data.ConnectionState.Closed;
+            logger.Error("Unable to connect", e);
+            throw;
         }
+        OnSessionEstablished();
+    }
 
-        public MockSnowflakeDbConnection()
-        {
-            // Default requester
-            _restRequester = new MockRetryUntilRestTimeoutRestRequester();
-        }
+    public override Task OpenAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.Register(() => { _connectionState = ConnectionState.Closed; });
 
-        public override void Open()
-        {
-            logger.Debug("Open Connection.");
-            SetMockSession();
-            try
+        SetMockSession();
+
+        return SfSession.OpenAsync(cancellationToken).ContinueWith(
+            previousTask =>
             {
-                SfSession.Open();
-            }
-            catch (Exception e)
-            {
-                // Otherwise when Dispose() is called, the close request would timeout.
-                _connectionState = System.Data.ConnectionState.Closed;
-                logger.Error("Unable to connect", e);
-                throw;
-            }
-            OnSessionEstablished();
-        }
-
-        public override Task OpenAsync(CancellationToken cancellationToken)
-        {
-            cancellationToken.Register(() => { _connectionState = ConnectionState.Closed; });
-
-            SetMockSession();
-
-            return SfSession.OpenAsync(cancellationToken).ContinueWith(
-                previousTask =>
+                if (previousTask.IsFaulted)
                 {
-                    if (previousTask.IsFaulted)
-                    {
-                        // Exception from SfSession.OpenAsync
-                        Exception sfSessionEx = previousTask.Exception;
-                        _connectionState = ConnectionState.Closed;
-                        logger.Error("Unable to connect", sfSessionEx);
-                        throw //sfSessionEx.InnerException;
+                    // Exception from SfSession.OpenAsync
+                    Exception sfSessionEx = previousTask.Exception;
+                    _connectionState = ConnectionState.Closed;
+                    logger.Error("Unable to connect", sfSessionEx);
+                    throw //sfSessionEx.InnerException;
                         new SnowflakeDbException(sfSessionEx, SFError.INTERNAL_ERROR, args: "Unable to connect");
-                    }
-                    if (previousTask.IsCanceled)
-                    {
-                        _connectionState = ConnectionState.Closed;
-                        logger.Debug("Connection canceled");
-                        throw new SnowflakeDbException(SFError.REQUEST_TIMEOUT, args: ["N/A", "N/A"]);
-                    }
-                    else
-                    {
-                        OnSessionEstablished();
-                    }
-                },
-                cancellationToken);
+                }
+                if (previousTask.IsCanceled)
+                {
+                    _connectionState = ConnectionState.Closed;
+                    logger.Debug("Connection canceled");
+                    throw new SnowflakeDbException(SFError.REQUEST_TIMEOUT, args: ["N/A", "N/A"]);
+                }
+                else
+                {
+                    OnSessionEstablished();
+                }
+            },
+            cancellationToken);
 
-        }
+    }
 
-        private void SetMockSession()
+    private void SetMockSession()
+    {
+        var sessionContext = new SessionPropertiesContext
         {
-            var sessionContext = new SessionPropertiesContext
-            {
-                Password = Password,
-                Passcode = Passcode
-            };
-            SfSession = new SFSession(ConnectionString, sessionContext, EasyLoggingStarter.Instance, _restRequester);
+            Password = Password,
+            Passcode = Passcode
+        };
+        SfSession = new SFSession(ConnectionString, sessionContext, EasyLoggingStarter.Instance, _restRequester);
 
-            if (_authenticatorFactory != null)
-                SfSession.ReplaceAuthenticator(_authenticatorFactory.Invoke(SfSession));
+        if (_authenticatorFactory != null)
+            SfSession.ReplaceAuthenticator(_authenticatorFactory.Invoke(SfSession));
 
-            _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
+        _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
 
-            _connectionState = ConnectionState.Connecting;
-        }
+        _connectionState = ConnectionState.Connecting;
+    }
 
-        private void OnSessionEstablished()
-        {
-            _connectionState = ConnectionState.Open;
-        }
+    private void OnSessionEstablished()
+    {
+        _connectionState = ConnectionState.Open;
+    }
 
-        protected override bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)
-        {
-            return false;
-        }
+    protected override bool CanReuseSession(TransactionRollbackStatus transactionRollbackStatus)
+    {
+        return false;
     }
 }

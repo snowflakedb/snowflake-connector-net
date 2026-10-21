@@ -17,800 +17,799 @@ using Snowflake.Data.Core.Session;
 using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Telemetry;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core;
+
+internal class SFSession
 {
-    internal class SFSession
+    private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSession>();
+
+    private static readonly Regex APPLICATION_REGEX = new Regex(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
+
+    private const string SF_AUTHORIZATION_SNOWFLAKE_FMT = "Snowflake Token=\"{0}\"";
+
+    private const int _defaultQueryContextCacheSize = 5;
+
+    internal string sessionId;
+
+    internal string sessionToken;
+
+    internal string masterToken;
+
+    internal IRestRequester restRequester { get; private set; }
+
+    private Lazy<IAuthenticator> _authenticator;
+
+    /// <summary>
+    /// TLS protocols requested by MINTLS/MAXTLS. Cloud storage SDKs do not accept them through
+    /// their own configuration objects, so they are handed the protocols separately.
+    /// </summary>
+    internal SslProtocols TlsProtocols { get; private set; }
+
+    /// <summary>
+    /// True when MINTLS/MAXTLS came from the connection string rather than from the defaults.
+    /// </summary>
+    internal bool TlsProtocolsExplicitlyRequested { get; private set; }
+
+    internal SFSessionProperties properties;
+
+    internal string database;
+    internal string schema;
+    internal string role;
+    internal string warehouse;
+    internal bool sessionPropertiesChanged = false;
+
+    internal string serverVersion;
+
+    private readonly ConnectionPoolConfig _poolConfig;
+
+    internal TimeSpan connectionTimeout => _poolConfig.ConnectionTimeout;
+
+    internal bool isHeartBeatEnabled;
+
+    private string arrayBindStage = null;
+    private int arrayBindStageThreshold = 0;
+    internal int masterValidityInSeconds = 0;
+
+    private readonly EasyLoggingStarter _easyLoggingStarter = EasyLoggingStarter.Instance;
+
+    private long _startTime = 0;
+
+    private long _timeSinceLastRenew = 0;
+
+    internal string ConnectionString { get; }
+
+    internal SessionPropertiesContext PropertiesContext { get; }
+
+    internal SFSessionHttpClientProperties ClientProperties { get; }
+
+    private QueryContextCache _queryContextCache = new QueryContextCache(_defaultQueryContextCacheSize);
+
+    private int _queryContextCacheSize = _defaultQueryContextCacheSize;
+
+    private bool _disableQueryContextCache = false;
+
+    internal bool _disableConsoleLogin;
+
+    private string _user;
+
+    internal readonly QueryLoggingConfig _queryLoggingConfig;
+
+    private volatile bool _invalidatedForPooling;
+
+    public bool GetPooling() => _poolConfig.PoolingEnabled;
+
+    public void SetPooling(bool isEnabled)
     {
-        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSession>();
+        _poolConfig.PoolingEnabled = isEnabled;
+    }
 
-        private static readonly Regex APPLICATION_REGEX = new Regex(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
+    internal String _queryTag;
 
-        private const string SF_AUTHORIZATION_SNOWFLAKE_FMT = "Snowflake Token=\"{0}\"";
+    internal SecureString _mfaToken;
 
-        private const int _defaultQueryContextCacheSize = 5;
+    private bool _isClientTelemetryEnabled;
 
-        internal string sessionId;
+    private bool _honorSessionTimezone = false;
 
-        internal string sessionToken;
+    private readonly bool _allowNumberOverflowAsStringEnabled = false;
 
-        internal string masterToken;
+    private volatile TimeZoneInfo _cachedSessionTimezone;
 
-        internal IRestRequester restRequester { get; private set; }
-
-        private Lazy<IAuthenticator> _authenticator;
-
-        /// <summary>
-        /// TLS protocols requested by MINTLS/MAXTLS. Cloud storage SDKs do not accept them through
-        /// their own configuration objects, so they are handed the protocols separately.
-        /// </summary>
-        internal SslProtocols TlsProtocols { get; private set; }
-
-        /// <summary>
-        /// True when MINTLS/MAXTLS came from the connection string rather than from the defaults.
-        /// </summary>
-        internal bool TlsProtocolsExplicitlyRequested { get; private set; }
-
-        internal SFSessionProperties properties;
-
-        internal string database;
-        internal string schema;
-        internal string role;
-        internal string warehouse;
-        internal bool sessionPropertiesChanged = false;
-
-        internal string serverVersion;
-
-        private readonly ConnectionPoolConfig _poolConfig;
-
-        internal TimeSpan connectionTimeout => _poolConfig.ConnectionTimeout;
-
-        internal bool isHeartBeatEnabled;
-
-        private string arrayBindStage = null;
-        private int arrayBindStageThreshold = 0;
-        internal int masterValidityInSeconds = 0;
-
-        private readonly EasyLoggingStarter _easyLoggingStarter = EasyLoggingStarter.Instance;
-
-        private long _startTime = 0;
-
-        private long _timeSinceLastRenew = 0;
-
-        internal string ConnectionString { get; }
-
-        internal SessionPropertiesContext PropertiesContext { get; }
-
-        internal SFSessionHttpClientProperties ClientProperties { get; }
-
-        private QueryContextCache _queryContextCache = new QueryContextCache(_defaultQueryContextCacheSize);
-
-        private int _queryContextCacheSize = _defaultQueryContextCacheSize;
-
-        private bool _disableQueryContextCache = false;
-
-        internal bool _disableConsoleLogin;
-
-        private string _user;
-
-        internal readonly QueryLoggingConfig _queryLoggingConfig;
-
-        private volatile bool _invalidatedForPooling;
-
-        public bool GetPooling() => _poolConfig.PoolingEnabled;
-
-        public void SetPooling(bool isEnabled)
+    internal void ProcessLoginResponse(LoginResponse authnResponse)
+    {
+        if (authnResponse.success)
         {
-            _poolConfig.PoolingEnabled = isEnabled;
-        }
-
-        internal String _queryTag;
-
-        internal SecureString _mfaToken;
-
-        private bool _isClientTelemetryEnabled;
-
-        private bool _honorSessionTimezone = false;
-
-        private readonly bool _allowNumberOverflowAsStringEnabled = false;
-
-        private volatile TimeZoneInfo _cachedSessionTimezone;
-
-        internal void ProcessLoginResponse(LoginResponse authnResponse)
-        {
-            if (authnResponse.success)
+            sessionId = authnResponse.data.sessionId;
+            sessionToken = authnResponse.data.token;
+            masterToken = authnResponse.data.masterToken;
+            database = authnResponse.data.authResponseSessionInfo.databaseName;
+            schema = authnResponse.data.authResponseSessionInfo.schemaName;
+            role = authnResponse.data.authResponseSessionInfo.roleName;
+            warehouse = authnResponse.data.authResponseSessionInfo.warehouseName;
+            serverVersion = authnResponse.data.serverVersion;
+            masterValidityInSeconds = authnResponse.data.masterValidityInSeconds;
+            UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
+            if (_disableQueryContextCache)
             {
-                sessionId = authnResponse.data.sessionId;
-                sessionToken = authnResponse.data.token;
-                masterToken = authnResponse.data.masterToken;
-                database = authnResponse.data.authResponseSessionInfo.databaseName;
-                schema = authnResponse.data.authResponseSessionInfo.schemaName;
-                role = authnResponse.data.authResponseSessionInfo.roleName;
-                warehouse = authnResponse.data.authResponseSessionInfo.warehouseName;
-                serverVersion = authnResponse.data.serverVersion;
-                masterValidityInSeconds = authnResponse.data.masterValidityInSeconds;
-                UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
-                if (_disableQueryContextCache)
-                {
-                    logger.Debug("Query context cache disabled.");
-                }
-
-                if (bool.Parse(properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]) &&
-                    !string.IsNullOrEmpty(_user) && !string.IsNullOrEmpty(authnResponse.data.idToken))
-                {
-                    SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(
-                        BuildTokenCacheKey(TokenType.IdToken), authnResponse.data.idToken);
-                }
-                if (!string.IsNullOrEmpty(authnResponse.data.mfaToken))
-                {
-                    _mfaToken = SecureStringHelper.Encode(authnResponse.data.mfaToken);
-                    SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(
-                        BuildTokenCacheKey(TokenType.MFAToken), authnResponse.data.mfaToken);
-                }
-                logger.Debug($"Session opened: {sessionId}");
-                _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                _timeSinceLastRenew = _startTime;
-                SnowflakeTelemetryModule.Register(this);
+                logger.Debug("Query context cache disabled.");
             }
-            else
+
+            if (bool.Parse(properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]) &&
+                !string.IsNullOrEmpty(_user) && !string.IsNullOrEmpty(authnResponse.data.idToken))
             {
-                SnowflakeDbException e = new SnowflakeDbException
-                    (SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-                    authnResponse.code,
-                    authnResponse.message,
-                    "");
-
-                logger.Error("Authentication failed", e);
-
-                if (SFMFATokenErrors.IsInvalidMFATokenContinueError(e.ErrorCode))
-                {
-                    logger.Info($"Unable to use cached MFA token is expired or invalid. Fails with the {e.Message}. ", e);
-                    _mfaToken = null;
-                    SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(
-                        BuildTokenCacheKey(TokenType.MFAToken));
-                }
-                throw e;
+                SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(
+                    BuildTokenCacheKey(TokenType.IdToken), authnResponse.data.idToken);
             }
-        }
-
-        internal readonly Dictionary<SFSessionParameter, Object> ParameterMap;
-
-        internal Uri BuildLoginUrl()
-        {
-            var queryParams = new Dictionary<string, string>();
-            queryParams[RestParams.SF_QUERY_WAREHOUSE] = properties.TryGetValue(SFSessionProperty.WAREHOUSE, out var warehouseValue) ? warehouseValue : "";
-            queryParams[RestParams.SF_QUERY_DB] = properties.TryGetValue(SFSessionProperty.DB, out var dbValue) ? dbValue : "";
-            queryParams[RestParams.SF_QUERY_SCHEMA] = properties.TryGetValue(SFSessionProperty.SCHEMA, out var schemaValue) ? schemaValue : "";
-            queryParams[RestParams.SF_QUERY_ROLE] = properties.TryGetValue(SFSessionProperty.ROLE, out var roleName) ? roleName : "";
-            queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
-            queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
-
-            var loginUrl = BuildUri(RestPath.SF_LOGIN_PATH, queryParams);
-            return loginUrl;
-        }
-
-        /// <summary>
-        ///     Constructor
-        /// </summary>
-        /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
-        internal SFSession(
-            String connectionString,
-            SessionPropertiesContext sessionContext) : this(connectionString, sessionContext, EasyLoggingStarter.Instance)
-        {
-        }
-
-        internal SFSession(
-            String connectionString,
-            SessionPropertiesContext sessionContext,
-            EasyLoggingStarter easyLoggingStarter)
-        {
-            _easyLoggingStarter = easyLoggingStarter;
-            ConnectionString = connectionString;
-            PropertiesContext = sessionContext;
-            properties = SFSessionProperties.ParseConnectionString(ConnectionString, sessionContext);
-            _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
-            _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
-            _honorSessionTimezone = bool.Parse(properties[SFSessionProperty.HONORSESSIONTIMEZONE]);
-            _allowNumberOverflowAsStringEnabled = bool.Parse(properties[SFSessionProperty.ALLOW_NUMBER_OVERFLOW_AS_STRING]);
-            properties.TryGetValue(SFSessionProperty.USER, out _user);
-            _isClientTelemetryEnabled = !bool.TryParse(properties[SFSessionProperty.CLIENT_TELEMETRY_ENABLED], out var clientTelemetryFlag) || clientTelemetryFlag;
-            ValidateApplicationName(properties);
-            try
+            if (!string.IsNullOrEmpty(authnResponse.data.mfaToken))
             {
-                ClientProperties = GetHttpClientConfig("default", out var httpClientConfig);
-                _authenticator = new Lazy<IAuthenticator>(() => AuthenticatorFactory.GetAuthenticator(this));
-                TlsProtocols = httpClientConfig.GetRequestedTlsProtocolsRange();
-                TlsProtocolsExplicitlyRequested = httpClientConfig.TlsProtocolsExplicitlyRequested;
-                ParameterMap = new Dictionary<SFSessionParameter, object>
-                {
-                    [SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] = ClientProperties._validateDefaultParameters,
-                    [SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE] = ClientProperties._clientSessionKeepAlive,
-                    [SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL] = ClientProperties._clientStoreTemporaryCredential
-                };
-                var httpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
-                restRequester = new RestRequester(httpClient);
-                _poolConfig = ClientProperties.BuildConnectionPoolConfig();
-
-                properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
-                _easyLoggingStarter.Init(easyLoggingConfigFile);
-                properties.TryGetValue(SFSessionProperty.QUERY_TAG, out _queryTag);
-                QueryLoggingConfig.ValidateAndExtract(properties, logger, out _queryLoggingConfig);
-
-                if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var _authenticatorType) &&
-                    MFACacheAuthenticator.IsMfaCacheAuthenticator(_authenticatorType))
-                {
-                    _mfaToken = SecureStringHelper.Encode(
-                        SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(BuildTokenCacheKey(TokenType.MFAToken)));
-                }
+                _mfaToken = SecureStringHelper.Encode(authnResponse.data.mfaToken);
+                SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(
+                    BuildTokenCacheKey(TokenType.MFAToken), authnResponse.data.mfaToken);
             }
-            catch (SnowflakeDbException e)
+            logger.Debug($"Session opened: {sessionId}");
+            _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            _timeSinceLastRenew = _startTime;
+            SnowflakeTelemetryModule.Register(this);
+        }
+        else
+        {
+            SnowflakeDbException e = new SnowflakeDbException
+            (SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
+                authnResponse.code,
+                authnResponse.message,
+                "");
+
+            logger.Error("Authentication failed", e);
+
+            if (SFMFATokenErrors.IsInvalidMFATokenContinueError(e.ErrorCode))
             {
-                logger.Error("Unable to initialize session ", e);
-                throw;
+                logger.Info($"Unable to use cached MFA token is expired or invalid. Fails with the {e.Message}. ", e);
+                _mfaToken = null;
+                SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(
+                    BuildTokenCacheKey(TokenType.MFAToken));
             }
-            catch (Exception e)
+            throw e;
+        }
+    }
+
+    internal readonly Dictionary<SFSessionParameter, Object> ParameterMap;
+
+    internal Uri BuildLoginUrl()
+    {
+        var queryParams = new Dictionary<string, string>();
+        queryParams[RestParams.SF_QUERY_WAREHOUSE] = properties.TryGetValue(SFSessionProperty.WAREHOUSE, out var warehouseValue) ? warehouseValue : "";
+        queryParams[RestParams.SF_QUERY_DB] = properties.TryGetValue(SFSessionProperty.DB, out var dbValue) ? dbValue : "";
+        queryParams[RestParams.SF_QUERY_SCHEMA] = properties.TryGetValue(SFSessionProperty.SCHEMA, out var schemaValue) ? schemaValue : "";
+        queryParams[RestParams.SF_QUERY_ROLE] = properties.TryGetValue(SFSessionProperty.ROLE, out var roleName) ? roleName : "";
+        queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
+        queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
+
+        var loginUrl = BuildUri(RestPath.SF_LOGIN_PATH, queryParams);
+        return loginUrl;
+    }
+
+    /// <summary>
+    ///     Constructor
+    /// </summary>
+    /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
+    internal SFSession(
+        String connectionString,
+        SessionPropertiesContext sessionContext) : this(connectionString, sessionContext, EasyLoggingStarter.Instance)
+    {
+    }
+
+    internal SFSession(
+        String connectionString,
+        SessionPropertiesContext sessionContext,
+        EasyLoggingStarter easyLoggingStarter)
+    {
+        _easyLoggingStarter = easyLoggingStarter;
+        ConnectionString = connectionString;
+        PropertiesContext = sessionContext;
+        properties = SFSessionProperties.ParseConnectionString(ConnectionString, sessionContext);
+        _disableQueryContextCache = bool.Parse(properties[SFSessionProperty.DISABLEQUERYCONTEXTCACHE]);
+        _disableConsoleLogin = bool.Parse(properties[SFSessionProperty.DISABLE_CONSOLE_LOGIN]);
+        _honorSessionTimezone = bool.Parse(properties[SFSessionProperty.HONORSESSIONTIMEZONE]);
+        _allowNumberOverflowAsStringEnabled = bool.Parse(properties[SFSessionProperty.ALLOW_NUMBER_OVERFLOW_AS_STRING]);
+        properties.TryGetValue(SFSessionProperty.USER, out _user);
+        _isClientTelemetryEnabled = !bool.TryParse(properties[SFSessionProperty.CLIENT_TELEMETRY_ENABLED], out var clientTelemetryFlag) || clientTelemetryFlag;
+        ValidateApplicationName(properties);
+        try
+        {
+            ClientProperties = GetHttpClientConfig("default", out var httpClientConfig);
+            _authenticator = new Lazy<IAuthenticator>(() => AuthenticatorFactory.GetAuthenticator(this));
+            TlsProtocols = httpClientConfig.GetRequestedTlsProtocolsRange();
+            TlsProtocolsExplicitlyRequested = httpClientConfig.TlsProtocolsExplicitlyRequested;
+            ParameterMap = new Dictionary<SFSessionParameter, object>
             {
-                logger.Error("Unable to initialize session ", e);
-                throw new SnowflakeDbException(e,
-                            SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-                            SFError.INVALID_CONNECTION_STRING,
-                            "Unable to initialize session ");
-            }
-        }
-
-        private SFSessionHttpClientProperties GetHttpClientConfig(string clientType, out HttpClientConfig httpClientConfig)
-        {
-            var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
-            httpClientConfig = extractedProperties.BuildHttpClientConfig(clientType);
-            return extractedProperties;
-        }
-
-        internal HttpClientConfig GetHttpClientConfig(string clientType)
-        {
-            _ = GetHttpClientConfig(clientType, out var httpClientConfig);
-            return httpClientConfig;
-        }
-
-        internal SFSession(String connectionString, SessionPropertiesContext sessionContext, IMockRestRequester restRequester) : this(connectionString, sessionContext, EasyLoggingStarter.Instance, restRequester)
-        {
-        }
-
-        internal SFSession(String connectionString, SessionPropertiesContext sessionContext, EasyLoggingStarter easyLoggingStarter, IMockRestRequester mockRestRequester) : this(connectionString, sessionContext, easyLoggingStarter)
-        {
-            // Inject the HttpClient to use with the Mock requester
-            mockRestRequester.setHttpClient(restRequester.GetHttpClient());
-            // Override the Rest requester with the mock for testing
-            restRequester = mockRestRequester;
-        }
-
-        internal bool IsPoolingEnabledForConnectionCache()
-        {
-            var authenticator = properties[SFSessionProperty.AUTHENTICATOR];
-            var forbiddenAuthenticators = new Func<string, bool>[]
-            {
-                OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
-                OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator,
-                ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator
+                [SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] = ClientProperties._validateDefaultParameters,
+                [SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE] = ClientProperties._clientSessionKeepAlive,
+                [SFSessionParameter.CLIENT_STORE_TEMPORARY_CREDENTIAL] = ClientProperties._clientStoreTemporaryCredential
             };
-            return !forbiddenAuthenticators.Any(f => f.Invoke(authenticator));
-        }
+            var httpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
+            restRequester = new RestRequester(httpClient);
+            _poolConfig = ClientProperties.BuildConnectionPoolConfig();
 
-        private void ValidateApplicationName(SFSessionProperties properties)
-        {
-            // If there is an "application" setting, verify that it matches the expect pattern
-            properties.TryGetValue(SFSessionProperty.APPLICATION, out string applicationNameSetting);
-            if (!String.IsNullOrEmpty(applicationNameSetting) && !APPLICATION_REGEX.IsMatch(applicationNameSetting))
+            properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
+            _easyLoggingStarter.Init(easyLoggingConfigFile);
+            properties.TryGetValue(SFSessionProperty.QUERY_TAG, out _queryTag);
+            QueryLoggingConfig.ValidateAndExtract(properties, logger, out _queryLoggingConfig);
+
+            if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var _authenticatorType) &&
+                MFACacheAuthenticator.IsMfaCacheAuthenticator(_authenticatorType))
             {
-                throw new SnowflakeDbException(
-                    SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-                    SFError.INVALID_CONNECTION_PARAMETER_VALUE,
-                    applicationNameSetting,
-                    SFSessionProperty.APPLICATION.ToString()
-                );
+                _mfaToken = SecureStringHelper.Encode(
+                    SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(BuildTokenCacheKey(TokenType.MFAToken)));
             }
         }
-
-        internal Uri BuildUri(string path, Dictionary<string, string> queryParams = null)
+        catch (SnowflakeDbException e)
         {
-            UriBuilder uriBuilder = new UriBuilder();
-            uriBuilder.Scheme = properties[SFSessionProperty.SCHEME];
-            uriBuilder.Host = properties[SFSessionProperty.HOST];
-            uriBuilder.Port = int.Parse(properties[SFSessionProperty.PORT]);
-            uriBuilder.Path = path;
+            logger.Error("Unable to initialize session ", e);
+            throw;
+        }
+        catch (Exception e)
+        {
+            logger.Error("Unable to initialize session ", e);
+            throw new SnowflakeDbException(e,
+                SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
+                SFError.INVALID_CONNECTION_STRING,
+                "Unable to initialize session ");
+        }
+    }
 
-            if (queryParams != null && queryParams.Any())
-            {
-                var queryString = HttpUtility.ParseQueryString(string.Empty);
-                foreach (var kvp in queryParams)
-                    queryString[kvp.Key] = kvp.Value;
+    private SFSessionHttpClientProperties GetHttpClientConfig(string clientType, out HttpClientConfig httpClientConfig)
+    {
+        var extractedProperties = SFSessionHttpClientProperties.ExtractAndValidate(properties);
+        httpClientConfig = extractedProperties.BuildHttpClientConfig(clientType);
+        return extractedProperties;
+    }
 
-                uriBuilder.Query = queryString.ToString();
-            }
+    internal HttpClientConfig GetHttpClientConfig(string clientType)
+    {
+        _ = GetHttpClientConfig(clientType, out var httpClientConfig);
+        return httpClientConfig;
+    }
 
-            return uriBuilder.Uri;
+    internal SFSession(String connectionString, SessionPropertiesContext sessionContext, IMockRestRequester restRequester) : this(connectionString, sessionContext, EasyLoggingStarter.Instance, restRequester)
+    {
+    }
+
+    internal SFSession(String connectionString, SessionPropertiesContext sessionContext, EasyLoggingStarter easyLoggingStarter, IMockRestRequester mockRestRequester) : this(connectionString, sessionContext, easyLoggingStarter)
+    {
+        // Inject the HttpClient to use with the Mock requester
+        mockRestRequester.setHttpClient(restRequester.GetHttpClient());
+        // Override the Rest requester with the mock for testing
+        restRequester = mockRestRequester;
+    }
+
+    internal bool IsPoolingEnabledForConnectionCache()
+    {
+        var authenticator = properties[SFSessionProperty.AUTHENTICATOR];
+        var forbiddenAuthenticators = new Func<string, bool>[]
+        {
+            OAuthAuthorizationCodeAuthenticator.IsOAuthAuthorizationCodeAuthenticator,
+            OAuthClientCredentialsAuthenticator.IsOAuthClientCredentialsAuthenticator,
+            ProgrammaticAccessTokenAuthenticator.IsProgrammaticAccessTokenAuthenticator
+        };
+        return !forbiddenAuthenticators.Any(f => f.Invoke(authenticator));
+    }
+
+    private void ValidateApplicationName(SFSessionProperties properties)
+    {
+        // If there is an "application" setting, verify that it matches the expect pattern
+        properties.TryGetValue(SFSessionProperty.APPLICATION, out string applicationNameSetting);
+        if (!String.IsNullOrEmpty(applicationNameSetting) && !APPLICATION_REGEX.IsMatch(applicationNameSetting))
+        {
+            throw new SnowflakeDbException(
+                SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
+                SFError.INVALID_CONNECTION_PARAMETER_VALUE,
+                applicationNameSetting,
+                SFSessionProperty.APPLICATION.ToString()
+            );
+        }
+    }
+
+    internal Uri BuildUri(string path, Dictionary<string, string> queryParams = null)
+    {
+        UriBuilder uriBuilder = new UriBuilder();
+        uriBuilder.Scheme = properties[SFSessionProperty.SCHEME];
+        uriBuilder.Host = properties[SFSessionProperty.HOST];
+        uriBuilder.Port = int.Parse(properties[SFSessionProperty.PORT]);
+        uriBuilder.Path = path;
+
+        if (queryParams != null && queryParams.Any())
+        {
+            var queryString = HttpUtility.ParseQueryString(string.Empty);
+            foreach (var kvp in queryParams)
+                queryString[kvp.Key] = kvp.Value;
+
+            uriBuilder.Query = queryString.ToString();
         }
 
-        internal virtual void Open()
-        {
-            logger.Debug("Open Session");
-            _authenticator.Value.Authenticate();
-        }
+        return uriBuilder.Uri;
+    }
 
-        internal virtual async Task OpenAsync(CancellationToken cancellationToken)
-        {
-            logger.Debug("Open Session Async");
-            await _authenticator.Value.AuthenticateAsync(cancellationToken).ConfigureAwait(false);
-        }
+    internal virtual void Open()
+    {
+        logger.Debug("Open Session");
+        _authenticator.Value.Authenticate();
+    }
 
-        internal void close()
+    internal virtual async Task OpenAsync(CancellationToken cancellationToken)
+    {
+        logger.Debug("Open Session Async");
+        await _authenticator.Value.AuthenticateAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    internal void close()
+    {
+        // Nothing to do if the session is not open
+        if (!IsEstablished()) return;
+        logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
+        stopHeartBeatForThisSession();
+        SnowflakeTelemetryModule.Unregister(sessionId);
+        var closeSessionRequest = PrepareCloseSessionRequest();
+        PostCloseSession(closeSessionRequest, restRequester);
+        sessionToken = null;
+    }
+
+    internal void CloseNonBlocking()
+    {
+        // Nothing to do if the session is not open
+        if (!IsEstablished()) return;
+        logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
+        stopHeartBeatForThisSession();
+        var closeSessionRequest = PrepareCloseSessionRequest();
+        Task.Run(() =>
         {
-            // Nothing to do if the session is not open
-            if (!IsEstablished()) return;
-            logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
-            stopHeartBeatForThisSession();
             SnowflakeTelemetryModule.Unregister(sessionId);
-            var closeSessionRequest = PrepareCloseSessionRequest();
             PostCloseSession(closeSessionRequest, restRequester);
-            sessionToken = null;
+        });
+        sessionToken = null;
+    }
+
+    internal async Task CloseAsync(CancellationToken cancellationToken)
+    {
+        // Nothing to do if the session is not open
+        if (!IsEstablished()) return;
+        logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
+        stopHeartBeatForThisSession();
+        await SnowflakeTelemetryModule.UnregisterAsync(sessionId, cancellationToken).ConfigureAwait(false);
+        var closeSessionRequest = PrepareCloseSessionRequest();
+
+        logger.Debug($"Closing session async");
+        var response = await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
+        if (!response.success)
+        {
+            logger.Error($"Failed to close session {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
         }
 
-        internal void CloseNonBlocking()
-        {
-            // Nothing to do if the session is not open
-            if (!IsEstablished()) return;
-            logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
-            stopHeartBeatForThisSession();
-            var closeSessionRequest = PrepareCloseSessionRequest();
-            Task.Run(() =>
-            {
-                SnowflakeTelemetryModule.Unregister(sessionId);
-                PostCloseSession(closeSessionRequest, restRequester);
-            });
-            sessionToken = null;
-        }
+        logger.Debug($"Session closed: {sessionId}");
+        sessionToken = null;
+    }
 
-        internal async Task CloseAsync(CancellationToken cancellationToken)
+    private static void PostCloseSession(SFRestRequest closeSessionRequest, IRestRequester restRequester)
+    {
+        try
         {
-            // Nothing to do if the session is not open
-            if (!IsEstablished()) return;
-            logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
-            stopHeartBeatForThisSession();
-            await SnowflakeTelemetryModule.UnregisterAsync(sessionId, cancellationToken).ConfigureAwait(false);
-            var closeSessionRequest = PrepareCloseSessionRequest();
-
-            logger.Debug($"Closing session async");
-            var response = await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
+            logger.Debug($"Closing session");
+            var response = restRequester.Post<CloseResponse>(closeSessionRequest);
             if (!response.success)
             {
-                logger.Error($"Failed to close session {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
+                logger.Error($"Failed to close session: {closeSessionRequest.SessionId}, error ignored. Code: {response.code} Message: {response.message}");
             }
 
-            logger.Debug($"Session closed: {sessionId}");
-            sessionToken = null;
+            logger.Debug($"Session closed: {closeSessionRequest.SessionId}");
+        }
+        catch (Exception)
+        {
+            logger.Error($"Failed to close session: {closeSessionRequest.SessionId}, because of exception.");
+            throw;
+        }
+    }
+
+    private SFRestRequest PrepareCloseSessionRequest()
+    {
+        var queryParams = new Dictionary<string, string>();
+        queryParams[RestParams.SF_QUERY_SESSION_DELETE] = "true";
+        queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
+        queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
+
+        return new SFRestRequest
+        {
+            Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
+            authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken),
+            SessionId = sessionId
+        };
+    }
+
+    internal bool IsEstablished() => sessionToken != null;
+
+    internal void renewSession()
+    {
+        logger.Info("Renew the session.");
+        var response = restRequester.Post<RenewSessionResponse>(getRenewSessionRequest());
+        if (!response.success)
+        {
+            SnowflakeDbException e = new SnowflakeDbException("",
+                response.code, response.message, sessionId);
+            logger.Error($"Renew session (ID: {sessionId}) failed", e);
+            throw e;
+        }
+        else
+        {
+            _timeSinceLastRenew = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            sessionToken = response.data.sessionToken;
+            masterToken = response.data.masterToken;
+            SnowflakeTelemetryModule.Register(this);
+        }
+    }
+
+    internal async Task renewSessionAsync(CancellationToken cancellationToken)
+    {
+        logger.Info("Renew the session.");
+        var response =
+            await restRequester.PostAsync<RenewSessionResponse>(
+                getRenewSessionRequest(),
+                cancellationToken
+            ).ConfigureAwait(false);
+        if (!response.success)
+        {
+            SnowflakeDbException e = new SnowflakeDbException("",
+                response.code, response.message, sessionId);
+            logger.Error($"Renew session (ID: {sessionId}) failed", e);
+            throw e;
+        }
+        else
+        {
+            sessionToken = response.data.sessionToken;
+            masterToken = response.data.masterToken;
+            SnowflakeTelemetryModule.Register(this);
+        }
+    }
+
+    internal SFRestRequest getRenewSessionRequest()
+    {
+        RenewSessionRequest postBody = new RenewSessionRequest()
+        {
+            oldSessionToken = this.sessionToken,
+            requestType = "RENEW"
+        };
+
+        var parameters = new Dictionary<string, string>
+        {
+            { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
+            { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
+        };
+
+        var result = new SFRestRequest
+        {
+            jsonBody = postBody,
+            Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH, parameters),
+            authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
+            _isLogin = true
+        };
+        result.RestTimeout = Timeout.InfiniteTimeSpan;
+        return result;
+    }
+
+    internal void UpdateSessionParameterMap(List<NameValueParameter> parameterList)
+    {
+        logger.Debug("Update parameter map");
+        // with HTAP parameter removal parameters might not returned
+        // query response
+        if (parameterList is null)
+        {
+            return;
         }
 
-        private static void PostCloseSession(SFRestRequest closeSessionRequest, IRestRequester restRequester)
+        foreach (NameValueParameter parameter in parameterList)
         {
+            if (Enum.TryParse(parameter.name, out SFSessionParameter parameterName))
+            {
+                ParameterMap[parameterName] = parameter.value;
+                if (parameterName == SFSessionParameter.TIMEZONE)
+                {
+                    _cachedSessionTimezone = null;
+                }
+            }
+        }
+        if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
+        {
+            string val = ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD].ToString();
+            this.arrayBindStageThreshold = Int32.Parse(val);
+        }
+        if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE))
+        {
+            bool keepAlive = Boolean.Parse(ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE].ToString());
+            if (keepAlive)
+            {
+                startHeartBeatForThisSession();
+            }
+            else
+            {
+                stopHeartBeatForThisSession();
+            }
+        }
+        if ((!_disableQueryContextCache) &&
+            (ParameterMap.ContainsKey(SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE)))
+        {
+            string val = ParameterMap[SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE].ToString();
+            _queryContextCacheSize = Int32.Parse(val);
+            _queryContextCache.SetCapacity(_queryContextCacheSize);
+        }
+
+        if (ParameterMap.TryGetValue(SFSessionParameter.CLIENT_TELEMETRY_ENABLED, out var clientTelemetryEnabledObj) && bool.TryParse(clientTelemetryEnabledObj.ToString(), out var clientTelemetryEnabled))
+        {
+            _isClientTelemetryEnabled = clientTelemetryEnabled;
+        }
+    }
+
+    internal void ClearQueryContextCache()
+    {
+        if (!_disableQueryContextCache)
+        {
+            _queryContextCache.ClearCacheSafely();
+        }
+    }
+
+    internal void UpdateQueryContextCache(ResponseQueryContext queryContext)
+    {
+        if (!_disableQueryContextCache)
+        {
+            _queryContextCache.Update(queryContext);
+        }
+    }
+
+    internal RequestQueryContext GetQueryContextRequest()
+    {
+        if (_disableQueryContextCache)
+        {
+            return null;
+        }
+        return _queryContextCache.GetQueryContextRequest();
+    }
+
+    internal TimeZoneInfo GetSessionTimezone()
+    {
+        if (!_honorSessionTimezone)
+        {
+            return TimeZoneInfo.Local;
+        }
+
+        var cached = _cachedSessionTimezone;
+        if (cached != null)
+        {
+            return cached;
+        }
+
+        var resolved = ResolveSessionTimezone();
+        _cachedSessionTimezone = resolved;
+        return resolved;
+    }
+
+    internal bool IsAllowNumberOverflowAsStringEnabled() => _allowNumberOverflowAsStringEnabled;
+
+    private TimeZoneInfo ResolveSessionTimezone()
+    {
+        if (ParameterMap.TryGetValue(SFSessionParameter.TIMEZONE, out var value))
+        {
+            var timezoneString = value.ToString();
             try
             {
-                logger.Debug($"Closing session");
-                var response = restRequester.Post<CloseResponse>(closeSessionRequest);
-                if (!response.success)
+                return TimeZoneConverter.TZConvert.GetTimeZoneInfo(timezoneString);
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                logger.Warn($"Session timezone '{timezoneString}' not found, falling back to local time");
+                return TimeZoneInfo.Local;
+            }
+        }
+        return TimeZoneInfo.Local;
+    }
+
+    internal void UpdateSessionProperties(QueryExecResponseData responseData)
+    {
+        // with HTAP session metadata removal database/schema might be not returned in query result
+        UpdateSessionProperty(ref database, responseData.finalDatabaseName);
+        UpdateSessionProperty(ref schema, responseData.finalSchemaName);
+        UpdateSessionProperty(ref role, responseData.finalRoleName);
+        UpdateSessionProperty(ref warehouse, responseData.finalWarehouseName);
+    }
+
+    internal void UpdateSessionProperty(ref string initialSessionValue, string finalSessionValue)
+    {
+        // with HTAP session metadata removal database/schema might be not returned in query result
+        if (!string.IsNullOrEmpty(finalSessionValue))
+        {
+            bool quoted = false;
+            string unquotedFinalValue = UnquoteJson(finalSessionValue, ref quoted);
+            if (!string.IsNullOrEmpty(initialSessionValue))
+            {
+                quoted |= initialSessionValue.StartsWith("\"");
+                if (!string.Equals(initialSessionValue, unquotedFinalValue, quoted ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
                 {
-                    logger.Error($"Failed to close session: {closeSessionRequest.SessionId}, error ignored. Code: {response.code} Message: {response.message}");
+                    sessionPropertiesChanged = true;
+                    initialSessionValue = unquotedFinalValue;
                 }
-
-                logger.Debug($"Session closed: {closeSessionRequest.SessionId}");
             }
-            catch (Exception)
+            else // null session value gets populated and is not treated as a session property change
             {
-                logger.Error($"Failed to close session: {closeSessionRequest.SessionId}, because of exception.");
-                throw;
+                initialSessionValue = unquotedFinalValue;
             }
         }
+    }
 
-        private SFRestRequest PrepareCloseSessionRequest()
+    private static string UnquoteJson(string value, ref bool unquoted)
+    {
+        if (value is null)
+            return value;
+        unquoted = value.Length >= 4 && value.StartsWith("\\\"") && value.EndsWith("\\\"");
+        return unquoted ? value.Replace("\\\"", "\"") : value;
+    }
+
+    internal bool SessionPropertiesChanged => sessionPropertiesChanged;
+
+    internal void startHeartBeatForThisSession()
+    {
+        if (!this.isHeartBeatEnabled)
         {
-            var queryParams = new Dictionary<string, string>();
-            queryParams[RestParams.SF_QUERY_SESSION_DELETE] = "true";
-            queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
-            queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
-
-            return new SFRestRequest
+            HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
+            if (this.masterValidityInSeconds == 0)
             {
-                Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
-                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken),
-                SessionId = sessionId
-            };
+                //In case server doesnot provide the default timeout
+                var DEFAULT_TIMEOUT_IN_SECOND = 14400;
+                this.masterValidityInSeconds = DEFAULT_TIMEOUT_IN_SECOND;
+            }
+            heartBeatBg.addConnection(this, this.masterValidityInSeconds);
+            this.isHeartBeatEnabled = true;
+        }
+    }
+    internal void stopHeartBeatForThisSession()
+    {
+        if (this.isHeartBeatEnabled)
+        {
+            HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
+            heartBeatBg.removeConnection(this);
+            this.isHeartBeatEnabled = false;
         }
 
-        internal bool IsEstablished() => sessionToken != null;
+    }
 
-        internal void renewSession()
+    public string GetArrayBindStage()
+    {
+        return arrayBindStage;
+    }
+
+    public void SetArrayBindStage(string arrayBindStage)
+    {
+        this.arrayBindStage = string.Format("{0}.{1}.{2}", this.database, this.schema, arrayBindStage);
+    }
+
+    public int GetArrayBindStageThreshold()
+    {
+        return this.arrayBindStageThreshold;
+    }
+
+    public void SetArrayBindStageThreshold(int arrayBindStageThreshold)
+    {
+        this.arrayBindStageThreshold = arrayBindStageThreshold;
+    }
+
+    internal void heartbeat()
+    {
+        logger.Debug("heartbeat");
+
+        bool retry = false;
+        if (IsEstablished())
         {
-            logger.Info("Renew the session.");
-            var response = restRequester.Post<RenewSessionResponse>(getRenewSessionRequest());
-            if (!response.success)
+            do
             {
-                SnowflakeDbException e = new SnowflakeDbException("",
-                    response.code, response.message, sessionId);
-                logger.Error($"Renew session (ID: {sessionId}) failed", e);
-                throw e;
-            }
-            else
-            {
-                _timeSinceLastRenew = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                sessionToken = response.data.sessionToken;
-                masterToken = response.data.masterToken;
-                SnowflakeTelemetryModule.Register(this);
-            }
-        }
-
-        internal async Task renewSessionAsync(CancellationToken cancellationToken)
-        {
-            logger.Info("Renew the session.");
-            var response =
-                    await restRequester.PostAsync<RenewSessionResponse>(
-                        getRenewSessionRequest(),
-                        cancellationToken
-                    ).ConfigureAwait(false);
-            if (!response.success)
-            {
-                SnowflakeDbException e = new SnowflakeDbException("",
-                    response.code, response.message, sessionId);
-                logger.Error($"Renew session (ID: {sessionId}) failed", e);
-                throw e;
-            }
-            else
-            {
-                sessionToken = response.data.sessionToken;
-                masterToken = response.data.masterToken;
-                SnowflakeTelemetryModule.Register(this);
-            }
-        }
-
-        internal SFRestRequest getRenewSessionRequest()
-        {
-            RenewSessionRequest postBody = new RenewSessionRequest()
-            {
-                oldSessionToken = this.sessionToken,
-                requestType = "RENEW"
-            };
-
-            var parameters = new Dictionary<string, string>
+                var parameters = new Dictionary<string, string>
                 {
                     { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
                     { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
                 };
 
-            var result = new SFRestRequest
-            {
-                jsonBody = postBody,
-                Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH, parameters),
-                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
-                _isLogin = true
-            };
-            result.RestTimeout = Timeout.InfiniteTimeSpan;
-            return result;
-        }
-
-        internal void UpdateSessionParameterMap(List<NameValueParameter> parameterList)
-        {
-            logger.Debug("Update parameter map");
-            // with HTAP parameter removal parameters might not returned
-            // query response
-            if (parameterList is null)
-            {
-                return;
-            }
-
-            foreach (NameValueParameter parameter in parameterList)
-            {
-                if (Enum.TryParse(parameter.name, out SFSessionParameter parameterName))
+                var heartBeatSessionRequest = new SFRestRequest
                 {
-                    ParameterMap[parameterName] = parameter.value;
-                    if (parameterName == SFSessionParameter.TIMEZONE)
-                    {
-                        _cachedSessionTimezone = null;
-                    }
+                    Url = BuildUri(RestPath.SF_SESSION_HEARTBEAT_PATH, parameters),
+                    authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken),
+                    RestTimeout = Timeout.InfiniteTimeSpan
+                };
+
+                NullDataResponse response = null;
+                try
+                {
+                    response = restRequester.Post<NullDataResponse>(heartBeatSessionRequest);
                 }
-            }
-            if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
-            {
-                string val = ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD].ToString();
-                this.arrayBindStageThreshold = Int32.Parse(val);
-            }
-            if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE))
-            {
-                bool keepAlive = Boolean.Parse(ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE].ToString());
-                if (keepAlive)
+                catch (HttpRequestException ex)
                 {
-                    startHeartBeatForThisSession();
+                    logger.Error($"heartbeat HTTP request failed for session ID: {sessionId}.", ex);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    logger.Error($"heartbeat request failed for session ID: {sessionId}.", ex);
+                    return;
+                }
+
+                logger.Debug("heartbeat response=" + response);
+                if (response.success)
+                {
+                    logger.Debug("SFSession::heartbeat success, session token did not expire.");
                 }
                 else
                 {
-                    stopHeartBeatForThisSession();
-                }
-            }
-            if ((!_disableQueryContextCache) &&
-                (ParameterMap.ContainsKey(SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE)))
-            {
-                string val = ParameterMap[SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE].ToString();
-                _queryContextCacheSize = Int32.Parse(val);
-                _queryContextCache.SetCapacity(_queryContextCacheSize);
-            }
-
-            if (ParameterMap.TryGetValue(SFSessionParameter.CLIENT_TELEMETRY_ENABLED, out var clientTelemetryEnabledObj) && bool.TryParse(clientTelemetryEnabledObj.ToString(), out var clientTelemetryEnabled))
-            {
-                _isClientTelemetryEnabled = clientTelemetryEnabled;
-            }
-        }
-
-        internal void ClearQueryContextCache()
-        {
-            if (!_disableQueryContextCache)
-            {
-                _queryContextCache.ClearCacheSafely();
-            }
-        }
-
-        internal void UpdateQueryContextCache(ResponseQueryContext queryContext)
-        {
-            if (!_disableQueryContextCache)
-            {
-                _queryContextCache.Update(queryContext);
-            }
-        }
-
-        internal RequestQueryContext GetQueryContextRequest()
-        {
-            if (_disableQueryContextCache)
-            {
-                return null;
-            }
-            return _queryContextCache.GetQueryContextRequest();
-        }
-
-        internal TimeZoneInfo GetSessionTimezone()
-        {
-            if (!_honorSessionTimezone)
-            {
-                return TimeZoneInfo.Local;
-            }
-
-            var cached = _cachedSessionTimezone;
-            if (cached != null)
-            {
-                return cached;
-            }
-
-            var resolved = ResolveSessionTimezone();
-            _cachedSessionTimezone = resolved;
-            return resolved;
-        }
-
-        internal bool IsAllowNumberOverflowAsStringEnabled() => _allowNumberOverflowAsStringEnabled;
-
-        private TimeZoneInfo ResolveSessionTimezone()
-        {
-            if (ParameterMap.TryGetValue(SFSessionParameter.TIMEZONE, out var value))
-            {
-                var timezoneString = value.ToString();
-                try
-                {
-                    return TimeZoneConverter.TZConvert.GetTimeZoneInfo(timezoneString);
-                }
-                catch (TimeZoneNotFoundException)
-                {
-                    logger.Warn($"Session timezone '{timezoneString}' not found, falling back to local time");
-                    return TimeZoneInfo.Local;
-                }
-            }
-            return TimeZoneInfo.Local;
-        }
-
-        internal void UpdateSessionProperties(QueryExecResponseData responseData)
-        {
-            // with HTAP session metadata removal database/schema might be not returned in query result
-            UpdateSessionProperty(ref database, responseData.finalDatabaseName);
-            UpdateSessionProperty(ref schema, responseData.finalSchemaName);
-            UpdateSessionProperty(ref role, responseData.finalRoleName);
-            UpdateSessionProperty(ref warehouse, responseData.finalWarehouseName);
-        }
-
-        internal void UpdateSessionProperty(ref string initialSessionValue, string finalSessionValue)
-        {
-            // with HTAP session metadata removal database/schema might be not returned in query result
-            if (!string.IsNullOrEmpty(finalSessionValue))
-            {
-                bool quoted = false;
-                string unquotedFinalValue = UnquoteJson(finalSessionValue, ref quoted);
-                if (!string.IsNullOrEmpty(initialSessionValue))
-                {
-                    quoted |= initialSessionValue.StartsWith("\"");
-                    if (!string.Equals(initialSessionValue, unquotedFinalValue, quoted ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
+                    if (response.IsSessionExpired())
                     {
-                        sessionPropertiesChanged = true;
-                        initialSessionValue = unquotedFinalValue;
-                    }
-                }
-                else // null session value gets populated and is not treated as a session property change
-                {
-                    initialSessionValue = unquotedFinalValue;
-                }
-            }
-        }
-
-        private static string UnquoteJson(string value, ref bool unquoted)
-        {
-            if (value is null)
-                return value;
-            unquoted = value.Length >= 4 && value.StartsWith("\\\"") && value.EndsWith("\\\"");
-            return unquoted ? value.Replace("\\\"", "\"") : value;
-        }
-
-        internal bool SessionPropertiesChanged => sessionPropertiesChanged;
-
-        internal void startHeartBeatForThisSession()
-        {
-            if (!this.isHeartBeatEnabled)
-            {
-                HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
-                if (this.masterValidityInSeconds == 0)
-                {
-                    //In case server doesnot provide the default timeout
-                    var DEFAULT_TIMEOUT_IN_SECOND = 14400;
-                    this.masterValidityInSeconds = DEFAULT_TIMEOUT_IN_SECOND;
-                }
-                heartBeatBg.addConnection(this, this.masterValidityInSeconds);
-                this.isHeartBeatEnabled = true;
-            }
-        }
-        internal void stopHeartBeatForThisSession()
-        {
-            if (this.isHeartBeatEnabled)
-            {
-                HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
-                heartBeatBg.removeConnection(this);
-                this.isHeartBeatEnabled = false;
-            }
-
-        }
-
-        public string GetArrayBindStage()
-        {
-            return arrayBindStage;
-        }
-
-        public void SetArrayBindStage(string arrayBindStage)
-        {
-            this.arrayBindStage = string.Format("{0}.{1}.{2}", this.database, this.schema, arrayBindStage);
-        }
-
-        public int GetArrayBindStageThreshold()
-        {
-            return this.arrayBindStageThreshold;
-        }
-
-        public void SetArrayBindStageThreshold(int arrayBindStageThreshold)
-        {
-            this.arrayBindStageThreshold = arrayBindStageThreshold;
-        }
-
-        internal void heartbeat()
-        {
-            logger.Debug("heartbeat");
-
-            bool retry = false;
-            if (IsEstablished())
-            {
-                do
-                {
-                    var parameters = new Dictionary<string, string>
+                        logger.Debug($"SFSession ::heartbeat Session ID: {sessionId} session token expired and retry heartbeat");
+                        try
                         {
-                            { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
-                            { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
-                        };
-
-                    var heartBeatSessionRequest = new SFRestRequest
-                    {
-                        Url = BuildUri(RestPath.SF_SESSION_HEARTBEAT_PATH, parameters),
-                        authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken),
-                        RestTimeout = Timeout.InfiniteTimeSpan
-                    };
-
-                    NullDataResponse response = null;
-                    try
-                    {
-                        response = restRequester.Post<NullDataResponse>(heartBeatSessionRequest);
-                    }
-                    catch (HttpRequestException ex)
-                    {
-                        logger.Error($"heartbeat HTTP request failed for session ID: {sessionId}.", ex);
-                        return;
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Error($"heartbeat request failed for session ID: {sessionId}.", ex);
-                        return;
-                    }
-
-                    logger.Debug("heartbeat response=" + response);
-                    if (response.success)
-                    {
-                        logger.Debug("SFSession::heartbeat success, session token did not expire.");
+                            renewSession();
+                            retry = true;
+                            continue;
+                        }
+                        catch (Exception ex)
+                        {
+                            // Since we don't lock the heart beat queue when sending
+                            // the heart beat, it's possible that the session get
+                            // closed when sending renew request and caused exception
+                            // thrown from renewSession(), simply ignore that
+                            logger.Error($"renew session (ID: {sessionId}) failed.", ex);
+                        }
                     }
                     else
                     {
-                        if (response.IsSessionExpired())
-                        {
-                            logger.Debug($"SFSession ::heartbeat Session ID: {sessionId} session token expired and retry heartbeat");
-                            try
-                            {
-                                renewSession();
-                                retry = true;
-                                continue;
-                            }
-                            catch (Exception ex)
-                            {
-                                // Since we don't lock the heart beat queue when sending
-                                // the heart beat, it's possible that the session get
-                                // closed when sending renew request and caused exception
-                                // thrown from renewSession(), simply ignore that
-                                logger.Error($"renew session (ID: {sessionId}) failed.", ex);
-                            }
-                        }
-                        else
-                        {
-                            logger.Error($"heartbeat failed for session ID: {sessionId}.");
-                        }
+                        logger.Error($"heartbeat failed for session ID: {sessionId}.");
                     }
-                    retry = false;
-                } while (retry);
-            }
+                }
+                retry = false;
+            } while (retry);
         }
-
-        internal virtual bool IsNotOpen()
-        {
-            return _startTime == 0;
-        }
-
-        internal virtual bool IsExpired(TimeSpan timeout, long utcTimeInMillis)
-        {
-            var hasEverBeenOpened = !IsNotOpen();
-            return hasEverBeenOpened && TimeoutHelper.IsExpired(_timeSinceLastRenew, utcTimeInMillis, timeout);
-        }
-
-        internal long GetStartTime() => _startTime;
-
-        internal void SetStartTime(long startTime)
-        {
-            _startTime = startTime;
-            _timeSinceLastRenew = _startTime;
-        }
-
-        internal void ReplaceAuthenticator(IAuthenticator replacementAuthenticator) =>
-            _authenticator = new Lazy<IAuthenticator>(() => replacementAuthenticator);
-
-        internal IAuthenticator GetAuthenticator() => _authenticator.Value;
-
-        internal void InvalidateForPooling()
-        {
-            if (_invalidatedForPooling)
-                return;
-            logger.Info($"Session {sessionId} invalidated for pooling due to authentication failure or session being destroyed server-side.");
-            _invalidatedForPooling = true;
-        }
-
-        internal virtual bool IsInvalidatedForPooling() => _invalidatedForPooling;
-
-        internal virtual bool IsClientTelemetryEnabled() => !string.IsNullOrEmpty(sessionId) && _isClientTelemetryEnabled;
-
-        private string BuildTokenCacheKey(TokenType tokenType) =>
-            SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
-                TokenType: tokenType,
-                Idp: "",
-                SnowflakeUrl: properties[SFSessionProperty.HOST],
-                Username: properties[SFSessionProperty.USER],
-                Role: ""));
     }
+
+    internal virtual bool IsNotOpen()
+    {
+        return _startTime == 0;
+    }
+
+    internal virtual bool IsExpired(TimeSpan timeout, long utcTimeInMillis)
+    {
+        var hasEverBeenOpened = !IsNotOpen();
+        return hasEverBeenOpened && TimeoutHelper.IsExpired(_timeSinceLastRenew, utcTimeInMillis, timeout);
+    }
+
+    internal long GetStartTime() => _startTime;
+
+    internal void SetStartTime(long startTime)
+    {
+        _startTime = startTime;
+        _timeSinceLastRenew = _startTime;
+    }
+
+    internal void ReplaceAuthenticator(IAuthenticator replacementAuthenticator) =>
+        _authenticator = new Lazy<IAuthenticator>(() => replacementAuthenticator);
+
+    internal IAuthenticator GetAuthenticator() => _authenticator.Value;
+
+    internal void InvalidateForPooling()
+    {
+        if (_invalidatedForPooling)
+            return;
+        logger.Info($"Session {sessionId} invalidated for pooling due to authentication failure or session being destroyed server-side.");
+        _invalidatedForPooling = true;
+    }
+
+    internal virtual bool IsInvalidatedForPooling() => _invalidatedForPooling;
+
+    internal virtual bool IsClientTelemetryEnabled() => !string.IsNullOrEmpty(sessionId) && _isClientTelemetryEnabled;
+
+    private string BuildTokenCacheKey(TokenType tokenType) =>
+        SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
+            TokenType: tokenType,
+            Idp: "",
+            SnowflakeUrl: properties[SFSessionProperty.HOST],
+            Username: properties[SFSessionProperty.USER],
+            Role: ""));
 }

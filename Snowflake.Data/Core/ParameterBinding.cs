@@ -1,15 +1,14 @@
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core;
+
+internal class BindingDTO
 {
-    internal class BindingDTO
+    public BindingDTO(string type, object value)
     {
-        public BindingDTO(string type, object value)
-        {
-            this.type = type;
-            this.value = value;
-        }
-
-        public string type { get; set; }
-
-        public object value { get; set; }
+        this.type = type;
+        this.value = value;
     }
+
+    public string type { get; set; }
+
+    public object value { get; set; }
 }

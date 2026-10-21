@@ -1,9 +1,8 @@
 using System;
 
-namespace Snowflake.Data.Tests.Client
+namespace Snowflake.Data.Tests.Client;
+
+public class DateTimeOffsetWrapper
 {
-    public class DateTimeOffsetWrapper
-    {
-        public DateTimeOffset Value { get; set; }
-    }
+    public DateTimeOffset Value { get; set; }
 }

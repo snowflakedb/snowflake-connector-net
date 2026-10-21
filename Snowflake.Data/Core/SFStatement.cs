@@ -13,352 +13,521 @@ using Snowflake.Data.Core.FileTransfer;
 using Snowflake.Data.Logger;
 using static System.Int32;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core;
+
+/// <summary>
+/// The status types of the query.
+/// </summary>
+public enum QueryStatus
 {
-    /// <summary>
-    /// The status types of the query.
-    /// </summary>
-    public enum QueryStatus
+    [StringAttr(value = "NO_DATA")]
+    NoData,
+    [StringAttr(value = "RUNNING")]
+    Running,
+    [StringAttr(value = "ABORTING")]
+    Aborting,
+    [StringAttr(value = "SUCCESS")]
+    Success,
+    [StringAttr(value = "FAILED_WITH_ERROR")]
+    FailedWithError,
+    [StringAttr(value = "ABORTED")]
+    Aborted,
+    [StringAttr(value = "QUEUED")]
+    Queued,
+    [StringAttr(value = "FAILED_WITH_INCIDENT")]
+    FailedWithIncident,
+    [StringAttr(value = "DISCONNECTED")]
+    Disconnected,
+    [StringAttr(value = "RESUMING_WAREHOUSE")]
+    ResumingWarehouse,
+    // purposeful typo
+    [StringAttr(value = "QUEUED_REPARING_WAREHOUSE")]
+    QueuedReparingWarehouse,
+    [StringAttr(value = "RESTARTED")]
+    Restarted,
+    [StringAttr(value = "BLOCKED")]
+    Blocked,
+}
+
+class StringAttr : Attribute
+{
+    public string value { get; set; }
+}
+
+internal static class QueryStatusExtensions
+{
+    private static readonly Dictionary<string, QueryStatus> s_queryStatusMap = Enum.GetValues(typeof(QueryStatus))
+        .Cast<QueryStatus>()
+        .ToDictionary(v => v.GetAttribute<StringAttr>().value, v => v, StringComparer.OrdinalIgnoreCase);
+
+    internal static QueryStatus GetQueryStatusByStringValue(string stringValue)
     {
-        [StringAttr(value = "NO_DATA")]
-        NoData,
-        [StringAttr(value = "RUNNING")]
-        Running,
-        [StringAttr(value = "ABORTING")]
-        Aborting,
-        [StringAttr(value = "SUCCESS")]
-        Success,
-        [StringAttr(value = "FAILED_WITH_ERROR")]
-        FailedWithError,
-        [StringAttr(value = "ABORTED")]
-        Aborted,
-        [StringAttr(value = "QUEUED")]
-        Queued,
-        [StringAttr(value = "FAILED_WITH_INCIDENT")]
-        FailedWithIncident,
-        [StringAttr(value = "DISCONNECTED")]
-        Disconnected,
-        [StringAttr(value = "RESUMING_WAREHOUSE")]
-        ResumingWarehouse,
-        // purposeful typo
-        [StringAttr(value = "QUEUED_REPARING_WAREHOUSE")]
-        QueuedReparingWarehouse,
-        [StringAttr(value = "RESTARTED")]
-        Restarted,
-        [StringAttr(value = "BLOCKED")]
-        Blocked,
+        return s_queryStatusMap.TryGetValue(stringValue, out var status)
+            ? status
+            : throw new Exception("The query status returned by the server is not recognized");
     }
 
-    class StringAttr : Attribute
+    internal static bool IsStillRunning(QueryStatus status)
     {
-        public string value { get; set; }
-    }
-
-    internal static class QueryStatusExtensions
-    {
-        private static readonly Dictionary<string, QueryStatus> s_queryStatusMap = Enum.GetValues(typeof(QueryStatus))
-            .Cast<QueryStatus>()
-            .ToDictionary(v => v.GetAttribute<StringAttr>().value, v => v, StringComparer.OrdinalIgnoreCase);
-
-        internal static QueryStatus GetQueryStatusByStringValue(string stringValue)
+        switch (status)
         {
-            return s_queryStatusMap.TryGetValue(stringValue, out var status)
-                ? status
-                : throw new Exception("The query status returned by the server is not recognized");
-        }
-
-        internal static bool IsStillRunning(QueryStatus status)
-        {
-            switch (status)
-            {
-                case QueryStatus.Running:
-                case QueryStatus.ResumingWarehouse:
-                case QueryStatus.Queued:
-                case QueryStatus.QueuedReparingWarehouse:
-                case QueryStatus.NoData:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        internal static bool IsAnError(QueryStatus status)
-        {
-            switch (status)
-            {
-                case QueryStatus.Aborting:
-                case QueryStatus.FailedWithError:
-                case QueryStatus.Aborted:
-                case QueryStatus.FailedWithIncident:
-                case QueryStatus.Disconnected:
-                case QueryStatus.Blocked:
-                    return true;
-                default:
-                    return false;
-            }
+            case QueryStatus.Running:
+            case QueryStatus.ResumingWarehouse:
+            case QueryStatus.Queued:
+            case QueryStatus.QueuedReparingWarehouse:
+            case QueryStatus.NoData:
+                return true;
+            default:
+                return false;
         }
     }
 
-    class SFStatement
+    internal static bool IsAnError(QueryStatus status)
     {
-        internal SFSession SfSession { get; set; }
-
-        private const string SF_QUERY_CANCEL_PATH = "/queries/v1/abort-request";
-
-        private const string SF_QUERY_REQUEST_ID = "requestId";
-
-        private const string SF_AUTHORIZATION_SNOWFLAKE_FMT = "Snowflake Token=\"{0}\"";
-
-        private const string SF_QUERY_RESULT_PATH = "/queries/{0}/result";
-
-        private const string SF_PARAM_MULTI_STATEMENT_COUNT = "MULTI_STATEMENT_COUNT";
-
-        private const string SF_PARAM_QUERY_TAG = "QUERY_TAG";
-
-        private const int GetResultWithIdMaxRetriesCount = 3;
-
-        private string _requestId;
-
-        private readonly object _requestIdLock = new object();
-
-        private readonly IRestRequester _restRequester;
-
-        private CancellationTokenSource _timeoutTokenSource;
-
-        // Merged cancellation token source for all cancellation signal.
-        // Cancel callback will be registered under token issued by this source.
-        private CancellationTokenSource _linkedCancellationTokenSource;
-
-        // Flag indicating if the SQL query is a regular query or a PUT/GET query
-        internal bool isPutGetQuery = false;
-
-        MemoryStream _uploadStream = null;
-
-        string _bindStage = null;
-
-        // the query id of the last query
-        string _lastQueryId = null;
-
-        private string _queryTag = null;
-        private readonly IQuerySFLogger _logger;
-
-        internal SFStatement(SFSession session) : this(session, session._queryTag)
-        { }
-
-        internal SFStatement(SFSession session, string queryTag) : this(session, queryTag, new QuerySFLogger(session._queryLoggingConfig, SFLoggerFactory.GetLogger<SFStatement>()))
-        { }
-
-        internal SFStatement(SFSession session, string queryTag, IQuerySFLogger logger)
+        switch (status)
         {
-            SfSession = session;
-            _restRequester = session.restRequester;
-            _queryTag = queryTag ?? session._queryTag;
-            _logger = logger;
+            case QueryStatus.Aborting:
+            case QueryStatus.FailedWithError:
+            case QueryStatus.Aborted:
+            case QueryStatus.FailedWithIncident:
+            case QueryStatus.Disconnected:
+            case QueryStatus.Blocked:
+                return true;
+            default:
+                return false;
         }
+    }
+}
 
-        internal string GetBindStage() => _bindStage;
+class SFStatement
+{
+    internal SFSession SfSession { get; set; }
 
-        private void AssignQueryRequestId()
+    private const string SF_QUERY_CANCEL_PATH = "/queries/v1/abort-request";
+
+    private const string SF_QUERY_REQUEST_ID = "requestId";
+
+    private const string SF_AUTHORIZATION_SNOWFLAKE_FMT = "Snowflake Token=\"{0}\"";
+
+    private const string SF_QUERY_RESULT_PATH = "/queries/{0}/result";
+
+    private const string SF_PARAM_MULTI_STATEMENT_COUNT = "MULTI_STATEMENT_COUNT";
+
+    private const string SF_PARAM_QUERY_TAG = "QUERY_TAG";
+
+    private const int GetResultWithIdMaxRetriesCount = 3;
+
+    private string _requestId;
+
+    private readonly object _requestIdLock = new object();
+
+    private readonly IRestRequester _restRequester;
+
+    private CancellationTokenSource _timeoutTokenSource;
+
+    // Merged cancellation token source for all cancellation signal.
+    // Cancel callback will be registered under token issued by this source.
+    private CancellationTokenSource _linkedCancellationTokenSource;
+
+    // Flag indicating if the SQL query is a regular query or a PUT/GET query
+    internal bool isPutGetQuery = false;
+
+    MemoryStream _uploadStream = null;
+
+    string _bindStage = null;
+
+    // the query id of the last query
+    string _lastQueryId = null;
+
+    private string _queryTag = null;
+    private readonly IQuerySFLogger _logger;
+
+    internal SFStatement(SFSession session) : this(session, session._queryTag)
+    { }
+
+    internal SFStatement(SFSession session, string queryTag) : this(session, queryTag, new QuerySFLogger(session._queryLoggingConfig, SFLoggerFactory.GetLogger<SFStatement>()))
+    { }
+
+    internal SFStatement(SFSession session, string queryTag, IQuerySFLogger logger)
+    {
+        SfSession = session;
+        _restRequester = session.restRequester;
+        _queryTag = queryTag ?? session._queryTag;
+        _logger = logger;
+    }
+
+    internal string GetBindStage() => _bindStage;
+
+    private void AssignQueryRequestId()
+    {
+        lock (_requestIdLock)
         {
-            lock (_requestIdLock)
+
+            if (_requestId != null)
             {
-
-                if (_requestId != null)
-                {
-                    _logger.Info("Another query is running.");
-                    throw new SnowflakeDbException(SFError.STATEMENT_ALREADY_RUNNING_QUERY);
-                }
-
-                _requestId = Guid.NewGuid().ToString();
+                _logger.Info("Another query is running.");
+                throw new SnowflakeDbException(SFError.STATEMENT_ALREADY_RUNNING_QUERY);
             }
+
+            _requestId = Guid.NewGuid().ToString();
         }
+    }
 
-        private void ClearQueryRequestId()
+    private void ClearQueryRequestId()
+    {
+        lock (_requestIdLock)
+            _requestId = null;
+    }
+
+    private SFRestRequest BuildQueryRequest(StatementContext statementContext, Dictionary<string, BindingDTO> bindings)
+    {
+        AssignQueryRequestId();
+
+        var startTime = DateTime.UtcNow - new DateTime(1970, 1, 1);
+        var secondsSinceEpoch = Convert.ToInt64(startTime.TotalMilliseconds).ToString();
+        var parameters = new Dictionary<string, string>()
         {
-            lock (_requestIdLock)
-                _requestId = null;
-        }
+            { RestParams.SF_QUERY_REQUEST_ID, _requestId },
+            { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
+            { RestParams.SF_QUERY_START_TIME, secondsSinceEpoch },
+        };
 
-        private SFRestRequest BuildQueryRequest(StatementContext statementContext, Dictionary<string, BindingDTO> bindings)
+        var queryUri = SfSession.BuildUri(RestPath.SF_QUERY_PATH, parameters);
+
+        Dictionary<string, string> bodyParameters = null;
+        // Get MULTI_STATEMENT_COUNT from parameter bindings
+        if (bindings != null && bindings.ContainsKey(SF_PARAM_MULTI_STATEMENT_COUNT))
         {
-            AssignQueryRequestId();
-
-            var startTime = DateTime.UtcNow - new DateTime(1970, 1, 1);
-            var secondsSinceEpoch = Convert.ToInt64(startTime.TotalMilliseconds).ToString();
-            var parameters = new Dictionary<string, string>()
+            bodyParameters = new Dictionary<string, string>
             {
-                { RestParams.SF_QUERY_REQUEST_ID, _requestId },
-                { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
-                { RestParams.SF_QUERY_START_TIME, secondsSinceEpoch },
+                [SF_PARAM_MULTI_STATEMENT_COUNT] = bindings[SF_PARAM_MULTI_STATEMENT_COUNT].value.ToString()
             };
+            // remove it from parameter bindings so it won't break
+            // parameter binding feature
+            bindings.Remove(SF_PARAM_MULTI_STATEMENT_COUNT);
+        }
 
-            var queryUri = SfSession.BuildUri(RestPath.SF_QUERY_PATH, parameters);
+        if (_queryTag != null)
+        {
+            bodyParameters ??= new Dictionary<string, string>();
+            bodyParameters[SF_PARAM_QUERY_TAG] = _queryTag;
+        }
 
-            Dictionary<string, string> bodyParameters = null;
-            // Get MULTI_STATEMENT_COUNT from parameter bindings
-            if (bindings != null && bindings.ContainsKey(SF_PARAM_MULTI_STATEMENT_COUNT))
+        var postBody = new QueryRequest();
+        postBody.sqlText = statementContext.CommandText;
+        postBody.describeOnly = statementContext.DescribeOnly;
+        postBody.parameters = bodyParameters;
+        postBody.QueryContextDTO = SfSession.GetQueryContextRequest();
+        postBody.asyncExec = statementContext.AsyncExec;
+        if (_bindStage == null)
+        {
+            postBody.parameterBindings = bindings;
+            postBody.bindStage = null;
+        }
+        else
+        {
+            postBody.parameterBindings = null;
+            postBody.bindStage = _bindStage;
+        }
+
+        return new SFRestRequest
+        {
+            Url = queryUri,
+            authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
+            serviceName = SfSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
+                ? (String)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]
+                : null,
+            jsonBody = postBody,
+            HttpTimeout = Timeout.InfiniteTimeSpan,
+            RestTimeout = Timeout.InfiniteTimeSpan,
+            isPutGet = isPutGetQuery,
+            SessionId = SfSession.sessionId
+        };
+    }
+
+    private SFRestRequest BuildResultRequest(string resultPath)
+    {
+        var uri = SfSession.BuildUri(resultPath);
+        return new SFRestRequest()
+        {
+            Url = uri,
+            authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
+            HttpTimeout = Timeout.InfiniteTimeSpan,
+            RestTimeout = Timeout.InfiniteTimeSpan,
+            SessionId = SfSession.sessionId
+        };
+    }
+
+    private SFRestRequest BuildResultRequestWithId(string resultId)
+    {
+        string resultPath = String.Format(SF_QUERY_RESULT_PATH, resultId);
+        return BuildResultRequest(resultPath);
+    }
+
+    private void CleanUpCancellationTokenSources()
+    {
+        _linkedCancellationTokenSource?.Dispose();
+        _linkedCancellationTokenSource = null;
+        _timeoutTokenSource?.Dispose();
+        _timeoutTokenSource = null;
+    }
+
+    internal SFBaseResultSet BuildResultSet(QueryExecResponse response, CancellationToken cancellationToken)
+    {
+        if ((response.data != null) && (response.data.queryId != null))
+        {
+            _lastQueryId = response.data.queryId;
+        }
+
+        if (response.success)
+        {
+            if ((response.data.resultIds != null) && (response.data.resultIds.Length > 0))
             {
-                bodyParameters = new Dictionary<string, string>
-                {
-                    [SF_PARAM_MULTI_STATEMENT_COUNT] = bindings[SF_PARAM_MULTI_STATEMENT_COUNT].value.ToString()
-                };
-                // remove it from parameter bindings so it won't break
-                // parameter binding feature
-                bindings.Remove(SF_PARAM_MULTI_STATEMENT_COUNT);
+                return new SFMultiStatementsResultSet(response.data, this, cancellationToken);
             }
 
-            if (_queryTag != null)
+            if (response.data.queryResultFormat == ResultFormat.ARROW)
             {
-                bodyParameters ??= new Dictionary<string, string>();
-                bodyParameters[SF_PARAM_QUERY_TAG] = _queryTag;
-            }
-
-            var postBody = new QueryRequest();
-            postBody.sqlText = statementContext.CommandText;
-            postBody.describeOnly = statementContext.DescribeOnly;
-            postBody.parameters = bodyParameters;
-            postBody.QueryContextDTO = SfSession.GetQueryContextRequest();
-            postBody.asyncExec = statementContext.AsyncExec;
-            if (_bindStage == null)
-            {
-                postBody.parameterBindings = bindings;
-                postBody.bindStage = null;
+                return new ArrowResultSet(response.data, this, cancellationToken);
             }
             else
             {
-                postBody.parameterBindings = null;
-                postBody.bindStage = _bindStage;
+                // JSON result format
+                return new SFResultSet(response.data, this, cancellationToken);
             }
+        }
 
-            return new SFRestRequest
+        if (response.data?.QueryContext != null)
+        {
+            SfSession.UpdateQueryContextCache(response.data.QueryContext);
+        }
+
+        throw new SnowflakeDbException(response.data?.sqlState,
+            response.code, response.message, response.data?.queryId);
+    }
+
+    private void SetTimeout(int timeout)
+    {
+        this._timeoutTokenSource =
+            timeout > 0 ? new CancellationTokenSource(timeout * 1000) : new CancellationTokenSource(Timeout.InfiniteTimeSpan);
+    }
+
+    /// <summary>
+    ///     Register cancel callback. Two factors: either external cancellation token passed down from upper
+    ///     layer or timeout reached. Whichever comes first would trigger query cancellation.
+    /// </summary>
+    /// <param name="timeout">query timeout. 0 means no timeout</param>
+    /// <param name="externalCancellationToken">cancellation token from upper layer</param>
+    private void registerQueryCancellationCallback(int timeout, CancellationToken externalCancellationToken)
+    {
+        SetTimeout(timeout);
+        _linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_timeoutTokenSource.Token,
+            externalCancellationToken);
+        if (!_linkedCancellationTokenSource.IsCancellationRequested)
+        {
+            _linkedCancellationTokenSource.Token.Register(() =>
             {
-                Url = queryUri,
-                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
-                serviceName = SfSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
-                    ? (String)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]
-                    : null,
-                jsonBody = postBody,
-                HttpTimeout = Timeout.InfiniteTimeSpan,
-                RestTimeout = Timeout.InfiniteTimeSpan,
-                isPutGet = isPutGetQuery,
-                SessionId = SfSession.sessionId
-            };
+                try
+                {
+                    Cancel();
+                }
+                catch (Exception ex)
+                {
+                    // Prevent an unhandled exception from being thrown
+                    _logger.Error("Unable to cancel query.", ex);
+                }
+            });
+        }
+    }
+
+    internal async Task<SFBaseResultSet> ExecuteAsync(StatementContext statementContext, Dictionary<string, BindingDTO> bindings, CancellationToken cancellationToken)
+    {
+        // Trim the sql query and check if this is a PUT/GET command
+        var trimmedSql = TrimSql(statementContext.CommandText);
+
+        if (IsPutOrGetCommand(trimmedSql))
+            throw new NotImplementedException("Get and Put are not supported in async calls.  Use Execute() instead of ExecuteAsync().");
+
+        registerQueryCancellationCallback(statementContext.CommandTimeout, cancellationToken);
+        var linkedToken = _linkedCancellationTokenSource.Token;
+
+        var arrayBindingThreshold = 0;
+        if (SfSession.ParameterMap.TryGetValue(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD, out var value))
+        {
+            var val = (string)value;
+            arrayBindingThreshold = Parse(val);
         }
 
-        private SFRestRequest BuildResultRequest(string resultPath)
+        var numBinding = GetBindingCount(bindings);
+
+        if (0 < arrayBindingThreshold
+            && arrayBindingThreshold <= numBinding
+            && !statementContext.DescribeOnly)
         {
-            var uri = SfSession.BuildUri(resultPath);
-            return new SFRestRequest()
+            try
             {
-                Url = uri,
-                authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
-                HttpTimeout = Timeout.InfiniteTimeSpan,
-                RestTimeout = Timeout.InfiniteTimeSpan,
-                SessionId = SfSession.sessionId
-            };
-        }
-
-        private SFRestRequest BuildResultRequestWithId(string resultId)
-        {
-            string resultPath = String.Format(SF_QUERY_RESULT_PATH, resultId);
-            return BuildResultRequest(resultPath);
-        }
-
-        private void CleanUpCancellationTokenSources()
-        {
-            _linkedCancellationTokenSource?.Dispose();
-            _linkedCancellationTokenSource = null;
-            _timeoutTokenSource?.Dispose();
-            _timeoutTokenSource = null;
-        }
-
-        internal SFBaseResultSet BuildResultSet(QueryExecResponse response, CancellationToken cancellationToken)
-        {
-            if ((response.data != null) && (response.data.queryId != null))
-            {
-                _lastQueryId = response.data.queryId;
+                AssignQueryRequestId();
+                SFBindUploader uploader = new SFBindUploader(SfSession, _requestId);
+                await uploader.UploadAsync(bindings, linkedToken).ConfigureAwait(false);
+                _bindStage = uploader.getStagePath();
             }
-
-            if (response.success)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                if ((response.data.resultIds != null) && (response.data.resultIds.Length > 0))
-                {
-                    return new SFMultiStatementsResultSet(response.data, this, cancellationToken);
-                }
+                throw;
+            }
+            // A rejected TLS configuration is not a reason to fall back to binds in the
+            // payload - that would silently drop the requested TLS restriction.
+            catch (Exception e) when (!e.IsTlsConfigurationNotSupported())
+            {
+                _logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " + e.Message);
+            }
+            finally
+            {
+                ClearQueryRequestId();
+            }
+        }
 
-                if (response.data.queryResultFormat == ResultFormat.ARROW)
-                {
-                    return new ArrowResultSet(response.data, this, cancellationToken);
-                }
+        string queryId = null;
+        try
+        {
+            var queryRequest = BuildQueryRequest(statementContext, bindings);
+            _logger.LogQuery(queryRequest, _requestId);
+            QueryExecResponse response = null;
+            var receivedFirstQueryResponse = false;
+            while (!receivedFirstQueryResponse)
+            {
+                response = await _restRequester.PostAsync<QueryExecResponse>(queryRequest, linkedToken).ConfigureAwait(false);
+                TryCaptureQueryId(response, ref queryId);
+
+                if (await RenewSessionIfNeededAsync(response, linkedToken).ConfigureAwait(false))
+                    queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
                 else
+                    receivedFirstQueryResponse = true;
+            }
+
+            var lastResultUrl = response.data?.getResultUrl;
+
+            if (!statementContext.AsyncExec)
+            {
+                while (response.IsQueryInProgress() || response.IsSessionExpired())
                 {
-                    // JSON result format
-                    return new SFResultSet(response.data, this, cancellationToken);
+                    var req = BuildResultRequest(lastResultUrl);
+                    response = await _restRequester.GetAsync<QueryExecResponse>(req, linkedToken).ConfigureAwait(false);
+                    TryCaptureQueryId(response, ref queryId);
+
+                    if (!await RenewSessionIfNeededAsync(response, linkedToken).ConfigureAwait(false))
+                        lastResultUrl = response.data?.getResultUrl;
                 }
             }
 
-            if (response.data?.QueryContext != null)
-            {
-                SfSession.UpdateQueryContextCache(response.data.QueryContext);
-            }
-
-            throw new SnowflakeDbException(response.data?.sqlState,
-                response.code, response.message, response.data?.queryId);
+            // ResultSet keeps the token as it's state, we pass the external one only.
+            return BuildResultSet(response, cancellationToken);
         }
-
-        private void SetTimeout(int timeout)
+        catch (OperationCanceledException ex)
         {
-            this._timeoutTokenSource =
-                timeout > 0 ? new CancellationTokenSource(timeout * 1000) : new CancellationTokenSource(Timeout.InfiniteTimeSpan);
+            queryId ??= (ex.InnerException as SnowflakeDbException)?.QueryId;
+            _lastQueryId = queryId ?? _lastQueryId;
+            _logger.Warn($"Query execution canceled. QueryId: {queryId ?? "unavailable"}");
+            throw WrapCancellationException(ex, cancellationToken, statementContext.CommandTimeout, queryId);
         }
-
-        /// <summary>
-        ///     Register cancel callback. Two factors: either external cancellation token passed down from upper
-        ///     layer or timeout reached. Whichever comes first would trigger query cancellation.
-        /// </summary>
-        /// <param name="timeout">query timeout. 0 means no timeout</param>
-        /// <param name="externalCancellationToken">cancellation token from upper layer</param>
-        private void registerQueryCancellationCallback(int timeout, CancellationToken externalCancellationToken)
+        catch (Exception ex)
         {
-            SetTimeout(timeout);
-            _linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_timeoutTokenSource.Token,
-                externalCancellationToken);
-            if (!_linkedCancellationTokenSource.IsCancellationRequested)
-            {
-                _linkedCancellationTokenSource.Token.Register(() =>
-                {
-                    try
-                    {
-                        Cancel();
-                    }
-                    catch (Exception ex)
-                    {
-                        // Prevent an unhandled exception from being thrown
-                        _logger.Error("Unable to cancel query.", ex);
-                    }
-                });
-            }
+            queryId ??= (ex.InnerException as SnowflakeDbException)?.QueryId;
+            _lastQueryId = queryId ?? _lastQueryId;
+            _logger.Error("Query execution failed.");
+            HandleExceptionForSession(ex);
+            throw;
         }
-
-        internal async Task<SFBaseResultSet> ExecuteAsync(StatementContext statementContext, Dictionary<string, BindingDTO> bindings, CancellationToken cancellationToken)
+        finally
         {
-            // Trim the sql query and check if this is a PUT/GET command
-            var trimmedSql = TrimSql(statementContext.CommandText);
+            CleanUpCancellationTokenSources();
+            ClearQueryRequestId();
+        }
+    }
 
+    internal SFBaseResultSet Execute(StatementContext statementContext, Dictionary<string, BindingDTO> bindings)
+    {
+        // Trim the sql query and check if this is a PUT/GET command
+        var trimmedSql = TrimSql(statementContext.CommandText);
+        try
+        {
             if (IsPutOrGetCommand(trimmedSql))
-                throw new NotImplementedException("Get and Put are not supported in async calls.  Use Execute() instead of ExecuteAsync().");
+            {
+                if (statementContext.AsyncExec)
+                    throw new NotImplementedException("Get and Put are not supported in async execution mode");
 
-            registerQueryCancellationCallback(statementContext.CommandTimeout, cancellationToken);
-            var linkedToken = _linkedCancellationTokenSource.Token;
+                return ExecuteSqlWithPutGet(statementContext, trimmedSql, bindings);
+            }
 
+            return ExecuteSqlOtherThanPutGet(statementContext, bindings);
+        }
+        finally
+        {
+            CleanUpCancellationTokenSources();
+            ClearQueryRequestId();
+        }
+    }
+
+    private SFBaseResultSet ExecuteSqlWithPutGet(StatementContext statementContext, string trimmedSql, Dictionary<string, BindingDTO> bindings)
+    {
+        try
+        {
+            isPutGetQuery = true;
+            var response = ExecuteHelper<PutGetExecResponse, PutGetResponseData>(statementContext, bindings);
+
+            var dataQueryId = response.data?.queryId ?? "Unknown";
+            _logger.Debug($"PUT/GET queryId: {dataQueryId}");
+
+            var fileTransferAgent = statementContext.Stream != null
+                ? new SFFileTransferAgent(trimmedSql, SfSession, response.data, new BorrowedMemoryStream(statementContext.Stream, false))
+                : new SFFileTransferAgent(trimmedSql, SfSession, response.data);
+
+            // Start the file transfer
+            fileTransferAgent.execute();
+
+            if (response.data != null)
+                _lastQueryId = response.data.queryId;
+
+            // Get the results of the upload/download
+            return fileTransferAgent.result();
+        }
+        catch (SnowflakeDbException ex)
+        {
+            _logger.Error($"Query execution failed, QueryId: {ex.QueryId ?? "unavailable"}", ex);
+            _lastQueryId = ex.QueryId ?? _lastQueryId;
+            HandleExceptionForSession(ex);
+            throw;
+        }
+        catch (NotSupportedException)
+        {
+            throw;
+        }
+        catch (OperationCanceledException ex)
+        {
+            _logger.Error("Query execution timed out.", ex);
+            _lastQueryId = (ex.InnerException as SnowflakeDbException)?.QueryId ?? _lastQueryId;
+            HandleExceptionForSession(ex);
+            throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR, args: ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error("Query execution failed.", ex);
+            HandleExceptionForSession(ex);
+            throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR, args: ex.Message);
+        }
+    }
+
+    private SFBaseResultSet ExecuteSqlOtherThanPutGet(StatementContext statementContext, Dictionary<string, BindingDTO> bindings)
+    {
+        var numBinding = GetBindingCount(bindings);
+        try
+        {
             var arrayBindingThreshold = 0;
             if (SfSession.ParameterMap.TryGetValue(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD, out var value))
             {
                 var val = (string)value;
                 arrayBindingThreshold = Parse(val);
             }
-
-            var numBinding = GetBindingCount(bindings);
 
             if (0 < arrayBindingThreshold
                 && arrayBindingThreshold <= numBinding
@@ -367,19 +536,16 @@ namespace Snowflake.Data.Core
                 try
                 {
                     AssignQueryRequestId();
-                    SFBindUploader uploader = new SFBindUploader(SfSession, _requestId);
-                    await uploader.UploadAsync(bindings, linkedToken).ConfigureAwait(false);
+                    var uploader = new SFBindUploader(SfSession, _requestId);
+                    uploader.Upload(bindings);
                     _bindStage = uploader.getStagePath();
-                }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                    throw;
                 }
                 // A rejected TLS configuration is not a reason to fall back to binds in the
                 // payload - that would silently drop the requested TLS restriction.
                 catch (Exception e) when (!e.IsTlsConfigurationNotSupported())
                 {
-                    _logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " + e.Message);
+                    _logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " +
+                                 e.Message);
                 }
                 finally
                 {
@@ -387,783 +553,616 @@ namespace Snowflake.Data.Core
                 }
             }
 
-            string queryId = null;
-            try
+            var response = ExecuteHelper<QueryExecResponse, QueryExecResponseData>(statementContext, bindings);
+            return BuildResultSet(response, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error("Query execution failed.", ex);
+            var queryId = (ex as SnowflakeDbException)?.QueryId;
+            queryId ??= ((ex as OperationCanceledException)?.InnerException as SnowflakeDbException)?.QueryId;
+            queryId ??= _lastQueryId;
+            _lastQueryId = queryId;
+
+            HandleExceptionForSession(ex);
+            throw;
+        }
+    }
+
+    internal async Task<SFBaseResultSet> GetResultWithIdAsync(string resultId, CancellationToken cancellationToken)
+    {
+        var req = BuildResultRequestWithId(resultId);
+        QueryExecResponse response = null;
+        var stopRetrying = false;
+        for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount + 1 && !stopRetrying; retryCount++)
+        {
+            response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+
+            if (await RenewSessionIfNeededAsync(response, cancellationToken).ConfigureAwait(false))
+                req.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+            else
+                stopRetrying = true;
+        }
+
+        return BuildResultSet(response, cancellationToken);
+    }
+
+    internal SFBaseResultSet GetResultWithId(string resultId)
+    {
+        var req = BuildResultRequestWithId(resultId);
+        QueryExecResponse response = null;
+        var stopRetrying = false;
+        for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount + 1 && !stopRetrying; retryCount++)
+        {
+            response = _restRequester.Get<QueryExecResponse>(req);
+
+            if (RenewSessionIfNeeded(response))
+                req.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+            else
+                stopRetrying = true;
+        }
+
+        return BuildResultSet(response, CancellationToken.None);
+    }
+
+    private SFRestRequest BuildCancelQueryRequest()
+    {
+        lock (_requestIdLock)
+        {
+            if (_requestId == null)
+                return null;
+            Dictionary<string, string> parameters = new Dictionary<string, string>()
             {
-                var queryRequest = BuildQueryRequest(statementContext, bindings);
-                _logger.LogQuery(queryRequest, _requestId);
-                QueryExecResponse response = null;
-                var receivedFirstQueryResponse = false;
-                while (!receivedFirstQueryResponse)
-                {
-                    response = await _restRequester.PostAsync<QueryExecResponse>(queryRequest, linkedToken).ConfigureAwait(false);
-                    TryCaptureQueryId(response, ref queryId);
+                { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
+                { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
+            };
+            var uri = SfSession.BuildUri(SF_QUERY_CANCEL_PATH, parameters);
 
-                    if (await RenewSessionIfNeededAsync(response, linkedToken).ConfigureAwait(false))
-                        queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
-                    else
-                        receivedFirstQueryResponse = true;
-                }
+            QueryCancelRequest postBody = new QueryCancelRequest()
+            {
+                requestId = _requestId
+            };
 
-                var lastResultUrl = response.data?.getResultUrl;
+            var request = new SFRestRequest()
+            {
+                Url = uri,
+                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
+                jsonBody = postBody,
+                SessionId = SfSession.sessionId
+            };
+            if (!TimeoutHelper.IsInfinite(SfSession.ClientProperties._abortRequestTimeout))
+                request.RestTimeout = SfSession.ClientProperties._abortRequestTimeout;
+            return request;
+        }
+    }
 
+    internal void Cancel()
+    {
+        SFRestRequest request = BuildCancelQueryRequest();
+        if (request == null)
+        {
+            CleanUpCancellationTokenSources();
+            return;
+        }
+
+        var cleanupWait = SfSession.ClientProperties._cleanupWait;
+        if (TimeoutHelper.IsInfinite(cleanupWait))
+        {
+            var response = _restRequester.Post<NullDataResponse>(request);
+            if (!response.success)
+                _logger.Warn("Query cancellation failed.");
+        }
+        else
+        {
+            var postTask = Task.Run(() => _restRequester.Post<NullDataResponse>(request));
+            postTask.ContinueWith(t =>
+                    _logger.Error("Query cancellation request failed.", t.Exception),
+                TaskContinuationOptions.OnlyOnFaulted);
+
+            if (postTask.Wait(cleanupWait))
+            {
+                if (!postTask.Result.success)
+                    _logger.Warn("Query cancellation failed.");
+            }
+            else if (cleanupWait != TimeSpan.Zero)
+            {
+                _logger.Warn($"Query cancellation did not complete within CLEANUP_WAIT ({cleanupWait.TotalSeconds}s). Returning to caller; the abort request continues in the background.");
+            }
+        }
+
+        // Always clean up CTS objects. When called from the cancellation callback thread,
+        // CancellationTokenSource.Dispose does not wait for in-flight callbacks to finish.
+        CleanUpCancellationTokenSources();
+    }
+
+    /// <summary>
+    /// Execute a sql query and return the response.
+    /// </summary>
+    /// <param name="statementContext">Execution context carrying command text, timeout, and optional stream.</param>
+    /// <param name="bindings">Parameter bindings or null if no parameters.</param>
+    /// <returns>The response data.</returns>
+    /// <exception>The http request fails or the response code is not succes</exception>
+    internal TResponse ExecuteHelper<TResponse, TResponseData>(
+        StatementContext statementContext,
+        Dictionary<string, BindingDTO> bindings)
+        where TResponse : BaseQueryExecResponse<TResponseData>
+        where TResponseData : IQueryExecResponseData
+    {
+        registerQueryCancellationCallback(statementContext.CommandTimeout, CancellationToken.None);
+
+        string queryId = null;
+        try
+        {
+            var queryRequest = BuildQueryRequest(statementContext, bindings);
+            _logger.LogQuery(queryRequest, _requestId);
+            TResponse response = null;
+            var receivedFirstQueryResponse = false;
+            while (!receivedFirstQueryResponse)
+            {
+                response = _restRequester.Post<TResponse>(queryRequest);
+                TryCaptureQueryId(response, ref queryId);
+                if (RenewSessionIfNeeded(response))
+                    queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                else
+                    receivedFirstQueryResponse = true;
+            }
+
+            if (typeof(TResponse) == typeof(QueryExecResponse))
+            {
+                QueryExecResponse queryResponse = (QueryExecResponse)(object)response;
                 if (!statementContext.AsyncExec)
                 {
+                    var lastResultUrl = queryResponse.data?.getResultUrl;
+
                     while (response.IsQueryInProgress() || response.IsSessionExpired())
                     {
                         var req = BuildResultRequest(lastResultUrl);
-                        response = await _restRequester.GetAsync<QueryExecResponse>(req, linkedToken).ConfigureAwait(false);
+                        response = _restRequester.Get<TResponse>(req);
+                        TryCaptureQueryId(response, ref queryId);
+
+                        if (!RenewSessionIfNeeded(response))
+                            lastResultUrl = queryResponse.data?.getResultUrl;
+                    }
+                }
+            }
+
+            if (!response.success)
+            {
+                if (response.data is QueryExecResponseData queryData && queryData.QueryContext != null)
+                {
+                    SfSession.UpdateQueryContextCache(queryData.QueryContext);
+                }
+
+                throw new SnowflakeDbException(
+                    response.data.sqlState,
+                    response.code,
+                    response.message,
+                    response.data.queryId);
+            }
+
+            return response;
+        }
+        catch (OperationCanceledException ex)
+        {
+            queryId ??= (ex.InnerException as SnowflakeDbException)?.QueryId;
+            _logger.Warn($"Query execution canceled. QueryId: {queryId ?? "unavailable"}");
+            throw WrapCancellationException(ex, CancellationToken.None, statementContext.CommandTimeout, queryId);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error("Query execution failed.", ex);
+            HandleExceptionForSession(ex);
+            throw;
+        }
+        finally
+        {
+            ClearQueryRequestId();
+        }
+    }
+
+    /// <summary>
+    /// Execute Async a sql query and return the response.
+    /// </summary>
+    /// <param name="statementContext">Execution context carrying command text, timeout, and optional stream.</param>
+    /// <param name="bindings">Parameter bindings or null if no parameters.</param>
+    /// <param name="cancellationToken">Token to cancel the async operation.</param>
+    /// <returns>The response data.</returns>
+    /// <exception>The http request fails or the response code is not succes</exception>
+    internal async Task<T> ExecuteAsyncHelper<T, U>(
+        StatementContext statementContext,
+        Dictionary<string, BindingDTO> bindings,
+        CancellationToken cancellationToken
+    )
+        where T : BaseQueryExecResponse<U>
+        where U : IQueryExecResponseData
+    {
+        registerQueryCancellationCallback(statementContext.CommandTimeout, cancellationToken);
+        var linkedToken = _linkedCancellationTokenSource.Token;
+
+        string queryId = null;
+        try
+        {
+            var queryRequest = BuildQueryRequest(statementContext, bindings);
+            _logger.LogQuery(queryRequest, _requestId);
+            T response = null;
+            var receivedFirstQueryResponse = false;
+            while (!receivedFirstQueryResponse)
+            {
+                response = await _restRequester.PostAsync<T>(queryRequest, linkedToken).ConfigureAwait(false);
+                TryCaptureQueryId(response, ref queryId);
+
+                if (await RenewSessionIfNeededAsync(response, linkedToken).ConfigureAwait(false))
+                    queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                else
+                    receivedFirstQueryResponse = true;
+            }
+
+            if (typeof(T) == typeof(QueryExecResponse))
+            {
+                var queryResponse = (QueryExecResponse)(object)response;
+                if (!statementContext.AsyncExec)
+                {
+                    var lastResultUrl = queryResponse.data?.getResultUrl;
+
+                    while (response.IsQueryInProgress() || response.IsSessionExpired())
+                    {
+                        var req = BuildResultRequest(lastResultUrl);
+                        response = await _restRequester.GetAsync<T>(req, linkedToken).ConfigureAwait(false);
                         TryCaptureQueryId(response, ref queryId);
 
                         if (!await RenewSessionIfNeededAsync(response, linkedToken).ConfigureAwait(false))
-                            lastResultUrl = response.data?.getResultUrl;
+                            lastResultUrl = queryResponse.data?.getResultUrl;
                     }
                 }
+            }
 
-                // ResultSet keeps the token as it's state, we pass the external one only.
-                return BuildResultSet(response, cancellationToken);
-            }
-            catch (OperationCanceledException ex)
+            if (!response.success)
             {
-                queryId ??= (ex.InnerException as SnowflakeDbException)?.QueryId;
-                _lastQueryId = queryId ?? _lastQueryId;
-                _logger.Warn($"Query execution canceled. QueryId: {queryId ?? "unavailable"}");
-                throw WrapCancellationException(ex, cancellationToken, statementContext.CommandTimeout, queryId);
-            }
-            catch (Exception ex)
-            {
-                queryId ??= (ex.InnerException as SnowflakeDbException)?.QueryId;
-                _lastQueryId = queryId ?? _lastQueryId;
-                _logger.Error("Query execution failed.");
-                HandleExceptionForSession(ex);
-                throw;
-            }
-            finally
-            {
-                CleanUpCancellationTokenSources();
-                ClearQueryRequestId();
-            }
-        }
-
-        internal SFBaseResultSet Execute(StatementContext statementContext, Dictionary<string, BindingDTO> bindings)
-        {
-            // Trim the sql query and check if this is a PUT/GET command
-            var trimmedSql = TrimSql(statementContext.CommandText);
-            try
-            {
-                if (IsPutOrGetCommand(trimmedSql))
+                if (response.data is QueryExecResponseData { QueryContext: not null } queryData)
                 {
-                    if (statementContext.AsyncExec)
-                        throw new NotImplementedException("Get and Put are not supported in async execution mode");
-
-                    return ExecuteSqlWithPutGet(statementContext, trimmedSql, bindings);
+                    SfSession.UpdateQueryContextCache(queryData.QueryContext);
                 }
 
-                return ExecuteSqlOtherThanPutGet(statementContext, bindings);
+                throw new SnowflakeDbException(
+                    response.data.sqlState,
+                    response.code,
+                    response.message,
+                    response.data.queryId);
             }
-            finally
-            {
-                CleanUpCancellationTokenSources();
-                ClearQueryRequestId();
-            }
+
+            return response;
         }
-
-        private SFBaseResultSet ExecuteSqlWithPutGet(StatementContext statementContext, string trimmedSql, Dictionary<string, BindingDTO> bindings)
+        catch (OperationCanceledException ex)
         {
-            try
-            {
-                isPutGetQuery = true;
-                var response = ExecuteHelper<PutGetExecResponse, PutGetResponseData>(statementContext, bindings);
-
-                var dataQueryId = response.data?.queryId ?? "Unknown";
-                _logger.Debug($"PUT/GET queryId: {dataQueryId}");
-
-                var fileTransferAgent = statementContext.Stream != null
-                    ? new SFFileTransferAgent(trimmedSql, SfSession, response.data, new BorrowedMemoryStream(statementContext.Stream, false))
-                    : new SFFileTransferAgent(trimmedSql, SfSession, response.data);
-
-                // Start the file transfer
-                fileTransferAgent.execute();
-
-                if (response.data != null)
-                    _lastQueryId = response.data.queryId;
-
-                // Get the results of the upload/download
-                return fileTransferAgent.result();
-            }
-            catch (SnowflakeDbException ex)
-            {
-                _logger.Error($"Query execution failed, QueryId: {ex.QueryId ?? "unavailable"}", ex);
-                _lastQueryId = ex.QueryId ?? _lastQueryId;
-                HandleExceptionForSession(ex);
-                throw;
-            }
-            catch (NotSupportedException)
-            {
-                throw;
-            }
-            catch (OperationCanceledException ex)
-            {
-                _logger.Error("Query execution timed out.", ex);
-                _lastQueryId = (ex.InnerException as SnowflakeDbException)?.QueryId ?? _lastQueryId;
-                HandleExceptionForSession(ex);
-                throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR, args: ex.Message);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error("Query execution failed.", ex);
-                HandleExceptionForSession(ex);
-                throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR, args: ex.Message);
-            }
+            queryId ??= (ex.InnerException as SnowflakeDbException)?.QueryId;
+            _logger.Warn($"Query execution canceled. QueryId: {queryId ?? "unavailable"}");
+            throw WrapCancellationException(ex, cancellationToken, statementContext.CommandTimeout, queryId);
         }
-
-        private SFBaseResultSet ExecuteSqlOtherThanPutGet(StatementContext statementContext, Dictionary<string, BindingDTO> bindings)
+        catch (Exception ex)
         {
-            var numBinding = GetBindingCount(bindings);
-            try
-            {
-                var arrayBindingThreshold = 0;
-                if (SfSession.ParameterMap.TryGetValue(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD, out var value))
-                {
-                    var val = (string)value;
-                    arrayBindingThreshold = Parse(val);
-                }
-
-                if (0 < arrayBindingThreshold
-                    && arrayBindingThreshold <= numBinding
-                    && !statementContext.DescribeOnly)
-                {
-                    try
-                    {
-                        AssignQueryRequestId();
-                        var uploader = new SFBindUploader(SfSession, _requestId);
-                        uploader.Upload(bindings);
-                        _bindStage = uploader.getStagePath();
-                    }
-                    // A rejected TLS configuration is not a reason to fall back to binds in the
-                    // payload - that would silently drop the requested TLS restriction.
-                    catch (Exception e) when (!e.IsTlsConfigurationNotSupported())
-                    {
-                        _logger.Warn("Exception encountered trying to upload binds to stage. Attaching binds in payload instead. Exception: " +
-                                    e.Message);
-                    }
-                    finally
-                    {
-                        ClearQueryRequestId();
-                    }
-                }
-
-                var response = ExecuteHelper<QueryExecResponse, QueryExecResponseData>(statementContext, bindings);
-                return BuildResultSet(response, CancellationToken.None);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error("Query execution failed.", ex);
-                var queryId = (ex as SnowflakeDbException)?.QueryId;
-                queryId ??= ((ex as OperationCanceledException)?.InnerException as SnowflakeDbException)?.QueryId;
-                queryId ??= _lastQueryId;
-                _lastQueryId = queryId;
-
-                HandleExceptionForSession(ex);
-                throw;
-            }
+            _logger.Error("Query execution failed.", ex);
+            HandleExceptionForSession(ex);
+            throw;
         }
-
-        internal async Task<SFBaseResultSet> GetResultWithIdAsync(string resultId, CancellationToken cancellationToken)
+        finally
         {
-            var req = BuildResultRequestWithId(resultId);
-            QueryExecResponse response = null;
-            var stopRetrying = false;
-            for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount + 1 && !stopRetrying; retryCount++)
-            {
-                response = await _restRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
-
-                if (await RenewSessionIfNeededAsync(response, cancellationToken).ConfigureAwait(false))
-                    req.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
-                else
-                    stopRetrying = true;
-            }
-
-            return BuildResultSet(response, cancellationToken);
+            ClearQueryRequestId();
         }
+    }
 
-        internal SFBaseResultSet GetResultWithId(string resultId)
+    /// <summary>
+    /// Creates a request to get the query status based on query ID.
+    /// </summary>
+    /// <param name="queryId"></param>
+    /// <returns>The request to get the query status.</returns>
+    private SFRestRequest BuildQueryStatusRequest(string queryId)
+    {
+        var queryUri = SfSession.BuildUri(RestPath.SF_MONITOR_QUERY_PATH + queryId);
+
+        return new SFRestRequest
         {
-            var req = BuildResultRequestWithId(resultId);
-            QueryExecResponse response = null;
-            var stopRetrying = false;
-            for (var retryCount = 0; retryCount < GetResultWithIdMaxRetriesCount + 1 && !stopRetrying; retryCount++)
+            Url = queryUri,
+            authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
+            serviceName = SfSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
+                ? (String)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]
+                : null,
+            HttpTimeout = Timeout.InfiniteTimeSpan,
+            RestTimeout = Timeout.InfiniteTimeSpan,
+            SessionId = SfSession.sessionId,
+            _isStatusRequest = true
+        };
+    }
+
+    /// <summary>
+    /// Gets the query status based on query ID.
+    /// </summary>
+    /// <param name="queryId"></param>
+    /// <returns>The query status.</returns>
+    internal QueryStatus GetQueryStatus(string queryId)
+    {
+        var queryRequest = BuildQueryStatusRequest(queryId);
+
+        try
+        {
+            QueryStatusResponse response = null;
+            bool receivedFirstQueryResponse = false;
+            while (!receivedFirstQueryResponse)
             {
-                response = _restRequester.Get<QueryExecResponse>(req);
+                response = _restRequester.Get<QueryStatusResponse>(queryRequest);
 
                 if (RenewSessionIfNeeded(response))
-                    req.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                    queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
                 else
-                    stopRetrying = true;
+                    receivedFirstQueryResponse = true;
             }
 
-            return BuildResultSet(response, CancellationToken.None);
+            if (!response.success)
+            {
+                throw new SnowflakeDbException(
+                    response.data.queries[0].state,
+                    response.code,
+                    response.message,
+                    queryId);
+            }
+
+            QueryStatus queryStatus = QueryStatus.NoData;
+            if (response.data.queries.Count != 0)
+            {
+                queryStatus = QueryStatusExtensions.GetQueryStatusByStringValue(response.data.queries[0].status);
+            }
+
+            return queryStatus;
+        }
+        catch
+        {
+            _logger.Error("Query execution failed.");
+            throw;
+        }
+        finally
+        {
+            ClearQueryRequestId();
+        }
+    }
+
+    /// <summary>
+    /// Gets the query status based on query ID.
+    /// </summary>
+    /// <param name="queryId"></param>
+    /// <returns>The query status.</returns>
+    internal async Task<QueryStatus> GetQueryStatusAsync(string queryId, CancellationToken cancellationToken)
+    {
+        var queryRequest = BuildQueryStatusRequest(queryId);
+
+        try
+        {
+            QueryStatusResponse response = null;
+            bool receivedFirstQueryResponse = false;
+            while (!receivedFirstQueryResponse)
+            {
+                response = await _restRequester.GetAsync<QueryStatusResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
+                if (await RenewSessionIfNeededAsync(response, cancellationToken).ConfigureAwait(false))
+                    queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+                else
+                    receivedFirstQueryResponse = true;
+            }
+
+            if (!response.success)
+            {
+                throw new SnowflakeDbException(
+                    response.data.queries[0].state,
+                    response.code,
+                    response.message,
+                    queryId);
+            }
+
+            QueryStatus queryStatus = QueryStatus.NoData;
+            if (response.data.queries.Count != 0)
+            {
+                queryStatus = QueryStatusExtensions.GetQueryStatusByStringValue(response.data.queries[0].status);
+            }
+
+            return queryStatus;
+        }
+        catch
+        {
+            _logger.Error("Query execution failed.");
+            throw;
+        }
+        finally
+        {
+            ClearQueryRequestId();
+        }
+    }
+
+    /// <summary>
+    /// Trim the query by removing spaces and comments at the beginning.
+    /// </summary>
+    /// <param name="originalSql">The original sql query.</param>
+    /// <returns>The query without the blanks and comments at the beginning.</returns>
+    internal string TrimSql(string originalSql)
+    {
+        char[] sqlQueryBuf = originalSql.ToCharArray();
+        var builder = new StringBuilder();
+
+        // skip old c-style comment
+        var idx = 0;
+        var sqlQueryLen = sqlQueryBuf.Length;
+        do
+        {
+            if (('/' == sqlQueryBuf[idx]) &&
+                (idx + 1 < sqlQueryLen) &&
+                ('*' == sqlQueryBuf[idx + 1]))
+            {
+                // Search for the matching */
+                var matchingPos = originalSql.IndexOf("*/", idx + 2);
+                if (matchingPos >= 0)
+                {
+                    // Found the comment closing, skip to after
+                    idx = matchingPos + 2;
+                }
+            }
+            else if ((sqlQueryBuf[idx] == '-') &&
+                     (idx + 1 < sqlQueryLen) &&
+                     (sqlQueryBuf[idx + 1] == '-'))
+            {
+                // Search for the new line
+                var newlinePos = originalSql.IndexOf("\n", idx + 2);
+
+                if (newlinePos >= 0)
+                {
+                    // Found the new line, skip to after
+                    idx = newlinePos + 1;
+                }
+            }
+
+            // No more characters after the closing comment character, stop trimming the query
+            if (idx >= sqlQueryLen)
+            {
+                break;
+            }
+
+            builder.Append(sqlQueryBuf[idx]);
+            idx++;
+        } while (idx < sqlQueryLen);
+
+        var trimmedQuery = builder.ToString();
+        trimmedQuery = trimmedQuery.Trim();
+
+        return trimmedQuery;
+    }
+
+    /// <summary>
+    /// Check if query is PUT or GET command.
+    /// </summary>
+    /// <param name="query">The sql query.</param>
+    /// <returns>The boolean value if the query is a PUT or GET command.</returns>
+    private bool IsPutOrGetCommand(string query)
+    {
+        return (query.Substring(0, 3).ToUpper() == "PUT") ||
+               (query.Substring(0, 3).ToUpper() == "GET");
+    }
+
+    private static int GetBindingCount(Dictionary<string, BindingDTO> binding)
+    {
+        if (!IsArrayBind(binding))
+        {
+            return 0;
+        }
+        else
+        {
+            List<object> values = (List<object>)binding.Values.First().value;
+            return values.Count * binding.Count;
+        }
+    }
+
+    private static Boolean IsArrayBind(Dictionary<string, BindingDTO> binding)
+    {
+        if (binding == null || binding.Count == 0)
+        {
+            return false;
         }
 
-        private SFRestRequest BuildCancelQueryRequest()
+        foreach (BindingDTO bindingDTO in binding.Values)
         {
-            lock (_requestIdLock)
-            {
-                if (_requestId == null)
-                    return null;
-                Dictionary<string, string> parameters = new Dictionary<string, string>()
-                {
-                    { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
-                    { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
-                };
-                var uri = SfSession.BuildUri(SF_QUERY_CANCEL_PATH, parameters);
-
-                QueryCancelRequest postBody = new QueryCancelRequest()
-                {
-                    requestId = _requestId
-                };
-
-                var request = new SFRestRequest()
-                {
-                    Url = uri,
-                    authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
-                    jsonBody = postBody,
-                    SessionId = SfSession.sessionId
-                };
-                if (!TimeoutHelper.IsInfinite(SfSession.ClientProperties._abortRequestTimeout))
-                    request.RestTimeout = SfSession.ClientProperties._abortRequestTimeout;
-                return request;
-            }
-        }
-
-        internal void Cancel()
-        {
-            SFRestRequest request = BuildCancelQueryRequest();
-            if (request == null)
-            {
-                CleanUpCancellationTokenSources();
-                return;
-            }
-
-            var cleanupWait = SfSession.ClientProperties._cleanupWait;
-            if (TimeoutHelper.IsInfinite(cleanupWait))
-            {
-                var response = _restRequester.Post<NullDataResponse>(request);
-                if (!response.success)
-                    _logger.Warn("Query cancellation failed.");
-            }
-            else
-            {
-                var postTask = Task.Run(() => _restRequester.Post<NullDataResponse>(request));
-                postTask.ContinueWith(t =>
-                    _logger.Error("Query cancellation request failed.", t.Exception),
-                    TaskContinuationOptions.OnlyOnFaulted);
-
-                if (postTask.Wait(cleanupWait))
-                {
-                    if (!postTask.Result.success)
-                        _logger.Warn("Query cancellation failed.");
-                }
-                else if (cleanupWait != TimeSpan.Zero)
-                {
-                    _logger.Warn($"Query cancellation did not complete within CLEANUP_WAIT ({cleanupWait.TotalSeconds}s). Returning to caller; the abort request continues in the background.");
-                }
-            }
-
-            // Always clean up CTS objects. When called from the cancellation callback thread,
-            // CancellationTokenSource.Dispose does not wait for in-flight callbacks to finish.
-            CleanUpCancellationTokenSources();
-        }
-
-        /// <summary>
-        /// Execute a sql query and return the response.
-        /// </summary>
-        /// <param name="statementContext">Execution context carrying command text, timeout, and optional stream.</param>
-        /// <param name="bindings">Parameter bindings or null if no parameters.</param>
-        /// <returns>The response data.</returns>
-        /// <exception>The http request fails or the response code is not succes</exception>
-        internal TResponse ExecuteHelper<TResponse, TResponseData>(
-            StatementContext statementContext,
-            Dictionary<string, BindingDTO> bindings)
-            where TResponse : BaseQueryExecResponse<TResponseData>
-            where TResponseData : IQueryExecResponseData
-        {
-            registerQueryCancellationCallback(statementContext.CommandTimeout, CancellationToken.None);
-
-            string queryId = null;
-            try
-            {
-                var queryRequest = BuildQueryRequest(statementContext, bindings);
-                _logger.LogQuery(queryRequest, _requestId);
-                TResponse response = null;
-                var receivedFirstQueryResponse = false;
-                while (!receivedFirstQueryResponse)
-                {
-                    response = _restRequester.Post<TResponse>(queryRequest);
-                    TryCaptureQueryId(response, ref queryId);
-                    if (RenewSessionIfNeeded(response))
-                        queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
-                    else
-                        receivedFirstQueryResponse = true;
-                }
-
-                if (typeof(TResponse) == typeof(QueryExecResponse))
-                {
-                    QueryExecResponse queryResponse = (QueryExecResponse)(object)response;
-                    if (!statementContext.AsyncExec)
-                    {
-                        var lastResultUrl = queryResponse.data?.getResultUrl;
-
-                        while (response.IsQueryInProgress() || response.IsSessionExpired())
-                        {
-                            var req = BuildResultRequest(lastResultUrl);
-                            response = _restRequester.Get<TResponse>(req);
-                            TryCaptureQueryId(response, ref queryId);
-
-                            if (!RenewSessionIfNeeded(response))
-                                lastResultUrl = queryResponse.data?.getResultUrl;
-                        }
-                    }
-                }
-
-                if (!response.success)
-                {
-                    if (response.data is QueryExecResponseData queryData && queryData.QueryContext != null)
-                    {
-                        SfSession.UpdateQueryContextCache(queryData.QueryContext);
-                    }
-
-                    throw new SnowflakeDbException(
-                        response.data.sqlState,
-                        response.code,
-                        response.message,
-                        response.data.queryId);
-                }
-
-                return response;
-            }
-            catch (OperationCanceledException ex)
-            {
-                queryId ??= (ex.InnerException as SnowflakeDbException)?.QueryId;
-                _logger.Warn($"Query execution canceled. QueryId: {queryId ?? "unavailable"}");
-                throw WrapCancellationException(ex, CancellationToken.None, statementContext.CommandTimeout, queryId);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error("Query execution failed.", ex);
-                HandleExceptionForSession(ex);
-                throw;
-            }
-            finally
-            {
-                ClearQueryRequestId();
-            }
-        }
-
-        /// <summary>
-        /// Execute Async a sql query and return the response.
-        /// </summary>
-        /// <param name="statementContext">Execution context carrying command text, timeout, and optional stream.</param>
-        /// <param name="bindings">Parameter bindings or null if no parameters.</param>
-        /// <param name="cancellationToken">Token to cancel the async operation.</param>
-        /// <returns>The response data.</returns>
-        /// <exception>The http request fails or the response code is not succes</exception>
-        internal async Task<T> ExecuteAsyncHelper<T, U>(
-            StatementContext statementContext,
-            Dictionary<string, BindingDTO> bindings,
-            CancellationToken cancellationToken
-        )
-            where T : BaseQueryExecResponse<U>
-            where U : IQueryExecResponseData
-        {
-            registerQueryCancellationCallback(statementContext.CommandTimeout, cancellationToken);
-            var linkedToken = _linkedCancellationTokenSource.Token;
-
-            string queryId = null;
-            try
-            {
-                var queryRequest = BuildQueryRequest(statementContext, bindings);
-                _logger.LogQuery(queryRequest, _requestId);
-                T response = null;
-                var receivedFirstQueryResponse = false;
-                while (!receivedFirstQueryResponse)
-                {
-                    response = await _restRequester.PostAsync<T>(queryRequest, linkedToken).ConfigureAwait(false);
-                    TryCaptureQueryId(response, ref queryId);
-
-                    if (await RenewSessionIfNeededAsync(response, linkedToken).ConfigureAwait(false))
-                        queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
-                    else
-                        receivedFirstQueryResponse = true;
-                }
-
-                if (typeof(T) == typeof(QueryExecResponse))
-                {
-                    var queryResponse = (QueryExecResponse)(object)response;
-                    if (!statementContext.AsyncExec)
-                    {
-                        var lastResultUrl = queryResponse.data?.getResultUrl;
-
-                        while (response.IsQueryInProgress() || response.IsSessionExpired())
-                        {
-                            var req = BuildResultRequest(lastResultUrl);
-                            response = await _restRequester.GetAsync<T>(req, linkedToken).ConfigureAwait(false);
-                            TryCaptureQueryId(response, ref queryId);
-
-                            if (!await RenewSessionIfNeededAsync(response, linkedToken).ConfigureAwait(false))
-                                lastResultUrl = queryResponse.data?.getResultUrl;
-                        }
-                    }
-                }
-
-                if (!response.success)
-                {
-                    if (response.data is QueryExecResponseData { QueryContext: not null } queryData)
-                    {
-                        SfSession.UpdateQueryContextCache(queryData.QueryContext);
-                    }
-
-                    throw new SnowflakeDbException(
-                        response.data.sqlState,
-                        response.code,
-                        response.message,
-                        response.data.queryId);
-                }
-
-                return response;
-            }
-            catch (OperationCanceledException ex)
-            {
-                queryId ??= (ex.InnerException as SnowflakeDbException)?.QueryId;
-                _logger.Warn($"Query execution canceled. QueryId: {queryId ?? "unavailable"}");
-                throw WrapCancellationException(ex, cancellationToken, statementContext.CommandTimeout, queryId);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error("Query execution failed.", ex);
-                HandleExceptionForSession(ex);
-                throw;
-            }
-            finally
-            {
-                ClearQueryRequestId();
-            }
-        }
-
-        /// <summary>
-        /// Creates a request to get the query status based on query ID.
-        /// </summary>
-        /// <param name="queryId"></param>
-        /// <returns>The request to get the query status.</returns>
-        private SFRestRequest BuildQueryStatusRequest(string queryId)
-        {
-            var queryUri = SfSession.BuildUri(RestPath.SF_MONITOR_QUERY_PATH + queryId);
-
-            return new SFRestRequest
-            {
-                Url = queryUri,
-                authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
-                serviceName = SfSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
-                    ? (String)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]
-                    : null,
-                HttpTimeout = Timeout.InfiniteTimeSpan,
-                RestTimeout = Timeout.InfiniteTimeSpan,
-                SessionId = SfSession.sessionId,
-                _isStatusRequest = true
-            };
-        }
-
-        /// <summary>
-        /// Gets the query status based on query ID.
-        /// </summary>
-        /// <param name="queryId"></param>
-        /// <returns>The query status.</returns>
-        internal QueryStatus GetQueryStatus(string queryId)
-        {
-            var queryRequest = BuildQueryStatusRequest(queryId);
-
-            try
-            {
-                QueryStatusResponse response = null;
-                bool receivedFirstQueryResponse = false;
-                while (!receivedFirstQueryResponse)
-                {
-                    response = _restRequester.Get<QueryStatusResponse>(queryRequest);
-
-                    if (RenewSessionIfNeeded(response))
-                        queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
-                    else
-                        receivedFirstQueryResponse = true;
-                }
-
-                if (!response.success)
-                {
-                    throw new SnowflakeDbException(
-                        response.data.queries[0].state,
-                        response.code,
-                        response.message,
-                        queryId);
-                }
-
-                QueryStatus queryStatus = QueryStatus.NoData;
-                if (response.data.queries.Count != 0)
-                {
-                    queryStatus = QueryStatusExtensions.GetQueryStatusByStringValue(response.data.queries[0].status);
-                }
-
-                return queryStatus;
-            }
-            catch
-            {
-                _logger.Error("Query execution failed.");
-                throw;
-            }
-            finally
-            {
-                ClearQueryRequestId();
-            }
-        }
-
-        /// <summary>
-        /// Gets the query status based on query ID.
-        /// </summary>
-        /// <param name="queryId"></param>
-        /// <returns>The query status.</returns>
-        internal async Task<QueryStatus> GetQueryStatusAsync(string queryId, CancellationToken cancellationToken)
-        {
-            var queryRequest = BuildQueryStatusRequest(queryId);
-
-            try
-            {
-                QueryStatusResponse response = null;
-                bool receivedFirstQueryResponse = false;
-                while (!receivedFirstQueryResponse)
-                {
-                    response = await _restRequester.GetAsync<QueryStatusResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
-                    if (await RenewSessionIfNeededAsync(response, cancellationToken).ConfigureAwait(false))
-                        queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
-                    else
-                        receivedFirstQueryResponse = true;
-                }
-
-                if (!response.success)
-                {
-                    throw new SnowflakeDbException(
-                        response.data.queries[0].state,
-                        response.code,
-                        response.message,
-                        queryId);
-                }
-
-                QueryStatus queryStatus = QueryStatus.NoData;
-                if (response.data.queries.Count != 0)
-                {
-                    queryStatus = QueryStatusExtensions.GetQueryStatusByStringValue(response.data.queries[0].status);
-                }
-
-                return queryStatus;
-            }
-            catch
-            {
-                _logger.Error("Query execution failed.");
-                throw;
-            }
-            finally
-            {
-                ClearQueryRequestId();
-            }
-        }
-
-        /// <summary>
-        /// Trim the query by removing spaces and comments at the beginning.
-        /// </summary>
-        /// <param name="originalSql">The original sql query.</param>
-        /// <returns>The query without the blanks and comments at the beginning.</returns>
-        internal string TrimSql(string originalSql)
-        {
-            char[] sqlQueryBuf = originalSql.ToCharArray();
-            var builder = new StringBuilder();
-
-            // skip old c-style comment
-            var idx = 0;
-            var sqlQueryLen = sqlQueryBuf.Length;
-            do
-            {
-                if (('/' == sqlQueryBuf[idx]) &&
-                    (idx + 1 < sqlQueryLen) &&
-                    ('*' == sqlQueryBuf[idx + 1]))
-                {
-                    // Search for the matching */
-                    var matchingPos = originalSql.IndexOf("*/", idx + 2);
-                    if (matchingPos >= 0)
-                    {
-                        // Found the comment closing, skip to after
-                        idx = matchingPos + 2;
-                    }
-                }
-                else if ((sqlQueryBuf[idx] == '-') &&
-                         (idx + 1 < sqlQueryLen) &&
-                         (sqlQueryBuf[idx + 1] == '-'))
-                {
-                    // Search for the new line
-                    var newlinePos = originalSql.IndexOf("\n", idx + 2);
-
-                    if (newlinePos >= 0)
-                    {
-                        // Found the new line, skip to after
-                        idx = newlinePos + 1;
-                    }
-                }
-
-                // No more characters after the closing comment character, stop trimming the query
-                if (idx >= sqlQueryLen)
-                {
-                    break;
-                }
-
-                builder.Append(sqlQueryBuf[idx]);
-                idx++;
-            } while (idx < sqlQueryLen);
-
-            var trimmedQuery = builder.ToString();
-            trimmedQuery = trimmedQuery.Trim();
-
-            return trimmedQuery;
-        }
-
-        /// <summary>
-        /// Check if query is PUT or GET command.
-        /// </summary>
-        /// <param name="query">The sql query.</param>
-        /// <returns>The boolean value if the query is a PUT or GET command.</returns>
-        private bool IsPutOrGetCommand(string query)
-        {
-            return (query.Substring(0, 3).ToUpper() == "PUT") ||
-                   (query.Substring(0, 3).ToUpper() == "GET");
-        }
-
-        private static int GetBindingCount(Dictionary<string, BindingDTO> binding)
-        {
-            if (!IsArrayBind(binding))
-            {
-                return 0;
-            }
-            else
-            {
-                List<object> values = (List<object>)binding.Values.First().value;
-                return values.Count * binding.Count;
-            }
-        }
-
-        private static Boolean IsArrayBind(Dictionary<string, BindingDTO> binding)
-        {
-            if (binding == null || binding.Count == 0)
+            if (bindingDTO.value == null)
             {
                 return false;
             }
 
-            foreach (BindingDTO bindingDTO in binding.Values)
+            if (bindingDTO.value.GetType() != typeof(List<object>))
             {
-                if (bindingDTO.value == null)
-                {
-                    return false;
-                }
-
-                if (bindingDTO.value.GetType() != typeof(List<object>))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        internal void SetUploadStream(MemoryStream stream)
-        {
-            _uploadStream = stream;
-        }
-
-        internal SFBaseResultSet ExecuteTransfer(string sql)
-        {
-            isPutGetQuery = true;
-            var response = ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
-                    StatementContext.Default with { CommandText = sql },
-                    null);
-
-            var fileTransferAgent = new SFFileTransferAgent(sql, SfSession, response.data, new BorrowedMemoryStream(_uploadStream, true));
-            fileTransferAgent.execute();
-
-            return fileTransferAgent.result();
-        }
-
-        internal async Task<SFBaseResultSet> ExecuteTransferAsync(string sql, CancellationToken cancellationToken)
-        {
-            isPutGetQuery = true;
-            var response =
-                await ExecuteAsyncHelper<PutGetExecResponse, PutGetResponseData>(
-                    StatementContext.Default with { CommandText = sql },
-                    null,
-                    cancellationToken).ConfigureAwait(false);
-
-            var fileTransferAgent = new SFFileTransferAgent(sql, SfSession, response.data, new BorrowedMemoryStream(_uploadStream, true));
-            fileTransferAgent.execute();
-
-            return fileTransferAgent.result();
-        }
-
-        internal string GetQueryId() => _lastQueryId;
-
-        private static void TryCaptureQueryId(BaseRestResponse response, ref string queryId)
-        {
-            queryId = response switch
-            {
-                QueryExecResponse { data.queryId: not null } qer => qer.data.queryId,
-                PutGetExecResponse { data.queryId: not null } per => per.data.queryId,
-                _ => queryId
-            };
-        }
-
-        private static OperationCanceledException WrapCancellationException(OperationCanceledException ex, CancellationToken externalCancellationToken, int timeout, string queryId)
-        {
-            var detail = externalCancellationToken.IsCancellationRequested
-                ? SnowflakeDbException.WithQueryId(ex, SFError.QUERY_CANCELLED, queryId)
-                : SnowflakeDbException.WithQueryId(ex, SFError.REQUEST_TIMEOUT, queryId, timeout.ToString());
-
-            return new OperationCanceledException(detail.Message, detail, ex.CancellationToken);
-        }
-
-        private void HandleExceptionForSession(Exception ex)
-        {
-            if (RestRequester.HasUnauthorizedStatusCode(ex) || ex.IsSessionGone())
-            {
-                SfSession.InvalidateForPooling();
+                return false;
             }
         }
 
-        /// <summary>Renews the session if expired. Throws if the session no longer exists. Returns true if renewed.</summary>
-        private async Task<bool> RenewSessionIfNeededAsync(BaseRestResponse response, CancellationToken cancellationToken)
+        return true;
+    }
+
+    internal void SetUploadStream(MemoryStream stream)
+    {
+        _uploadStream = stream;
+    }
+
+    internal SFBaseResultSet ExecuteTransfer(string sql)
+    {
+        isPutGetQuery = true;
+        var response = ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
+            StatementContext.Default with { CommandText = sql },
+            null);
+
+        var fileTransferAgent = new SFFileTransferAgent(sql, SfSession, response.data, new BorrowedMemoryStream(_uploadStream, true));
+        fileTransferAgent.execute();
+
+        return fileTransferAgent.result();
+    }
+
+    internal async Task<SFBaseResultSet> ExecuteTransferAsync(string sql, CancellationToken cancellationToken)
+    {
+        isPutGetQuery = true;
+        var response =
+            await ExecuteAsyncHelper<PutGetExecResponse, PutGetResponseData>(
+                StatementContext.Default with { CommandText = sql },
+                null,
+                cancellationToken).ConfigureAwait(false);
+
+        var fileTransferAgent = new SFFileTransferAgent(sql, SfSession, response.data, new BorrowedMemoryStream(_uploadStream, true));
+        fileTransferAgent.execute();
+
+        return fileTransferAgent.result();
+    }
+
+    internal string GetQueryId() => _lastQueryId;
+
+    private static void TryCaptureQueryId(BaseRestResponse response, ref string queryId)
+    {
+        queryId = response switch
         {
-            if (response.IsSessionGone())
-                throw new SnowflakeDbException(SFError.SESSION_GONE);
+            QueryExecResponse { data.queryId: not null } qer => qer.data.queryId,
+            PutGetExecResponse { data.queryId: not null } per => per.data.queryId,
+            _ => queryId
+        };
+    }
 
-            if (!response.IsSessionExpired()) return false;
-            _logger.Info("Request failed with session expired, trying to renew the session.");
-            await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
+    private static OperationCanceledException WrapCancellationException(OperationCanceledException ex, CancellationToken externalCancellationToken, int timeout, string queryId)
+    {
+        var detail = externalCancellationToken.IsCancellationRequested
+            ? SnowflakeDbException.WithQueryId(ex, SFError.QUERY_CANCELLED, queryId)
+            : SnowflakeDbException.WithQueryId(ex, SFError.REQUEST_TIMEOUT, queryId, timeout.ToString());
 
-            return true;
-        }
+        return new OperationCanceledException(detail.Message, detail, ex.CancellationToken);
+    }
 
-        /// <summary>Renews the session if expired. Throws if the session no longer exists. Returns true if renewed.</summary>
-        private bool RenewSessionIfNeeded(BaseRestResponse response)
+    private void HandleExceptionForSession(Exception ex)
+    {
+        if (RestRequester.HasUnauthorizedStatusCode(ex) || ex.IsSessionGone())
         {
-            if (response.IsSessionGone())
-                throw new SnowflakeDbException(SFError.SESSION_GONE);
-
-            if (!response.IsSessionExpired()) return false;
-            _logger.Info("Request failed with session expired, trying to renew the session.");
-            SfSession.renewSession();
-
-            return true;
+            SfSession.InvalidateForPooling();
         }
+    }
+
+    /// <summary>Renews the session if expired. Throws if the session no longer exists. Returns true if renewed.</summary>
+    private async Task<bool> RenewSessionIfNeededAsync(BaseRestResponse response, CancellationToken cancellationToken)
+    {
+        if (response.IsSessionGone())
+            throw new SnowflakeDbException(SFError.SESSION_GONE);
+
+        if (!response.IsSessionExpired()) return false;
+        _logger.Info("Request failed with session expired, trying to renew the session.");
+        await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
+
+        return true;
+    }
+
+    /// <summary>Renews the session if expired. Throws if the session no longer exists. Returns true if renewed.</summary>
+    private bool RenewSessionIfNeeded(BaseRestResponse response)
+    {
+        if (response.IsSessionGone())
+            throw new SnowflakeDbException(SFError.SESSION_GONE);
+
+        if (!response.IsSessionExpired()) return false;
+        _logger.Info("Request failed with session expired, trying to renew the session.");
+        SfSession.renewSession();
+
+        return true;
     }
 }

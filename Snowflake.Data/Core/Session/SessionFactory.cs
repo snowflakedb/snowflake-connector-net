@@ -1,10 +1,9 @@
-namespace Snowflake.Data.Core.Session
+namespace Snowflake.Data.Core.Session;
+
+internal class SessionFactory : ISessionFactory
 {
-    internal class SessionFactory : ISessionFactory
+    public SFSession NewSession(string connectionString, SessionPropertiesContext sessionContext)
     {
-        public SFSession NewSession(string connectionString, SessionPropertiesContext sessionContext)
-        {
-            return new SFSession(connectionString, sessionContext, EasyLoggingStarter.Instance);
-        }
+        return new SFSession(connectionString, sessionContext, EasyLoggingStarter.Instance);
     }
 }

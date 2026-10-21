@@ -10,166 +10,166 @@ using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
 
-namespace Snowflake.Data.Tests.UnitTests.Logger
+namespace Snowflake.Data.Tests.UnitTests.Logger;
+
+[CollectionDefinition(nameof(EasyLoggerManagerTestFixture), DisableParallelization = true)]
+public sealed class EasyLoggerManagerTestFixture : ICollectionFixture<EasyLoggerManagerTestFixture.Fixture>
 {
-    [CollectionDefinition(nameof(EasyLoggerManagerTestFixture), DisableParallelization = true)]
-    public sealed class EasyLoggerManagerTestFixture : ICollectionFixture<EasyLoggerManagerTestFixture.Fixture>
+    public sealed class Fixture : IDisposable
     {
-        public sealed class Fixture : IDisposable
-        {
-            public void Dispose()
-            {
-                EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
-                RemoveEasyLoggingLogFiles();
-            }
-
-            private static void RemoveEasyLoggingLogFiles()
-            {
-                var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                Directory.GetFiles(logsDirectory)
-                    .Where(filePath => filePath.StartsWith(Path.Combine(logsDirectory, "easy_logging_logs")))
-                    .AsParallel()
-                    .ForAll(filePath => File.Delete(filePath));
-            }
-        }
-    }
-
-    [Collection(nameof(EasyLoggerManagerTestFixture))]
-    public sealed class EasyLoggerManagerTest : IDisposable
-    {
-        private const string InfoMessage = "Easy logging Info message";
-        private const string DebugMessage = "Easy logging Debug message";
-        private const string WarnMessage = "Easy logging Warn message";
-        private const string ErrorMessage = "Easy logging Error message";
-        private static readonly string s_logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-
-        private static AsyncLocal<string> _directoryLogPath = new AsyncLocal<string>();
-
-        public EasyLoggerManagerTest()
-        {
-            _directoryLogPath.Value = RandomLogsDirectoryPath();
-        }
-
         public void Dispose()
         {
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, _directoryLogPath.Value);
+            EasyLoggerManager.Instance.ResetEasyLogging(EasyLoggingLogLevel.Off);
+            RemoveEasyLoggingLogFiles();
         }
 
-        [SFFact]
-        public void TestThatChangesLogLevel()
+        private static void RemoveEasyLoggingLogFiles()
         {
-            // arrange
-            var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
-
-            // act
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Off, _directoryLogPath.Value);
-
-            // assert
-            Assert.False(logger.IsDebugEnabled());
-            Assert.False(logger.IsInfoEnabled());
-            Assert.False(logger.IsWarnEnabled());
-            Assert.False(logger.IsErrorEnabled());
-
-            // act
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, _directoryLogPath.Value);
-
-            // assert
-            Assert.False(logger.IsDebugEnabled());
-            Assert.False(logger.IsInfoEnabled());
-            Assert.False(logger.IsWarnEnabled());
-            Assert.True(logger.IsErrorEnabled());
-
-            // act
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, _directoryLogPath.Value);
-
-            // assert
-            Assert.False(logger.IsDebugEnabled());
-            Assert.False(logger.IsInfoEnabled());
-            Assert.True(logger.IsWarnEnabled());
-            Assert.True(logger.IsErrorEnabled());
-
-            // act
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, _directoryLogPath.Value);
-
-            // assert
-            Assert.True(logger.IsDebugEnabled());
-            Assert.True(logger.IsInfoEnabled());
-            Assert.True(logger.IsWarnEnabled());
-            Assert.True(logger.IsErrorEnabled());
+            var logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            Directory.GetFiles(logsDirectory)
+                .Where(filePath => filePath.StartsWith(Path.Combine(logsDirectory, "easy_logging_logs")))
+                .AsParallel()
+                .ForAll(filePath => File.Delete(filePath));
         }
+    }
+}
 
-        [SFFact]
-        public void TestThatLogsToProperFileWithProperLogLevelOnly()
+[Collection(nameof(EasyLoggerManagerTestFixture))]
+public sealed class EasyLoggerManagerTest : IDisposable
+{
+    private const string InfoMessage = "Easy logging Info message";
+    private const string DebugMessage = "Easy logging Debug message";
+    private const string WarnMessage = "Easy logging Warn message";
+    private const string ErrorMessage = "Easy logging Error message";
+    private static readonly string s_logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+    private static AsyncLocal<string> _directoryLogPath = new AsyncLocal<string>();
+
+    public EasyLoggerManagerTest()
+    {
+        _directoryLogPath.Value = RandomLogsDirectoryPath();
+    }
+
+    public void Dispose()
+    {
+        EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, _directoryLogPath.Value);
+    }
+
+    [SFFact]
+    public void TestThatChangesLogLevel()
+    {
+        // arrange
+        var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
+
+        // act
+        EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Off, _directoryLogPath.Value);
+
+        // assert
+        Assert.False(logger.IsDebugEnabled());
+        Assert.False(logger.IsInfoEnabled());
+        Assert.False(logger.IsWarnEnabled());
+        Assert.False(logger.IsErrorEnabled());
+
+        // act
+        EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Error, _directoryLogPath.Value);
+
+        // assert
+        Assert.False(logger.IsDebugEnabled());
+        Assert.False(logger.IsInfoEnabled());
+        Assert.False(logger.IsWarnEnabled());
+        Assert.True(logger.IsErrorEnabled());
+
+        // act
+        EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, _directoryLogPath.Value);
+
+        // assert
+        Assert.False(logger.IsDebugEnabled());
+        Assert.False(logger.IsInfoEnabled());
+        Assert.True(logger.IsWarnEnabled());
+        Assert.True(logger.IsErrorEnabled());
+
+        // act
+        EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, _directoryLogPath.Value);
+
+        // assert
+        Assert.True(logger.IsDebugEnabled());
+        Assert.True(logger.IsInfoEnabled());
+        Assert.True(logger.IsWarnEnabled());
+        Assert.True(logger.IsErrorEnabled());
+    }
+
+    [SFFact]
+    public void TestThatLogsToProperFileWithProperLogLevelOnly()
+    {
+        // arrange
+        var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
+        EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, _directoryLogPath.Value);
+
+        // act
+        logger.Debug(DebugMessage);
+        logger.Info(InfoMessage);
+        logger.Warn(WarnMessage);
+        logger.Error(ErrorMessage);
+
+        // assert
+        var logLines = File.ReadLines(FindLogFilePath(_directoryLogPath.Value));
+        Assert.Equal(0, logLines.Count(s => s.Contains(DebugMessage)));
+        Assert.Equal(1, logLines.Count(s => s.Contains(InfoMessage)));
+        Assert.Equal(1, logLines.Count(s => s.Contains(WarnMessage)));
+        Assert.Equal(1, logLines.Count(s => s.Contains(ErrorMessage)));
+
+        // arrange - use a fresh directory to avoid race with in-flight log calls to the old appender
+        var secondDirectoryLogPath = RandomLogsDirectoryPath();
+        EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, secondDirectoryLogPath);
+
+        // act
+        logger.Debug(DebugMessage);
+
+        // assert
+        logLines = File.ReadLines(FindLogFilePath(secondDirectoryLogPath));
+        Assert.Equal(1, logLines.Count(s => s.Contains(DebugMessage)));
+    }
+
+    [SFFact(RetriesCount = RetriesCount.Thrice)]
+    public async Task TestThatRollsLogIfSizeIsTooBig()
+    {
+        // arrange
+        const int ExpectedBackupLogCount = 2;
+        var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
+        EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Trace, _directoryLogPath.Value);
+
+        var appenders = SFLoggerImpl.s_appenders;
+        appenders.Remove(appenders[0]);
+        var randomFileName = $"snowflake_dotnet_{Path.GetRandomFileName()}";
+        var logFileName = randomFileName.Substring(0, randomFileName.Length - 4) + ".log";
+        var appender = new SFRollingFileAppender(FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance)
         {
-            // arrange
-            var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Info, _directoryLogPath.Value);
+            LogFilePath = Path.Combine(_directoryLogPath.Value, logFileName),
+            MaximumFileSizeInBytes = 1,
+            MaxSizeRollBackups = ExpectedBackupLogCount,
+            PatternLayout = EasyLoggerManager.PatternLayout()
+        };
+        appender.ActivateOptions();
+        appenders.Add(appender);
 
-            // act
+        // act
+        for (int i = 0; i < 5; i++)
+        {
             logger.Debug(DebugMessage);
-            logger.Info(InfoMessage);
-            logger.Warn(WarnMessage);
-            logger.Error(ErrorMessage);
-
-            // assert
-            var logLines = File.ReadLines(FindLogFilePath(_directoryLogPath.Value));
-            Assert.Equal(0, logLines.Count(s => s.Contains(DebugMessage)));
-            Assert.Equal(1, logLines.Count(s => s.Contains(InfoMessage)));
-            Assert.Equal(1, logLines.Count(s => s.Contains(WarnMessage)));
-            Assert.Equal(1, logLines.Count(s => s.Contains(ErrorMessage)));
-
-            // arrange - use a fresh directory to avoid race with in-flight log calls to the old appender
-            var secondDirectoryLogPath = RandomLogsDirectoryPath();
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Debug, secondDirectoryLogPath);
-
-            // act
-            logger.Debug(DebugMessage);
-
-            // assert
-            logLines = File.ReadLines(FindLogFilePath(secondDirectoryLogPath));
-            Assert.Equal(1, logLines.Count(s => s.Contains(DebugMessage)));
+            await Task.Delay(1000).ConfigureAwait(false);
         }
+        var backupLogs = Directory.GetFiles(_directoryLogPath.Value, $"{logFileName}.*.bak");
 
-        [SFFact(RetriesCount = RetriesCount.Thrice)]
-        public async Task TestThatRollsLogIfSizeIsTooBig()
-        {
-            // arrange
-            const int ExpectedBackupLogCount = 2;
-            var logger = SFLoggerFactory.GetSFLogger<SFBlockingChunkDownloaderV3>();
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Trace, _directoryLogPath.Value);
+        // assert
+        Assert.Equal(ExpectedBackupLogCount, backupLogs.Length);
+    }
 
-            var appenders = SFLoggerImpl.s_appenders;
-            appenders.Remove(appenders[0]);
-            var randomFileName = $"snowflake_dotnet_{Path.GetRandomFileName()}";
-            var logFileName = randomFileName.Substring(0, randomFileName.Length - 4) + ".log";
-            var appender = new SFRollingFileAppender(FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance)
-            {
-                LogFilePath = Path.Combine(_directoryLogPath.Value, logFileName),
-                MaximumFileSizeInBytes = 1,
-                MaxSizeRollBackups = ExpectedBackupLogCount,
-                PatternLayout = EasyLoggerManager.PatternLayout()
-            };
-            appender.ActivateOptions();
-            appenders.Add(appender);
-
-            // act
-            for (int i = 0; i < 5; i++)
-            {
-                logger.Debug(DebugMessage);
-                await Task.Delay(1000).ConfigureAwait(false);
-            }
-            var backupLogs = Directory.GetFiles(_directoryLogPath.Value, $"{logFileName}.*.bak");
-
-            // assert
-            Assert.Equal(ExpectedBackupLogCount, backupLogs.Length);
-        }
-
-        [SFFact]
-        public void TestThatOnlyUnknownFieldsAreLogged()
-        {
-            // arrange
-            string expectedFakeLogField = "fake_log_field";
-            string ConfigWithUnknownFields = $@"{{
+    [SFFact]
+    public void TestThatOnlyUnknownFieldsAreLogged()
+    {
+        // arrange
+        string expectedFakeLogField = "fake_log_field";
+        string ConfigWithUnknownFields = $@"{{
                     ""common"": {{
                         ""LOG_LEVEL"": ""warn"",
                         ""lOg_PaTh"": ""path"",
@@ -177,38 +177,37 @@ namespace Snowflake.Data.Tests.UnitTests.Logger
                         ""{expectedFakeLogField}_2"": ""123""
                     }}
                 }}";
-            var configFilePath = Guid.NewGuid().ToString() + ".json";
-            using (var writer = File.CreateText(configFilePath))
-            {
-                writer.Write(ConfigWithUnknownFields);
-            }
-            EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, _directoryLogPath.Value);
-            var parser = new EasyLoggingConfigParser();
-
-            // act
-            parser.Parse(configFilePath);
-
-            // assert
-            var logLines = File.ReadLines(FindLogFilePath(_directoryLogPath.Value));
-            Assert.Equal(2, logLines.Count(s => s.Contains($"Unknown field from config: {expectedFakeLogField}")));
-
-            // cleanup
-            File.Delete(configFilePath);
-        }
-
-        private static string RandomLogsDirectoryPath()
+        var configFilePath = Guid.NewGuid().ToString() + ".json";
+        using (var writer = File.CreateText(configFilePath))
         {
-            var randomName = Path.GetRandomFileName();
-            return Path.Combine(s_logsDirectory, $"easy_logging_logs_{randomName}", "dotnet");
+            writer.Write(ConfigWithUnknownFields);
         }
+        EasyLoggerManager.Instance.ReconfigureEasyLogging(EasyLoggingLogLevel.Warn, _directoryLogPath.Value);
+        var parser = new EasyLoggingConfigParser();
 
-        internal static string FindLogFilePath(string directoryLogPath)
-        {
-            Assert.True(Directory.Exists(directoryLogPath));
-            var files = Directory.GetFiles(directoryLogPath);
-            Assert.Single(files);
-            return files.First();
-        }
+        // act
+        parser.Parse(configFilePath);
 
+        // assert
+        var logLines = File.ReadLines(FindLogFilePath(_directoryLogPath.Value));
+        Assert.Equal(2, logLines.Count(s => s.Contains($"Unknown field from config: {expectedFakeLogField}")));
+
+        // cleanup
+        File.Delete(configFilePath);
     }
+
+    private static string RandomLogsDirectoryPath()
+    {
+        var randomName = Path.GetRandomFileName();
+        return Path.Combine(s_logsDirectory, $"easy_logging_logs_{randomName}", "dotnet");
+    }
+
+    internal static string FindLogFilePath(string directoryLogPath)
+    {
+        Assert.True(Directory.Exists(directoryLogPath));
+        var files = Directory.GetFiles(directoryLogPath);
+        Assert.Single(files);
+        return files.First();
+    }
+
 }

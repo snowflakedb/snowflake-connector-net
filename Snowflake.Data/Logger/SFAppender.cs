@@ -1,11 +1,10 @@
 using System;
 
-namespace Snowflake.Data.Log
-{
-    internal interface SFAppender
-    {
-        void Append(string logLevel, string message, Type type, Exception ex = null);
+namespace Snowflake.Data.Log;
 
-        void ActivateOptions();
-    }
+internal interface SFAppender
+{
+    void Append(string logLevel, string message, Type type, Exception ex = null);
+
+    void ActivateOptions();
 }

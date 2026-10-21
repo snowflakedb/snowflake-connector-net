@@ -5,131 +5,130 @@ using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Core;
 
-namespace Snowflake.Data.Tests.Mock
+namespace Snowflake.Data.Tests.Mock;
+
+internal class MockRestRequesterForQueryCancellation : MockBaseRestRequester
 {
-    internal class MockRestRequesterForQueryCancellation : MockBaseRestRequester
+    private static readonly string SessionToken = "mock_session_token";
+
+    internal bool CancelRequestSent { get; private set; }
+    internal string CancelledQueryId { get; private set; }
+
+    internal Action OnGetQueryStatusResponse { get; set; }
+
+    internal bool ThrowOnCancel { get; set; }
+
+    private readonly Queue<string> _statusQueue = new Queue<string>();
+
+    internal void EnqueueStatus(params string[] statuses)
     {
-        private static readonly string SessionToken = "mock_session_token";
+        foreach (var s in statuses) _statusQueue.Enqueue(s);
+    }
 
-        internal bool CancelRequestSent { get; private set; }
-        internal string CancelledQueryId { get; private set; }
-
-        internal Action OnGetQueryStatusResponse { get; set; }
-
-        internal bool ThrowOnCancel { get; set; }
-
-        private readonly Queue<string> _statusQueue = new Queue<string>();
-
-        internal void EnqueueStatus(params string[] statuses)
+    public override Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+    {
+        SFRestRequest sfRequest = (SFRestRequest)request;
+        if (sfRequest.jsonBody is LoginRequest)
         {
-            foreach (var s in statuses) _statusQueue.Enqueue(s);
-        }
-
-        public override Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
-        {
-            SFRestRequest sfRequest = (SFRestRequest)request;
-            if (sfRequest.jsonBody is LoginRequest)
+            return Task.FromResult<T>((T)(object)new LoginResponse
             {
-                return Task.FromResult<T>((T)(object)new LoginResponse
+                data = new LoginResponseData()
                 {
-                    data = new LoginResponseData()
+                    token = SessionToken,
+                    masterToken = "master_token",
+                    authResponseSessionInfo = new SessionInfo(),
+                    nameValueParameter = new List<NameValueParameter>()
+                },
+                success = true
+            });
+        }
+        else if (sfRequest.jsonBody is QueryRequest queryRequest &&
+                 queryRequest.sqlText != null &&
+                 queryRequest.sqlText.Contains("SYSTEM$CANCEL_QUERY"))
+        {
+            if (ThrowOnCancel)
+            {
+                throw new Exception("Simulated cancel failure");
+            }
+
+            CancelRequestSent = true;
+            var startIdx = queryRequest.sqlText.IndexOf("SYSTEM$CANCEL_QUERY('", StringComparison.Ordinal);
+            if (startIdx >= 0)
+            {
+                startIdx += "SYSTEM$CANCEL_QUERY('".Length;
+                var endIdx = queryRequest.sqlText.IndexOf("'", startIdx, StringComparison.Ordinal);
+                if (endIdx > startIdx)
+                {
+                    CancelledQueryId = queryRequest.sqlText.Substring(startIdx, endIdx - startIdx);
+                }
+            }
+
+            return Task.FromResult<T>((T)(object)new QueryExecResponse
+            {
+                success = true,
+                data = new QueryExecResponseData
+                {
+                    rowSet = new string[,] { { "query cancelled" } },
+                    rowType = new List<ExecResponseRowType>
                     {
-                        token = SessionToken,
-                        masterToken = "master_token",
-                        authResponseSessionInfo = new SessionInfo(),
-                        nameValueParameter = new List<NameValueParameter>()
+                        new ExecResponseRowType { name = "result", type = "TEXT" }
                     },
-                    success = true
-                });
-            }
-            else if (sfRequest.jsonBody is QueryRequest queryRequest &&
-                     queryRequest.sqlText != null &&
-                     queryRequest.sqlText.Contains("SYSTEM$CANCEL_QUERY"))
+                    parameters = new List<NameValueParameter>()
+                }
+            });
+        }
+        else if (sfRequest.jsonBody == null)
+        {
+            if (typeof(T) == typeof(CloseResponse))
             {
-                if (ThrowOnCancel)
-                {
-                    throw new Exception("Simulated cancel failure");
-                }
+                return Task.FromResult<T>((T)(object)new CloseResponse { success = true });
+            }
+            return Task.FromResult<T>((T)(object)new NullDataResponse { success = true });
+        }
+        return Task.FromResult<T>((T)(object)null);
+    }
 
-                CancelRequestSent = true;
-                var startIdx = queryRequest.sqlText.IndexOf("SYSTEM$CANCEL_QUERY('", StringComparison.Ordinal);
-                if (startIdx >= 0)
-                {
-                    startIdx += "SYSTEM$CANCEL_QUERY('".Length;
-                    var endIdx = queryRequest.sqlText.IndexOf("'", startIdx, StringComparison.Ordinal);
-                    if (endIdx > startIdx)
-                    {
-                        CancelledQueryId = queryRequest.sqlText.Substring(startIdx, endIdx - startIdx);
-                    }
-                }
+    public override T Post<T>(IRestRequest postRequest)
+    {
+        return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None).ConfigureAwait(false)).Result;
+    }
 
-                return Task.FromResult<T>((T)(object)new QueryExecResponse
+    public override T Get<T>(IRestRequest request)
+    {
+        return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None).ConfigureAwait(false)).Result;
+    }
+
+    public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+    {
+        SFRestRequest sfRequest = (SFRestRequest)request;
+
+        if (sfRequest._isStatusRequest)
+        {
+            var response = new QueryStatusResponse
+            {
+                success = true,
+                data = new QueryStatusData
                 {
-                    success = true,
-                    data = new QueryExecResponseData
+                    queries = new List<QueryStatusDataQueries>
                     {
-                        rowSet = new string[,] { { "query cancelled" } },
-                        rowType = new List<ExecResponseRowType>
+                        new QueryStatusDataQueries
                         {
-                            new ExecResponseRowType { name = "result", type = "TEXT" }
-                        },
-                        parameters = new List<NameValueParameter>()
-                    }
-                });
-            }
-            else if (sfRequest.jsonBody == null)
-            {
-                if (typeof(T) == typeof(CloseResponse))
-                {
-                    return Task.FromResult<T>((T)(object)new CloseResponse { success = true });
-                }
-                return Task.FromResult<T>((T)(object)new NullDataResponse { success = true });
-            }
-            return Task.FromResult<T>((T)(object)null);
-        }
-
-        public override T Post<T>(IRestRequest postRequest)
-        {
-            return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None).ConfigureAwait(false)).Result;
-        }
-
-        public override T Get<T>(IRestRequest request)
-        {
-            return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None).ConfigureAwait(false)).Result;
-        }
-
-        public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
-        {
-            SFRestRequest sfRequest = (SFRestRequest)request;
-
-            if (sfRequest._isStatusRequest)
-            {
-                var response = new QueryStatusResponse
-                {
-                    success = true,
-                    data = new QueryStatusData
-                    {
-                        queries = new List<QueryStatusDataQueries>
-                        {
-                            new QueryStatusDataQueries
-                            {
-                                status = _statusQueue.Count > 0 ? _statusQueue.Dequeue() : "RUNNING"
-                            }
+                            status = _statusQueue.Count > 0 ? _statusQueue.Dequeue() : "RUNNING"
                         }
                     }
-                };
+                }
+            };
 
-                OnGetQueryStatusResponse?.Invoke();
+            OnGetQueryStatusResponse?.Invoke();
 
-                return Task.FromResult<T>((T)(object)response);
-            }
-
-            return Task.FromResult<T>((T)(object)null);
+            return Task.FromResult<T>((T)(object)response);
         }
 
-        public override Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<HttpResponseMessage>(null);
-        }
+        return Task.FromResult<T>((T)(object)null);
+    }
+
+    public override Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
+    {
+        return Task.FromResult<HttpResponseMessage>(null);
     }
 }

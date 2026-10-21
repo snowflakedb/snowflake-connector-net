@@ -3,52 +3,51 @@ using Xunit;
 using Snowflake.Data.Configuration;
 using Snowflake.Data.Tests.Util;
 
-namespace Snowflake.Data.Tests.UnitTests.Configuration
+namespace Snowflake.Data.Tests.UnitTests.Configuration;
+
+public class EasyLoggingConfigProviderTest
 {
-    public class EasyLoggingConfigProviderTest
+    private const string FilePathFromConnectionString = "/Users/dotnet/config.json";
+    private const string FilePathToUse = "/home/config.json";
+
+    [SFFact]
+    public void TestThatProvidesConfiguration()
     {
-        private const string FilePathFromConnectionString = "/Users/dotnet/config.json";
-        private const string FilePathToUse = "/home/config.json";
+        // arrange
+        var configFinder = new Mock<EasyLoggingConfigFinder>();
+        var configParser = new Mock<EasyLoggingConfigParser>();
+        var configProvider = new EasyLoggingConfigProvider(configFinder.Object, configParser.Object);
+        var config = new ClientConfig();
+        configFinder
+            .Setup(finder => finder.FindConfigFilePath(FilePathFromConnectionString))
+            .Returns(FilePathToUse);
+        configParser
+            .Setup(parser => parser.Parse(FilePathToUse))
+            .Returns(config);
 
-        [SFFact]
-        public void TestThatProvidesConfiguration()
-        {
-            // arrange
-            var configFinder = new Mock<EasyLoggingConfigFinder>();
-            var configParser = new Mock<EasyLoggingConfigParser>();
-            var configProvider = new EasyLoggingConfigProvider(configFinder.Object, configParser.Object);
-            var config = new ClientConfig();
-            configFinder
-                .Setup(finder => finder.FindConfigFilePath(FilePathFromConnectionString))
-                .Returns(FilePathToUse);
-            configParser
-                .Setup(parser => parser.Parse(FilePathToUse))
-                .Returns(config);
+        // act
+        var result = configProvider.ProvideConfig(FilePathFromConnectionString);
 
-            // act
-            var result = configProvider.ProvideConfig(FilePathFromConnectionString);
+        // assert
+        Assert.Same(config, result);
+    }
 
-            // assert
-            Assert.Same(config, result);
-        }
+    [SFFact]
+    public void TestThatReturnsNullWhenNoConfigurationFound()
+    {
+        // arrange
+        var configFinder = new Mock<EasyLoggingConfigFinder>();
+        var configParser = new Mock<EasyLoggingConfigParser>();
+        var configProvider = new EasyLoggingConfigProvider(configFinder.Object, configParser.Object);
+        configFinder
+            .Setup(finder => finder.FindConfigFilePath(FilePathFromConnectionString))
+            .Returns((string)null);
 
-        [SFFact]
-        public void TestThatReturnsNullWhenNoConfigurationFound()
-        {
-            // arrange
-            var configFinder = new Mock<EasyLoggingConfigFinder>();
-            var configParser = new Mock<EasyLoggingConfigParser>();
-            var configProvider = new EasyLoggingConfigProvider(configFinder.Object, configParser.Object);
-            configFinder
-                .Setup(finder => finder.FindConfigFilePath(FilePathFromConnectionString))
-                .Returns((string)null);
+        // act
+        var result = configProvider.ProvideConfig(FilePathFromConnectionString);
 
-            // act
-            var result = configProvider.ProvideConfig(FilePathFromConnectionString);
-
-            // assert
-            Assert.Null(result);
-            configParser.Verify(parser => parser.Parse(It.IsAny<string>()), Times.Never);
-        }
+        // assert
+        Assert.Null(result);
+        configParser.Verify(parser => parser.Parse(It.IsAny<string>()), Times.Never);
     }
 }

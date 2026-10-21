@@ -6,99 +6,98 @@ using Snowflake.Data.Core;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 
-namespace Snowflake.Data.Tests.UnitTests.Session
+namespace Snowflake.Data.Tests.UnitTests.Session;
+
+public class SessionCreationTokenCounterTest
 {
-    public class SessionCreationTokenCounterTest
+    private static readonly TimeSpan s_longTime = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan s_shortTime = TimeSpan.FromMilliseconds(50);
+
+    [SFFact]
+    public void TestGrantSessionCreation()
     {
-        private static readonly TimeSpan s_longTime = TimeSpan.FromSeconds(30);
-        private static readonly TimeSpan s_shortTime = TimeSpan.FromMilliseconds(50);
+        // arrange
+        var tokens = new SessionCreationTokenCounter(s_longTime);
 
-        [SFFact]
-        public void TestGrantSessionCreation()
-        {
-            // arrange
-            var tokens = new SessionCreationTokenCounter(s_longTime);
+        // act
+        tokens.NewToken();
 
-            // act
-            tokens.NewToken();
+        // assert
+        Assert.Equal(1, tokens.Count());
 
-            // assert
-            Assert.Equal(1, tokens.Count());
+        // act
+        tokens.NewToken();
 
-            // act
-            tokens.NewToken();
+        // assert
+        Assert.Equal(2, tokens.Count());
+    }
 
-            // assert
-            Assert.Equal(2, tokens.Count());
-        }
+    [SFFact]
+    public void TestCompleteSessionCreation()
+    {
+        // arrange
+        var tokens = new SessionCreationTokenCounter(s_longTime);
+        var token1 = tokens.NewToken();
+        var token2 = tokens.NewToken();
 
-        [SFFact]
-        public void TestCompleteSessionCreation()
-        {
-            // arrange
-            var tokens = new SessionCreationTokenCounter(s_longTime);
-            var token1 = tokens.NewToken();
-            var token2 = tokens.NewToken();
+        // act
+        tokens.RemoveToken(token1);
 
-            // act
-            tokens.RemoveToken(token1);
+        // assert
+        Assert.Equal(1, tokens.Count());
 
-            // assert
-            Assert.Equal(1, tokens.Count());
+        // act
+        tokens.RemoveToken(token2);
 
-            // act
-            tokens.RemoveToken(token2);
+        // assert
+        Assert.Equal(0, tokens.Count());
+    }
 
-            // assert
-            Assert.Equal(0, tokens.Count());
-        }
+    [SFFact]
+    public void TestCompleteUnknownTokenDoesNotThrowExceptions()
+    {
+        // arrange
+        var tokens = new SessionCreationTokenCounter(s_longTime);
+        tokens.NewToken();
+        var unknownToken = new SessionCreationToken(SFSessionHttpClientProperties.DefaultConnectionTimeout);
 
-        [SFFact]
-        public void TestCompleteUnknownTokenDoesNotThrowExceptions()
-        {
-            // arrange
-            var tokens = new SessionCreationTokenCounter(s_longTime);
-            tokens.NewToken();
-            var unknownToken = new SessionCreationToken(SFSessionHttpClientProperties.DefaultConnectionTimeout);
+        // act
+        tokens.RemoveToken(unknownToken);
 
-            // act
-            tokens.RemoveToken(unknownToken);
+        // assert
+        Assert.Equal(1, tokens.Count());
+    }
 
-            // assert
-            Assert.Equal(1, tokens.Count());
-        }
+    [SFFact]
+    public async Task TestCompleteCleansExpiredTokens()
+    {
+        // arrange
+        var tokens = new SessionCreationTokenCounter(s_shortTime);
+        var token = tokens.NewToken();
+        tokens.NewToken(); // this token will be cleaned because of expiration
+        Assert.Equal(2, tokens.Count());
+        const int EpsilonMillis = 5;
+        await Task.Delay((int)s_shortTime.TotalMilliseconds + EpsilonMillis).ConfigureAwait(false);
 
-        [SFFact]
-        public async Task TestCompleteCleansExpiredTokens()
-        {
-            // arrange
-            var tokens = new SessionCreationTokenCounter(s_shortTime);
-            var token = tokens.NewToken();
-            tokens.NewToken(); // this token will be cleaned because of expiration
-            Assert.Equal(2, tokens.Count());
-            const int EpsilonMillis = 5;
-            await Task.Delay((int)s_shortTime.TotalMilliseconds + EpsilonMillis).ConfigureAwait(false);
+        // act
+        tokens.RemoveToken(token);
 
-            // act
-            tokens.RemoveToken(token);
+        // assert
+        Assert.Equal(0, tokens.Count());
+    }
 
-            // assert
-            Assert.Equal(0, tokens.Count());
-        }
+    [SFFact]
+    public void TestResetTokens()
+    {
+        // arrange
+        var tokens = new SessionCreationTokenCounter(s_longTime);
+        tokens.NewToken();
+        tokens.NewToken();
 
-        [SFFact]
-        public void TestResetTokens()
-        {
-            // arrange
-            var tokens = new SessionCreationTokenCounter(s_longTime);
-            tokens.NewToken();
-            tokens.NewToken();
+        // act
+        tokens.Reset();
 
-            // act
-            tokens.Reset();
-
-            // assert
-            Assert.Equal(0, tokens.Count());
-        }
+        // assert
+        Assert.Equal(0, tokens.Count());
     }
 }

@@ -7,125 +7,124 @@ using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
 
-namespace Snowflake.Data.Core.Authenticator
+namespace Snowflake.Data.Core.Authenticator;
+
+class WorkloadIdentityFederationAuthenticator : BaseAuthenticator, IAuthenticator
 {
-    class WorkloadIdentityFederationAuthenticator : BaseAuthenticator, IAuthenticator
+    private const string AUTH_NAME = "workload_identity";
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WorkloadIdentityFederationAuthenticator>();
+
+    private readonly IEnvironmentFacade _environmentFacade;
+    private readonly TimeProvider _timeProvider;
+    private readonly AwsSdkWrapper _awsSdkWrapper;
+    private readonly string _metadataHost;
+    private readonly string _awsStsHost;
+
+    private AttestationProvider? _provider;
+    private string _entraResource;
+    private string _token;
+    private string _impersonationPath;
+    private WorkloadIdentityAttestationData _attestationData;
+
+    public WorkloadIdentityFederationAuthenticator(SFSession session) : this(session, EnvironmentFacade.Instance, TimeProvider.Instance, AwsSdkWrapper.Instance, null)
     {
-        private const string AUTH_NAME = "workload_identity";
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WorkloadIdentityFederationAuthenticator>();
+    }
 
-        private readonly IEnvironmentFacade _environmentFacade;
-        private readonly TimeProvider _timeProvider;
-        private readonly AwsSdkWrapper _awsSdkWrapper;
-        private readonly string _metadataHost;
-        private readonly string _awsStsHost;
-
-        private AttestationProvider? _provider;
-        private string _entraResource;
-        private string _token;
-        private string _impersonationPath;
-        private WorkloadIdentityAttestationData _attestationData;
-
-        public WorkloadIdentityFederationAuthenticator(SFSession session) : this(session, EnvironmentFacade.Instance, TimeProvider.Instance, AwsSdkWrapper.Instance, null)
+    internal WorkloadIdentityFederationAuthenticator(
+        SFSession session,
+        IEnvironmentFacade environmentFacade,
+        TimeProvider timeProvider,
+        AwsSdkWrapper awsSdkWrapper,
+        string metadataHost) : base(session)
+    {
+        _environmentFacade = environmentFacade;
+        _timeProvider = timeProvider;
+        _awsSdkWrapper = awsSdkWrapper;
+        _metadataHost = metadataHost;
+        // metadataHost is the test seam pointing every provider at a local mock. In production it is
+        // null and the AWS STS endpoint comes from the WORKLOAD_IDENTITY_HOST connection property,
+        // which the connection string validation already restricted to the AWS provider.
+        _awsStsHost = metadataHost
+                      ?? (session.properties.TryGetValue(SFSessionProperty.WORKLOAD_IDENTITY_HOST, out var workloadIdentityHost)
+                          ? workloadIdentityHost
+                          : null);
+        if (session.properties.TryGetValue(SFSessionProperty.WORKLOAD_IDENTITY_PROVIDER, out var provider) && !string.IsNullOrEmpty(provider))
         {
+            _provider = (AttestationProvider)Enum.Parse(typeof(AttestationProvider), provider, true);
+        }
+        else
+        {
+            throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Property {SFSessionProperty.WORKLOAD_IDENTITY_PROVIDER} is required for Workload Identity authentication");
+        }
+        if (!session.properties.TryGetValue(SFSessionProperty.WORKLOAD_IDENTITY_ENTRA_RESOURCE, out _entraResource))
+        {
+            _entraResource = null;
+        }
+        if (!session.properties.TryGetValue(SFSessionProperty.WORKLOAD_IMPERSONATION_PATH, out _impersonationPath))
+        {
+            _impersonationPath = null;
+        }
+        session.properties.TryGetValue(SFSessionProperty.TOKEN, out _token);
+    }
+
+    public static bool IsWorkloadIdentityAuthenticator(string authenticator) =>
+        AUTH_NAME.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
+
+    protected override string AuthName => AUTH_NAME;
+
+    protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
+    {
+        data.Token = _attestationData.Credential;
+        data.Provider = _attestationData.Provider.ToString();
+    }
+
+    public async Task AuthenticateAsync(CancellationToken cancellationToken)
+    {
+        _attestationData = CreateAttestation();
+        await LoginAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public void Authenticate()
+    {
+        _attestationData = CreateAttestation();
+        Login();
+    }
+
+    internal WorkloadIdentityAttestationData CreateAttestation()
+    {
+        var host = Session.properties.TryGetValue(SFSessionProperty.HOST, out var configuredHost) ? configuredHost : null;
+        var extraAllowedSuffixes = SnowflakeHost.GetExtraAllowedHostSuffixes(_environmentFacade);
+        if (extraAllowedSuffixes.Count > 0)
+        {
+            s_logger.Info($"SNOWFLAKE_WIF_ALLOWED_HOST_SUFFIXES is set. Additionally allowing WORKLOAD_IDENTITY host suffixes: {string.Join(", ", extraAllowedSuffixes)}");
+        }
+        if (!SnowflakeHost.IsSnowflakeHostForWorkloadIdentity(host, _environmentFacade))
+        {
+            var rejectionMessage = $"WORKLOAD_IDENTITY requires a recognized Snowflake host (*.snowflakecomputing.com, .cn or .mil). Got: '{host}'";
+            s_logger.Error(rejectionMessage);
+            throw new SnowflakeDbException(SFError.WIF_ATTESTATION_ERROR, new object[] { _provider, rejectionMessage });
         }
 
-        internal WorkloadIdentityFederationAuthenticator(
-            SFSession session,
-            IEnvironmentFacade environmentFacade,
-            TimeProvider timeProvider,
-            AwsSdkWrapper awsSdkWrapper,
-            string metadataHost) : base(session)
+        try
         {
-            _environmentFacade = environmentFacade;
-            _timeProvider = timeProvider;
-            _awsSdkWrapper = awsSdkWrapper;
-            _metadataHost = metadataHost;
-            // metadataHost is the test seam pointing every provider at a local mock. In production it is
-            // null and the AWS STS endpoint comes from the WORKLOAD_IDENTITY_HOST connection property,
-            // which the connection string validation already restricted to the AWS provider.
-            _awsStsHost = metadataHost
-                          ?? (session.properties.TryGetValue(SFSessionProperty.WORKLOAD_IDENTITY_HOST, out var workloadIdentityHost)
-                              ? workloadIdentityHost
-                              : null);
-            if (session.properties.TryGetValue(SFSessionProperty.WORKLOAD_IDENTITY_PROVIDER, out var provider) && !string.IsNullOrEmpty(provider))
+            return _provider switch
             {
-                _provider = (AttestationProvider)Enum.Parse(typeof(AttestationProvider), provider, true);
-            }
-            else
-            {
-                throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Property {SFSessionProperty.WORKLOAD_IDENTITY_PROVIDER} is required for Workload Identity authentication");
-            }
-            if (!session.properties.TryGetValue(SFSessionProperty.WORKLOAD_IDENTITY_ENTRA_RESOURCE, out _entraResource))
-            {
-                _entraResource = null;
-            }
-            if (!session.properties.TryGetValue(SFSessionProperty.WORKLOAD_IMPERSONATION_PATH, out _impersonationPath))
-            {
-                _impersonationPath = null;
-            }
-            session.properties.TryGetValue(SFSessionProperty.TOKEN, out _token);
+                AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_environmentFacade, _timeProvider, _awsSdkWrapper, Session.restRequester, _awsStsHost)
+                    .CreateAttestationData(_entraResource, _token, _impersonationPath),
+                AttestationProvider.AZURE => new WorkflowIdentityAzureAttestationRetriever(_environmentFacade, Session.restRequester, _metadataHost)
+                    .CreateAttestationData(_entraResource, _token, _impersonationPath),
+                AttestationProvider.GCP => new WorkflowIdentityGcpAttestationRetriever(Session.restRequester, _metadataHost)
+                    .CreateAttestationData(_entraResource, _token, _impersonationPath),
+                AttestationProvider.OIDC => new WorkflowIdentityOidcAttestationRetriever()
+                    .CreateAttestationData(_entraResource, _token, _impersonationPath),
+                _ => throw new SnowflakeDbException(SFError.WIF_ATTESTATION_ERROR, $"Unsupported attestation provider: {_provider}"),
+            };
         }
-
-        public static bool IsWorkloadIdentityAuthenticator(string authenticator) =>
-            AUTH_NAME.Equals(authenticator, StringComparison.InvariantCultureIgnoreCase);
-
-        protected override string AuthName => AUTH_NAME;
-
-        protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
+        catch (Exception e) when (e is not SnowflakeDbException)
         {
-            data.Token = _attestationData.Credential;
-            data.Provider = _attestationData.Provider.ToString();
-        }
-
-        public async Task AuthenticateAsync(CancellationToken cancellationToken)
-        {
-            _attestationData = CreateAttestation();
-            await LoginAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        public void Authenticate()
-        {
-            _attestationData = CreateAttestation();
-            Login();
-        }
-
-        internal WorkloadIdentityAttestationData CreateAttestation()
-        {
-            var host = Session.properties.TryGetValue(SFSessionProperty.HOST, out var configuredHost) ? configuredHost : null;
-            var extraAllowedSuffixes = SnowflakeHost.GetExtraAllowedHostSuffixes(_environmentFacade);
-            if (extraAllowedSuffixes.Count > 0)
-            {
-                s_logger.Info($"SNOWFLAKE_WIF_ALLOWED_HOST_SUFFIXES is set. Additionally allowing WORKLOAD_IDENTITY host suffixes: {string.Join(", ", extraAllowedSuffixes)}");
-            }
-            if (!SnowflakeHost.IsSnowflakeHostForWorkloadIdentity(host, _environmentFacade))
-            {
-                var rejectionMessage = $"WORKLOAD_IDENTITY requires a recognized Snowflake host (*.snowflakecomputing.com, .cn or .mil). Got: '{host}'";
-                s_logger.Error(rejectionMessage);
-                throw new SnowflakeDbException(SFError.WIF_ATTESTATION_ERROR, new object[] { _provider, rejectionMessage });
-            }
-
-            try
-            {
-                return _provider switch
-                {
-                    AttestationProvider.AWS => new WorkflowIdentityAwsAttestationRetriever(_environmentFacade, _timeProvider, _awsSdkWrapper, Session.restRequester, _awsStsHost)
-                        .CreateAttestationData(_entraResource, _token, _impersonationPath),
-                    AttestationProvider.AZURE => new WorkflowIdentityAzureAttestationRetriever(_environmentFacade, Session.restRequester, _metadataHost)
-                        .CreateAttestationData(_entraResource, _token, _impersonationPath),
-                    AttestationProvider.GCP => new WorkflowIdentityGcpAttestationRetriever(Session.restRequester, _metadataHost)
-                        .CreateAttestationData(_entraResource, _token, _impersonationPath),
-                    AttestationProvider.OIDC => new WorkflowIdentityOidcAttestationRetriever()
-                        .CreateAttestationData(_entraResource, _token, _impersonationPath),
-                    _ => throw new SnowflakeDbException(SFError.WIF_ATTESTATION_ERROR, $"Unsupported attestation provider: {_provider}"),
-                };
-            }
-            catch (Exception e) when (e is not SnowflakeDbException)
-            {
-                var errorMessage = $"Failed to create attestation data for provider {_provider}: {e.Message}";
-                s_logger.Error(errorMessage);
-                throw new SnowflakeDbException(e, SFError.WIF_ATTESTATION_ERROR, new object[] { _provider, e.Message });
-            }
+            var errorMessage = $"Failed to create attestation data for provider {_provider}: {e.Message}";
+            s_logger.Error(errorMessage);
+            throw new SnowflakeDbException(e, SFError.WIF_ATTESTATION_ERROR, new object[] { _provider, e.Message });
         }
     }
 }

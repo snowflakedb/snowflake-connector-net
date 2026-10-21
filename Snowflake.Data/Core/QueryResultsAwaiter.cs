@@ -5,184 +5,183 @@ using System;
 using System.Text.RegularExpressions;
 using Snowflake.Data.Client;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core;
+
+internal sealed class QueryResultsRetryConfig
 {
-    internal sealed class QueryResultsRetryConfig
+    private const int DefaultAsyncNoDataMaxRetry = 24;
+
+    private readonly int[] _defaultAsyncRetryPattern = { 1, 1, 2, 3, 4, 8, 10 };
+
+    internal readonly int _asyncNoDataMaxRetry;
+
+    internal readonly int[] _asyncRetryPattern;
+
+    internal QueryResultsRetryConfig()
     {
-        private const int DefaultAsyncNoDataMaxRetry = 24;
-
-        private readonly int[] _defaultAsyncRetryPattern = { 1, 1, 2, 3, 4, 8, 10 };
-
-        internal readonly int _asyncNoDataMaxRetry;
-
-        internal readonly int[] _asyncRetryPattern;
-
-        internal QueryResultsRetryConfig()
-        {
-            _asyncNoDataMaxRetry = DefaultAsyncNoDataMaxRetry;
-            _asyncRetryPattern = _defaultAsyncRetryPattern;
-        }
-
-        internal QueryResultsRetryConfig(int asyncNoDataMaxRetry, int[] asyncRetryPattern)
-        {
-            _asyncNoDataMaxRetry = asyncNoDataMaxRetry;
-            _asyncRetryPattern = asyncRetryPattern;
-        }
+        _asyncNoDataMaxRetry = DefaultAsyncNoDataMaxRetry;
+        _asyncRetryPattern = _defaultAsyncRetryPattern;
     }
 
-    internal sealed class QueryResultsAwaiter
+    internal QueryResultsRetryConfig(int asyncNoDataMaxRetry, int[] asyncRetryPattern)
     {
-        private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<QueryResultsAwaiter>();
+        _asyncNoDataMaxRetry = asyncNoDataMaxRetry;
+        _asyncRetryPattern = asyncRetryPattern;
+    }
+}
 
-        private static readonly Regex s_uuidRegex = new Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
+internal sealed class QueryResultsAwaiter
+{
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<QueryResultsAwaiter>();
 
-        private QueryResultsRetryConfig _queryResultsRetryConfig;
+    private static readonly Regex s_uuidRegex = new Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
 
-        internal static readonly QueryResultsAwaiter Instance = new QueryResultsAwaiter();
+    private QueryResultsRetryConfig _queryResultsRetryConfig;
 
-        internal QueryResultsAwaiter()
+    internal static readonly QueryResultsAwaiter Instance = new QueryResultsAwaiter();
+
+    internal QueryResultsAwaiter()
+    {
+        _queryResultsRetryConfig = new QueryResultsRetryConfig();
+    }
+
+    internal QueryResultsAwaiter(QueryResultsRetryConfig queryResultsRetryConfig)
+    {
+        _queryResultsRetryConfig = queryResultsRetryConfig;
+    }
+
+    internal QueryStatus GetQueryStatus(SnowflakeDbConnection connection, string queryId)
+    {
+        ValidateQueryId(queryId);
+        var sfStatement = new SFStatement(connection.SfSession);
+        return sfStatement.GetQueryStatus(queryId);
+    }
+
+    internal async Task<QueryStatus> GetQueryStatusAsync(SnowflakeDbConnection connection, string queryId, CancellationToken cancellationToken)
+    {
+        ValidateQueryId(queryId);
+        var sfStatement = new SFStatement(connection.SfSession);
+        return await sfStatement.GetQueryStatusAsync(queryId, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Checks query status until it is done executing.
+    /// </summary>
+    /// <param name="connection"></param>
+    /// <param name="queryId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <param name="isAsync"></param>
+    internal async Task RetryUntilQueryResultIsAvailable(SnowflakeDbConnection connection, string queryId, CancellationToken cancellationToken, bool isAsync)
+    {
+        int retryPatternPos = 0;
+        int noDataCounter = 0;
+
+        QueryStatus status;
+        try
         {
-            _queryResultsRetryConfig = new QueryResultsRetryConfig();
-        }
-
-        internal QueryResultsAwaiter(QueryResultsRetryConfig queryResultsRetryConfig)
-        {
-            _queryResultsRetryConfig = queryResultsRetryConfig;
-        }
-
-        internal QueryStatus GetQueryStatus(SnowflakeDbConnection connection, string queryId)
-        {
-            ValidateQueryId(queryId);
-            var sfStatement = new SFStatement(connection.SfSession);
-            return sfStatement.GetQueryStatus(queryId);
-        }
-
-        internal async Task<QueryStatus> GetQueryStatusAsync(SnowflakeDbConnection connection, string queryId, CancellationToken cancellationToken)
-        {
-            ValidateQueryId(queryId);
-            var sfStatement = new SFStatement(connection.SfSession);
-            return await sfStatement.GetQueryStatusAsync(queryId, cancellationToken).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Checks query status until it is done executing.
-        /// </summary>
-        /// <param name="connection"></param>
-        /// <param name="queryId"></param>
-        /// <param name="cancellationToken"></param>
-        /// <param name="isAsync"></param>
-        internal async Task RetryUntilQueryResultIsAvailable(SnowflakeDbConnection connection, string queryId, CancellationToken cancellationToken, bool isAsync)
-        {
-            int retryPatternPos = 0;
-            int noDataCounter = 0;
-
-            QueryStatus status;
-            try
+            while (true)
             {
-                while (true)
+                if (cancellationToken.IsCancellationRequested)
                 {
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        s_logger.Debug("Cancellation requested for getting results from query id");
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
-
-                    status = isAsync
-                        ? await GetQueryStatusAsync(connection, queryId, cancellationToken).ConfigureAwait(false)
-                        : GetQueryStatus(connection, queryId);
-
-                    if (!QueryStatusExtensions.IsStillRunning(status))
-                    {
-                        return;
-                    }
-
-                    // Timeout based on query status retry rules
-                    if (isAsync)
-                    {
-                        await Task.Delay(TimeSpan.FromSeconds(_queryResultsRetryConfig._asyncRetryPattern[retryPatternPos]), cancellationToken).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        Thread.Sleep(TimeSpan.FromSeconds(_queryResultsRetryConfig._asyncRetryPattern[retryPatternPos]));
-                    }
-
-                    // If no data, increment the no data counter
-                    if (status == QueryStatus.NoData)
-                    {
-                        noDataCounter++;
-
-                        // Check if retry for no data is exceeded
-                        if (noDataCounter > _queryResultsRetryConfig._asyncNoDataMaxRetry)
-                        {
-                            var errorMessage = "Max retry for no data is reached";
-                            s_logger.Error(errorMessage);
-                            throw new Exception(errorMessage);
-                        }
-                    }
-
-                    if (retryPatternPos < _queryResultsRetryConfig._asyncRetryPattern.Length - 1)
-                    {
-                        retryPatternPos++;
-                    }
+                    s_logger.Debug("Cancellation requested for getting results from query id");
+                    cancellationToken.ThrowIfCancellationRequested();
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                s_logger.Debug($"Cancellation requested: sending abort request for query id {queryId}");
-                AbortQuery(connection, queryId, isAsync);
-                throw;
-            }
-        }
 
-        private void AbortQuery(SnowflakeDbConnection connection, string queryId, bool isAsync)
-        {
-            try
-            {
+                status = isAsync
+                    ? await GetQueryStatusAsync(connection, queryId, cancellationToken).ConfigureAwait(false)
+                    : GetQueryStatus(connection, queryId);
+
+                if (!QueryStatusExtensions.IsStillRunning(status))
+                {
+                    return;
+                }
+
+                // Timeout based on query status retry rules
                 if (isAsync)
                 {
-                    CancelQueryByIdAsync(connection, queryId)
-                        .ConfigureAwait(false)
-                        .GetAwaiter()
-                        .GetResult();
+                    await Task.Delay(TimeSpan.FromSeconds(_queryResultsRetryConfig._asyncRetryPattern[retryPatternPos]), cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
-                    CancelQueryById(connection, queryId);
+                    Thread.Sleep(TimeSpan.FromSeconds(_queryResultsRetryConfig._asyncRetryPattern[retryPatternPos]));
+                }
+
+                // If no data, increment the no data counter
+                if (status == QueryStatus.NoData)
+                {
+                    noDataCounter++;
+
+                    // Check if retry for no data is exceeded
+                    if (noDataCounter > _queryResultsRetryConfig._asyncNoDataMaxRetry)
+                    {
+                        var errorMessage = "Max retry for no data is reached";
+                        s_logger.Error(errorMessage);
+                        throw new Exception(errorMessage);
+                    }
+                }
+
+                if (retryPatternPos < _queryResultsRetryConfig._asyncRetryPattern.Length - 1)
+                {
+                    retryPatternPos++;
                 }
             }
-            catch (Exception ex)
+        }
+        catch (OperationCanceledException)
+        {
+            s_logger.Debug($"Cancellation requested: sending abort request for query id {queryId}");
+            AbortQuery(connection, queryId, isAsync);
+            throw;
+        }
+    }
+
+    private void AbortQuery(SnowflakeDbConnection connection, string queryId, bool isAsync)
+    {
+        try
+        {
+            if (isAsync)
             {
-                s_logger.Warn($"Failed to abort query {queryId} after cancellation.", ex);
+                CancelQueryByIdAsync(connection, queryId)
+                    .ConfigureAwait(false)
+                    .GetAwaiter()
+                    .GetResult();
+            }
+            else
+            {
+                CancelQueryById(connection, queryId);
             }
         }
-
-        private async Task CancelQueryByIdAsync(SnowflakeDbConnection connection, string queryId)
+        catch (Exception ex)
         {
-            ValidateQueryId(queryId);
-            s_logger.Debug($"Sending cancel query request for query id {queryId}");
-            using var cmd = (SnowflakeDbCommand)connection.CreateCommand();
-            cmd.CommandText = $"SELECT SYSTEM$CANCEL_QUERY('{queryId}')";
-            await cmd.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
-            s_logger.Debug($"Cancel query request sent successfully for query id {queryId}");
+            s_logger.Warn($"Failed to abort query {queryId} after cancellation.", ex);
         }
+    }
 
-        private void CancelQueryById(SnowflakeDbConnection connection, string queryId)
-        {
-            ValidateQueryId(queryId);
-            s_logger.Debug($"Sending cancel query request for query id {queryId}");
-            using var cmd = connection.CreateCommand();
-            cmd.CommandText = $"SELECT SYSTEM$CANCEL_QUERY('{queryId}')";
-            cmd.ExecuteNonQuery();
-            s_logger.Debug($"Cancel query request sent successfully for query id {queryId}");
-        }
+    private async Task CancelQueryByIdAsync(SnowflakeDbConnection connection, string queryId)
+    {
+        ValidateQueryId(queryId);
+        s_logger.Debug($"Sending cancel query request for query id {queryId}");
+        using var cmd = (SnowflakeDbCommand)connection.CreateCommand();
+        cmd.CommandText = $"SELECT SYSTEM$CANCEL_QUERY('{queryId}')";
+        await cmd.ExecuteNonQueryAsync(CancellationToken.None).ConfigureAwait(false);
+        s_logger.Debug($"Cancel query request sent successfully for query id {queryId}");
+    }
 
-        private static void ValidateQueryId(string queryId)
-        {
-            if (!string.IsNullOrEmpty(queryId) && s_uuidRegex.IsMatch(queryId))
-                return;
+    private void CancelQueryById(SnowflakeDbConnection connection, string queryId)
+    {
+        ValidateQueryId(queryId);
+        s_logger.Debug($"Sending cancel query request for query id {queryId}");
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = $"SELECT SYSTEM$CANCEL_QUERY('{queryId}')";
+        cmd.ExecuteNonQuery();
+        s_logger.Debug($"Cancel query request sent successfully for query id {queryId}");
+    }
 
-            s_logger.Error($"The given query id {queryId} is not valid uuid");
-            throw new Exception("Invalid query id format. Expected a UUID.");
-        }
+    private static void ValidateQueryId(string queryId)
+    {
+        if (!string.IsNullOrEmpty(queryId) && s_uuidRegex.IsMatch(queryId))
+            return;
+
+        s_logger.Error($"The given query id {queryId} is not valid uuid");
+        throw new Exception("Invalid query id format. Expected a UUID.");
     }
 }

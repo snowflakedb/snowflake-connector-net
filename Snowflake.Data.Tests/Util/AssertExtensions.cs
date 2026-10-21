@@ -3,40 +3,39 @@ using System.Text;
 using Xunit;
 using Xunit.Sdk;
 
-namespace Snowflake.Data.Tests.Util
+namespace Snowflake.Data.Tests.Util;
+
+public static class AssertExtensions
 {
-    public static class AssertExtensions
+    public static void NotEmptyString(string actual)
     {
-        public static void NotEmptyString(string actual)
-        {
-            Assert.False(string.IsNullOrEmpty(actual));
-        }
+        Assert.False(string.IsNullOrEmpty(actual));
+    }
 
-        public static void Equal<T>(T expected, T actual, string message)
-        {
-            if (expected.Equals(actual))
-                return;
+    public static void Equal<T>(T expected, T actual, string message)
+    {
+        if (expected.Equals(actual))
+            return;
 
-            throw new XunitException($"Expected {expected}, actual: {actual} \n" + message);
-        }
+        throw new XunitException($"Expected {expected}, actual: {actual} \n" + message);
+    }
 
-        public static void AnySucceeds(params Action[] assert)
+    public static void AnySucceeds(params Action[] assert)
+    {
+        var failedAssertsMessages = new StringBuilder();
+        foreach (var action in assert)
         {
-            var failedAssertsMessages = new StringBuilder();
-            foreach (var action in assert)
+            try
             {
-                try
-                {
-                    action();
-                    return;
-                }
-                catch (XunitException ex)
-                {
-                    failedAssertsMessages.AppendLine(ex.Message);
-                }
+                action();
+                return;
             }
-
-            throw new XunitException(failedAssertsMessages.ToString());
+            catch (XunitException ex)
+            {
+                failedAssertsMessages.AppendLine(ex.Message);
+            }
         }
+
+        throw new XunitException(failedAssertsMessages.ToString());
     }
 }

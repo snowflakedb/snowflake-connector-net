@@ -14,222 +14,162 @@ using Snowflake.Data.Configuration;
 using Snowflake.Data.Core.FileTransfer.StorageClient;
 using Snowflake.Data.Core.Tools;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core;
+
+/// <summary>
+/// The status of the file to be uploaded/downloaded.
+/// </summary>
+enum ResultStatus
+{
+    ERROR,
+    UPLOADED,
+    DOWNLOADED,
+    COLLISION,
+    SKIPPED,
+    RENEW_TOKEN,
+    RENEW_PRESIGNED_URL,
+    NOT_FOUND_FILE,
+    NEED_RETRY,
+    NEED_RETRY_WITH_LOWER_CONCURRENCY
+}
+
+/// <summary>
+/// The command type of the query.
+/// </summary>
+internal enum CommandTypes
+{
+    UPLOAD,
+    DOWNLOAD
+}
+
+/// <summary>
+/// The type of the storage client.
+/// </summary>
+internal enum StorageClientType
+{
+    LOCAL,
+    REMOTE
+}
+
+/// <summary>
+/// Class responsible for uploading and downloading files to the remote client.
+/// </summary>
+class SFFileTransferAgent
 {
     /// <summary>
-    /// The status of the file to be uploaded/downloaded.
+    /// The logger.
     /// </summary>
-    enum ResultStatus
+    private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFFileTransferAgent>();
+
+    /// <summary>
+    /// Auto-detect keyword for source compression type auto detection.
+    /// </summary>
+    private static readonly string COMPRESSION_AUTO_DETECT = "auto_detect";
+
+    /// <summary>
+    /// The Snowflake query
+    /// </summary>
+    private string Query;
+
+    /// <summary>
+    /// The Snowflake session
+    /// </summary>
+    private SFSession Session;
+
+    private readonly IEnvironmentFacade _environmentFacade;
+
+    /// <summary>
+    /// The type of transfer either UPLOAD or DOWNLOAD.
+    /// </summary>
+    private readonly CommandTypes CommandType;
+
+    /// <summary>
+    /// The file metadata. Applies to all files being uploaded/downloaded
+    /// </summary>
+    private PutGetResponseData TransferMetadata;
+
+    /// <summary>
+    /// List of metadata for small and large files.
+    /// </summary>
+    private List<SFFileMetadata> FilesMetas = new List<SFFileMetadata>();
+
+    private List<SFFileMetadata> SmallFilesMetas = new List<SFFileMetadata>();
+    private List<SFFileMetadata> LargeFilesMetas = new List<SFFileMetadata>();
+
+    /// <summary>
+    /// List of metadata for the resulting file after upload/download.
+    /// </summary>
+    private List<SFFileMetadata> ResultsMetas = new List<SFFileMetadata>();
+
+    /// <summary>
+    /// List of encryption materials of the files to be uploaded/downloaded.
+    /// </summary>
+    private List<PutGetEncryptionMaterial> EncryptionMaterials = new List<PutGetEncryptionMaterial>();
+
+    /// <summary>
+    /// Time to wait before uploading the next file.
+    /// </summary>
+    private int INJECT_WAIT_IN_PUT = 0;
+
+    /// <summary>
+    /// String indicating local storage type.
+    /// </summary>
+    private const string LOCAL_FS = "LOCAL_FS";
+
+    private const string STREAM_FILE_NAME = "stream";
+
+    /// <summary>
+    /// In-memory stream for upload. When <c>BorrowedMemoryStream.Owned</c> is true the driver created
+    /// and controls the stream's lifetime; otherwise the stream was provided by the caller.
+    /// </summary>
+    private readonly BorrowedMemoryStream _memoryStream;
+
+    /// <summary>
+    /// Mutex for renewing expired client.
+    /// </summary>
+    private static Mutex RenewClientMutex = new Mutex();
+
+    /// <summary>
+    /// Placeholder threshold value using max long value.
+    /// </summary>
+    private long DATA_SIZE_THRESHOLD = Int64.MaxValue;
+
+    /// <summary>
+    /// Constructor.
+    /// </summary>
+    public SFFileTransferAgent(
+        string query,
+        SFSession session,
+        PutGetResponseData responseData,
+        IEnvironmentFacade environmentFacade = null)
     {
-        ERROR,
-        UPLOADED,
-        DOWNLOADED,
-        COLLISION,
-        SKIPPED,
-        RENEW_TOKEN,
-        RENEW_PRESIGNED_URL,
-        NOT_FOUND_FILE,
-        NEED_RETRY,
-        NEED_RETRY_WITH_LOWER_CONCURRENCY
+        Query = query;
+        Session = session;
+        TransferMetadata = responseData;
+        TransferMetadata.threshold = DATA_SIZE_THRESHOLD;
+        CommandType = (CommandTypes)Enum.Parse(typeof(CommandTypes), TransferMetadata.command, true);
+        _environmentFacade = environmentFacade ?? EnvironmentFacade.Instance;
+    }
+
+    public SFFileTransferAgent(
+        string query,
+        SFSession session,
+        PutGetResponseData responseData,
+        BorrowedMemoryStream inputStream,
+        IEnvironmentFacade environmentFacade = null) : this(query, session, responseData, environmentFacade)
+    {
+        if (CommandType != CommandTypes.UPLOAD)
+            throw new NotSupportedException("In-memory stream for GET queries is not supported.");
+
+        _memoryStream = inputStream;
     }
 
     /// <summary>
-    /// The command type of the query.
+    /// Execute the PUT/GET command.
     /// </summary>
-    internal enum CommandTypes
+    public void execute()
     {
-        UPLOAD,
-        DOWNLOAD
-    }
-
-    /// <summary>
-    /// The type of the storage client.
-    /// </summary>
-    internal enum StorageClientType
-    {
-        LOCAL,
-        REMOTE
-    }
-
-    /// <summary>
-    /// Class responsible for uploading and downloading files to the remote client.
-    /// </summary>
-    class SFFileTransferAgent
-    {
-        /// <summary>
-        /// The logger.
-        /// </summary>
-        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFFileTransferAgent>();
-
-        /// <summary>
-        /// Auto-detect keyword for source compression type auto detection.
-        /// </summary>
-        private static readonly string COMPRESSION_AUTO_DETECT = "auto_detect";
-
-        /// <summary>
-        /// The Snowflake query
-        /// </summary>
-        private string Query;
-
-        /// <summary>
-        /// The Snowflake session
-        /// </summary>
-        private SFSession Session;
-
-        private readonly IEnvironmentFacade _environmentFacade;
-
-        /// <summary>
-        /// The type of transfer either UPLOAD or DOWNLOAD.
-        /// </summary>
-        private readonly CommandTypes CommandType;
-
-        /// <summary>
-        /// The file metadata. Applies to all files being uploaded/downloaded
-        /// </summary>
-        private PutGetResponseData TransferMetadata;
-
-        /// <summary>
-        /// List of metadata for small and large files.
-        /// </summary>
-        private List<SFFileMetadata> FilesMetas = new List<SFFileMetadata>();
-
-        private List<SFFileMetadata> SmallFilesMetas = new List<SFFileMetadata>();
-        private List<SFFileMetadata> LargeFilesMetas = new List<SFFileMetadata>();
-
-        /// <summary>
-        /// List of metadata for the resulting file after upload/download.
-        /// </summary>
-        private List<SFFileMetadata> ResultsMetas = new List<SFFileMetadata>();
-
-        /// <summary>
-        /// List of encryption materials of the files to be uploaded/downloaded.
-        /// </summary>
-        private List<PutGetEncryptionMaterial> EncryptionMaterials = new List<PutGetEncryptionMaterial>();
-
-        /// <summary>
-        /// Time to wait before uploading the next file.
-        /// </summary>
-        private int INJECT_WAIT_IN_PUT = 0;
-
-        /// <summary>
-        /// String indicating local storage type.
-        /// </summary>
-        private const string LOCAL_FS = "LOCAL_FS";
-
-        private const string STREAM_FILE_NAME = "stream";
-
-        /// <summary>
-        /// In-memory stream for upload. When <c>BorrowedMemoryStream.Owned</c> is true the driver created
-        /// and controls the stream's lifetime; otherwise the stream was provided by the caller.
-        /// </summary>
-        private readonly BorrowedMemoryStream _memoryStream;
-
-        /// <summary>
-        /// Mutex for renewing expired client.
-        /// </summary>
-        private static Mutex RenewClientMutex = new Mutex();
-
-        /// <summary>
-        /// Placeholder threshold value using max long value.
-        /// </summary>
-        private long DATA_SIZE_THRESHOLD = Int64.MaxValue;
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        public SFFileTransferAgent(
-            string query,
-            SFSession session,
-            PutGetResponseData responseData,
-            IEnvironmentFacade environmentFacade = null)
-        {
-            Query = query;
-            Session = session;
-            TransferMetadata = responseData;
-            TransferMetadata.threshold = DATA_SIZE_THRESHOLD;
-            CommandType = (CommandTypes)Enum.Parse(typeof(CommandTypes), TransferMetadata.command, true);
-            _environmentFacade = environmentFacade ?? EnvironmentFacade.Instance;
-        }
-
-        public SFFileTransferAgent(
-            string query,
-            SFSession session,
-            PutGetResponseData responseData,
-            BorrowedMemoryStream inputStream,
-            IEnvironmentFacade environmentFacade = null) : this(query, session, responseData, environmentFacade)
-        {
-            if (CommandType != CommandTypes.UPLOAD)
-                throw new NotSupportedException("In-memory stream for GET queries is not supported.");
-
-            _memoryStream = inputStream;
-        }
-
-        /// <summary>
-        /// Execute the PUT/GET command.
-        /// </summary>
-        public void execute()
-        {
-            try
-            {
-                // Initialize the encryption metadata
-                initEncryptionMaterial();
-
-                if (CommandTypes.UPLOAD == CommandType)
-                {
-                    initFileMetadataForUpload();
-                }
-                else if (CommandTypes.DOWNLOAD == CommandType)
-                {
-                    initFileMetadata(TransferMetadata.src_locations);
-
-                    Directory.CreateDirectory(TransferMetadata.localLocation);
-                }
-
-                // Update the file metadata with GCS presigned URL
-                UpdatePresignedUrl();
-
-                foreach (SFFileMetadata fileMetadata in FilesMetas)
-                {
-                    // If the file is larger than the threshold, add it to the large files list
-                    // Otherwise add it to the small files list
-                    if (fileMetadata.srcFileSize > TransferMetadata.threshold)
-                    {
-                        LargeFilesMetas.Add(fileMetadata);
-                    }
-                    else
-                    {
-                        SmallFilesMetas.Add(fileMetadata);
-                    }
-                }
-
-                // Check command type
-                if (CommandTypes.UPLOAD == CommandType)
-                {
-                    upload();
-                }
-                else if (CommandTypes.DOWNLOAD == CommandType)
-                {
-                    download();
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Error("Error while transferring file(s): " + e.Message);
-                if (e is SnowflakeDbException snowflakeException)
-                {
-                    if (snowflakeException.QueryId == null)
-                    {
-                        snowflakeException.QueryId = TransferMetadata.queryId;
-                    }
-
-                    throw snowflakeException;
-                }
-
-                throw new SnowflakeDbException(SFError.IO_ERROR_ON_GETPUT_COMMAND, TransferMetadata.queryId, e);
-            }
-        }
-
-        public async Task executeAsync(CancellationToken cancellationToken)
+        try
         {
             // Initialize the encryption metadata
             initEncryptionMaterial();
@@ -246,7 +186,7 @@ namespace Snowflake.Data.Core
             }
 
             // Update the file metadata with GCS presigned URL
-            await UpdatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
+            UpdatePresignedUrl();
 
             foreach (SFFileMetadata fileMetadata in FilesMetas)
             {
@@ -265,875 +205,848 @@ namespace Snowflake.Data.Core
             // Check command type
             if (CommandTypes.UPLOAD == CommandType)
             {
-                await uploadAsync(cancellationToken).ConfigureAwait(false);
+                upload();
             }
             else if (CommandTypes.DOWNLOAD == CommandType)
             {
-                await downloadAsync(cancellationToken).ConfigureAwait(false);
+                download();
             }
         }
-
-        /// <summary>
-        /// Generate the result set based on the file metadata.
-        /// </summary>
-        /// <returns>The result set containing file status and info</returns>
-        public SFResultSet result()
+        catch (Exception e)
         {
-            // Set the row count using the number of metadata in the result metas
-            TransferMetadata.rowSet = new string[ResultsMetas.Count, 8];
-
-            // For each file metadata, set the result set variables
-            for (int index = 0; index < ResultsMetas.Count; index++)
+            Logger.Error("Error while transferring file(s): " + e.Message);
+            if (e is SnowflakeDbException snowflakeException)
             {
-                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceFileName] = ResultsMetas[index].srcFileName;
-                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName] = ResultsMetas[index].destFileName;
-                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize] =
-                    ResultsMetas[index].srcFileSize.ToString();
-                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize] =
-                    ResultsMetas[index].destFileSize.ToString();
-                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus] = ResultsMetas[index].resultStatus;
-
-                if (ResultsMetas[index].lastError != null)
+                if (snowflakeException.QueryId == null)
                 {
-                    TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails] =
-                        ResultsMetas[index].lastError.ToString();
-                }
-                else
-                {
-                    TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails] = null;
+                    snowflakeException.QueryId = TransferMetadata.queryId;
                 }
 
-                if (ResultsMetas[index].sourceCompression.Name != null)
-                {
-                    TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType] =
-                        ResultsMetas[index].sourceCompression.Name;
-                }
-                else
-                {
-                    TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType] = null;
-                }
-
-                if (ResultsMetas[index].targetCompression.Name != null)
-                {
-                    TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType] =
-                        ResultsMetas[index].targetCompression.Name;
-                }
-                else
-                {
-                    TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType] = null;
-                }
+                throw snowflakeException;
             }
 
-            return new SFResultSet(TransferMetadata, new SFStatement(Session));
+            throw new SnowflakeDbException(SFError.IO_ERROR_ON_GETPUT_COMMAND, TransferMetadata.queryId, e);
+        }
+    }
+
+    public async Task executeAsync(CancellationToken cancellationToken)
+    {
+        // Initialize the encryption metadata
+        initEncryptionMaterial();
+
+        if (CommandTypes.UPLOAD == CommandType)
+        {
+            initFileMetadataForUpload();
+        }
+        else if (CommandTypes.DOWNLOAD == CommandType)
+        {
+            initFileMetadata(TransferMetadata.src_locations);
+
+            Directory.CreateDirectory(TransferMetadata.localLocation);
         }
 
-        /// <summary>
-        /// Upload files sequentially or in parallel.
-        /// </summary>
-        private void upload()
+        // Update the file metadata with GCS presigned URL
+        await UpdatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
+
+        foreach (SFFileMetadata fileMetadata in FilesMetas)
         {
-            //Start the upload tasks(for small files upload in parallel using the given parallelism
-            //factor, for large file updload sequentially)
-            //For each file, using the remote client
-            if (0 < LargeFilesMetas.Count)
+            // If the file is larger than the threshold, add it to the large files list
+            // Otherwise add it to the small files list
+            if (fileMetadata.srcFileSize > TransferMetadata.threshold)
             {
-                Logger.Debug("Start uploading large files");
-                foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
-                {
-                    UploadFilesInSequential(fileMetadata);
-                }
-
-                Logger.Debug("End uploading large files");
-            }
-
-            if (0 < SmallFilesMetas.Count)
-            {
-                Logger.Debug("Start uploading small files");
-                UploadFilesInParallel(SmallFilesMetas, TransferMetadata.parallel);
-                Logger.Debug("End uploading small files");
-            }
-        }
-
-        /// <summary>
-        /// Upload files sequentially or in parallel.
-        /// </summary>
-        private async Task uploadAsync(CancellationToken cancellationToken)
-        {
-            //Start the upload tasks(for small files upload in parallel using the given parallelism
-            //factor, for large file updload sequentially)
-            //For each file, using the remote client
-            if (0 < LargeFilesMetas.Count)
-            {
-                Logger.Debug("Start uploading large files");
-                foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
-                {
-                    await UploadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
-                }
-
-                Logger.Debug("End uploading large files");
-            }
-
-            if (0 < SmallFilesMetas.Count)
-            {
-                Logger.Debug("Start uploading small files");
-                await UploadFilesInParallelAsync(SmallFilesMetas, cancellationToken).ConfigureAwait(false);
-                Logger.Debug("End uploading small files");
-            }
-        }
-
-
-        /// <summary>
-        /// Download files sequentially or in parallel.
-        /// </summary>
-        private void download()
-        {
-            //Start the download tasks(for small files download in parallel using the given parallelism
-            //factor, for large file download sequentially)
-            //For each file, using the remote client
-            if (0 < LargeFilesMetas.Count)
-            {
-                Logger.Debug("Start uploading large files");
-                foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
-                {
-                    DownloadFilesInSequential(fileMetadata);
-                }
-
-                Logger.Debug("End uploading large files");
-            }
-
-            if (0 < SmallFilesMetas.Count)
-            {
-                Logger.Debug("Start uploading small files");
-                DownloadFilesInParallel(SmallFilesMetas, TransferMetadata.parallel);
-                Logger.Debug("End uploading small files");
-            }
-        }
-
-        /// <summary>
-        /// Download files sequentially or in parallel.
-        /// </summary>
-        private async Task downloadAsync(CancellationToken cancellationToken)
-        {
-            //Start the download tasks(for small files download in parallel using the given parallelism
-            //factor, for large file download sequentially)
-            //For each file, using the remote client
-            if (0 < LargeFilesMetas.Count)
-            {
-                Logger.Debug("Start uploading large files");
-                foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
-                {
-                    await DownloadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
-                }
-
-                Logger.Debug("End uploading large files");
-            }
-
-            if (0 < SmallFilesMetas.Count)
-            {
-                Logger.Debug("Start uploading small files");
-                await DownloadFilesInParallelAsync(SmallFilesMetas, TransferMetadata.parallel, cancellationToken).ConfigureAwait(false);
-                Logger.Debug("End uploading small files");
-            }
-        }
-
-        /// <summary>
-        /// Get the presigned URL and update the file metadata.
-        /// </summary>
-        private void UpdatePresignedUrl()
-        {
-            // Presigned url only applies to GCS
-            if (TransferMetadata.stageInfo.locationType != "GCS")
-                return;
-
-            if (CommandTypes.DOWNLOAD == CommandType)
-            {
-                for (var index = 0; index < FilesMetas.Count; index++)
-                {
-                    FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
-                }
-
-                return;
-            }
-
-            if (CommandType != CommandTypes.UPLOAD)
-                return;
-
-            // Skip entirely in access-token mode: a downscoped token is folder-scoped and already covers every file, so there is nothing per-file to fetch.
-            if (TransferMetadata.stageInfo.stageCredentials?.TryGetValue(SFGCSClient.GCS_ACCESS_TOKEN, out var value) == true &&
-                !string.IsNullOrEmpty(value))
-                return;
-
-            foreach (var fileMeta in FilesMetas)
-            {
-                var filePathToReplace = getFilePathFromPutCommand(Query);
-                var fileNameToReplaceWith = fileMeta.destFileName;
-                var queryWithSingleFile = Query;
-                queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
-
-                var sfStatement = new SFStatement(Session)
-                {
-                    isPutGetQuery = true
-                };
-                var statementContext = StatementContext.Default with { CommandText = queryWithSingleFile };
-                var response = sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(statementContext, null);
-
-                fileMeta.stageInfo = response.data.stageInfo;
-                fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
-            }
-        }
-
-        /// <summary>
-        /// Get the presigned URL async method and update the file metadata.
-        /// </summary>
-        private async Task UpdatePresignedUrlAsync(CancellationToken cancellationToken)
-        {
-            // Presigned url only applies to GCS
-            if (TransferMetadata.stageInfo.locationType != "GCS")
-                return;
-
-            if (CommandType == CommandTypes.DOWNLOAD)
-            {
-                for (var index = 0; index < FilesMetas.Count; index++)
-                {
-                    FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
-                }
-
-                return;
-            }
-
-            if (CommandType != CommandTypes.UPLOAD)
-                return;
-
-            // Skip entirely in access-token mode: a downscoped token is folder-scoped and already covers every file, so there is nothing per-file to fetch.
-            if (TransferMetadata.stageInfo.stageCredentials?.TryGetValue(SFGCSClient.GCS_ACCESS_TOKEN, out var value) == true &&
-                !string.IsNullOrEmpty(value))
-                return;
-
-            foreach (var fileMeta in FilesMetas)
-            {
-                var filePathToReplace = getFilePathFromPutCommand(Query);
-                var fileNameToReplaceWith = fileMeta.destFileName;
-                var queryWithSingleFile = Query;
-                queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
-
-                var sfStatement = new SFStatement(Session)
-                {
-                    isPutGetQuery = true
-                };
-
-                var statementContext = StatementContext.Default with { CommandText = queryWithSingleFile };
-                var response = await sfStatement.ExecuteAsyncHelper<PutGetExecResponse, PutGetResponseData>(statementContext, null, cancellationToken)
-                    .ConfigureAwait(false);
-
-                fileMeta.stageInfo = response.data.stageInfo;
-                fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
-            }
-        }
-
-        /// <summary>
-        /// Obtain the file path from the PUT query.
-        /// </summary>
-        /// <param name="query">The query containing the file path</param>
-        /// <returns>The file path contained by the query</returns>
-        internal static string getFilePathFromPutCommand(string query)
-        {
-            // Extract file path from PUT command:
-            // E.g. "PUT file://C:<path-to-file> @DB.SCHEMA.%TABLE;"
-            int startIndex = query.IndexOf("file://") + "file://".Length;
-            int endIndex = query.Substring(startIndex).IndexOf('@') - 1;
-            string filePath = query.Substring(startIndex, endIndex).TrimEnd();
-
-            // Check if file path contains an enclosing (') char
-            if (filePath[filePath.Length - 1] == '\'')
-            {
-                filePath = filePath.Substring(0, filePath.Length - 1);
-            }
-
-            return filePath;
-        }
-
-        /// <summary>
-        /// Initialize the encryption materials for file encryption.
-        /// </summary>
-        private void initEncryptionMaterial()
-        {
-            if (CommandTypes.UPLOAD == CommandType)
-            {
-                if (TransferMetadata.stageInfo.isClientSideEncrypted)
-                {
-                    EncryptionMaterials.Add(TransferMetadata.encryptionMaterial[0]);
-                }
-            }
-        }
-
-        private (string Name, long Length, SFFileCompressionTypes.SFFileCompressionType CompressionType) GetCompressionData(string name)
-        {
-            string resultName;
-            long resultLength;
-            if (_memoryStream?.Owned == false)
-            {
-                resultName = $"{STREAM_FILE_NAME}.{Path.GetFileName(name)}";
-                resultLength = _memoryStream.Length;
+                LargeFilesMetas.Add(fileMetadata);
             }
             else
             {
-                var fileInfo = new FileInfo(name);
-
-                //  Retrieve / Compute the file actual compression type for each file in the list(most work is for auto - detect)
-                resultName = fileInfo.Name;
-                resultLength = _memoryStream?.Length ?? fileInfo.Length;
+                SmallFilesMetas.Add(fileMetadata);
             }
+        }
 
-            SFFileCompressionTypes.SFFileCompressionType compressionType;
+        // Check command type
+        if (CommandTypes.UPLOAD == CommandType)
+        {
+            await uploadAsync(cancellationToken).ConfigureAwait(false);
+        }
+        else if (CommandTypes.DOWNLOAD == CommandType)
+        {
+            await downloadAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
 
-            if (TransferMetadata.autoCompress &&
-                TransferMetadata.sourceCompression.Equals(COMPRESSION_AUTO_DETECT))
+    /// <summary>
+    /// Generate the result set based on the file metadata.
+    /// </summary>
+    /// <returns>The result set containing file status and info</returns>
+    public SFResultSet result()
+    {
+        // Set the row count using the number of metadata in the result metas
+        TransferMetadata.rowSet = new string[ResultsMetas.Count, 8];
+
+        // For each file metadata, set the result set variables
+        for (int index = 0; index < ResultsMetas.Count; index++)
+        {
+            TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceFileName] = ResultsMetas[index].srcFileName;
+            TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName] = ResultsMetas[index].destFileName;
+            TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize] =
+                ResultsMetas[index].srcFileSize.ToString();
+            TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize] =
+                ResultsMetas[index].destFileSize.ToString();
+            TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus] = ResultsMetas[index].resultStatus;
+
+            if (ResultsMetas[index].lastError != null)
             {
-                // Auto-detect source compression type
-                // Will return NONE if no matching type is found
-                compressionType = _memoryStream?.Owned == false
-                    ? SFFileCompressionTypes.GuessCompressionType(_memoryStream)
-                    : SFFileCompressionTypes.GuessCompressionType(name);
-
-                Logger.Debug($"File compression detected as {compressionType.Name} for: {name}");
+                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails] =
+                    ResultsMetas[index].lastError.ToString();
             }
             else
             {
-                // User defined source compression type
-                compressionType =
-                    SFFileCompressionTypes.LookUpByName(TransferMetadata.sourceCompression);
+                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails] = null;
             }
 
-            // Verify that the compression type is supported
-            if (!compressionType.IsSupported)
+            if (ResultsMetas[index].sourceCompression.Name != null)
             {
-                //   SqlState.FEATURE_NOT_SUPPORTED = 0A000
-                throw new SnowflakeDbException("0A000", SFError.INTERNAL_ERROR, compressionType.Name);
-            }
-
-            return (resultName, resultLength, compressionType);
-        }
-
-        /// <summary>
-        /// Initialize the file metadata of each file to be uploaded/downloaded.
-        /// </summary>
-        /// <param name="files">List of files to obtain metadata from</param>
-        private void initFileMetadata(List<string> files)
-        {
-            if (CommandTypes.UPLOAD == CommandType)
-            {
-                foreach (var file in files)
-                {
-                    var (sourceName, length, compressionType) = GetCompressionData(file);
-
-                    var fileMetadata = new SFFileMetadata
-                    {
-                        srcFilePath = file,
-                        srcFileName = sourceName,
-                        srcFileSize = length,
-                        stageInfo = TransferMetadata.stageInfo,
-                        overwrite = TransferMetadata.overwrite,
-                        // Need to compress before sending only if autoCompress is On and the file is
-                        // not compressed yet
-                        requireCompress = TransferMetadata.autoCompress && SFFileCompressionTypes.NONE.Equals(compressionType),
-                        sourceCompression = compressionType,
-                        presignedUrl = TransferMetadata.stageInfo.presignedUrl,
-                        // If the file is under the threshold, don't upload in chunks, set parallel to 1
-                        parallel = (_memoryStream == null && length > TransferMetadata.threshold) ? TransferMetadata.parallel : 1,
-                        memoryStream = _memoryStream,
-                        canCompressSpillToFile = _memoryStream?.Owned != false || _environmentFacade.GetBool(EnvVars.PutDisableInMemoryCompress),
-                        proxyCredentials = null,
-                        MaxBytesInMemory = GetFileTransferMaxBytesInMemory(),
-                        _operationType = CommandTypes.UPLOAD
-                    };
-
-                    /// The storage client used to upload data from files or streams
-                    /// This is only needed for remote storage types
-                    if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
-                    {
-                        fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata, tlsProtocols: Session.TlsProtocols, tlsProtocolsExplicitlyRequested: Session.TlsProtocolsExplicitlyRequested);
-                    }
-
-                    if (!fileMetadata.requireCompress)
-                    {
-                        // The file is already compressed
-                        fileMetadata.targetCompression = fileMetadata.sourceCompression;
-                        fileMetadata.destFileName = sourceName;
-                    }
-                    else
-                    {
-                        // The file will need to be compressed using gzip
-                        fileMetadata.targetCompression = SFFileCompressionTypes.GZIP;
-                        fileMetadata.destFileName = sourceName + SFFileCompressionTypes.GZIP.FileExtension;
-                    }
-
-                    if (EncryptionMaterials.Count > 0)
-                    {
-                        fileMetadata.encryptionMaterial = EncryptionMaterials[0];
-                    }
-
-                    if (Session.properties.ContainsKey(SFSessionProperty.PROXYHOST))
-                    {
-                        string host, port, user, password;
-                        Session.properties.TryGetValue(SFSessionProperty.PROXYHOST, out host);
-                        Session.properties.TryGetValue(SFSessionProperty.PROXYPORT, out port);
-                        Session.properties.TryGetValue(SFSessionProperty.PROXYUSER, out user);
-                        Session.properties.TryGetValue(SFSessionProperty.PROXYPASSWORD, out password);
-
-
-                        fileMetadata.proxyCredentials = new ProxyCredentials()
-                        {
-                            ProxyHost = host,
-                            ProxyPort = Convert.ToInt32(port),
-                            ProxyUser = host,
-                            ProxyPassword = password
-                        };
-                    }
-
-                    FilesMetas.Add(fileMetadata);
-                }
-            }
-            else if (CommandTypes.DOWNLOAD == CommandType)
-            {
-                for (int index = 0; index < files.Count; index++)
-                {
-                    string file = files[index];
-                    SFFileMetadata fileMetadata = new SFFileMetadata()
-                    {
-                        srcFileName = file,
-                        destFileName = file.Split('/').Last(),
-                        localLocation = TransferMetadata.localLocation,
-                        stageInfo = TransferMetadata.stageInfo,
-                        overwrite = TransferMetadata.overwrite,
-                        presignedUrl = TransferMetadata.stageInfo.presignedUrl,
-                        parallel = TransferMetadata.parallel,
-                        encryptionMaterial = index < TransferMetadata.encryptionMaterial.Count
-                            ? TransferMetadata.encryptionMaterial[index]
-                            : null,
-                        MaxBytesInMemory = GetFileTransferMaxBytesInMemory(),
-                        _operationType = CommandTypes.DOWNLOAD
-                    };
-
-                    /// The storage client used to download data from files or streams
-                    /// This is only needed for remote storage types
-                    if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
-                    {
-                        fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata, tlsProtocols: Session.TlsProtocols, tlsProtocolsExplicitlyRequested: Session.TlsProtocolsExplicitlyRequested);
-
-                        FileHeader fileHeader = fileMetadata.client.GetFileHeader(fileMetadata);
-
-                        if (fileHeader != null)
-                        {
-                            fileMetadata.srcFileSize = fileHeader.contentLength;
-                            fileMetadata.encryptionMetadata = fileHeader.encryptionMetadata;
-                        }
-                    }
-
-                    FilesMetas.Add(fileMetadata);
-                }
-            }
-        }
-
-        private int GetFileTransferMaxBytesInMemory()
-        {
-            if (!Session.properties.TryGetValue(SFSessionProperty.FILE_TRANSFER_MEMORY_THRESHOLD, out var maxBytesInMemoryString))
-            {
-                return FileTransferConfiguration.DefaultMaxBytesInMemory;
-            }
-
-            if (string.IsNullOrEmpty(maxBytesInMemoryString))
-            {
-                return FileTransferConfiguration.DefaultMaxBytesInMemory;
-            }
-
-            try
-            {
-                return int.Parse(maxBytesInMemoryString);
-            }
-            catch (Exception)
-            {
-                Logger.Warn("Default for FILE_TRANSFER_MEMORY_THRESHOLD used due to invalid session value.");
-                return FileTransferConfiguration.DefaultMaxBytesInMemory;
-            }
-        }
-
-        /// <summary>
-        /// Expand the wildcards if any to generate the list of paths for all files matched by the wildcards.
-        /// Also replace the relative paths to the absolute paths for the files if needed.
-        /// </summary>
-        /// <param name="location">The path to expand</param>
-        /// <returns>The list of file matching the input location</returns>
-        /// <exception cref="DirectoryNotFoundException">Directory not found. Could not find a part of the pat </exception>
-        /// <exception cref="FileNotFoundException">File not found or the path is pointing to a Directory</exception>
-        private List<string> expandFileNames(string location)
-        {
-            location = ExpandHomeDirectoryIfNeeded(location);
-            var fileName = Path.GetFileName(location);
-            var directoryName = Path.GetDirectoryName(location);
-            var foundDirectories = ExpandDirectories(directoryName);
-            var filePaths = new List<string>();
-
-            if (ContainsWildcard(fileName))
-            {
-                foreach (var directory in foundDirectories)
-                {
-                    var ext = Path.GetExtension(fileName);
-                    /*
-                     * We have to check that the extension format is exactly 4 characters (e.g. .txt) as there is
-                     * an anomaly within .NET Framework usage of GetFiles method when using three-character
-                     * file extension (without a dot) which returns files with extensions that begin with the
-                     * specified pattern. For example searching for "*.xls" returns both "book.xls" and "book.xlsx".
-                     */
-                    if (4 == ext.Length && fileName.Contains('*'))
-                    {
-                        var potentialMatches =
-                            Directory.GetFiles(
-                                directory,
-                                fileName,
-                                SearchOption.TopDirectoryOnly);
-                        filePaths.AddRange(potentialMatches.Where(potentialMatch => potentialMatch.EndsWith(ext)));
-                    }
-                    else
-                    {
-                        filePaths.AddRange(
-                            Directory.GetFiles(
-                                directory,
-                                fileName,
-                                SearchOption.TopDirectoryOnly));
-                    }
-                }
+                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType] =
+                    ResultsMetas[index].sourceCompression.Name;
             }
             else
             {
-                // No wildcard in the filename
-                foreach (var directory in foundDirectories)
-                {
-                    var fullPath = Path.GetFullPath(directory + fileName);
-                    if (IsDirectory(fullPath))
-                    {
-                        throw new FileNotFoundException(
-                            "Directories not supported, you need to provide a file path", fullPath);
-                    }
-
-                    filePaths.Add(fullPath);
-                }
+                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType] = null;
             }
 
-            if (Logger.IsDebugEnabled())
+            if (ResultsMetas[index].targetCompression.Name != null)
             {
-                Logger.Debug("Expand " + location + " into: ");
-                foreach (var filepath in filePaths)
-                {
-                    Logger.Debug("\t" + filepath);
-                }
-            }
-
-            return filePaths;
-        }
-
-        /// <summary>
-        /// Expand the wildcards in the directory path to generate the list of directories to be searched for the files.
-        /// </summary>
-        /// <param name="directoryPath">The path to expand</param>
-        private static IEnumerable<string> ExpandDirectories(string directoryPath)
-        {
-            if (string.IsNullOrEmpty(directoryPath))
-            {
-                return new List<string> { Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar };
-            }
-
-            if (!ContainsWildcard(directoryPath))
-            {
-                return new List<string> { Path.GetFullPath(directoryPath) + Path.DirectorySeparatorChar };
-            }
-
-            var pathParts = directoryPath.Split(Path.DirectorySeparatorChar);
-            var resolvedPaths = new List<string>();
-
-            bool firstPass = true;
-
-            foreach (var part in pathParts)
-            {
-                if (ContainsWildcard(part))
-                {
-                    // Directory containing the wildcard is the first one in the path
-                    if (firstPass)
-                    {
-                        resolvedPaths.Add(Directory.GetCurrentDirectory());
-                    }
-
-                    var tempPaths = new List<string>();
-                    foreach (var location in resolvedPaths)
-                    {
-                        var foundDirectories = Directory.GetDirectories(location, part, SearchOption.TopDirectoryOnly);
-                        foundDirectories = foundDirectories.Select(s => s + Path.DirectorySeparatorChar).ToArray();
-                        tempPaths.AddRange(foundDirectories);
-                    }
-
-                    resolvedPaths = tempPaths;
-                }
-                else
-                {
-                    if (resolvedPaths.Count == 0)
-                    {
-                        var pathBeginning = "";
-                        if ((Environment.OSVersion.Platform == PlatformID.Unix ||
-                             Environment.OSVersion.Platform == PlatformID.MacOSX) &&
-                            directoryPath.StartsWith(Path.DirectorySeparatorChar.ToString()))
-                        {
-                            pathBeginning = Path.DirectorySeparatorChar.ToString();
-                        }
-
-                        pathBeginning += $"{part}{Path.DirectorySeparatorChar.ToString()}";
-                        resolvedPaths.Add(pathBeginning);
-                    }
-                    else
-                    {
-                        resolvedPaths = resolvedPaths.Select(s => s + (part + Path.DirectorySeparatorChar)).ToList();
-                    }
-                }
-
-                firstPass = false;
-            }
-
-            return resolvedPaths;
-        }
-
-        /// <summary>
-        /// Expand the home directory if needed.
-        /// </summary>
-        /// <param name="directoryPath">The path to expand</param>
-        private static string ExpandHomeDirectoryIfNeeded(string directoryPath)
-        {
-            if (!directoryPath.Contains('~')) return directoryPath;
-
-            var homePath = (Environment.OSVersion.Platform == PlatformID.Unix ||
-                            Environment.OSVersion.Platform == PlatformID.MacOSX)
-                ? EnvironmentFacade.Instance.GetString(EnvVars.Home)
-                : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
-
-            return directoryPath.Replace("~", homePath);
-        }
-
-        /// <summary>
-        /// Compress the in-memory stream using GZip and update file metadata with the compressed result.
-        /// </summary>
-        /// <param name="fileMetadata">The metadata for the file to compress.</param>
-        /// <param name="uncompressedStream">Origin stream.</param>
-        private void compressInMemoryWithGzip(SFFileMetadata fileMetadata, out BorrowedMemoryStream uncompressedStream)
-        {
-            var compressed = new MemoryStream();
-            fileMetadata.memoryStream.Position = 0;
-            using (var gzip = new GZipStream(compressed, CompressionMode.Compress, leaveOpen: true))
-            {
-                fileMetadata.memoryStream.CopyTo(gzip);
-                uncompressedStream = fileMetadata.memoryStream;
-            }
-
-            compressed.Position = 0;
-            fileMetadata.memoryStream = compressed.GetBorrowedStream(true);
-            fileMetadata.destFileSize = compressed.Length;
-        }
-
-        /// <summary>
-        /// Compress a file using the given file metadata (file path, compression type, etc...) and
-        /// update the metadata accordingly after the compression is finished.
-        /// </summary>
-        /// <param name="fileMetadata">The metadata for the file to compress.</param>
-        /// <param name="memoryStream">Origin memory stream</param>
-        private void compressFileWithGzip(SFFileMetadata fileMetadata, out BorrowedMemoryStream memoryStream)
-        {
-            if (!fileMetadata.canCompressSpillToFile)
-            {
-                compressInMemoryWithGzip(fileMetadata, out memoryStream);
-                return;
-            }
-
-            memoryStream = fileMetadata.memoryStream;
-            fileMetadata.realSrcFilePath = Path.Combine(fileMetadata.tmpDir, fileMetadata.srcFileName + "_c.gz");
-
-            if (memoryStream == null)
-            {
-                var fileToCompress = new FileInfo(fileMetadata.srcFilePath);
-                if ((File.GetAttributes(fileToCompress.FullName) & FileAttributes.Hidden) == FileAttributes.Hidden) return;
-
-                using var originalFileStream = fileToCompress.OpenRead();
-                using var compressedFileStream = FileOperations.Instance.Create(fileMetadata.realSrcFilePath);
-                using var compressionStream = new GZipStream(compressedFileStream, CompressionMode.Compress);
-                originalFileStream.CopyTo(compressionStream);
+                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType] =
+                    ResultsMetas[index].targetCompression.Name;
             }
             else
             {
-                memoryStream.Position = 0;
-                using var compressedFileStream = FileOperations.Instance.Create(fileMetadata.realSrcFilePath);
-                using var compressionStream = new GZipStream(compressedFileStream, CompressionMode.Compress);
-                memoryStream.CopyTo(compressionStream);
-                fileMetadata.memoryStream = null;
-            }
-
-            Logger.Debug($"Compressed {fileMetadata.srcFileName} to {fileMetadata.realSrcFilePath}");
-            var destInfo = new FileInfo(fileMetadata.realSrcFilePath);
-            fileMetadata.destFileSize = destInfo.Length;
-        }
-
-        /// <summary>
-        /// Get digest and size of file to be uploaded.
-        /// </summary>
-        /// <param name="fileMetadata">The metadata for the file to get digest.</param>
-        private void GetDigestAndSizeForFile(SFFileMetadata fileMetadata)
-        {
-#pragma warning disable SYSLIB0021 // TODO SNOW-3662960
-            using var sha256 = SHA256Managed.Create();
-            if (fileMetadata.memoryStream != null)
-            {
-                fileMetadata.memoryStream.Position = 0;
-                fileMetadata.sha256Digest = Convert.ToBase64String(sha256.ComputeHash(fileMetadata.memoryStream));
-                fileMetadata.uploadSize = fileMetadata.memoryStream.Length;
-            }
-            else
-            {
-                using var fileStream = File.OpenRead(fileMetadata.realSrcFilePath);
-                fileMetadata.sha256Digest = Convert.ToBase64String(sha256.ComputeHash(fileStream));
-                fileMetadata.uploadSize = fileStream.Length;
+                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType] = null;
             }
         }
 
-        /// <summary>
-        /// Renew expired client.
-        /// </summary>
-        /// <returns>The renewed storage client.</returns>
-        private ISFRemoteStorageClient renewExpiredClient(ProxyCredentials proxyCredentials)
-        {
-            RenewClientMutex.WaitOne();
+        return new SFResultSet(TransferMetadata, new SFStatement(Session));
+    }
 
-            var sfStatement = new SFStatement(Session);
-            var statementContext = StatementContext.Default with { CommandText = TransferMetadata.command };
+    /// <summary>
+    /// Upload files sequentially or in parallel.
+    /// </summary>
+    private void upload()
+    {
+        //Start the upload tasks(for small files upload in parallel using the given parallelism
+        //factor, for large file updload sequentially)
+        //For each file, using the remote client
+        if (0 < LargeFilesMetas.Count)
+        {
+            Logger.Debug("Start uploading large files");
+            foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
+            {
+                UploadFilesInSequential(fileMetadata);
+            }
+
+            Logger.Debug("End uploading large files");
+        }
+
+        if (0 < SmallFilesMetas.Count)
+        {
+            Logger.Debug("Start uploading small files");
+            UploadFilesInParallel(SmallFilesMetas, TransferMetadata.parallel);
+            Logger.Debug("End uploading small files");
+        }
+    }
+
+    /// <summary>
+    /// Upload files sequentially or in parallel.
+    /// </summary>
+    private async Task uploadAsync(CancellationToken cancellationToken)
+    {
+        //Start the upload tasks(for small files upload in parallel using the given parallelism
+        //factor, for large file updload sequentially)
+        //For each file, using the remote client
+        if (0 < LargeFilesMetas.Count)
+        {
+            Logger.Debug("Start uploading large files");
+            foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
+            {
+                await UploadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+            }
+
+            Logger.Debug("End uploading large files");
+        }
+
+        if (0 < SmallFilesMetas.Count)
+        {
+            Logger.Debug("Start uploading small files");
+            await UploadFilesInParallelAsync(SmallFilesMetas, cancellationToken).ConfigureAwait(false);
+            Logger.Debug("End uploading small files");
+        }
+    }
+
+
+    /// <summary>
+    /// Download files sequentially or in parallel.
+    /// </summary>
+    private void download()
+    {
+        //Start the download tasks(for small files download in parallel using the given parallelism
+        //factor, for large file download sequentially)
+        //For each file, using the remote client
+        if (0 < LargeFilesMetas.Count)
+        {
+            Logger.Debug("Start uploading large files");
+            foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
+            {
+                DownloadFilesInSequential(fileMetadata);
+            }
+
+            Logger.Debug("End uploading large files");
+        }
+
+        if (0 < SmallFilesMetas.Count)
+        {
+            Logger.Debug("Start uploading small files");
+            DownloadFilesInParallel(SmallFilesMetas, TransferMetadata.parallel);
+            Logger.Debug("End uploading small files");
+        }
+    }
+
+    /// <summary>
+    /// Download files sequentially or in parallel.
+    /// </summary>
+    private async Task downloadAsync(CancellationToken cancellationToken)
+    {
+        //Start the download tasks(for small files download in parallel using the given parallelism
+        //factor, for large file download sequentially)
+        //For each file, using the remote client
+        if (0 < LargeFilesMetas.Count)
+        {
+            Logger.Debug("Start uploading large files");
+            foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
+            {
+                await DownloadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+            }
+
+            Logger.Debug("End uploading large files");
+        }
+
+        if (0 < SmallFilesMetas.Count)
+        {
+            Logger.Debug("Start uploading small files");
+            await DownloadFilesInParallelAsync(SmallFilesMetas, TransferMetadata.parallel, cancellationToken).ConfigureAwait(false);
+            Logger.Debug("End uploading small files");
+        }
+    }
+
+    /// <summary>
+    /// Get the presigned URL and update the file metadata.
+    /// </summary>
+    private void UpdatePresignedUrl()
+    {
+        // Presigned url only applies to GCS
+        if (TransferMetadata.stageInfo.locationType != "GCS")
+            return;
+
+        if (CommandTypes.DOWNLOAD == CommandType)
+        {
+            for (var index = 0; index < FilesMetas.Count; index++)
+            {
+                FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
+            }
+
+            return;
+        }
+
+        if (CommandType != CommandTypes.UPLOAD)
+            return;
+
+        // Skip entirely in access-token mode: a downscoped token is folder-scoped and already covers every file, so there is nothing per-file to fetch.
+        if (TransferMetadata.stageInfo.stageCredentials?.TryGetValue(SFGCSClient.GCS_ACCESS_TOKEN, out var value) == true &&
+            !string.IsNullOrEmpty(value))
+            return;
+
+        foreach (var fileMeta in FilesMetas)
+        {
+            var filePathToReplace = getFilePathFromPutCommand(Query);
+            var fileNameToReplaceWith = fileMeta.destFileName;
+            var queryWithSingleFile = Query;
+            queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
+
+            var sfStatement = new SFStatement(Session)
+            {
+                isPutGetQuery = true
+            };
+            var statementContext = StatementContext.Default with { CommandText = queryWithSingleFile };
             var response = sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(statementContext, null);
 
-            TransferMetadata = response.data;
+            fileMeta.stageInfo = response.data.stageInfo;
+            fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
+        }
+    }
 
-            RenewClientMutex.ReleaseMutex();
+    /// <summary>
+    /// Get the presigned URL async method and update the file metadata.
+    /// </summary>
+    private async Task UpdatePresignedUrlAsync(CancellationToken cancellationToken)
+    {
+        // Presigned url only applies to GCS
+        if (TransferMetadata.stageInfo.locationType != "GCS")
+            return;
 
-            return SFRemoteStorageUtil.GetRemoteStorage(response.data, proxyCredentials, Session.TlsProtocols, Session.TlsProtocolsExplicitlyRequested);
+        if (CommandType == CommandTypes.DOWNLOAD)
+        {
+            for (var index = 0; index < FilesMetas.Count; index++)
+            {
+                FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
+            }
+
+            return;
         }
 
-        /// <summary>
-        /// Renew expired client.
-        /// </summary>
-        /// <returns>The renewed storage client.</returns>
-        private async Task<ISFRemoteStorageClient> renewExpiredClientAsync(CancellationToken cancellationToken)
-        {
-            var sfStatement = new SFStatement(Session);
-            var statementContext = StatementContext.Default with { CommandText = TransferMetadata.command };
-            var response = await
-                sfStatement.ExecuteAsyncHelper<PutGetExecResponse, PutGetResponseData>(
-                    statementContext,
-                    null,
-                    cancellationToken).ConfigureAwait(false);
+        if (CommandType != CommandTypes.UPLOAD)
+            return;
 
-            return SFRemoteStorageUtil.GetRemoteStorage(response.data, tlsProtocols: Session.TlsProtocols, tlsProtocolsExplicitlyRequested: Session.TlsProtocolsExplicitlyRequested);
+        // Skip entirely in access-token mode: a downscoped token is folder-scoped and already covers every file, so there is nothing per-file to fetch.
+        if (TransferMetadata.stageInfo.stageCredentials?.TryGetValue(SFGCSClient.GCS_ACCESS_TOKEN, out var value) == true &&
+            !string.IsNullOrEmpty(value))
+            return;
+
+        foreach (var fileMeta in FilesMetas)
+        {
+            var filePathToReplace = getFilePathFromPutCommand(Query);
+            var fileNameToReplaceWith = fileMeta.destFileName;
+            var queryWithSingleFile = Query;
+            queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
+
+            var sfStatement = new SFStatement(Session)
+            {
+                isPutGetQuery = true
+            };
+
+            var statementContext = StatementContext.Default with { CommandText = queryWithSingleFile };
+            var response = await sfStatement.ExecuteAsyncHelper<PutGetExecResponse, PutGetResponseData>(statementContext, null, cancellationToken)
+                .ConfigureAwait(false);
+
+            fileMeta.stageInfo = response.data.stageInfo;
+            fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
+        }
+    }
+
+    /// <summary>
+    /// Obtain the file path from the PUT query.
+    /// </summary>
+    /// <param name="query">The query containing the file path</param>
+    /// <returns>The file path contained by the query</returns>
+    internal static string getFilePathFromPutCommand(string query)
+    {
+        // Extract file path from PUT command:
+        // E.g. "PUT file://C:<path-to-file> @DB.SCHEMA.%TABLE;"
+        int startIndex = query.IndexOf("file://") + "file://".Length;
+        int endIndex = query.Substring(startIndex).IndexOf('@') - 1;
+        string filePath = query.Substring(startIndex, endIndex).TrimEnd();
+
+        // Check if file path contains an enclosing (') char
+        if (filePath[filePath.Length - 1] == '\'')
+        {
+            filePath = filePath.Substring(0, filePath.Length - 1);
         }
 
-        /// <summary>
-        /// Upload a list of files in parallel using the given parallelization factor.
-        /// </summary>
-        /// <param name="fileMetadata">The metadata of the file to upload.</param>
-        /// <returns>The result outcome for each file.</returns>
-        private void UploadFilesInSequential(
-            SFFileMetadata fileMetadata)
+        return filePath;
+    }
+
+    /// <summary>
+    /// Initialize the encryption materials for file encryption.
+    /// </summary>
+    private void initEncryptionMaterial()
+    {
+        if (CommandTypes.UPLOAD == CommandType)
         {
-            SFFileMetadata resultMetadata = UploadSingleFile(fileMetadata);
-            bool breakFlag = false;
-
-            for (int count = 0; count < 10; count++)
+            if (TransferMetadata.stageInfo.isClientSideEncrypted)
             {
-                if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
+                EncryptionMaterials.Add(TransferMetadata.encryptionMaterial[0]);
+            }
+        }
+    }
+
+    private (string Name, long Length, SFFileCompressionTypes.SFFileCompressionType CompressionType) GetCompressionData(string name)
+    {
+        string resultName;
+        long resultLength;
+        if (_memoryStream?.Owned == false)
+        {
+            resultName = $"{STREAM_FILE_NAME}.{Path.GetFileName(name)}";
+            resultLength = _memoryStream.Length;
+        }
+        else
+        {
+            var fileInfo = new FileInfo(name);
+
+            //  Retrieve / Compute the file actual compression type for each file in the list(most work is for auto - detect)
+            resultName = fileInfo.Name;
+            resultLength = _memoryStream?.Length ?? fileInfo.Length;
+        }
+
+        SFFileCompressionTypes.SFFileCompressionType compressionType;
+
+        if (TransferMetadata.autoCompress &&
+            TransferMetadata.sourceCompression.Equals(COMPRESSION_AUTO_DETECT))
+        {
+            // Auto-detect source compression type
+            // Will return NONE if no matching type is found
+            compressionType = _memoryStream?.Owned == false
+                ? SFFileCompressionTypes.GuessCompressionType(_memoryStream)
+                : SFFileCompressionTypes.GuessCompressionType(name);
+
+            Logger.Debug($"File compression detected as {compressionType.Name} for: {name}");
+        }
+        else
+        {
+            // User defined source compression type
+            compressionType =
+                SFFileCompressionTypes.LookUpByName(TransferMetadata.sourceCompression);
+        }
+
+        // Verify that the compression type is supported
+        if (!compressionType.IsSupported)
+        {
+            //   SqlState.FEATURE_NOT_SUPPORTED = 0A000
+            throw new SnowflakeDbException("0A000", SFError.INTERNAL_ERROR, compressionType.Name);
+        }
+
+        return (resultName, resultLength, compressionType);
+    }
+
+    /// <summary>
+    /// Initialize the file metadata of each file to be uploaded/downloaded.
+    /// </summary>
+    /// <param name="files">List of files to obtain metadata from</param>
+    private void initFileMetadata(List<string> files)
+    {
+        if (CommandTypes.UPLOAD == CommandType)
+        {
+            foreach (var file in files)
+            {
+                var (sourceName, length, compressionType) = GetCompressionData(file);
+
+                var fileMetadata = new SFFileMetadata
                 {
-                    fileMetadata.client = renewExpiredClient(fileMetadata.proxyCredentials);
-                }
-                else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+                    srcFilePath = file,
+                    srcFileName = sourceName,
+                    srcFileSize = length,
+                    stageInfo = TransferMetadata.stageInfo,
+                    overwrite = TransferMetadata.overwrite,
+                    // Need to compress before sending only if autoCompress is On and the file is
+                    // not compressed yet
+                    requireCompress = TransferMetadata.autoCompress && SFFileCompressionTypes.NONE.Equals(compressionType),
+                    sourceCompression = compressionType,
+                    presignedUrl = TransferMetadata.stageInfo.presignedUrl,
+                    // If the file is under the threshold, don't upload in chunks, set parallel to 1
+                    parallel = (_memoryStream == null && length > TransferMetadata.threshold) ? TransferMetadata.parallel : 1,
+                    memoryStream = _memoryStream,
+                    canCompressSpillToFile = _memoryStream?.Owned != false || _environmentFacade.GetBool(EnvVars.PutDisableInMemoryCompress),
+                    proxyCredentials = null,
+                    MaxBytesInMemory = GetFileTransferMaxBytesInMemory(),
+                    _operationType = CommandTypes.UPLOAD
+                };
+
+                /// The storage client used to upload data from files or streams
+                /// This is only needed for remote storage types
+                if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
                 {
-                    UpdatePresignedUrl();
+                    fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata, tlsProtocols: Session.TlsProtocols, tlsProtocolsExplicitlyRequested: Session.TlsProtocolsExplicitlyRequested);
                 }
 
-                // Break out of loop if file is successfully uploaded or already exists
-                if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
-                    fileMetadata.resultStatus == ResultStatus.SKIPPED.ToString())
+                if (!fileMetadata.requireCompress)
                 {
-                    breakFlag = true;
-                    break;
+                    // The file is already compressed
+                    fileMetadata.targetCompression = fileMetadata.sourceCompression;
+                    fileMetadata.destFileName = sourceName;
+                }
+                else
+                {
+                    // The file will need to be compressed using gzip
+                    fileMetadata.targetCompression = SFFileCompressionTypes.GZIP;
+                    fileMetadata.destFileName = sourceName + SFFileCompressionTypes.GZIP.FileExtension;
+                }
+
+                if (EncryptionMaterials.Count > 0)
+                {
+                    fileMetadata.encryptionMaterial = EncryptionMaterials[0];
+                }
+
+                if (Session.properties.ContainsKey(SFSessionProperty.PROXYHOST))
+                {
+                    string host, port, user, password;
+                    Session.properties.TryGetValue(SFSessionProperty.PROXYHOST, out host);
+                    Session.properties.TryGetValue(SFSessionProperty.PROXYPORT, out port);
+                    Session.properties.TryGetValue(SFSessionProperty.PROXYUSER, out user);
+                    Session.properties.TryGetValue(SFSessionProperty.PROXYPASSWORD, out password);
+
+
+                    fileMetadata.proxyCredentials = new ProxyCredentials()
+                    {
+                        ProxyHost = host,
+                        ProxyPort = Convert.ToInt32(port),
+                        ProxyUser = host,
+                        ProxyPassword = password
+                    };
+                }
+
+                FilesMetas.Add(fileMetadata);
+            }
+        }
+        else if (CommandTypes.DOWNLOAD == CommandType)
+        {
+            for (int index = 0; index < files.Count; index++)
+            {
+                string file = files[index];
+                SFFileMetadata fileMetadata = new SFFileMetadata()
+                {
+                    srcFileName = file,
+                    destFileName = file.Split('/').Last(),
+                    localLocation = TransferMetadata.localLocation,
+                    stageInfo = TransferMetadata.stageInfo,
+                    overwrite = TransferMetadata.overwrite,
+                    presignedUrl = TransferMetadata.stageInfo.presignedUrl,
+                    parallel = TransferMetadata.parallel,
+                    encryptionMaterial = index < TransferMetadata.encryptionMaterial.Count
+                        ? TransferMetadata.encryptionMaterial[index]
+                        : null,
+                    MaxBytesInMemory = GetFileTransferMaxBytesInMemory(),
+                    _operationType = CommandTypes.DOWNLOAD
+                };
+
+                /// The storage client used to download data from files or streams
+                /// This is only needed for remote storage types
+                if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
+                {
+                    fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata, tlsProtocols: Session.TlsProtocols, tlsProtocolsExplicitlyRequested: Session.TlsProtocolsExplicitlyRequested);
+
+                    FileHeader fileHeader = fileMetadata.client.GetFileHeader(fileMetadata);
+
+                    if (fileHeader != null)
+                    {
+                        fileMetadata.srcFileSize = fileHeader.contentLength;
+                        fileMetadata.encryptionMetadata = fileHeader.encryptionMetadata;
+                    }
+                }
+
+                FilesMetas.Add(fileMetadata);
+            }
+        }
+    }
+
+    private int GetFileTransferMaxBytesInMemory()
+    {
+        if (!Session.properties.TryGetValue(SFSessionProperty.FILE_TRANSFER_MEMORY_THRESHOLD, out var maxBytesInMemoryString))
+        {
+            return FileTransferConfiguration.DefaultMaxBytesInMemory;
+        }
+
+        if (string.IsNullOrEmpty(maxBytesInMemoryString))
+        {
+            return FileTransferConfiguration.DefaultMaxBytesInMemory;
+        }
+
+        try
+        {
+            return int.Parse(maxBytesInMemoryString);
+        }
+        catch (Exception)
+        {
+            Logger.Warn("Default for FILE_TRANSFER_MEMORY_THRESHOLD used due to invalid session value.");
+            return FileTransferConfiguration.DefaultMaxBytesInMemory;
+        }
+    }
+
+    /// <summary>
+    /// Expand the wildcards if any to generate the list of paths for all files matched by the wildcards.
+    /// Also replace the relative paths to the absolute paths for the files if needed.
+    /// </summary>
+    /// <param name="location">The path to expand</param>
+    /// <returns>The list of file matching the input location</returns>
+    /// <exception cref="DirectoryNotFoundException">Directory not found. Could not find a part of the pat </exception>
+    /// <exception cref="FileNotFoundException">File not found or the path is pointing to a Directory</exception>
+    private List<string> expandFileNames(string location)
+    {
+        location = ExpandHomeDirectoryIfNeeded(location);
+        var fileName = Path.GetFileName(location);
+        var directoryName = Path.GetDirectoryName(location);
+        var foundDirectories = ExpandDirectories(directoryName);
+        var filePaths = new List<string>();
+
+        if (ContainsWildcard(fileName))
+        {
+            foreach (var directory in foundDirectories)
+            {
+                var ext = Path.GetExtension(fileName);
+                /*
+                 * We have to check that the extension format is exactly 4 characters (e.g. .txt) as there is
+                 * an anomaly within .NET Framework usage of GetFiles method when using three-character
+                 * file extension (without a dot) which returns files with extensions that begin with the
+                 * specified pattern. For example searching for "*.xls" returns both "book.xls" and "book.xlsx".
+                 */
+                if (4 == ext.Length && fileName.Contains('*'))
+                {
+                    var potentialMatches =
+                        Directory.GetFiles(
+                            directory,
+                            fileName,
+                            SearchOption.TopDirectoryOnly);
+                    filePaths.AddRange(potentialMatches.Where(potentialMatch => potentialMatch.EndsWith(ext)));
+                }
+                else
+                {
+                    filePaths.AddRange(
+                        Directory.GetFiles(
+                            directory,
+                            fileName,
+                            SearchOption.TopDirectoryOnly));
                 }
             }
-
-            if (!breakFlag)
+        }
+        else
+        {
+            // No wildcard in the filename
+            foreach (var directory in foundDirectories)
             {
-                // Could not upload a file even after retry
-                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
-            }
+                var fullPath = Path.GetFullPath(directory + fileName);
+                if (IsDirectory(fullPath))
+                {
+                    throw new FileNotFoundException(
+                        "Directories not supported, you need to provide a file path", fullPath);
+                }
 
-            ResultsMetas.Add(fileMetadata);
-
-            if (INJECT_WAIT_IN_PUT > 0)
-            {
-                Thread.Sleep(INJECT_WAIT_IN_PUT);
+                filePaths.Add(fullPath);
             }
         }
 
-        /// <summary>
-        /// Upload a list of files in parallel using the given parallelization factor.
-        /// </summary>
-        /// <param name="fileMetadata">The metadata of the file to upload.</param>
-        /// <param name="cancellationToken">Cancellation support.</param>
-        /// <returns>The result outcome for each file.</returns>
-        private async Task UploadFilesInSequentialAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+        if (Logger.IsDebugEnabled())
         {
-            SFFileMetadata resultMetadata = await UploadSingleFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
-            bool breakFlag = false;
-
-            for (int count = 0; count < 10; count++)
+            Logger.Debug("Expand " + location + " into: ");
+            foreach (var filepath in filePaths)
             {
-                if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
-                {
-                    fileMetadata.client = await renewExpiredClientAsync(cancellationToken).ConfigureAwait(false);
-                }
-                else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
-                {
-                    await UpdatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
-                }
-
-                // Break out of loop if file is successfully uploaded or already exists
-                if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
-                    fileMetadata.resultStatus == ResultStatus.SKIPPED.ToString())
-                {
-                    breakFlag = true;
-                    break;
-                }
-            }
-
-            if (!breakFlag)
-            {
-                // Could not upload a file even after retry
-                fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
-            }
-
-            ResultsMetas.Add(fileMetadata);
-
-            if (INJECT_WAIT_IN_PUT > 0)
-            {
-                Thread.Sleep(INJECT_WAIT_IN_PUT);
+                Logger.Debug("\t" + filepath);
             }
         }
 
-        /// <summary>
-        /// Download a list of files in parallel using the given parallelization factor.
-        /// </summary>
-        /// <param name="fileMetadata">The metadata of the file to download.</param>
-        /// <returns>The result outcome for each file.</returns>
-        private void DownloadFilesInSequential(
-            SFFileMetadata fileMetadata)
-        {
-            SFFileMetadata resultMetadata = DownloadSingleFile(fileMetadata);
+        return filePaths;
+    }
 
+    /// <summary>
+    /// Expand the wildcards in the directory path to generate the list of directories to be searched for the files.
+    /// </summary>
+    /// <param name="directoryPath">The path to expand</param>
+    private static IEnumerable<string> ExpandDirectories(string directoryPath)
+    {
+        if (string.IsNullOrEmpty(directoryPath))
+        {
+            return new List<string> { Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar };
+        }
+
+        if (!ContainsWildcard(directoryPath))
+        {
+            return new List<string> { Path.GetFullPath(directoryPath) + Path.DirectorySeparatorChar };
+        }
+
+        var pathParts = directoryPath.Split(Path.DirectorySeparatorChar);
+        var resolvedPaths = new List<string>();
+
+        bool firstPass = true;
+
+        foreach (var part in pathParts)
+        {
+            if (ContainsWildcard(part))
+            {
+                // Directory containing the wildcard is the first one in the path
+                if (firstPass)
+                {
+                    resolvedPaths.Add(Directory.GetCurrentDirectory());
+                }
+
+                var tempPaths = new List<string>();
+                foreach (var location in resolvedPaths)
+                {
+                    var foundDirectories = Directory.GetDirectories(location, part, SearchOption.TopDirectoryOnly);
+                    foundDirectories = foundDirectories.Select(s => s + Path.DirectorySeparatorChar).ToArray();
+                    tempPaths.AddRange(foundDirectories);
+                }
+
+                resolvedPaths = tempPaths;
+            }
+            else
+            {
+                if (resolvedPaths.Count == 0)
+                {
+                    var pathBeginning = "";
+                    if ((Environment.OSVersion.Platform == PlatformID.Unix ||
+                         Environment.OSVersion.Platform == PlatformID.MacOSX) &&
+                        directoryPath.StartsWith(Path.DirectorySeparatorChar.ToString()))
+                    {
+                        pathBeginning = Path.DirectorySeparatorChar.ToString();
+                    }
+
+                    pathBeginning += $"{part}{Path.DirectorySeparatorChar.ToString()}";
+                    resolvedPaths.Add(pathBeginning);
+                }
+                else
+                {
+                    resolvedPaths = resolvedPaths.Select(s => s + (part + Path.DirectorySeparatorChar)).ToList();
+                }
+            }
+
+            firstPass = false;
+        }
+
+        return resolvedPaths;
+    }
+
+    /// <summary>
+    /// Expand the home directory if needed.
+    /// </summary>
+    /// <param name="directoryPath">The path to expand</param>
+    private static string ExpandHomeDirectoryIfNeeded(string directoryPath)
+    {
+        if (!directoryPath.Contains('~')) return directoryPath;
+
+        var homePath = (Environment.OSVersion.Platform == PlatformID.Unix ||
+                        Environment.OSVersion.Platform == PlatformID.MacOSX)
+            ? EnvironmentFacade.Instance.GetString(EnvVars.Home)
+            : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
+
+        return directoryPath.Replace("~", homePath);
+    }
+
+    /// <summary>
+    /// Compress the in-memory stream using GZip and update file metadata with the compressed result.
+    /// </summary>
+    /// <param name="fileMetadata">The metadata for the file to compress.</param>
+    /// <param name="uncompressedStream">Origin stream.</param>
+    private void compressInMemoryWithGzip(SFFileMetadata fileMetadata, out BorrowedMemoryStream uncompressedStream)
+    {
+        var compressed = new MemoryStream();
+        fileMetadata.memoryStream.Position = 0;
+        using (var gzip = new GZipStream(compressed, CompressionMode.Compress, leaveOpen: true))
+        {
+            fileMetadata.memoryStream.CopyTo(gzip);
+            uncompressedStream = fileMetadata.memoryStream;
+        }
+
+        compressed.Position = 0;
+        fileMetadata.memoryStream = compressed.GetBorrowedStream(true);
+        fileMetadata.destFileSize = compressed.Length;
+    }
+
+    /// <summary>
+    /// Compress a file using the given file metadata (file path, compression type, etc...) and
+    /// update the metadata accordingly after the compression is finished.
+    /// </summary>
+    /// <param name="fileMetadata">The metadata for the file to compress.</param>
+    /// <param name="memoryStream">Origin memory stream</param>
+    private void compressFileWithGzip(SFFileMetadata fileMetadata, out BorrowedMemoryStream memoryStream)
+    {
+        if (!fileMetadata.canCompressSpillToFile)
+        {
+            compressInMemoryWithGzip(fileMetadata, out memoryStream);
+            return;
+        }
+
+        memoryStream = fileMetadata.memoryStream;
+        fileMetadata.realSrcFilePath = Path.Combine(fileMetadata.tmpDir, fileMetadata.srcFileName + "_c.gz");
+
+        if (memoryStream == null)
+        {
+            var fileToCompress = new FileInfo(fileMetadata.srcFilePath);
+            if ((File.GetAttributes(fileToCompress.FullName) & FileAttributes.Hidden) == FileAttributes.Hidden) return;
+
+            using var originalFileStream = fileToCompress.OpenRead();
+            using var compressedFileStream = FileOperations.Instance.Create(fileMetadata.realSrcFilePath);
+            using var compressionStream = new GZipStream(compressedFileStream, CompressionMode.Compress);
+            originalFileStream.CopyTo(compressionStream);
+        }
+        else
+        {
+            memoryStream.Position = 0;
+            using var compressedFileStream = FileOperations.Instance.Create(fileMetadata.realSrcFilePath);
+            using var compressionStream = new GZipStream(compressedFileStream, CompressionMode.Compress);
+            memoryStream.CopyTo(compressionStream);
+            fileMetadata.memoryStream = null;
+        }
+
+        Logger.Debug($"Compressed {fileMetadata.srcFileName} to {fileMetadata.realSrcFilePath}");
+        var destInfo = new FileInfo(fileMetadata.realSrcFilePath);
+        fileMetadata.destFileSize = destInfo.Length;
+    }
+
+    /// <summary>
+    /// Get digest and size of file to be uploaded.
+    /// </summary>
+    /// <param name="fileMetadata">The metadata for the file to get digest.</param>
+    private void GetDigestAndSizeForFile(SFFileMetadata fileMetadata)
+    {
+#pragma warning disable SYSLIB0021 // TODO SNOW-3662960
+        using var sha256 = SHA256Managed.Create();
+        if (fileMetadata.memoryStream != null)
+        {
+            fileMetadata.memoryStream.Position = 0;
+            fileMetadata.sha256Digest = Convert.ToBase64String(sha256.ComputeHash(fileMetadata.memoryStream));
+            fileMetadata.uploadSize = fileMetadata.memoryStream.Length;
+        }
+        else
+        {
+            using var fileStream = File.OpenRead(fileMetadata.realSrcFilePath);
+            fileMetadata.sha256Digest = Convert.ToBase64String(sha256.ComputeHash(fileStream));
+            fileMetadata.uploadSize = fileStream.Length;
+        }
+    }
+
+    /// <summary>
+    /// Renew expired client.
+    /// </summary>
+    /// <returns>The renewed storage client.</returns>
+    private ISFRemoteStorageClient renewExpiredClient(ProxyCredentials proxyCredentials)
+    {
+        RenewClientMutex.WaitOne();
+
+        var sfStatement = new SFStatement(Session);
+        var statementContext = StatementContext.Default with { CommandText = TransferMetadata.command };
+        var response = sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(statementContext, null);
+
+        TransferMetadata = response.data;
+
+        RenewClientMutex.ReleaseMutex();
+
+        return SFRemoteStorageUtil.GetRemoteStorage(response.data, proxyCredentials, Session.TlsProtocols, Session.TlsProtocolsExplicitlyRequested);
+    }
+
+    /// <summary>
+    /// Renew expired client.
+    /// </summary>
+    /// <returns>The renewed storage client.</returns>
+    private async Task<ISFRemoteStorageClient> renewExpiredClientAsync(CancellationToken cancellationToken)
+    {
+        var sfStatement = new SFStatement(Session);
+        var statementContext = StatementContext.Default with { CommandText = TransferMetadata.command };
+        var response = await
+            sfStatement.ExecuteAsyncHelper<PutGetExecResponse, PutGetResponseData>(
+                statementContext,
+                null,
+                cancellationToken).ConfigureAwait(false);
+
+        return SFRemoteStorageUtil.GetRemoteStorage(response.data, tlsProtocols: Session.TlsProtocols, tlsProtocolsExplicitlyRequested: Session.TlsProtocolsExplicitlyRequested);
+    }
+
+    /// <summary>
+    /// Upload a list of files in parallel using the given parallelization factor.
+    /// </summary>
+    /// <param name="fileMetadata">The metadata of the file to upload.</param>
+    /// <returns>The result outcome for each file.</returns>
+    private void UploadFilesInSequential(
+        SFFileMetadata fileMetadata)
+    {
+        SFFileMetadata resultMetadata = UploadSingleFile(fileMetadata);
+        bool breakFlag = false;
+
+        for (int count = 0; count < 10; count++)
+        {
             if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
             {
                 fileMetadata.client = renewExpiredClient(fileMetadata.proxyCredentials);
@@ -1143,24 +1056,42 @@ namespace Snowflake.Data.Core
                 UpdatePresignedUrl();
             }
 
-            ResultsMetas.Add(resultMetadata);
-
-            if (INJECT_WAIT_IN_PUT > 0)
+            // Break out of loop if file is successfully uploaded or already exists
+            if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
+                fileMetadata.resultStatus == ResultStatus.SKIPPED.ToString())
             {
-                Thread.Sleep(INJECT_WAIT_IN_PUT);
+                breakFlag = true;
+                break;
             }
         }
 
-        /// <summary>
-        /// Download a list of files in parallel using the given parallelization factor.
-        /// </summary>
-        /// <param name="fileMetadata">The metadata of the file to download.</param>
-        /// <returns>The result outcome for each file.</returns>
-        private async Task DownloadFilesInSequentialAsync(
-            SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+        if (!breakFlag)
         {
-            SFFileMetadata resultMetadata = await DownloadSingleFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+            // Could not upload a file even after retry
+            fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+        }
 
+        ResultsMetas.Add(fileMetadata);
+
+        if (INJECT_WAIT_IN_PUT > 0)
+        {
+            Thread.Sleep(INJECT_WAIT_IN_PUT);
+        }
+    }
+
+    /// <summary>
+    /// Upload a list of files in parallel using the given parallelization factor.
+    /// </summary>
+    /// <param name="fileMetadata">The metadata of the file to upload.</param>
+    /// <param name="cancellationToken">Cancellation support.</param>
+    /// <returns>The result outcome for each file.</returns>
+    private async Task UploadFilesInSequentialAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+    {
+        SFFileMetadata resultMetadata = await UploadSingleFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+        bool breakFlag = false;
+
+        for (int count = 0; count < 10; count++)
+        {
             if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
             {
                 fileMetadata.client = await renewExpiredClientAsync(cancellationToken).ConfigureAwait(false);
@@ -1170,346 +1101,414 @@ namespace Snowflake.Data.Core
                 await UpdatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            ResultsMetas.Add(resultMetadata);
-
-            if (INJECT_WAIT_IN_PUT > 0)
+            // Break out of loop if file is successfully uploaded or already exists
+            if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
+                fileMetadata.resultStatus == ResultStatus.SKIPPED.ToString())
             {
-                Thread.Sleep(INJECT_WAIT_IN_PUT);
+                breakFlag = true;
+                break;
             }
         }
 
-        /// <summary>
-        /// Upload a list of files in parallel using the given parallelization factor.
-        /// </summary>
-        /// <param name="filesMetadata">The list of files to upload in parallel.</param>
-        /// <param name="parallel">The number of files to upload in parallel.</param>
-        /// <returns>The result outcome for each file.</returns>
-        private void UploadFilesInParallel(
-            List<SFFileMetadata> filesMetadata,
-            int parallel)
+        if (!breakFlag)
         {
-            var listOfActions = new List<Action>();
-            foreach (SFFileMetadata fileMetadata in filesMetadata)
-            {
-                listOfActions.Add(() => UploadFilesInSequential(fileMetadata));
-            }
-
-            var options = new ParallelOptions { MaxDegreeOfParallelism = parallel };
-            Parallel.Invoke(options, listOfActions.ToArray());
+            // Could not upload a file even after retry
+            fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
         }
 
-        /// <summary>
-        /// Upload a list of files in parallel using the given parallelization factor.
-        /// </summary>
-        /// <param name="filesMetadata">The list of files to upload in parallel.</param>
-        /// <param name="cancellationToken">Cancellation support.</param>
-        /// <returns>The result outcome for each file.</returns>
-        private async Task UploadFilesInParallelAsync(List<SFFileMetadata> filesMetadata, CancellationToken cancellationToken)
+        ResultsMetas.Add(fileMetadata);
+
+        if (INJECT_WAIT_IN_PUT > 0)
         {
-            foreach (SFFileMetadata fileMetadata in filesMetadata)
-            {
-                await UploadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
-            }
+            Thread.Sleep(INJECT_WAIT_IN_PUT);
+        }
+    }
+
+    /// <summary>
+    /// Download a list of files in parallel using the given parallelization factor.
+    /// </summary>
+    /// <param name="fileMetadata">The metadata of the file to download.</param>
+    /// <returns>The result outcome for each file.</returns>
+    private void DownloadFilesInSequential(
+        SFFileMetadata fileMetadata)
+    {
+        SFFileMetadata resultMetadata = DownloadSingleFile(fileMetadata);
+
+        if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
+        {
+            fileMetadata.client = renewExpiredClient(fileMetadata.proxyCredentials);
+        }
+        else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+        {
+            UpdatePresignedUrl();
         }
 
-        /// <summary>
-        /// Download a list of files in parallel using the given parallelization factor.
-        /// </summary>
-        /// <param name="filesMetadata">The list of files to download in parallel.</param>
-        /// <param name="parallel">The number of files to download in parallel.</param>
-        /// <returns>The result outcome for each file.</returns>
-        private void DownloadFilesInParallel(
-            List<SFFileMetadata> filesMetadata,
-            int parallel)
-        {
-            var listOfActions = new List<Action>();
-            foreach (SFFileMetadata fileMetadata in filesMetadata)
-            {
-                listOfActions.Add(() => DownloadFilesInSequential(fileMetadata));
-            }
+        ResultsMetas.Add(resultMetadata);
 
-            var options = new ParallelOptions { MaxDegreeOfParallelism = parallel };
-            Parallel.Invoke(options, listOfActions.ToArray());
+        if (INJECT_WAIT_IN_PUT > 0)
+        {
+            Thread.Sleep(INJECT_WAIT_IN_PUT);
+        }
+    }
+
+    /// <summary>
+    /// Download a list of files in parallel using the given parallelization factor.
+    /// </summary>
+    /// <param name="fileMetadata">The metadata of the file to download.</param>
+    /// <returns>The result outcome for each file.</returns>
+    private async Task DownloadFilesInSequentialAsync(
+        SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+    {
+        SFFileMetadata resultMetadata = await DownloadSingleFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+
+        if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
+        {
+            fileMetadata.client = await renewExpiredClientAsync(cancellationToken).ConfigureAwait(false);
+        }
+        else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+        {
+            await UpdatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        /// <summary>
-        /// Download a list of files in parallel using the given parallelization factor.
-        /// </summary>
-        /// <param name="filesMetadata">The list of files to download in parallel.</param>
-        /// <param name="parallel">The number of files to download in parallel.</param>
-        /// <returns>The result outcome for each file.</returns>
-        private async Task DownloadFilesInParallelAsync(
-            List<SFFileMetadata> filesMetadata,
-            int parallel,
-            CancellationToken cancellationToken)
-        {
-            var listOfActions = new List<Action>();
-            foreach (SFFileMetadata fileMetadata in filesMetadata)
-            {
-                await DownloadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
-            }
+        ResultsMetas.Add(resultMetadata);
 
-            var options = new ParallelOptions { MaxDegreeOfParallelism = parallel };
-            Parallel.Invoke(options, listOfActions.ToArray());
+        if (INJECT_WAIT_IN_PUT > 0)
+        {
+            Thread.Sleep(INJECT_WAIT_IN_PUT);
+        }
+    }
+
+    /// <summary>
+    /// Upload a list of files in parallel using the given parallelization factor.
+    /// </summary>
+    /// <param name="filesMetadata">The list of files to upload in parallel.</param>
+    /// <param name="parallel">The number of files to upload in parallel.</param>
+    /// <returns>The result outcome for each file.</returns>
+    private void UploadFilesInParallel(
+        List<SFFileMetadata> filesMetadata,
+        int parallel)
+    {
+        var listOfActions = new List<Action>();
+        foreach (SFFileMetadata fileMetadata in filesMetadata)
+        {
+            listOfActions.Add(() => UploadFilesInSequential(fileMetadata));
         }
 
-        /// <summary>
-        /// Upload a single file.
-        /// </summary>
-        /// <param name="storageClient">Storage client to upload the file with.</param>
-        /// <param name="fileMetadata">The metadata of the file to upload.</param>
-        /// <returns>The result outcome.</returns>
-        private SFFileMetadata UploadSingleFile(SFFileMetadata fileMetadata)
+        var options = new ParallelOptions { MaxDegreeOfParallelism = parallel };
+        Parallel.Invoke(options, listOfActions.ToArray());
+    }
+
+    /// <summary>
+    /// Upload a list of files in parallel using the given parallelization factor.
+    /// </summary>
+    /// <param name="filesMetadata">The list of files to upload in parallel.</param>
+    /// <param name="cancellationToken">Cancellation support.</param>
+    /// <returns>The result outcome for each file.</returns>
+    private async Task UploadFilesInParallelAsync(List<SFFileMetadata> filesMetadata, CancellationToken cancellationToken)
+    {
+        foreach (SFFileMetadata fileMetadata in filesMetadata)
         {
-            fileMetadata.realSrcFilePath = fileMetadata.srcFilePath;
+            await UploadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+        }
+    }
 
-            BorrowedMemoryStream memoryStream = null;
-            try
+    /// <summary>
+    /// Download a list of files in parallel using the given parallelization factor.
+    /// </summary>
+    /// <param name="filesMetadata">The list of files to download in parallel.</param>
+    /// <param name="parallel">The number of files to download in parallel.</param>
+    /// <returns>The result outcome for each file.</returns>
+    private void DownloadFilesInParallel(
+        List<SFFileMetadata> filesMetadata,
+        int parallel)
+    {
+        var listOfActions = new List<Action>();
+        foreach (SFFileMetadata fileMetadata in filesMetadata)
+        {
+            listOfActions.Add(() => DownloadFilesInSequential(fileMetadata));
+        }
+
+        var options = new ParallelOptions { MaxDegreeOfParallelism = parallel };
+        Parallel.Invoke(options, listOfActions.ToArray());
+    }
+
+    /// <summary>
+    /// Download a list of files in parallel using the given parallelization factor.
+    /// </summary>
+    /// <param name="filesMetadata">The list of files to download in parallel.</param>
+    /// <param name="parallel">The number of files to download in parallel.</param>
+    /// <returns>The result outcome for each file.</returns>
+    private async Task DownloadFilesInParallelAsync(
+        List<SFFileMetadata> filesMetadata,
+        int parallel,
+        CancellationToken cancellationToken)
+    {
+        var listOfActions = new List<Action>();
+        foreach (SFFileMetadata fileMetadata in filesMetadata)
+        {
+            await DownloadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+        }
+
+        var options = new ParallelOptions { MaxDegreeOfParallelism = parallel };
+        Parallel.Invoke(options, listOfActions.ToArray());
+    }
+
+    /// <summary>
+    /// Upload a single file.
+    /// </summary>
+    /// <param name="storageClient">Storage client to upload the file with.</param>
+    /// <param name="fileMetadata">The metadata of the file to upload.</param>
+    /// <returns>The result outcome.</returns>
+    private SFFileMetadata UploadSingleFile(SFFileMetadata fileMetadata)
+    {
+        fileMetadata.realSrcFilePath = fileMetadata.srcFilePath;
+
+        BorrowedMemoryStream memoryStream = null;
+        try
+        {
+            var needsTmpDir = (fileMetadata.requireCompress && fileMetadata.canCompressSpillToFile) || fileMetadata.MaxBytesInMemory >= 0;
+            if (needsTmpDir)
+                fileMetadata.tmpDir = GetTemporaryDirectory();
+
+            // Compress the file if needed
+            if (fileMetadata.requireCompress)
+                compressFileWithGzip(fileMetadata, out memoryStream);
+
+            // Calculate the digest
+            GetDigestAndSizeForFile(fileMetadata);
+
+            if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
             {
-                var needsTmpDir = (fileMetadata.requireCompress && fileMetadata.canCompressSpillToFile) || fileMetadata.MaxBytesInMemory >= 0;
-                if (needsTmpDir)
-                    fileMetadata.tmpDir = GetTemporaryDirectory();
-
-                // Compress the file if needed
-                if (fileMetadata.requireCompress)
-                    compressFileWithGzip(fileMetadata, out memoryStream);
-
-                // Calculate the digest
-                GetDigestAndSizeForFile(fileMetadata);
-
-                if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
-                {
-                    // Upload the file using the remote client SDK and the file metadata
-                    SFRemoteStorageUtil.UploadOneFileWithRetry(fileMetadata);
-                }
-                else
-                {
-                    // Upload the file using the local client SDK and the file metadata
-                    SFLocalStorageUtil.UploadOneFileWithRetry(fileMetadata);
-                }
+                // Upload the file using the remote client SDK and the file metadata
+                SFRemoteStorageUtil.UploadOneFileWithRetry(fileMetadata);
             }
-            catch (Exception ex)
+            else
             {
-                Logger.Debug("Unhandled exception while uploading file.", ex);
-                throw;
+                // Upload the file using the local client SDK and the file metadata
+                SFLocalStorageUtil.UploadOneFileWithRetry(fileMetadata);
             }
-            finally
+        }
+        catch (Exception ex)
+        {
+            Logger.Debug("Unhandled exception while uploading file.", ex);
+            throw;
+        }
+        finally
+        {
+            if (fileMetadata.tmpDir != null)
             {
-                if (fileMetadata.tmpDir != null)
-                {
-                    Directory.Delete(fileMetadata.tmpDir, true);
-                    if (memoryStream != null)
-                        fileMetadata.memoryStream = memoryStream;
-                }
-                else if (!fileMetadata.canCompressSpillToFile && memoryStream != null)
-                {
-                    var compressedMemoryStream = fileMetadata.memoryStream;
+                Directory.Delete(fileMetadata.tmpDir, true);
+                if (memoryStream != null)
                     fileMetadata.memoryStream = memoryStream;
-                    compressedMemoryStream.Dispose();
-                }
             }
-
-            return fileMetadata;
+            else if (!fileMetadata.canCompressSpillToFile && memoryStream != null)
+            {
+                var compressedMemoryStream = fileMetadata.memoryStream;
+                fileMetadata.memoryStream = memoryStream;
+                compressedMemoryStream.Dispose();
+            }
         }
 
-        /// <summary>
-        /// Upload a single file.
-        /// </summary>
-        /// <param name="storageClient">Storage client to upload the file with.</param>
-        /// <param name="fileMetadata">The metadata of the file to upload.</param>
-        /// <param name="cancellationToken">Cancellation support.</param>
-        /// <returns>The result outcome.</returns>
-        private async Task<SFFileMetadata> UploadSingleFileAsync(
-            SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+        return fileMetadata;
+    }
+
+    /// <summary>
+    /// Upload a single file.
+    /// </summary>
+    /// <param name="storageClient">Storage client to upload the file with.</param>
+    /// <param name="fileMetadata">The metadata of the file to upload.</param>
+    /// <param name="cancellationToken">Cancellation support.</param>
+    /// <returns>The result outcome.</returns>
+    private async Task<SFFileMetadata> UploadSingleFileAsync(
+        SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+    {
+        fileMetadata.realSrcFilePath = fileMetadata.srcFilePath;
+
+        // Create tmp folder to store compressed files
+        fileMetadata.tmpDir = GetTemporaryDirectory();
+
+        try
         {
-            fileMetadata.realSrcFilePath = fileMetadata.srcFilePath;
-
-            // Create tmp folder to store compressed files
-            fileMetadata.tmpDir = GetTemporaryDirectory();
-
-            try
+            // Compress the file if needed
+            if (fileMetadata.requireCompress)
             {
-                // Compress the file if needed
-                if (fileMetadata.requireCompress)
-                {
-                    compressFileWithGzip(fileMetadata, out _);
-                }
-
-                // Calculate the digest
-                GetDigestAndSizeForFile(fileMetadata);
-
-                if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
-                {
-                    // Upload the file using the remote client SDK and the file metadata
-                    await SFRemoteStorageUtil.UploadOneFileWithRetryAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
-                }
-                else
-                {
-                    // Upload the file using the local client SDK and the file metadata
-                    SFLocalStorageUtil.UploadOneFileWithRetry(fileMetadata);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("UploadSingleFileAsync encountered an error: " + ex.Message);
-                throw;
-            }
-            finally
-            {
-                Directory.Delete(fileMetadata.tmpDir, true);
+                compressFileWithGzip(fileMetadata, out _);
             }
 
-            return fileMetadata;
-        }
+            // Calculate the digest
+            GetDigestAndSizeForFile(fileMetadata);
 
-        /// <summary>
-        /// Download a single file.
-        /// </summary>
-        /// <param name="storageClient">Storage client to download the file with.</param>
-        /// <param name="fileMetadata">The metadata of the file to download.</param>
-        /// <returns>The result outcome.</returns>
-        private SFFileMetadata DownloadSingleFile(
-            SFFileMetadata fileMetadata)
-        {
-            // Create tmp folder to store compressed files
-            fileMetadata.tmpDir = GetTemporaryDirectory();
-
-            try
+            if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
             {
-                if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
-                {
-                    // Upload the file using the remote client SDK and the file metadata
-                    SFRemoteStorageUtil.DownloadOneFile(fileMetadata);
-                }
-                else
-                {
-                    // Upload the file using the local client SDK and the file metadata
-                    SFLocalStorageUtil.DownloadOneFile(fileMetadata);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("DownloadSingleFile encountered an error: " + ex.Message);
-                throw;
-            }
-            finally
-            {
-                Directory.Delete(fileMetadata.tmpDir, true);
-            }
-
-            return fileMetadata;
-        }
-
-        /// <summary>
-        /// Download a single file.
-        /// </summary>
-        /// <param name="storageClient">Storage client to download the file with.</param>
-        /// <param name="fileMetadata">The metadata of the file to download.</param>
-        /// <returns>The result outcome.</returns>
-        private async Task<SFFileMetadata> DownloadSingleFileAsync(
-            SFFileMetadata fileMetadata, CancellationToken cancellationToken)
-        {
-            // Create tmp folder to store compressed files
-            fileMetadata.tmpDir = GetTemporaryDirectory();
-
-            try
-            {
-                if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
-                {
-                    // Upload the file using the remote client SDK and the file metadata
-                    await SFRemoteStorageUtil.DownloadOneFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
-                }
-                else
-                {
-                    // Upload the file using the local client SDK and the file metadata
-                    SFLocalStorageUtil.DownloadOneFile(fileMetadata);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("DownloadSingleFileAsync encountered an error: " + ex.Message);
-                throw;
-            }
-            finally
-            {
-                Directory.Delete(fileMetadata.tmpDir, true);
-            }
-
-            return fileMetadata;
-        }
-
-        /// <summary>
-        /// Create a temporary directory.
-        /// </summary>
-        /// <returns>The temporary directory name.</returns>
-        /// Referenced from: https://stackoverflow.com/a/278457
-        public string GetTemporaryDirectory()
-        {
-            string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-            Directory.CreateDirectory(tempDirectory);
-            return tempDirectory;
-        }
-
-
-        /// <summary>
-        /// Get the storage client type.
-        /// </summary>
-        /// <param name="stageInfo">The stage info used to get the stage location type.</param>
-        /// <returns>The storage client type.</returns>
-        public StorageClientType GetStorageClientType(PutGetStageInfo stageInfo)
-        {
-            string stageLocationType = stageInfo.locationType;
-
-            if (stageLocationType == LOCAL_FS)
-            {
-                return StorageClientType.LOCAL;
+                // Upload the file using the remote client SDK and the file metadata
+                await SFRemoteStorageUtil.UploadOneFileWithRetryAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
             }
             else
             {
-                return StorageClientType.REMOTE;
+                // Upload the file using the local client SDK and the file metadata
+                SFLocalStorageUtil.UploadOneFileWithRetry(fileMetadata);
             }
         }
-
-        private void initFileMetadataForUpload()
+        catch (Exception ex)
         {
-            // Initialize the list of actual files to upload
-            var expandedSrcLocations = new List<string>();
-            if (_memoryStream != null)
-            {
-                // stream put only support single file
-                if (TransferMetadata.src_locations.Count != 1)
-                {
-                    throw new ArgumentException("Invalid stream put.");
-                }
+            Logger.Error("UploadSingleFileAsync encountered an error: " + ex.Message);
+            throw;
+        }
+        finally
+        {
+            Directory.Delete(fileMetadata.tmpDir, true);
+        }
 
-                expandedSrcLocations.Add(TransferMetadata.src_locations[0]);
+        return fileMetadata;
+    }
+
+    /// <summary>
+    /// Download a single file.
+    /// </summary>
+    /// <param name="storageClient">Storage client to download the file with.</param>
+    /// <param name="fileMetadata">The metadata of the file to download.</param>
+    /// <returns>The result outcome.</returns>
+    private SFFileMetadata DownloadSingleFile(
+        SFFileMetadata fileMetadata)
+    {
+        // Create tmp folder to store compressed files
+        fileMetadata.tmpDir = GetTemporaryDirectory();
+
+        try
+        {
+            if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
+            {
+                // Upload the file using the remote client SDK and the file metadata
+                SFRemoteStorageUtil.DownloadOneFile(fileMetadata);
             }
             else
             {
-                foreach (var location in TransferMetadata.src_locations)
-                {
-                    expandedSrcLocations.AddRange(expandFileNames(location));
-                }
+                // Upload the file using the local client SDK and the file metadata
+                SFLocalStorageUtil.DownloadOneFile(fileMetadata);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("DownloadSingleFile encountered an error: " + ex.Message);
+            throw;
+        }
+        finally
+        {
+            Directory.Delete(fileMetadata.tmpDir, true);
+        }
+
+        return fileMetadata;
+    }
+
+    /// <summary>
+    /// Download a single file.
+    /// </summary>
+    /// <param name="storageClient">Storage client to download the file with.</param>
+    /// <param name="fileMetadata">The metadata of the file to download.</param>
+    /// <returns>The result outcome.</returns>
+    private async Task<SFFileMetadata> DownloadSingleFileAsync(
+        SFFileMetadata fileMetadata, CancellationToken cancellationToken)
+    {
+        // Create tmp folder to store compressed files
+        fileMetadata.tmpDir = GetTemporaryDirectory();
+
+        try
+        {
+            if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
+            {
+                // Upload the file using the remote client SDK and the file metadata
+                await SFRemoteStorageUtil.DownloadOneFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                // Upload the file using the local client SDK and the file metadata
+                SFLocalStorageUtil.DownloadOneFile(fileMetadata);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("DownloadSingleFileAsync encountered an error: " + ex.Message);
+            throw;
+        }
+        finally
+        {
+            Directory.Delete(fileMetadata.tmpDir, true);
+        }
+
+        return fileMetadata;
+    }
+
+    /// <summary>
+    /// Create a temporary directory.
+    /// </summary>
+    /// <returns>The temporary directory name.</returns>
+    /// Referenced from: https://stackoverflow.com/a/278457
+    public string GetTemporaryDirectory()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDirectory);
+        return tempDirectory;
+    }
+
+
+    /// <summary>
+    /// Get the storage client type.
+    /// </summary>
+    /// <param name="stageInfo">The stage info used to get the stage location type.</param>
+    /// <returns>The storage client type.</returns>
+    public StorageClientType GetStorageClientType(PutGetStageInfo stageInfo)
+    {
+        string stageLocationType = stageInfo.locationType;
+
+        if (stageLocationType == LOCAL_FS)
+        {
+            return StorageClientType.LOCAL;
+        }
+        else
+        {
+            return StorageClientType.REMOTE;
+        }
+    }
+
+    private void initFileMetadataForUpload()
+    {
+        // Initialize the list of actual files to upload
+        var expandedSrcLocations = new List<string>();
+        if (_memoryStream != null)
+        {
+            // stream put only support single file
+            if (TransferMetadata.src_locations.Count != 1)
+            {
+                throw new ArgumentException("Invalid stream put.");
             }
 
-            // Initialize each file specific metadata (for example, file path, name and size) and
-            // put it in1 of the 2 lists : Small files and large files based on a threshold
-            // extracted from the command response
-            initFileMetadata(expandedSrcLocations);
-
-            if (expandedSrcLocations.Count == 0)
-                throw new ArgumentException("No file found for: " + TransferMetadata.src_locations[0]);
+            expandedSrcLocations.Add(TransferMetadata.src_locations[0]);
         }
-
-        private static bool IsDirectory(string path)
+        else
         {
-            var attr = File.GetAttributes(path);
-            return attr.HasFlag(FileAttributes.Directory);
+            foreach (var location in TransferMetadata.src_locations)
+            {
+                expandedSrcLocations.AddRange(expandFileNames(location));
+            }
         }
 
-        private static bool ContainsWildcard(string str)
-        {
-            return str.Contains('*') || str.Contains('?');
-        }
+        // Initialize each file specific metadata (for example, file path, name and size) and
+        // put it in1 of the 2 lists : Small files and large files based on a threshold
+        // extracted from the command response
+        initFileMetadata(expandedSrcLocations);
+
+        if (expandedSrcLocations.Count == 0)
+            throw new ArgumentException("No file found for: " + TransferMetadata.src_locations[0]);
+    }
+
+    private static bool IsDirectory(string path)
+    {
+        var attr = File.GetAttributes(path);
+        return attr.HasFlag(FileAttributes.Directory);
+    }
+
+    private static bool ContainsWildcard(string str)
+    {
+        return str.Contains('*') || str.Contains('?');
     }
 }

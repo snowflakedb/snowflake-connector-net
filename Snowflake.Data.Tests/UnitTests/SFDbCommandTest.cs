@@ -1,63 +1,62 @@
 using Snowflake.Data.Tests.Util;
 
-namespace Snowflake.Data.Tests.UnitTests
+namespace Snowflake.Data.Tests.UnitTests;
+
+using Xunit;
+using Snowflake.Data.Client;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+public sealed class SFDbCommandTest
 {
-    using Xunit;
-    using Snowflake.Data.Client;
-    using System;
-    using System.Threading;
-    using System.Threading.Tasks;
-    public sealed class SFDbCommandTest
+    SnowflakeDbCommand command;
+
+    public SFDbCommandTest()
     {
-        SnowflakeDbCommand command;
+        command = new SnowflakeDbCommand();
+    }
 
-        public SFDbCommandTest()
-        {
-            command = new SnowflakeDbCommand();
-        }
+    [SFFact]
+    public void TestCommandWithConnectionAndCommandText()
+    {
+        // Arrange
+        SnowflakeDbConnection conn = new SnowflakeDbConnection();
+        string commandText = "select 1";
 
-        [SFFact]
-        public void TestCommandWithConnectionAndCommandText()
-        {
-            // Arrange
-            SnowflakeDbConnection conn = new SnowflakeDbConnection();
-            string commandText = "select 1";
+        // Act
+        command = new SnowflakeDbCommand(conn, commandText);
 
-            // Act
-            command = new SnowflakeDbCommand(conn, commandText);
+        // Assert
+        Assert.Equal(conn, command.Connection);
+        Assert.Equal(commandText, command.CommandText);
+    }
 
-            // Assert
-            Assert.Equal(conn, command.Connection);
-            Assert.Equal(commandText, command.CommandText);
-        }
+    [SFFact]
+    public void TestCommandExecuteThrowsExceptionWhenCommandTextIsNotSet()
+    {
+        // Act
+        var thrown = Assert.Throws<Exception>(() => command.ExecuteScalar());
 
-        [SFFact]
-        public void TestCommandExecuteThrowsExceptionWhenCommandTextIsNotSet()
-        {
-            // Act
-            var thrown = Assert.Throws<Exception>(() => command.ExecuteScalar());
+        // Assert
+        Assert.NotEmpty(thrown.Message);
+    }
 
-            // Assert
-            Assert.NotEmpty(thrown.Message);
-        }
+    [SFFact]
+    public void TestCommandExecuteAsyncThrowsExceptionWhenCommandTextIsNotSet()
+    {
+        // Arrange
+        Task<object> commandTask = command.ExecuteScalarAsync(CancellationToken.None);
 
-        [SFFact]
-        public void TestCommandExecuteAsyncThrowsExceptionWhenCommandTextIsNotSet()
-        {
-            // Arrange
-            Task<object> commandTask = command.ExecuteScalarAsync(CancellationToken.None);
+        // Act
+        var thrown = Assert.Throws<AggregateException>(() => commandTask.Wait());
 
-            // Act
-            var thrown = Assert.Throws<AggregateException>(() => commandTask.Wait());
+        // Assert
+        Assert.Equal("Unable to execute command due to command text not being set", thrown.InnerException.Message);
+    }
 
-            // Assert
-            Assert.Equal("Unable to execute command due to command text not being set", thrown.InnerException.Message);
-        }
-
-        [SFFact]
-        public void TestCommandPrepareShouldNotThrowsException()
-        {
-            command.Prepare();
-        }
+    [SFFact]
+    public void TestCommandPrepareShouldNotThrowsException()
+    {
+        command.Prepare();
     }
 }

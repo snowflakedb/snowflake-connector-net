@@ -1,7 +1,6 @@
-namespace Snowflake.Data.Tests.Client
+namespace Snowflake.Data.Tests.Client;
+
+public class StringWrapper
 {
-    public class StringWrapper
-    {
-        public string Value { get; set; }
-    }
+    public string Value { get; set; }
 }

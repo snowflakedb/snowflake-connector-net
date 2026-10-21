@@ -7,89 +7,88 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Snowflake.Data.Tests.Mock
+namespace Snowflake.Data.Tests.Mock;
+
+class MockS3Client
 {
-    class MockS3Client
+    // Mock status codes for S3 requests
+    internal const string AwsStatusOk = "OK";
+    internal const string AwsStatusError = "AWS_ERROR";
+
+    // Mock S3 data for FileHeader
+    internal const string AmzIV = "MOCK_AMZ_IV";
+    internal const string AmzKey = "MOCK_AMZ_KEY";
+    internal const string AmzMatdesc = "MOCK_AMZ_MATDESC";
+    internal const string SfcDigest = "MOCK_SFC_DIGEST";
+
+    // Mock error message for S3 errors
+    internal const string S3ErrorMessage = "S3 Error Message";
+
+    // Mock data for downloaded file
+    internal const string S3FileContent = "S3ClientTest";
+
+    // Mock content length
+    internal const int ContentLength = 9999;
+
+    // Create AWS exception for mock requests
+    private static Exception CreateMockAwsResponseError(string awsErrorCode)
     {
-        // Mock status codes for S3 requests
-        internal const string AwsStatusOk = "OK";
-        internal const string AwsStatusError = "AWS_ERROR";
+        var exception = awsErrorCode.Length > 0
+            ? new AmazonS3Exception(S3ErrorMessage) { ErrorCode = awsErrorCode }
+            : new Exception("Non-AWS exception");
 
-        // Mock S3 data for FileHeader
-        internal const string AmzIV = "MOCK_AMZ_IV";
-        internal const string AmzKey = "MOCK_AMZ_KEY";
-        internal const string AmzMatdesc = "MOCK_AMZ_MATDESC";
-        internal const string SfcDigest = "MOCK_SFC_DIGEST";
+        return exception;
+    }
 
-        // Mock error message for S3 errors
-        internal const string S3ErrorMessage = "S3 Error Message";
-
-        // Mock data for downloaded file
-        internal const string S3FileContent = "S3ClientTest";
-
-        // Mock content length
-        internal const int ContentLength = 9999;
-
-        // Create AWS exception for mock requests
-        private static Exception CreateMockAwsResponseError(string awsErrorCode)
+    // Create mock response for GetFileHeader
+    internal static Task<GetObjectMetadataResponse> CreateResponseForGetFileHeader(string statusCode, bool isAsync)
+    {
+        if (statusCode == nameof(HttpStatusCode.OK))
         {
-            var exception = awsErrorCode.Length > 0
-               ? new AmazonS3Exception(S3ErrorMessage) { ErrorCode = awsErrorCode }
-               : new Exception("Non-AWS exception");
+            var getObjectResponse = new GetObjectMetadataResponse
+            {
+                ContentLength = ContentLength
+            };
+            getObjectResponse.Metadata.Add(SFS3Client.AMZ_IV, AmzIV);
+            getObjectResponse.Metadata.Add(SFS3Client.AMZ_KEY, AmzKey);
+            getObjectResponse.Metadata.Add(SFS3Client.AMZ_MATDESC, AmzMatdesc);
+            getObjectResponse.Metadata.Add(SFS3Client.SFC_DIGEST, SfcDigest);
 
-            return exception;
+            return Task.FromResult(getObjectResponse);
         }
-
-        // Create mock response for GetFileHeader
-        internal static Task<GetObjectMetadataResponse> CreateResponseForGetFileHeader(string statusCode, bool isAsync)
+        else
         {
-            if (statusCode == nameof(HttpStatusCode.OK))
-            {
-                var getObjectResponse = new GetObjectMetadataResponse
-                {
-                    ContentLength = ContentLength
-                };
-                getObjectResponse.Metadata.Add(SFS3Client.AMZ_IV, AmzIV);
-                getObjectResponse.Metadata.Add(SFS3Client.AMZ_KEY, AmzKey);
-                getObjectResponse.Metadata.Add(SFS3Client.AMZ_MATDESC, AmzMatdesc);
-                getObjectResponse.Metadata.Add(SFS3Client.SFC_DIGEST, SfcDigest);
-
-                return Task.FromResult(getObjectResponse);
-            }
-            else
-            {
-                throw CreateMockAwsResponseError(statusCode);
-            }
+            throw CreateMockAwsResponseError(statusCode);
         }
+    }
 
-        // Create mock response for UploadFile
-        internal static Task<PutObjectResponse> CreateResponseForUploadFile(string awsStatusCode, bool isAsync)
+    // Create mock response for UploadFile
+    internal static Task<PutObjectResponse> CreateResponseForUploadFile(string awsStatusCode, bool isAsync)
+    {
+        if (awsStatusCode == AwsStatusOk)
         {
-            if (awsStatusCode == AwsStatusOk)
-            {
-                return Task.FromResult(new PutObjectResponse());
-            }
-            else
-            {
-                throw CreateMockAwsResponseError(awsStatusCode);
-            }
+            return Task.FromResult(new PutObjectResponse());
         }
-
-        // Create mock response for DownloadFile
-        internal static Task<GetObjectResponse> CreateResponseForDownloadFile(string statusCode, bool isAsync)
+        else
         {
-            if (statusCode == HttpStatusCode.OK.ToString())
-            {
-                var getObjectResponse = new GetObjectResponse();
-                byte[] bytes = Encoding.UTF8.GetBytes(MockS3Client.S3FileContent);
-                getObjectResponse.ResponseStream = new MemoryStream(bytes);
+            throw CreateMockAwsResponseError(awsStatusCode);
+        }
+    }
 
-                return Task.FromResult(getObjectResponse);
-            }
-            else
-            {
-                throw CreateMockAwsResponseError(statusCode);
-            }
+    // Create mock response for DownloadFile
+    internal static Task<GetObjectResponse> CreateResponseForDownloadFile(string statusCode, bool isAsync)
+    {
+        if (statusCode == HttpStatusCode.OK.ToString())
+        {
+            var getObjectResponse = new GetObjectResponse();
+            byte[] bytes = Encoding.UTF8.GetBytes(MockS3Client.S3FileContent);
+            getObjectResponse.ResponseStream = new MemoryStream(bytes);
+
+            return Task.FromResult(getObjectResponse);
+        }
+        else
+        {
+            throw CreateMockAwsResponseError(statusCode);
         }
     }
 }

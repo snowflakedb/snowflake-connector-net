@@ -4,88 +4,87 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Snowflake.Data.Tests.Mock
+namespace Snowflake.Data.Tests.Mock;
+
+internal class MockOktaRestRequester : MockBaseRestRequester
 {
-    internal class MockOktaRestRequester : MockBaseRestRequester
+    public string TokenUrl { get; set; }
+    public string SSOUrl { get; set; }
+    public string ResponseContent { get; set; }
+    public int MaxRetryCount { get; set; }
+    public int MaxRetryTimeout { get; set; }
+
+    public override Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
     {
-        public string TokenUrl { get; set; }
-        public string SSOUrl { get; set; }
-        public string ResponseContent { get; set; }
-        public int MaxRetryCount { get; set; }
-        public int MaxRetryTimeout { get; set; }
+        var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK);
+        response.Content = new StringContent(ResponseContent);
+        response.Content.Headers.Add(OktaAuthenticator.RetryCountHeader, MaxRetryCount.ToString());
+        response.Content.Headers.Add(OktaAuthenticator.TimeoutElapsedHeader, MaxRetryTimeout.ToString());
+        return Task.FromResult(response);
+    }
 
-        public override Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
-        {
-            var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK);
-            response.Content = new StringContent(ResponseContent);
-            response.Content.Headers.Add(OktaAuthenticator.RetryCountHeader, MaxRetryCount.ToString());
-            response.Content.Headers.Add(OktaAuthenticator.TimeoutElapsedHeader, MaxRetryTimeout.ToString());
-            return Task.FromResult(response);
-        }
+    public override T Post<T>(IRestRequest postRequest)
+    {
+        return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
+    }
 
-        public override T Post<T>(IRestRequest postRequest)
+    public override Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
+    {
+        if (postRequest is SFRestRequest)
         {
-            return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
-        }
-
-        public override Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
-        {
-            if (postRequest is SFRestRequest)
+            if (((SFRestRequest)postRequest).jsonBody is AuthenticatorRequest)
             {
-                if (((SFRestRequest)postRequest).jsonBody is AuthenticatorRequest)
+                // authenticator
+                var authnResponse = new AuthenticatorResponse
                 {
-                    // authenticator
-                    var authnResponse = new AuthenticatorResponse
+                    success = true,
+                    data = new AuthenticatorResponseData
                     {
-                        success = true,
-                        data = new AuthenticatorResponseData
-                        {
-                            tokenUrl = TokenUrl,
-                            ssoUrl = SSOUrl,
-                        }
-                    };
+                        tokenUrl = TokenUrl,
+                        ssoUrl = SSOUrl,
+                    }
+                };
 
-                    return Task.FromResult<T>((T)(object)authnResponse);
-                }
-                else
-                {
-                    // login
-                    var loginResponse = new LoginResponse
-                    {
-                        success = true,
-                        data = new LoginResponseData
-                        {
-                            sessionId = "",
-                            token = "",
-                            masterToken = "",
-                            masterValidityInSeconds = 0,
-                            authResponseSessionInfo = new SessionInfo
-                            {
-                                databaseName = "",
-                                schemaName = "",
-                                roleName = "",
-                                warehouseName = "",
-                            }
-                        }
-                    };
-
-                    return Task.FromResult<T>((T)(object)loginResponse);
-                }
+                return Task.FromResult<T>((T)(object)authnResponse);
             }
             else
             {
-                //idp onetime token
-                IdpTokenResponse tokenResponse = new IdpTokenResponse
+                // login
+                var loginResponse = new LoginResponse
                 {
-                    CookieToken = "cookie",
+                    success = true,
+                    data = new LoginResponseData
+                    {
+                        sessionId = "",
+                        token = "",
+                        masterToken = "",
+                        masterValidityInSeconds = 0,
+                        authResponseSessionInfo = new SessionInfo
+                        {
+                            databaseName = "",
+                            schemaName = "",
+                            roleName = "",
+                            warehouseName = "",
+                        }
+                    }
                 };
-                return Task.FromResult<T>((T)(object)tokenResponse);
+
+                return Task.FromResult<T>((T)(object)loginResponse);
             }
         }
-
-        public override HttpResponseMessage Get(IRestRequest request)
+        else
         {
-            return Task.Run(async () => await (GetAsync(request, CancellationToken.None)).ConfigureAwait(false)).Result;
+            //idp onetime token
+            IdpTokenResponse tokenResponse = new IdpTokenResponse
+            {
+                CookieToken = "cookie",
+            };
+            return Task.FromResult<T>((T)(object)tokenResponse);
         }
+    }
+
+    public override HttpResponseMessage Get(IRestRequest request)
+    {
+        return Task.Run(async () => await (GetAsync(request, CancellationToken.None)).ConfigureAwait(false)).Result;
     }
 }

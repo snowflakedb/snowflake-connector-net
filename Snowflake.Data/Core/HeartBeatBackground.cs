@@ -3,125 +3,124 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-namespace Snowflake.Data.Core
+namespace Snowflake.Data.Core;
+
+internal sealed class HeartBeatBackground
 {
-    internal sealed class HeartBeatBackground
+    private static HeartBeatBackground instance = null;
+    private static readonly object heartBeatLock = new object();
+
+    private static readonly object _heartBeatLock = new object();
+    private static List<SFSession> heartBeatConns = null;
+
+    private static Thread heartBeatThread = null;
+    private static long masterTokenValidationTimeInSec = 0;
+    private static bool isHeartBeatEnd = false;
+
+    private HeartBeatBackground()
     {
-        private static HeartBeatBackground instance = null;
-        private static readonly object heartBeatLock = new object();
 
-        private static readonly object _heartBeatLock = new object();
-        private static List<SFSession> heartBeatConns = null;
+    }
 
-        private static Thread heartBeatThread = null;
-        private static long masterTokenValidationTimeInSec = 0;
-        private static bool isHeartBeatEnd = false;
+    ~HeartBeatBackground()
+    {
+        isHeartBeatEnd = true;
+    }
 
-        private HeartBeatBackground()
+    internal static int getQueueLength()
+    {
+        lock (heartBeatLock)
         {
-
+            if (heartBeatConns == null)
+            {
+                return 0;
+            }
+            return heartBeatConns.Count();
         }
+    }
 
-        ~HeartBeatBackground()
-        {
-            isHeartBeatEnd = true;
-        }
+    internal static void setValidity(long validity)
+    {
+        masterTokenValidationTimeInSec = validity;
+    }
 
-        internal static int getQueueLength()
+    public static HeartBeatBackground Instance
+    {
+        get
         {
             lock (heartBeatLock)
             {
-                if (heartBeatConns == null)
+                if (instance == null)
                 {
-                    return 0;
+                    instance = new HeartBeatBackground();
                 }
-                return heartBeatConns.Count();
+                return instance;
             }
         }
+    }
 
-        internal static void setValidity(long validity)
+    private long getHeartBeatInterval(long masterTokenValidationTime)
+    {
+        return masterTokenValidationTime / 4;
+    }
+
+    public void addConnection(SFSession conn, long masterTokenValidityInSecs)
+    {
+        lock (heartBeatLock)
         {
-            masterTokenValidationTimeInSec = validity;
+            if (heartBeatConns == null)
+            {
+                heartBeatConns = new List<SFSession>();
+            }
+
+            heartBeatConns.Add(conn);
+            // for test purpose that Validity can be set to non-zero value
+            if ((masterTokenValidationTimeInSec == 0) ||
+                (masterTokenValidityInSecs < masterTokenValidationTimeInSec))
+            {
+                //update validation time
+                masterTokenValidationTimeInSec = masterTokenValidityInSecs;
+            }
+            if (heartBeatThread == null)
+            {
+                heartBeatThread = new Thread(heartBeatAll) { IsBackground = true };
+                heartBeatThread.Start();
+            }
         }
+    }
 
-        public static HeartBeatBackground Instance
+    public void removeConnection(SFSession conn)
+    {
+        lock (heartBeatLock)
         {
-            get
+            heartBeatConns.Remove(conn);
+        }
+    }
+
+    void heartBeatAll()
+    {
+        while (true)
+        {
+            List<SFSession> copyOfHeartBeatQueue = new List<SFSession>();
+
+            long heartBeatInterval = getHeartBeatInterval(masterTokenValidationTimeInSec);
+            Thread.Sleep(TimeSpan.FromSeconds(heartBeatInterval));
+
+            if (isHeartBeatEnd)
+            {
+                return;
+            }
+            else
             {
                 lock (heartBeatLock)
                 {
-                    if (instance == null)
-                    {
-                        instance = new HeartBeatBackground();
-                    }
-                    return instance;
+                    copyOfHeartBeatQueue.AddRange(heartBeatConns);
                 }
             }
-        }
 
-        private long getHeartBeatInterval(long masterTokenValidationTime)
-        {
-            return masterTokenValidationTime / 4;
-        }
-
-        public void addConnection(SFSession conn, long masterTokenValidityInSecs)
-        {
-            lock (heartBeatLock)
+            for (int i = 0; i < copyOfHeartBeatQueue.Count(); i++)
             {
-                if (heartBeatConns == null)
-                {
-                    heartBeatConns = new List<SFSession>();
-                }
-
-                heartBeatConns.Add(conn);
-                // for test purpose that Validity can be set to non-zero value
-                if ((masterTokenValidationTimeInSec == 0) ||
-                    (masterTokenValidityInSecs < masterTokenValidationTimeInSec))
-                {
-                    //update validation time
-                    masterTokenValidationTimeInSec = masterTokenValidityInSecs;
-                }
-                if (heartBeatThread == null)
-                {
-                    heartBeatThread = new Thread(heartBeatAll) { IsBackground = true };
-                    heartBeatThread.Start();
-                }
-            }
-        }
-
-        public void removeConnection(SFSession conn)
-        {
-            lock (heartBeatLock)
-            {
-                heartBeatConns.Remove(conn);
-            }
-        }
-
-        void heartBeatAll()
-        {
-            while (true)
-            {
-                List<SFSession> copyOfHeartBeatQueue = new List<SFSession>();
-
-                long heartBeatInterval = getHeartBeatInterval(masterTokenValidationTimeInSec);
-                Thread.Sleep(TimeSpan.FromSeconds(heartBeatInterval));
-
-                if (isHeartBeatEnd)
-                {
-                    return;
-                }
-                else
-                {
-                    lock (heartBeatLock)
-                    {
-                        copyOfHeartBeatQueue.AddRange(heartBeatConns);
-                    }
-                }
-
-                for (int i = 0; i < copyOfHeartBeatQueue.Count(); i++)
-                {
-                    copyOfHeartBeatQueue[i].heartbeat();
-                }
+                copyOfHeartBeatQueue[i].heartbeat();
             }
         }
     }
