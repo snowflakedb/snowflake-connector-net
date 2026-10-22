@@ -14,7 +14,7 @@ namespace Snowflake.Data.Core.Session;
 sealed class SessionPool : IDisposable
 {
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionPool>();
-    private readonly object _sessionPoolLock = new object();
+    private readonly object _sessionPoolLock = new();
     private static readonly ISessionFactory s_sessionFactorySingleton = new SessionFactory();
     private readonly ISessionFactory _instanceSessionFactory;
 
@@ -36,7 +36,7 @@ sealed class SessionPool : IDisposable
     private bool _configOverriden = false;
     private bool _underDestruction = false;
 
-    private static readonly InvalidOperationException s_notSupportedInCachePoolException = new InvalidOperationException("Feature not supported in a Connection Cache");
+    private static readonly InvalidOperationException s_notSupportedInCachePoolException = new("Feature not supported in a Connection Cache");
 
     private SessionPool()
     {
@@ -365,7 +365,7 @@ sealed class SessionPool : IDisposable
         throw WaitingFailedException();
     }
 
-    private static Exception WaitingFailedException() => new Exception("Could not obtain a connection from the pool within a given timeout");
+    private static Exception WaitingFailedException() => new("Could not obtain a connection from the pool within a given timeout");
 
     internal SFSession ExtractIdleSession(string connStr)
     {

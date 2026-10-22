@@ -13,8 +13,7 @@ internal class OAuthAuthorizationCodeRequest
     public string CodeChallenge { get; set; }
     public string State { get; set; }
 
-    public Url GetUrl() =>
-        new Url(CreateUrl(true), CreateUrl(false));
+    public Url GetUrl() => new(CreateUrl(true), CreateUrl(false));
 
     private string CreateUrl(bool includeSecrets)
     {

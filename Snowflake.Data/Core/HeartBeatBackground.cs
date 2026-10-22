@@ -8,9 +8,9 @@ namespace Snowflake.Data.Core;
 internal sealed class HeartBeatBackground
 {
     private static HeartBeatBackground instance = null;
-    private static readonly object heartBeatLock = new object();
+    private static readonly object heartBeatLock = new();
 
-    private static readonly object _heartBeatLock = new object();
+    private static readonly object _heartBeatLock = new();
     private static List<SFSession> heartBeatConns = null;
 
     private static Thread heartBeatThread = null;

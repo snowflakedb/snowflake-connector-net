@@ -12,7 +12,7 @@ namespace Snowflake.Data.Client;
 public class SnowflakeDbConnectionPool
 {
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeDbConnectionPool>();
-    private static readonly Object s_connectionManagerInstanceLock = new Object();
+    private static readonly Object s_connectionManagerInstanceLock = new();
     private static IConnectionManager s_connectionManager;
     internal const ConnectionPoolType DefaultConnectionPoolType = ConnectionPoolType.MultipleConnectionPool;
 

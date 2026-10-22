@@ -11,11 +11,11 @@ internal class SFCredentialManagerInMemoryImpl : ISnowflakeCredentialManager
 {
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerInMemoryImpl>();
 
-    private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+    private readonly ReaderWriterLockSlim _lock = new();
 
-    private Dictionary<string, SecureString> s_credentials = new Dictionary<string, SecureString>();
+    private Dictionary<string, SecureString> s_credentials = new();
 
-    public static readonly SFCredentialManagerInMemoryImpl Instance = new SFCredentialManagerInMemoryImpl();
+    public static readonly SFCredentialManagerInMemoryImpl Instance = new();
 
     public string GetCredentials(string key)
     {

@@ -22,7 +22,7 @@ internal class EasyLoggingStarter
 
     private readonly IEnvironmentFacade _environmentFacade;
 
-    private readonly object _lockForExclusiveInit = new object();
+    private readonly object _lockForExclusiveInit = new();
 
     private EasyLoggingInitTrialParameters _initTrialParameters = null;
 
@@ -30,7 +30,7 @@ internal class EasyLoggingStarter
 
     internal FileAccessPermissions _logFileUnixPermissions = DefaultFileUnixPermissions;
 
-    public static readonly EasyLoggingStarter Instance = new EasyLoggingStarter(EasyLoggingConfigProvider.Instance,
+    public static readonly EasyLoggingStarter Instance = new(EasyLoggingConfigProvider.Instance,
         EasyLoggerManager.Instance, UnixOperations.Instance, DirectoryOperations.Instance, EnvironmentFacade.Instance);
 
     internal EasyLoggingStarter(

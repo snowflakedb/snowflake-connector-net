@@ -344,7 +344,7 @@ class OktaAuthenticator : BaseAuthenticator, IAuthenticator
 
 internal class IdpTokenRestRequest : BaseRestRequest, IRestRequest
 {
-    private static readonly MediaTypeWithQualityHeaderValue s_jsonHeader = new MediaTypeWithQualityHeaderValue("application/json");
+    private static readonly MediaTypeWithQualityHeaderValue s_jsonHeader = new("application/json");
 
     internal IdpTokenRequest JsonBody { get; set; }
 

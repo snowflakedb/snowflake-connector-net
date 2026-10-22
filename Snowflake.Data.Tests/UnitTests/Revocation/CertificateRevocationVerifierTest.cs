@@ -431,7 +431,7 @@ public class CertificateRevocationVerifierTest : RevocationTests
 #if NETFRAMEWORK
             new HttpRequestException("Response status code does not indicate success: 404 (Not Found).", null);
 #else
-        new HttpRequestException("Response status code does not indicate success: 404 (Not Found).", null, HttpStatusCode.NotFound);
+        new("Response status code does not indicate success: 404 (Not Found).", null, HttpStatusCode.NotFound);
 #endif
 
     private static void MockByteResponseForGet(Mock<IRestRequester> restRequester, string url, byte[] bytes)
@@ -549,7 +549,7 @@ public class CertificateRevocationVerifierTest : RevocationTests
     }
 
     private HttpClientConfig GetHttpConfig(CertRevocationCheckMode checkMode = CertRevocationCheckMode.Enabled, long crlDownloadMaxSize = 20971520) =>
-        new HttpClientConfig(
+        new(
             null,
             new SFSessionRetryProperties(default, false, false, default, 3, true),
             new SFSessionCRLProperties(checkMode, false, true, false, 10, crlDownloadMaxSize),

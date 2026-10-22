@@ -10,7 +10,7 @@ internal class CertificateCrlDistributionPointsExtractor
 {
     private const string CrlDistributionPointsOid = "2.5.29.31";
 
-    public static CertificateCrlDistributionPointsExtractor Instance = new CertificateCrlDistributionPointsExtractor();
+    public static CertificateCrlDistributionPointsExtractor Instance = new();
 
     internal CertificateCrlDistributionPointsExtractor()
     {

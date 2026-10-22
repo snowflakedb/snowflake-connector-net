@@ -42,7 +42,7 @@ public class PutGetStageInfoTest
     }
 
     private PutGetStageInfo CreateGcsStageInfo(string region, bool useRegionalUrl, string endPoint) =>
-        new PutGetStageInfo
+        new()
         {
             locationType = SFRemoteStorageUtil.GCS_FS,
             location = "some location",

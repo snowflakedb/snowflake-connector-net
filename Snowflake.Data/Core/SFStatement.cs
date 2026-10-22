@@ -119,7 +119,7 @@ class SFStatement
 
     private string _requestId;
 
-    private readonly object _requestIdLock = new object();
+    private readonly object _requestIdLock = new();
 
     private readonly IRestRequester _restRequester;
 

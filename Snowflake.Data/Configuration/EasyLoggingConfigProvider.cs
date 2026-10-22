@@ -6,7 +6,7 @@ internal class EasyLoggingConfigProvider
 
     private readonly EasyLoggingConfigParser _configParser;
 
-    public static readonly EasyLoggingConfigProvider Instance = new EasyLoggingConfigProvider();
+    public static readonly EasyLoggingConfigProvider Instance = new();
 
     internal EasyLoggingConfigProvider() : this(EasyLoggingConfigFinder.Instance, EasyLoggingConfigParser.Instance)
     {

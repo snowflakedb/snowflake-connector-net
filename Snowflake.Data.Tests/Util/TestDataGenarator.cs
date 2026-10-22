@@ -5,7 +5,7 @@ namespace Snowflake.Data.Tests.Util;
 
 public class TestDataGenarator
 {
-    private static Random s_random = new Random();
+    private static Random s_random = new();
     private static string s_lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
     private static string s_uppercaseChars = s_lowercaseChars.ToUpper();
     private static string s_nonZeroDigits = "123456789";
@@ -13,7 +13,7 @@ public class TestDataGenarator
     private static string s_letterChars = s_lowercaseChars + s_uppercaseChars;
     private static string s_alphanumericChars = s_letterChars + s_digitChars;
 
-    public static string AsciiCodes => new String(Enumerable.Range(0, 256).Select(ch => (char)ch).ToArray());
+    public static string AsciiCodes => new(Enumerable.Range(0, 256).Select(ch => (char)ch).ToArray());
     public static char SnowflakeUnicode => '\u2744';
     public static string EmojiUnicode => "\uD83D\uDE00";
     public static string StringWithUnicode => AsciiCodes + SnowflakeUnicode + EmojiUnicode;

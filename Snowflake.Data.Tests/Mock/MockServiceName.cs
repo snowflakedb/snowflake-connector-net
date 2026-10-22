@@ -56,7 +56,7 @@ internal class MockServiceName : MockBaseRestRequester
                     rowSet = new string[,] { { "1" } },
                     rowType = new List<ExecResponseRowType>()
                     {
-                        new ExecResponseRowType
+                        new()
                         {
                             name = "colone",
                             type = "FIXED"

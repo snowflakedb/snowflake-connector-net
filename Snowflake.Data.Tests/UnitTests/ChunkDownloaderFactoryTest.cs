@@ -25,7 +25,7 @@ public sealed class ChunkDownloaderFactoryTest : IDisposable
             rowSet = new string[,] { { } },
             rowType = new List<ExecResponseRowType>(),
             parameters = new List<NameValueParameter>(),
-            chunks = new List<ExecResponseChunk>{new ExecResponseChunk()
+            chunks = new List<ExecResponseChunk>{new()
             {
                 url = "fake",
                 uncompressedSize = 100,
@@ -40,7 +40,7 @@ public sealed class ChunkDownloaderFactoryTest : IDisposable
         SFSession session = new SFSession(connectionString, new SessionPropertiesContext());
         List<NameValueParameter> list = new List<NameValueParameter>
         {
-            new NameValueParameter { name = "CLIENT_PREFETCH_THREADS", value = "3" }
+            new() { name = "CLIENT_PREFETCH_THREADS", value = "3" }
         };
         session.UpdateSessionParameterMap(list);
 

@@ -84,9 +84,9 @@ class SFReusableChunk : BaseResultChunk
         private static int metaBlockLengthBits = 15;
         private static int metaBlockLength = 1 << metaBlockLengthBits;
 
-        private readonly List<byte[]> data = new List<byte[]>();
-        private readonly List<int[]> offsets = new List<int[]>();
-        private readonly List<int[]> lengths = new List<int[]>();
+        private readonly List<byte[]> data = new();
+        private readonly List<int[]> offsets = new();
+        private readonly List<int[]> lengths = new();
         private int nextIndex = 0;
         private int currentDatOffset = 0;
 

@@ -13,7 +13,7 @@ internal class ValidatorOperations
 
     private readonly long _unixGroupId;
 
-    public static readonly ValidatorOperations Instance = new ValidatorOperations(UnixOperations.Instance);
+    public static readonly ValidatorOperations Instance = new(UnixOperations.Instance);
 
     internal ValidatorOperations(UnixOperations unixOperations)
     {

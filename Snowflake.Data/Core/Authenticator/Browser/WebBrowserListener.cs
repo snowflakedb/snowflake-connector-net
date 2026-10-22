@@ -25,7 +25,7 @@ internal class WebBrowserListener<T> : IDisposable
     private readonly string _successResponse;
     private readonly string _unexpectedErrorResponse;
     private readonly ManualResetEvent _successEvent;
-    private readonly object _wakeEventLock = new object();
+    private readonly object _wakeEventLock = new();
     private T _result;
     private string _browserError;
     private Exception _exception;

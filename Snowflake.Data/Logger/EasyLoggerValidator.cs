@@ -6,7 +6,7 @@ namespace Snowflake.Data.Logger;
 
 internal class EasyLoggerValidator
 {
-    public static readonly EasyLoggerValidator Instance = new EasyLoggerValidator();
+    public static readonly EasyLoggerValidator Instance = new();
 
     internal void ValidateLogFilePermissions(UnixStream stream)
     {

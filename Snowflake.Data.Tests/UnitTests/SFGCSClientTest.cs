@@ -29,7 +29,7 @@ public sealed class SFGCSClientTest
 
     const string Region = "US-CENTRAL1";
 
-    Dictionary<string, string> _stageCredentials = new Dictionary<string, string>()
+    Dictionary<string, string> _stageCredentials = new()
     {
         {"GCS_ACCESS_TOKEN", "MOCK_GCS_ACCESS_TOKEN"}
     };

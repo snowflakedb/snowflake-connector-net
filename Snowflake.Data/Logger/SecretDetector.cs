@@ -8,8 +8,8 @@ internal class SecretDetector : ISecretDetector
 {
     public static SecretDetector Instance { get; } = new();
 
-    private static List<string> CUSTOM_PATTERNS_REGEX = new List<string>();
-    private static List<string> CUSTOM_PATTERNS_MASK = new List<string>();
+    private static List<string> CUSTOM_PATTERNS_REGEX = new();
+    private static List<string> CUSTOM_PATTERNS_MASK = new();
     private static int CUSTOM_PATTERNS_LENGTH;
 
     public void SetCustomPatterns(string[] customRegex, string[] customMask)

@@ -11,7 +11,7 @@ namespace Snowflake.Data.Core.Converter;
 
 internal static class JsonToStructuredTypeConverter
 {
-    private static readonly TimeConverter s_timeConverter = new TimeConverter();
+    private static readonly TimeConverter s_timeConverter = new();
 
     public static T ConvertObject<T>(List<FieldMetadata> fields, JObject value, TimeZoneInfo sessionTimezone)
     {

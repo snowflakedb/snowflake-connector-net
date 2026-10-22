@@ -28,7 +28,7 @@ internal class CertificateRevocationVerifier
     private readonly TimeSpan _httpTimeout;
     private readonly long _crlDownloadMaxSize;
 
-    private static readonly ConcurrentDictionary<string, object> s_locksForCrlUrls = new ConcurrentDictionary<string, object>();
+    private static readonly ConcurrentDictionary<string, object> s_locksForCrlUrls = new();
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<CertificateRevocationVerifier>();
 
     public CertificateRevocationVerifier(

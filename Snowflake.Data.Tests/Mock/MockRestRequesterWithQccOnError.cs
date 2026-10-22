@@ -12,11 +12,11 @@ internal sealed class MockRestRequesterWithQccOnError : MockBaseRestRequester
     private const int FAILED_QUERY_CODE = 999;
     private const string FAILED_QUERY_MESSAGE = "mock query failure";
 
-    private static readonly ResponseQueryContext MockQueryContext = new ResponseQueryContext
+    private static readonly ResponseQueryContext MockQueryContext = new()
     {
         Entries = new List<ResponseQueryContextElement>
         {
-            new ResponseQueryContextElement(new QueryContextElement(42, 1000L, 1, "mock_context"))
+            new(new QueryContextElement(42, 1000L, 1, "mock_context"))
         }
     };
 

@@ -6,9 +6,9 @@ namespace Snowflake.Data.Log;
 internal class SFLoggerImpl : SFLogger
 {
     private readonly Type _type;
-    internal static List<SFAppender> s_appenders = new List<SFAppender>();
+    internal static List<SFAppender> s_appenders = new();
     internal static LoggingEvent s_level = LoggingEvent.OFF;
-    private static readonly object s_lock = new object();
+    private static readonly object s_lock = new();
     private static bool s_isTraceEnabled = false;
     private static bool s_isDebugEnabled = false;
     private static bool s_isInfoEnabled = false;

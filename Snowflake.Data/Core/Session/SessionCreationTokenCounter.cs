@@ -7,8 +7,8 @@ namespace Snowflake.Data.Core.Session;
 internal class SessionCreationTokenCounter : ISessionCreationTokenCounter
 {
     private readonly TimeSpan _timeout;
-    private readonly ReaderWriterLockSlim _tokenLock = new ReaderWriterLockSlim();
-    private readonly List<SessionCreationToken> _tokens = new List<SessionCreationToken>();
+    private readonly ReaderWriterLockSlim _tokenLock = new();
+    private readonly List<SessionCreationToken> _tokens = new();
 
     public SessionCreationTokenCounter(TimeSpan timeout)
     {

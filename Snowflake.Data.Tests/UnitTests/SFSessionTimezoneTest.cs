@@ -70,7 +70,7 @@ public class SFSessionTimezoneTest
 
         session.UpdateSessionParameterMap(new List<NameValueParameter>
         {
-            new NameValueParameter { name = "TIMEZONE", value = "Asia/Tokyo" }
+            new() { name = "TIMEZONE", value = "Asia/Tokyo" }
         });
 
         var afterUpdate = session.GetSessionTimezone();

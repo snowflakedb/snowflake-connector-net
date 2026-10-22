@@ -14,7 +14,7 @@ internal class EasyLoggingConfigFinder
     private readonly FileOperations _fileOperations;
     private readonly IEnvironmentFacade _environmentFacade;
 
-    public static readonly EasyLoggingConfigFinder Instance = new EasyLoggingConfigFinder(FileOperations.Instance, EnvironmentFacade.Instance);
+    public static readonly EasyLoggingConfigFinder Instance = new(FileOperations.Instance, EnvironmentFacade.Instance);
 
     internal EasyLoggingConfigFinder(FileOperations fileOperations, IEnvironmentFacade environmentFacade)
     {

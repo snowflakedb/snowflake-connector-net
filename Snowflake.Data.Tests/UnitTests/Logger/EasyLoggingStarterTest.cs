@@ -20,7 +20,7 @@ public sealed class EasyLoggingStarterTest
     private const string AnotherConfigPath = "/another/path";
     private static readonly string s_expectedLogPath = Path.Combine(LogPath, "dotnet");
 
-    private static readonly ClientConfig s_configWithErrorLevel = new ClientConfig
+    private static readonly ClientConfig s_configWithErrorLevel = new()
     {
         CommonProps = new ClientConfigCommonProps
         {
@@ -29,7 +29,7 @@ public sealed class EasyLoggingStarterTest
         }
     };
 
-    private static readonly ClientConfig s_configWithInfoLevel = new ClientConfig
+    private static readonly ClientConfig s_configWithInfoLevel = new()
     {
         CommonProps = new ClientConfigCommonProps
         {
@@ -38,7 +38,7 @@ public sealed class EasyLoggingStarterTest
         }
     };
 
-    private static readonly ClientConfig s_configWithNoLogPath = new ClientConfig
+    private static readonly ClientConfig s_configWithNoLogPath = new()
     {
         CommonProps = new ClientConfigCommonProps
         {
@@ -46,7 +46,7 @@ public sealed class EasyLoggingStarterTest
         }
     };
 
-    private static readonly ClientConfig s_configWithStdoutAsLogPath = new ClientConfig
+    private static readonly ClientConfig s_configWithStdoutAsLogPath = new()
     {
         CommonProps = new ClientConfigCommonProps
         {
@@ -55,7 +55,7 @@ public sealed class EasyLoggingStarterTest
         }
     };
 
-    private static readonly ClientConfig s_configWithValidLogPermission = new ClientConfig
+    private static readonly ClientConfig s_configWithValidLogPermission = new()
     {
         CommonProps = new ClientConfigCommonProps
         {

@@ -6,9 +6,9 @@ namespace Snowflake.Data.Core.Session;
 
 internal class WaitingQueue : IWaitingQueue
 {
-    private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
-    private readonly List<SemaphoreSlim> _queue = new List<SemaphoreSlim>();
-    private readonly HashSet<SemaphoreSlim> _notSuccessfulCollection = new HashSet<SemaphoreSlim>();
+    private readonly ReaderWriterLockSlim _lock = new();
+    private readonly List<SemaphoreSlim> _queue = new();
+    private readonly HashSet<SemaphoreSlim> _notSuccessfulCollection = new();
 
     public bool Wait(int millisecondsTimeout, CancellationToken cancellationToken)
     {

@@ -18,9 +18,9 @@ internal class SFCredentialManagerWindowsNativeImpl : ISnowflakeCredentialManage
 
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerWindowsNativeImpl>();
 
-    private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+    private readonly ReaderWriterLockSlim _lock = new();
 
-    public static readonly SFCredentialManagerWindowsNativeImpl Instance = new SFCredentialManagerWindowsNativeImpl();
+    public static readonly SFCredentialManagerWindowsNativeImpl Instance = new();
 
     public string GetCredentials(string key)
     {

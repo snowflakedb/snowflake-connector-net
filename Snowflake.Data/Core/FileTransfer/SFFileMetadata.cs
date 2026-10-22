@@ -154,7 +154,7 @@ internal class FileTransferConfiguration
     public int MaxBytesInMemory { get; set; }
 
     public static FileTransferConfiguration FromFileMetadata(SFFileMetadata fileMetadata) =>
-        new FileTransferConfiguration()
+        new()
         {
             TempDir = fileMetadata.tmpDir ?? DefaultTempDir,
             MaxBytesInMemory = fileMetadata.MaxBytesInMemory

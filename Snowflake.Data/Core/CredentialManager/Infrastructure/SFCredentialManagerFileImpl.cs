@@ -20,7 +20,7 @@ internal class SFCredentialManagerFileImpl : ISnowflakeCredentialManager
 
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFCredentialManagerFileImpl>();
 
-    private static readonly object s_lock = new object();
+    private static readonly object s_lock = new();
 
     internal SFCredentialManagerFileStorage _fileStorage = null;
 

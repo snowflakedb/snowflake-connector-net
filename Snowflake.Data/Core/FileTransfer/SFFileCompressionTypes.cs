@@ -101,47 +101,33 @@ internal class SFFileCompressionTypes
         }
     }
 
-    public static readonly SFFileCompressionType GZIP =
-        new SFFileCompressionType(GZIP_EXTENSION, GZIP_NAME, gzip_magics, 2, true);
+    public static readonly SFFileCompressionType GZIP = new(GZIP_EXTENSION, GZIP_NAME, gzip_magics, 2, true);
 
-    public static readonly SFFileCompressionType DEFLATE =
-        new SFFileCompressionType(DEFLATE_EXTENSION, DEFLATE_NAME, deflate_magics, 2, true);
+    public static readonly SFFileCompressionType DEFLATE = new(DEFLATE_EXTENSION, DEFLATE_NAME, deflate_magics, 2, true);
 
-    public static readonly SFFileCompressionType RAW_DEFLATE =
-        new SFFileCompressionType(RAW_DEFLATE_EXTENSION, RAW_DEFLATE_NAME, true);
+    public static readonly SFFileCompressionType RAW_DEFLATE = new(RAW_DEFLATE_EXTENSION, RAW_DEFLATE_NAME, true);
 
-    public static readonly SFFileCompressionType BZIP2 =
-        new SFFileCompressionType(BZIP2_EXTENSION, BZIP2_NAME, bzip2_magics, 2, true);
+    public static readonly SFFileCompressionType BZIP2 = new(BZIP2_EXTENSION, BZIP2_NAME, bzip2_magics, 2, true);
 
-    public static readonly SFFileCompressionType ZSTD =
-        new SFFileCompressionType(ZSTD_EXTENSION, ZSTD_NAME, zstd_magics, 4, true);
+    public static readonly SFFileCompressionType ZSTD = new(ZSTD_EXTENSION, ZSTD_NAME, zstd_magics, 4, true);
 
-    public static readonly SFFileCompressionType BROTLI =
-        new SFFileCompressionType(BROTLI_EXTENSION, BROTLI_NAME, brotli_magics, 4, true);
+    public static readonly SFFileCompressionType BROTLI = new(BROTLI_EXTENSION, BROTLI_NAME, brotli_magics, 4, true);
 
-    public static readonly SFFileCompressionType ORC =
-        new SFFileCompressionType(ORC_EXTENSION, ORC_NAME, orc_magics, 3, true);
+    public static readonly SFFileCompressionType ORC = new(ORC_EXTENSION, ORC_NAME, orc_magics, 3, true);
 
-    public static readonly SFFileCompressionType PARQUET =
-        new SFFileCompressionType(PARQUET_EXTENSION, PARQUET_NAME, parquet_magics, 4, true);
+    public static readonly SFFileCompressionType PARQUET = new(PARQUET_EXTENSION, PARQUET_NAME, parquet_magics, 4, true);
 
-    public static readonly SFFileCompressionType LZIP =
-        new SFFileCompressionType(LZIP_EXTENSION, LZIP_NAME, false);
+    public static readonly SFFileCompressionType LZIP = new(LZIP_EXTENSION, LZIP_NAME, false);
 
-    public static readonly SFFileCompressionType LZMA =
-        new SFFileCompressionType(LZMA_EXTENSION, LZMA_NAME, false);
+    public static readonly SFFileCompressionType LZMA = new(LZMA_EXTENSION, LZMA_NAME, false);
 
-    public static readonly SFFileCompressionType LZO =
-        new SFFileCompressionType(LZO_EXTENSION, LZO_NAME, false);
+    public static readonly SFFileCompressionType LZO = new(LZO_EXTENSION, LZO_NAME, false);
 
-    public static readonly SFFileCompressionType XZ =
-        new SFFileCompressionType(XZ_EXTENSION, XZ_NAME, false);
+    public static readonly SFFileCompressionType XZ = new(XZ_EXTENSION, XZ_NAME, false);
 
-    public static readonly SFFileCompressionType COMPRESS =
-        new SFFileCompressionType(COMPRESS_EXTENSION, COMPRESS_NAME, false);
+    public static readonly SFFileCompressionType COMPRESS = new(COMPRESS_EXTENSION, COMPRESS_NAME, false);
 
-    public static readonly SFFileCompressionType NONE =
-        new SFFileCompressionType(NONE_EXTENSION, NONE_NAME, true);
+    public static readonly SFFileCompressionType NONE = new(NONE_EXTENSION, NONE_NAME, true);
 
 
     static readonly IReadOnlyList<SFFileCompressionType> compressionTypes =

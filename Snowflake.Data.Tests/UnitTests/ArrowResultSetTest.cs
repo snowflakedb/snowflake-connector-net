@@ -470,7 +470,7 @@ public sealed class ArrowResultSetTest
         {
             rowType = new List<ExecResponseRowType>()
             {
-                new ExecResponseRowType
+                new()
                 {
                     name = "name",
                     type = UnknownDataType
@@ -489,7 +489,7 @@ public sealed class ArrowResultSetTest
         {
             rowType = new List<ExecResponseRowType>()
             {
-                new ExecResponseRowType
+                new()
                 {
                     name = "name",
                     type = SFDataType.None.ToString()

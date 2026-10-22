@@ -18,7 +18,7 @@ internal class MockRestRequesterForQueryCancellation : MockBaseRestRequester
 
     internal bool ThrowOnCancel { get; set; }
 
-    private readonly Queue<string> _statusQueue = new Queue<string>();
+    private readonly Queue<string> _statusQueue = new();
 
     internal void EnqueueStatus(params string[] statuses)
     {
@@ -71,7 +71,7 @@ internal class MockRestRequesterForQueryCancellation : MockBaseRestRequester
                     rowSet = new string[,] { { "query cancelled" } },
                     rowType = new List<ExecResponseRowType>
                     {
-                        new ExecResponseRowType { name = "result", type = "TEXT" }
+                        new() { name = "result", type = "TEXT" }
                     },
                     parameters = new List<NameValueParameter>()
                 }
@@ -111,7 +111,7 @@ internal class MockRestRequesterForQueryCancellation : MockBaseRestRequester
                 {
                     queries = new List<QueryStatusDataQueries>
                     {
-                        new QueryStatusDataQueries
+                        new()
                         {
                             status = _statusQueue.Count > 0 ? _statusQueue.Dequeue() : "RUNNING"
                         }

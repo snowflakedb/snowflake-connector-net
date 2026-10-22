@@ -21,7 +21,7 @@ internal class TomlConnectionBuilder
     private const string DefaultTokenPath = "/snowflake/session/token";
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
 
-    private readonly Dictionary<string, string> _tomlToNetPropertiesMapper = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
+    private readonly Dictionary<string, string> _tomlToNetPropertiesMapper = new(StringComparer.InvariantCultureIgnoreCase)
     {
         { "DATABASE", "DB" },
         { "PROTOCOL", "SCHEME" }
@@ -32,7 +32,7 @@ internal class TomlConnectionBuilder
 
     private static bool _skipWarningForReadPermissions = false;
 
-    public static readonly TomlConnectionBuilder Instance = new TomlConnectionBuilder();
+    public static readonly TomlConnectionBuilder Instance = new();
 
     private TomlConnectionBuilder() : this(FileOperations.Instance, EnvironmentFacade.Instance)
     {

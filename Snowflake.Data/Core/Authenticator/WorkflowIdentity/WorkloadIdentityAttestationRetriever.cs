@@ -22,5 +22,5 @@ internal abstract class WorkloadIdentityAttestationRetriever
     public abstract AttestationProvider GetAttestationProvider();
 
     protected SnowflakeDbException AttestationError(string errorMessage) =>
-        new SnowflakeDbException(SFError.WIF_ATTESTATION_ERROR, GetAttestationProvider().ToString(), errorMessage);
+        new(SFError.WIF_ATTESTATION_ERROR, GetAttestationProvider().ToString(), errorMessage);
 }

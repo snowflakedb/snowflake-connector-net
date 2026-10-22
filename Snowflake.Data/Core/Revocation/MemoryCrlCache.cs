@@ -7,7 +7,7 @@ namespace Snowflake.Data.Core.Revocation;
 
 internal class MemoryCrlCache : ICrlCache
 {
-    private readonly ConcurrentDictionary<string, Crl> _cache = new ConcurrentDictionary<string, Crl>();
+    private readonly ConcurrentDictionary<string, Crl> _cache = new();
 
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<MemoryCrlCache>();
 

@@ -5,7 +5,7 @@ namespace Snowflake.Data.Log;
 
 internal class EasyLoggingLevelMapper
 {
-    public static readonly EasyLoggingLevelMapper Instance = new EasyLoggingLevelMapper();
+    public static readonly EasyLoggingLevelMapper Instance = new();
 
     public LoggingEvent ToLoggingEventLevel(EasyLoggingLogLevel level)
     {

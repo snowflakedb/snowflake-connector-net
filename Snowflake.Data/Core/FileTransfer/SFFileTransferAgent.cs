@@ -91,20 +91,20 @@ class SFFileTransferAgent
     /// <summary>
     /// List of metadata for small and large files.
     /// </summary>
-    private List<SFFileMetadata> FilesMetas = new List<SFFileMetadata>();
+    private List<SFFileMetadata> FilesMetas = new();
 
-    private List<SFFileMetadata> SmallFilesMetas = new List<SFFileMetadata>();
-    private List<SFFileMetadata> LargeFilesMetas = new List<SFFileMetadata>();
+    private List<SFFileMetadata> SmallFilesMetas = new();
+    private List<SFFileMetadata> LargeFilesMetas = new();
 
     /// <summary>
     /// List of metadata for the resulting file after upload/download.
     /// </summary>
-    private List<SFFileMetadata> ResultsMetas = new List<SFFileMetadata>();
+    private List<SFFileMetadata> ResultsMetas = new();
 
     /// <summary>
     /// List of encryption materials of the files to be uploaded/downloaded.
     /// </summary>
-    private List<PutGetEncryptionMaterial> EncryptionMaterials = new List<PutGetEncryptionMaterial>();
+    private List<PutGetEncryptionMaterial> EncryptionMaterials = new();
 
     /// <summary>
     /// Time to wait before uploading the next file.
@@ -127,7 +127,7 @@ class SFFileTransferAgent
     /// <summary>
     /// Mutex for renewing expired client.
     /// </summary>
-    private static Mutex RenewClientMutex = new Mutex();
+    private static Mutex RenewClientMutex = new();
 
     /// <summary>
     /// Placeholder threshold value using max long value.

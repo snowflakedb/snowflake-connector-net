@@ -134,7 +134,7 @@ internal sealed class HttpUtil
     private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
     internal const int DefaultConnectionLimit = 50;
 
-    private static readonly List<string> s_supportedEndpointsForRetryPolicy = new List<string>
+    private static readonly List<string> s_supportedEndpointsForRetryPolicy = new()
     {
         RestPath.SF_LOGIN_PATH,
         RestPath.SF_AUTHENTICATOR_REQUEST_PATH,
@@ -167,9 +167,9 @@ internal sealed class HttpUtil
 #endif
     }
 
-    internal static HttpUtil Instance { get; } = new HttpUtil();
+    internal static HttpUtil Instance { get; } = new();
 
-    private readonly object _httpClientProviderLock = new object();
+    private readonly object _httpClientProviderLock = new();
 
     // Handlers for the cloud storage SDKs. They live here with the session registry so that one
     // type owns every HttpClient and handler lifetime in the driver, but they are built
@@ -177,10 +177,9 @@ internal sealed class HttpUtil
     // wrapping them would retry a stage transfer twice, and no revocation settings, which have
     // never applied to stage transfers. Keyed on the storage identity - TLS protocols, proxy,
     // redirect and connection limit - rather than on a session ConfKey.
-    private readonly ConcurrentDictionary<string, HttpMessageHandler> _storageHandlers =
-        new ConcurrentDictionary<string, HttpMessageHandler>();
+    private readonly ConcurrentDictionary<string, HttpMessageHandler> _storageHandlers = new();
 
-    private Dictionary<string, HttpClient> _HttpClients = new Dictionary<string, HttpClient>();
+    private Dictionary<string, HttpClient> _HttpClients = new();
 
     private IRestRequester _restRequesterForCrlCheck;
 
@@ -681,7 +680,7 @@ internal sealed class HttpUtil
     }
 
     private CertificateRevocationVerifier CreateCertificateRevocationVerifier(HttpClientConfig config) =>
-        new CertificateRevocationVerifier(
+        new(
             config,
             TimeProvider.Instance,
             GetHttpClientForCrlCheck(),

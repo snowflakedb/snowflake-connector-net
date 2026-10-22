@@ -17,7 +17,7 @@ public class SnowflakeCredentialManagerFactory
 {
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeCredentialManagerFactory>();
 
-    private static readonly object s_credentialManagerLock = new object();
+    private static readonly object s_credentialManagerLock = new();
     private static readonly ISnowflakeCredentialManager s_defaultCredentialManager = GetDefaultCredentialManager();
 
     private static ISnowflakeCredentialManager s_credentialManager = s_defaultCredentialManager;

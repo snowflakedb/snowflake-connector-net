@@ -8,9 +8,9 @@ namespace Snowflake.Data.Log;
 
 internal class EasyLoggerManager
 {
-    public static readonly EasyLoggerManager Instance = new EasyLoggerManager();
+    public static readonly EasyLoggerManager Instance = new();
 
-    private readonly object _lockForExclusiveConfigure = new object();
+    private readonly object _lockForExclusiveConfigure = new();
 
     private readonly EasyLoggingLevelMapper _levelMapper = EasyLoggingLevelMapper.Instance;
 

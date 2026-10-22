@@ -11,7 +11,7 @@ namespace Snowflake.Data.Core.Tools;
 
 internal class UnixOperations
 {
-    public static readonly UnixOperations Instance = new UnixOperations();
+    public static readonly UnixOperations Instance = new();
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<UnixOperations>();
     private static readonly Encoding Utf8NoBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 

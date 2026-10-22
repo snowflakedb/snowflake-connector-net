@@ -30,7 +30,7 @@ public class SnowflakeDbConnection : DbConnection
 
     private bool _disposed = false;
 
-    private static Mutex _arraybindingMutex = new Mutex();
+    private static Mutex _arraybindingMutex = new();
 
     // TBD this doesn't make sense to have a static flag while reset it
     // in each instance.

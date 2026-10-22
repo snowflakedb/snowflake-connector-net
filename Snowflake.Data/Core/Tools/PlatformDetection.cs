@@ -21,7 +21,7 @@ internal static class PlatformDetection
     internal static string GceMetadataRootUrl = "http://metadata.google.internal";
     internal static string GcpMetadataBaseUrl = "http://metadata.google.internal/computeMetadata/v1";
 
-    private static readonly HttpClient s_httpClient = new HttpClient(
+    private static readonly HttpClient s_httpClient = new(
         new HttpClientHandler
         {
             UseProxy = false,

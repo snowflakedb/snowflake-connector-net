@@ -4,7 +4,7 @@ namespace Snowflake.Data.Core.Authenticator.WorkflowIdentity;
 
 internal class AwsSdkWrapper
 {
-    public static AwsSdkWrapper Instance = new AwsSdkWrapper();
+    public static AwsSdkWrapper Instance = new();
 
     public virtual ImmutableCredentials GetAwsCredentials() =>
 #pragma warning disable CS0618 // Type or member is obsolete

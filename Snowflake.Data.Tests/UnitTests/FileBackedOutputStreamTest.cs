@@ -72,5 +72,5 @@ public class FileBackedOutputStreamTest
         Assert.False(File.Exists(fileName));
     }
 
-    private MemoryStream ToByteStream(string value) => new MemoryStream(Encoding.ASCII.GetBytes(value));
+    private MemoryStream ToByteStream(string value) => new(Encoding.ASCII.GetBytes(value));
 }

@@ -6,7 +6,7 @@ namespace Snowflake.Data.Core.Authenticator.Browser;
 
 internal class WebListenerStarter
 {
-    public static WebListenerStarter Instance = new WebListenerStarter();
+    public static WebListenerStarter Instance = new();
 
     public virtual HttpListener StartHttpListener(string url)
     {

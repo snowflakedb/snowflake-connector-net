@@ -16,11 +16,11 @@ internal sealed class OsReleaseReader
     // Parses KEY=VALUE pairs where VALUE may be quoted or unquoted:
     // BUILD_ID=rolling -> ["BUILD_ID", "rolling"]
     // NAME="Arch Linux" -> ["NAME", "Arch Linux"]
-    private static readonly Regex s_keyValueRegex = new Regex(
+    private static readonly Regex s_keyValueRegex = new(
         @"^([A-Z0-9_]+)=(?:""([^""]*)""|(.*))\s*$",
         RegexOptions.Compiled);
 
-    private static readonly HashSet<string> s_allowedKeys = new HashSet<string>(StringComparer.Ordinal)
+    private static readonly HashSet<string> s_allowedKeys = new(StringComparer.Ordinal)
     {
         "NAME",
         "PRETTY_NAME",
@@ -33,7 +33,7 @@ internal sealed class OsReleaseReader
     };
 
     private static Dictionary<string, string> s_cachedOsDetails;
-    private static readonly object s_lock = new object();
+    private static readonly object s_lock = new();
 
     /// <summary>
     /// Returns parsed OS details from /etc/os-release on Linux.

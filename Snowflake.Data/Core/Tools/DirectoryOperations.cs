@@ -6,7 +6,7 @@ namespace Snowflake.Data.Core.Tools;
 
 internal class DirectoryOperations
 {
-    public static readonly DirectoryOperations Instance = new DirectoryOperations();
+    public static readonly DirectoryOperations Instance = new();
     private readonly UnixOperations _unixOperations;
 
     internal DirectoryOperations() : this(UnixOperations.Instance)
@@ -36,9 +36,9 @@ internal class DirectoryOperations
 
     public virtual void Delete(string path, bool recursive) => Directory.Delete(path, recursive);
 
-    public virtual DirectoryInformation GetDirectoryInfo(string path) => new DirectoryInformation(new DirectoryInfo(path));
+    public virtual DirectoryInformation GetDirectoryInfo(string path) => new(new DirectoryInfo(path));
 
-    public virtual DirectoryInformation GetParentDirectoryInfo(string path) => new DirectoryInformation(Directory.GetParent(path));
+    public virtual DirectoryInformation GetParentDirectoryInfo(string path) => new(Directory.GetParent(path));
 
     public virtual string[] GetFiles(string path, string searchPattern) => Directory.GetFiles(path, searchPattern);
 

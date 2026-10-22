@@ -127,7 +127,7 @@ public class StorageTransportTest
     public void TestCacheKeyStillDistinguishesDifferentProxyPasswords()
     {
         // arrange - otherwise two proxies differing only by password would share a handler
-        ProxyCredentials Credentials(string password) => new ProxyCredentials
+        ProxyCredentials Credentials(string password) => new()
         {
             ProxyHost = "proxy.snowflake.com",
             ProxyPort = 8080,

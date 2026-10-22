@@ -29,13 +29,13 @@ public class GcmEncryptionProviderTest
     private static readonly string s_emptyAad = string.Empty;
     private static readonly byte[] s_emptyAadBytes = Encoding.UTF8.GetBytes(s_emptyAad);
     private static readonly string s_emptyAadBase64 = Convert.ToBase64String(s_emptyAadBytes);
-    private static readonly PutGetEncryptionMaterial s_encryptionMaterial = new PutGetEncryptionMaterial
+    private static readonly PutGetEncryptionMaterial s_encryptionMaterial = new()
     {
         queryStageMasterKey = s_qsmk,
         queryId = s_queryId,
         smkId = SmkId
     };
-    private static readonly FileTransferConfiguration s_fileTransferConfiguration = new FileTransferConfiguration
+    private static readonly FileTransferConfiguration s_fileTransferConfiguration = new()
     {
         TempDir = Path.GetTempPath(),
         MaxBytesInMemory = FileTransferConfiguration.DefaultMaxBytesInMemory

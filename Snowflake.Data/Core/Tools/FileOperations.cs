@@ -10,7 +10,7 @@ namespace Snowflake.Data.Core.Tools;
 internal class FileOperations
 {
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<FileOperations>();
-    public static readonly FileOperations Instance = new FileOperations();
+    public static readonly FileOperations Instance = new();
     private readonly UnixOperations _unixOperations;
     private const FileAccessPermissions NotSafePermissions = FileAccessPermissions.AllPermissions & ~(FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite);
 

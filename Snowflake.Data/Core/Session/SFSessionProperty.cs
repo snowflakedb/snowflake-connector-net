@@ -207,7 +207,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, String>
         .Select(p => p.ToString())
         .ToList();
 
-    private static readonly List<string> s_accountRegexStrings = new List<string>
+    private static readonly List<string> s_accountRegexStrings = new()
     {
         "^\\w",
         "\\w$",

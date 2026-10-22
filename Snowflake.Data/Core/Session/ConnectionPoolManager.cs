@@ -13,7 +13,7 @@ namespace Snowflake.Data.Core.Session;
 internal sealed class ConnectionPoolManager : IConnectionManager
 {
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ConnectionPoolManager>();
-    private static readonly Object s_poolsLock = new Object();
+    private static readonly Object s_poolsLock = new();
     private static readonly Exception s_operationNotAvailable = new("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool");
     private readonly Dictionary<string, SessionPool> _pools;
     private readonly SessionPoolFactory _sessionPoolFactory;

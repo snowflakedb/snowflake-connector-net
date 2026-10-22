@@ -14,9 +14,9 @@ class ConnectingThreads
 {
     private string _connectionString;
 
-    private ConcurrentQueue<ThreadEvent> _events = new ConcurrentQueue<ThreadEvent>();
+    private ConcurrentQueue<ThreadEvent> _events = new();
 
-    private List<Thread> threads = new List<Thread>();
+    private List<Thread> threads = new();
 
     public ConnectingThreads(string connectionString)
     {
@@ -172,14 +172,12 @@ class ThreadEvent
 
     public bool IsWaitingEvent() => string.Equals(EventName, WaitingForSession);
 
-    public static ThreadEvent EventConnected(string threadName, long duration) =>
-        new ThreadEvent(threadName, Connected, null, duration);
+    public static ThreadEvent EventConnected(string threadName, long duration) => new(threadName, Connected, null, duration);
 
     public static ThreadEvent EventConnectingFailed(string threadName, Exception exception, long duration) =>
-        new ThreadEvent(threadName, FailedToConnect, exception, duration);
+        new(threadName, FailedToConnect, exception, duration);
 
-    public static ThreadEvent EventWaitingForSessionStarted(string threadName) =>
-        new ThreadEvent(threadName, WaitingForSession, null, 0);
+    public static ThreadEvent EventWaitingForSessionStarted(string threadName) => new(threadName, WaitingForSession, null, 0);
 }
 
 class SessionPoolThreadEventHandler : SessionPoolEventHandler

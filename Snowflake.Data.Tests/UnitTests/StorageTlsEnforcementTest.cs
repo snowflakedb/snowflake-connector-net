@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.UnitTests;
 public class StorageTlsEnforcementTest
 {
     private static PutGetStageInfo GcsStageInfo() =>
-        new PutGetStageInfo
+        new()
         {
             locationType = SFRemoteStorageUtil.GCS_FS,
             location = "test-bucket/path",

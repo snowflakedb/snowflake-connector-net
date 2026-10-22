@@ -34,11 +34,11 @@ internal sealed class QueryResultsAwaiter
 {
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<QueryResultsAwaiter>();
 
-    private static readonly Regex s_uuidRegex = new Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
+    private static readonly Regex s_uuidRegex = new("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
 
     private QueryResultsRetryConfig _queryResultsRetryConfig;
 
-    internal static readonly QueryResultsAwaiter Instance = new QueryResultsAwaiter();
+    internal static readonly QueryResultsAwaiter Instance = new();
 
     internal QueryResultsAwaiter()
     {

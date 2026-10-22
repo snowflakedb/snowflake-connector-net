@@ -14,7 +14,7 @@ internal static class SfMiniCore
     internal const string STILL_LOADING_MESSAGE = "Minicore is still loading";
 
     private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<object>();
-    private static readonly object s_lock = new object();
+    private static readonly object s_lock = new();
     private static Task<LoadResult> s_loadTask;
 
     [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]

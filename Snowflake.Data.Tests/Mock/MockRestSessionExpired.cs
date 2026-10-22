@@ -67,7 +67,7 @@ internal class MockRestSessionExpired : MockBaseRestRequester
                         rowSet = new string[,] { { "1" } },
                         rowType = new List<ExecResponseRowType>()
                         {
-                            new ExecResponseRowType
+                            new()
                             {
                                 name = "colone",
                                 type = "FIXED"
@@ -165,7 +165,7 @@ internal class MockRestSessionExpired : MockBaseRestRequester
                     rowSet = new string[,] { { "abc" } },
                     rowType = new List<ExecResponseRowType>()
                     {
-                        new ExecResponseRowType
+                        new()
                         {
                             name = "colOne",
                             type = SFDataType.TEXT.ToString()

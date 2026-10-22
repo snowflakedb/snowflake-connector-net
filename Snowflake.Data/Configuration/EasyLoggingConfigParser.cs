@@ -17,7 +17,7 @@ internal class EasyLoggingConfigParser
 
     private readonly UnixOperations _unixOperations;
 
-    public static readonly EasyLoggingConfigParser Instance = new EasyLoggingConfigParser(UnixOperations.Instance);
+    public static readonly EasyLoggingConfigParser Instance = new(UnixOperations.Instance);
 
     internal EasyLoggingConfigParser(UnixOperations unixOperations)
     {

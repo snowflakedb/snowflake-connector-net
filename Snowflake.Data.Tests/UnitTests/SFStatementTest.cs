@@ -278,7 +278,7 @@ public class SFStatementTest
         {
             Entries = new List<ResponseQueryContextElement>
             {
-                new ResponseQueryContextElement(new QueryContextElement(42, 1000L, 1, "error_context"))
+                new(new QueryContextElement(42, 1000L, 1, "error_context"))
             }
         };
         var response = new QueryExecResponse
@@ -314,7 +314,7 @@ public class SFStatementTest
         {
             Entries = new List<ResponseQueryContextElement>
             {
-                new ResponseQueryContextElement(new QueryContextElement(99, 2000L, 1, "existing"))
+                new(new QueryContextElement(99, 2000L, 1, "existing"))
             }
         };
         session.UpdateQueryContextCache(preExistingContext);

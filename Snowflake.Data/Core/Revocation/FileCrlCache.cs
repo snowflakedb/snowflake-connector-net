@@ -12,7 +12,7 @@ namespace Snowflake.Data.Core.Revocation;
 
 internal class FileCrlCache : ICrlCache
 {
-    private static readonly object _lock = new object();
+    private static readonly object _lock = new();
     private const FileAccessPermissions UnwantedUnixPermissions = FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite;
     private const FileAccessPermissions WantedUnixDirPermissions = FileAccessPermissions.UserReadWriteExecute;
     private const FileAccessPermissions WantedUnixFilePermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;

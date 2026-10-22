@@ -23,7 +23,7 @@ internal class SFSession
 {
     private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSession>();
 
-    private static readonly Regex APPLICATION_REGEX = new Regex(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
+    private static readonly Regex APPLICATION_REGEX = new(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
 
     private const string SF_AUTHORIZATION_SNOWFLAKE_FMT = "Snowflake Token=\"{0}\"";
 
@@ -82,7 +82,7 @@ internal class SFSession
 
     internal SFSessionHttpClientProperties ClientProperties { get; }
 
-    private QueryContextCache _queryContextCache = new QueryContextCache(_defaultQueryContextCacheSize);
+    private QueryContextCache _queryContextCache = new(_defaultQueryContextCacheSize);
 
     private int _queryContextCacheSize = _defaultQueryContextCacheSize;
 

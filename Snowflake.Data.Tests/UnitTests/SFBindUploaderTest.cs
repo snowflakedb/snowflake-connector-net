@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.UnitTests;
 
 public class SFBindUploaderTest
 {
-    private readonly SFBindUploader _bindUploader = new SFBindUploader(null, "test");
+    private readonly SFBindUploader _bindUploader = new(null, "test");
 
     [SFTheory]
     [InlineData(SFDataType.DATE, "0", "1/1/1970")]

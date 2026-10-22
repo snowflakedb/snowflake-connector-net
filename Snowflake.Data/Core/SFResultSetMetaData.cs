@@ -31,7 +31,7 @@ class SFResultSetMetaData
     /// <summary>
     ///     This map is used to cache column name to column index. Index is 0-based.
     /// </summary>
-    private Dictionary<string, int> columnNameToIndexCache = new Dictionary<string, int>();
+    private Dictionary<string, int> columnNameToIndexCache = new();
 
     internal SFResultSetMetaData(QueryExecResponseData queryExecResponseData, SFSession session)
     {

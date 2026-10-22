@@ -34,7 +34,7 @@ public sealed class SFRemoteStorageClientTest : IDisposable
 
     [ThreadStatic] private static string t_realSourceFilePath;
 
-    PutGetEncryptionMaterial EncryptionMaterial = new PutGetEncryptionMaterial()
+    PutGetEncryptionMaterial EncryptionMaterial = new()
     {
         queryId = "MOCK/QUERY/ID/==",
         queryStageMasterKey = "MOCKQUERYSTAGEMASTERKE==",

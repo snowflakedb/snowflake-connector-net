@@ -6,7 +6,7 @@ public class StringTransformations
 {
     private List<StringTransformation> _transformations = new();
 
-    public static readonly StringTransformations NoTransformationsInstance = new StringTransformations();
+    public static readonly StringTransformations NoTransformationsInstance = new();
 
     public string Transform(string value)
     {

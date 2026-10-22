@@ -13,7 +13,7 @@ internal class WebBrowserStarter
 
     private readonly IWebBrowserRunner _runner;
 
-    public static WebBrowserStarter Instance = new WebBrowserStarter(WebBrowserRunner.Instance);
+    public static WebBrowserStarter Instance = new(WebBrowserRunner.Instance);
 
     internal WebBrowserStarter(IWebBrowserRunner runner)
     {

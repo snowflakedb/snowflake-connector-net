@@ -37,7 +37,7 @@ public sealed class SFS3ClientTest
 
     const string Region = "us-west-2";
 
-    Dictionary<string, string> _stageCredentials = new Dictionary<string, string>()
+    Dictionary<string, string> _stageCredentials = new()
     {
         {"AWS_KEY_ID", AwsKeyId},
         {"AWS_SECRET_KEY", AwsSecretKey},
@@ -46,7 +46,7 @@ public sealed class SFS3ClientTest
         {"AWS_KEY", AwsKey}
     };
 
-    ProxyCredentials _proxyCredentials = new ProxyCredentials()
+    ProxyCredentials _proxyCredentials = new()
     {
         ProxyHost = "proxyHost",
         ProxyPort = 8080,
