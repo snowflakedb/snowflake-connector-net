@@ -20,10 +20,10 @@ class WorkloadIdentityFederationAuthenticator : BaseAuthenticator, IAuthenticato
     private readonly string _metadataHost;
     private readonly string _awsStsHost;
 
-    private AttestationProvider? _provider;
-    private string _entraResource;
-    private string _token;
-    private string _impersonationPath;
+    private readonly AttestationProvider? _provider;
+    private readonly string _entraResource;
+    private readonly string _token;
+    private readonly string _impersonationPath;
     private WorkloadIdentityAttestationData _attestationData;
 
     public WorkloadIdentityFederationAuthenticator(SFSession session) : this(session, EnvironmentFacade.Instance, TimeProvider.Instance, AwsSdkWrapper.Instance, null)

@@ -6,9 +6,9 @@ namespace Snowflake.Data.Core.Converter.Builder;
 
 internal class ObjectBuilderByConstructor : IObjectBuilder
 {
-    private Type _type;
-    private List<object> _result;
-    private Type[] _parameters;
+    private readonly Type _type;
+    private readonly List<object> _result;
+    private readonly Type[] _parameters;
     private int _index;
 
     public ObjectBuilderByConstructor(Type type, int fieldsCount)

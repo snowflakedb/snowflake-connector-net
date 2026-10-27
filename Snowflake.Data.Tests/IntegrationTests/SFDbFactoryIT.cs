@@ -11,9 +11,9 @@ namespace Snowflake.Data.Tests.IntegrationTests;
 public sealed class SFDbFactoryIT : SFBaseTestAsync, IDisposable
 {
     private readonly SFBaseTestAsyncFixture _fixture;
-    DbProviderFactory _factory;
-    DbCommand _command;
-    DbConnection _connection;
+    readonly DbProviderFactory _factory;
+    readonly DbCommand _command;
+    readonly DbConnection _connection;
 
     public SFDbFactoryIT(SFBaseTestAsyncFixture fixture) : base(fixture)
     {

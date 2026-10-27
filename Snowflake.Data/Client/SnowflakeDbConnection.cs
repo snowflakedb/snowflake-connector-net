@@ -18,7 +18,7 @@ public class SnowflakeDbConnection : DbConnection
         SFEnvironment.StartMinicoreLoading();
     }
 
-    private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
+    private readonly SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
 
     internal SFSession SfSession { get; set; }
 
@@ -30,7 +30,7 @@ public class SnowflakeDbConnection : DbConnection
 
     private bool _disposed = false;
 
-    private static Mutex _arraybindingMutex = new();
+    private static readonly Mutex _arraybindingMutex = new();
 
     // TBD this doesn't make sense to have a static flag while reset it
     // in each instance.

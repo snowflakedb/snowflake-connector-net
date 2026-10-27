@@ -71,11 +71,11 @@ internal class QueryContextCache
 {
     private readonly object _qccLock;
     private int _capacity; // Capacity of the cache
-    private Dictionary<long, QueryContextElement> _idMap; // Map for id and QCC
-    private Dictionary<long, QueryContextElement> _priorityMap; // Map for priority and QCC
-    private Dictionary<long, QueryContextElement> _newPriorityMap; // Intermediate map for priority and QCC for current round of merging
-    private SortedSet<QueryContextElement> _cacheSet; // Order data as per priority
-    private SFLogger _logger = SFLoggerFactory.GetLogger<QueryContextCache>();
+    private readonly Dictionary<long, QueryContextElement> _idMap; // Map for id and QCC
+    private readonly Dictionary<long, QueryContextElement> _priorityMap; // Map for priority and QCC
+    private readonly Dictionary<long, QueryContextElement> _newPriorityMap; // Intermediate map for priority and QCC for current round of merging
+    private readonly SortedSet<QueryContextElement> _cacheSet; // Order data as per priority
+    private readonly SFLogger _logger = SFLoggerFactory.GetLogger<QueryContextCache>();
 
     public QueryContextCache(int capacity)
     {

@@ -34,7 +34,7 @@ public sealed class SFRemoteStorageClientTest : IDisposable
 
     [ThreadStatic] private static string t_realSourceFilePath;
 
-    PutGetEncryptionMaterial EncryptionMaterial = new()
+    readonly PutGetEncryptionMaterial EncryptionMaterial = new()
     {
         queryId = "MOCK/QUERY/ID/==",
         queryStageMasterKey = "MOCKQUERYSTAGEMASTERKE==",
@@ -56,12 +56,12 @@ public sealed class SFRemoteStorageClientTest : IDisposable
     const int DestFileSizeWhenFileAlreadyExists = 0;
 
     // Mock client and metadata
-    SFGCSClient _client;
-    PutGetResponseData _responseData;
-    SFFileMetadata _fileMetadata;
+    readonly SFGCSClient _client;
+    readonly PutGetResponseData _responseData;
+    readonly SFFileMetadata _fileMetadata;
 
     // Token for async tests
-    CancellationToken _cancellationToken;
+    readonly CancellationToken _cancellationToken;
 
     // Flags for non-async and async mock methods
     const bool NotAsync = false;

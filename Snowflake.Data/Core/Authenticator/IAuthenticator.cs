@@ -59,7 +59,7 @@ internal abstract class BaseAuthenticator
     protected SFSession Session;
 
     // The client environment properties
-    private LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv.CloneForSession();
+    private readonly LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv.CloneForSession();
 
     // Provider for the SPCS container identity token
     internal SpcsTokenProvider SpcsTokenProvider = SpcsTokenProvider.CreateIfRunningInSpcs();

@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.Mock;
 class MockSnowflakeDbConnection : SnowflakeDbConnection
 {
     private readonly Func<SFSession, IAuthenticator> _authenticatorFactory;
-    private SFLogger logger = SFLoggerFactory.GetLogger<MockSnowflakeDbConnection>();
+    private readonly SFLogger logger = SFLoggerFactory.GetLogger<MockSnowflakeDbConnection>();
 
     private readonly IMockRestRequester _restRequester;
 

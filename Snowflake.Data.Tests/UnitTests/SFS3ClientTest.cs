@@ -37,7 +37,7 @@ public sealed class SFS3ClientTest
 
     const string Region = "us-west-2";
 
-    Dictionary<string, string> _stageCredentials = new()
+    readonly Dictionary<string, string> _stageCredentials = new()
     {
         {"AWS_KEY_ID", AwsKeyId},
         {"AWS_SECRET_KEY", AwsSecretKey},
@@ -46,7 +46,7 @@ public sealed class SFS3ClientTest
         {"AWS_KEY", AwsKey}
     };
 
-    ProxyCredentials _proxyCredentials = new()
+    readonly ProxyCredentials _proxyCredentials = new()
     {
         ProxyHost = "proxyHost",
         ProxyPort = 8080,
@@ -62,7 +62,7 @@ public sealed class SFS3ClientTest
     [ThreadStatic] private static string t_downloadFileName;
 
     // Token for async tests
-    CancellationToken _cancellationToken;
+    readonly CancellationToken _cancellationToken;
 
     // Mock upload file size
     const int UploadFileSize = 9999;
@@ -70,7 +70,7 @@ public sealed class SFS3ClientTest
     // The mock client and metadata
     SFS3Client _client;
     SFFileMetadata _fileMetadata;
-    AmazonS3Config _clientConfig;
+    readonly AmazonS3Config _clientConfig;
 
     public SFS3ClientTest()
     {

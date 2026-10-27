@@ -82,15 +82,15 @@ internal class SFSession
 
     internal SFSessionHttpClientProperties ClientProperties { get; }
 
-    private QueryContextCache _queryContextCache = new(_defaultQueryContextCacheSize);
+    private readonly QueryContextCache _queryContextCache = new(_defaultQueryContextCacheSize);
 
     private int _queryContextCacheSize = _defaultQueryContextCacheSize;
 
-    private bool _disableQueryContextCache = false;
+    private readonly bool _disableQueryContextCache = false;
 
     internal bool _disableConsoleLogin;
 
-    private string _user;
+    private readonly string _user;
 
     internal readonly QueryLoggingConfig _queryLoggingConfig;
 
@@ -109,7 +109,7 @@ internal class SFSession
 
     private bool _isClientTelemetryEnabled;
 
-    private bool _honorSessionTimezone = false;
+    private readonly bool _honorSessionTimezone = false;
 
     private readonly bool _allowNumberOverflowAsStringEnabled = false;
 

@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.UnitTests;
 
 public sealed class ConcatenatedStreamTest
 {
-    Stream _concatStream;
+    readonly Stream _concatStream;
 
     public ConcatenatedStreamTest()
     {

@@ -10,7 +10,7 @@ class SFResultSetMetaData
 {
     static private readonly SFLogger logger = SFLoggerFactory.GetLogger<SFResultSetMetaData>();
 
-    private int columnCount;
+    private readonly int columnCount;
 
     internal readonly string dateOutputFormat;
 
@@ -31,7 +31,7 @@ class SFResultSetMetaData
     /// <summary>
     ///     This map is used to cache column name to column index. Index is 0-based.
     /// </summary>
-    private Dictionary<string, int> columnNameToIndexCache = new();
+    private readonly Dictionary<string, int> columnNameToIndexCache = new();
 
     internal SFResultSetMetaData(QueryExecResponseData queryExecResponseData, SFSession session)
     {

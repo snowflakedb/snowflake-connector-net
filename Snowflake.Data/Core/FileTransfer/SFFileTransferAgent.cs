@@ -69,12 +69,12 @@ class SFFileTransferAgent
     /// <summary>
     /// The Snowflake query
     /// </summary>
-    private string Query;
+    private readonly string Query;
 
     /// <summary>
     /// The Snowflake session
     /// </summary>
-    private SFSession Session;
+    private readonly SFSession Session;
 
     private readonly IEnvironmentFacade _environmentFacade;
 
@@ -91,25 +91,25 @@ class SFFileTransferAgent
     /// <summary>
     /// List of metadata for small and large files.
     /// </summary>
-    private List<SFFileMetadata> FilesMetas = new();
+    private readonly List<SFFileMetadata> FilesMetas = new();
 
-    private List<SFFileMetadata> SmallFilesMetas = new();
-    private List<SFFileMetadata> LargeFilesMetas = new();
+    private readonly List<SFFileMetadata> SmallFilesMetas = new();
+    private readonly List<SFFileMetadata> LargeFilesMetas = new();
 
     /// <summary>
     /// List of metadata for the resulting file after upload/download.
     /// </summary>
-    private List<SFFileMetadata> ResultsMetas = new();
+    private readonly List<SFFileMetadata> ResultsMetas = new();
 
     /// <summary>
     /// List of encryption materials of the files to be uploaded/downloaded.
     /// </summary>
-    private List<PutGetEncryptionMaterial> EncryptionMaterials = new();
+    private readonly List<PutGetEncryptionMaterial> EncryptionMaterials = new();
 
     /// <summary>
     /// Time to wait before uploading the next file.
     /// </summary>
-    private int INJECT_WAIT_IN_PUT = 0;
+    private readonly int INJECT_WAIT_IN_PUT = 0;
 
     /// <summary>
     /// String indicating local storage type.
@@ -127,12 +127,12 @@ class SFFileTransferAgent
     /// <summary>
     /// Mutex for renewing expired client.
     /// </summary>
-    private static Mutex RenewClientMutex = new();
+    private static readonly Mutex RenewClientMutex = new();
 
     /// <summary>
     /// Placeholder threshold value using max long value.
     /// </summary>
-    private long DATA_SIZE_THRESHOLD = Int64.MaxValue;
+    private readonly long DATA_SIZE_THRESHOLD = Int64.MaxValue;
 
     /// <summary>
     /// Constructor.

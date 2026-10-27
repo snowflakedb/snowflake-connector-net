@@ -14,7 +14,7 @@ internal class GcmEncryptionProvider
     internal const int TagSizeInBytes = TagSizeInBits / 8;
     private const int InitVectorSizeInBytes = 12;
     private const string AesGcmNoPaddingCipher = "AES/GCM/NoPadding";
-    private static int DefaultBufferSize = 1 << 20;
+    private static readonly int DefaultBufferSize = 1 << 20;
 
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<GcmEncryptionProvider>();
 

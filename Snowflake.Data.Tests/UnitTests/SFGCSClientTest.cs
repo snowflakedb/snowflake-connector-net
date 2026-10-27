@@ -29,7 +29,7 @@ public sealed class SFGCSClientTest
 
     const string Region = "US-CENTRAL1";
 
-    Dictionary<string, string> _stageCredentials = new()
+    readonly Dictionary<string, string> _stageCredentials = new()
     {
         {"GCS_ACCESS_TOKEN", "MOCK_GCS_ACCESS_TOKEN"}
     };
@@ -41,14 +41,14 @@ public sealed class SFGCSClientTest
     [ThreadStatic] private static string t_downloadFileName;
 
     // Token for async tests
-    CancellationToken _cancellationToken;
+    readonly CancellationToken _cancellationToken;
 
     // Mock upload file size
     const int UploadFileSize = 9999;
 
     // The mock client and metadata
-    SFGCSClient _client;
-    SFFileMetadata _fileMetadata;
+    readonly SFGCSClient _client;
+    readonly SFFileMetadata _fileMetadata;
 
     public SFGCSClientTest()
     {

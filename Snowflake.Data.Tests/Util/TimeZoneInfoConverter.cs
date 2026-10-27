@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.Util;
 
 public static class TimeZoneInfoConverter
 {
-    private static Dictionary<string, string> s_mapping = TimeZoneMapping().ToDictionary(x => x.Key, x => x.Value);
+    private static readonly Dictionary<string, string> s_mapping = TimeZoneMapping().ToDictionary(x => x.Key, x => x.Value);
 
     public static TimeZoneInfo FindSystemTimeZoneById(string timeZoneString)
     {

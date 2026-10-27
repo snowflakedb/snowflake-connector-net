@@ -18,9 +18,9 @@ public class SnowflakeDbCommand : DbCommand
 
     private SFStatement sfStatement;
 
-    private SnowflakeDbParameterCollection parameterCollection;
+    private readonly SnowflakeDbParameterCollection parameterCollection;
 
-    private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
+    private readonly SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
 
     private readonly QueryResultsAwaiter _queryResultsAwaiter = QueryResultsAwaiter.Instance;
 

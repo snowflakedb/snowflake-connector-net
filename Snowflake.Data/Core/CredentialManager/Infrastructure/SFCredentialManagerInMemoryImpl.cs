@@ -13,7 +13,7 @@ internal class SFCredentialManagerInMemoryImpl : ISnowflakeCredentialManager
 
     private readonly ReaderWriterLockSlim _lock = new();
 
-    private Dictionary<string, SecureString> s_credentials = new();
+    private readonly Dictionary<string, SecureString> s_credentials = new();
 
     public static readonly SFCredentialManagerInMemoryImpl Instance = new();
 

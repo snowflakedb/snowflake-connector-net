@@ -12,11 +12,11 @@ namespace Snowflake.Data.Tests.IntegrationTests;
 
 class ConnectingThreads
 {
-    private string _connectionString;
+    private readonly string _connectionString;
 
-    private ConcurrentQueue<ThreadEvent> _events = new();
+    private readonly ConcurrentQueue<ThreadEvent> _events = new();
 
-    private List<Thread> threads = new();
+    private readonly List<Thread> threads = new();
 
     public ConnectingThreads(string connectionString)
     {
@@ -62,17 +62,17 @@ class ConnectingThread
 {
     private static readonly SFLogger s_logger = ConnectingThreads.Logger();
 
-    private string _name;
+    private readonly string _name;
 
-    private ConcurrentQueue<ThreadEvent> _events;
+    private readonly ConcurrentQueue<ThreadEvent> _events;
 
-    private string _connectionString;
+    private readonly string _connectionString;
 
-    private long _waitBeforeConnectMillis;
+    private readonly long _waitBeforeConnectMillis;
 
-    private long _waitAfterConnectMillis;
+    private readonly long _waitAfterConnectMillis;
 
-    private bool _closeOnExit;
+    private readonly bool _closeOnExit;
 
     internal const string NamePrefix = "thread_";
 

@@ -179,7 +179,7 @@ internal sealed class HttpUtil
     // redirect and connection limit - rather than on a session ConfKey.
     private readonly ConcurrentDictionary<string, HttpMessageHandler> _storageHandlers = new();
 
-    private Dictionary<string, HttpClient> _HttpClients = new();
+    private readonly Dictionary<string, HttpClient> _HttpClients = new();
 
     private IRestRequester _restRequesterForCrlCheck;
 
@@ -764,8 +764,8 @@ internal sealed class HttpUtil
             }
         }
 
-        UriBuilder uriBuilder;
-        List<IRule> rules;
+        readonly UriBuilder uriBuilder;
+        readonly List<IRule> rules;
 
         internal UriUpdater(Uri uri, bool includeRetryReason = true)
         {
@@ -849,15 +849,15 @@ internal sealed class HttpUtil
 
     private class RetryHandler : DelegatingHandler
     {
-        private static SFLogger logger = SFLoggerFactory.GetLogger<RetryHandler>();
+        private static readonly SFLogger logger = SFLoggerFactory.GetLogger<RetryHandler>();
 
         private const int MaxRedirectsCount = 20;
 
-        private bool disableRetry;
-        private bool forceRetryOn404;
-        private int maxRetryCount;
-        private bool includeRetryReason;
-        private int connectionLimit;
+        private readonly bool disableRetry;
+        private readonly bool forceRetryOn404;
+        private readonly int maxRetryCount;
+        private readonly bool includeRetryReason;
+        private readonly int connectionLimit;
 
         internal RetryHandler(HttpMessageHandler innerHandler, bool disableRetry, bool forceRetryOn404, int maxRetryCount,
             bool includeRetryReason, int connectionLimit) : base(innerHandler)

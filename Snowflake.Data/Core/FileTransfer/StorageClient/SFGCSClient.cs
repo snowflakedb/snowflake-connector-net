@@ -31,7 +31,7 @@ class SFGCSClient : ISFRemoteStorageClient
     /// <summary>
     /// The GCS access token.
     /// </summary>
-    private string AccessToken;
+    private readonly string AccessToken;
 
     /// <summary>
     /// The attribute in the credential map containing the access token.

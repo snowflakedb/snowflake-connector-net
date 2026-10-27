@@ -32,7 +32,7 @@ public sealed class SFAzureClientTest
 
     const string Region = "canadacentral";
 
-    Dictionary<string, string> _stageCredentials = new()
+    readonly Dictionary<string, string> _stageCredentials = new()
     {
         {"AZURE_SAS_TOKEN", "MOCK_AZURE_SAS_TOKEN"}
     };
@@ -46,7 +46,7 @@ public sealed class SFAzureClientTest
     [ThreadStatic] private static string t_downloadFileName;
 
     // Token for async tests
-    CancellationToken _cancellationToken;
+    readonly CancellationToken _cancellationToken;
 
     // Mock upload file size
     const int UploadFileSize = 9999;

@@ -170,7 +170,7 @@ internal static class TlsConfigurationErrorExtensions
 
 class SFMFATokenErrors
 {
-    private static List<SFError> InvalidMFATokenErrors = new()
+    private static readonly List<SFError> InvalidMFATokenErrors = new()
     {
         SFError.EXT_AUTHN_DENIED,
         SFError.EXT_AUTHN_LOCKED,

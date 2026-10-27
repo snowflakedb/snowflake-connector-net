@@ -38,7 +38,7 @@ public class SFFileTransferAgentTest : IDisposable
     long _sourceFileSize;
 
     // Mock encryption material for the files
-    List<PutGetEncryptionMaterial> _encryptionMaterial = new()
+    readonly List<PutGetEncryptionMaterial> _encryptionMaterial = new()
     {
         new PutGetEncryptionMaterial()
         {

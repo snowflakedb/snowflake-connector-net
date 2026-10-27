@@ -139,7 +139,7 @@ class SFStatement
     // the query id of the last query
     string _lastQueryId = null;
 
-    private string _queryTag = null;
+    private readonly string _queryTag = null;
     private readonly IQuerySFLogger _logger;
 
     internal SFStatement(SFSession session) : this(session, session._queryTag)

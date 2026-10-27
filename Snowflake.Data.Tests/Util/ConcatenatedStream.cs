@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.Util;
 /// </summary>
 class ConcatenatedStream : Stream
 {
-    Queue<Stream> streams;
+    readonly Queue<Stream> streams;
 
     public ConcatenatedStream(IEnumerable<Stream> streams)
     {

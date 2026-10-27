@@ -98,8 +98,8 @@ internal class S3DownloadRequest : BaseRestRequest, IRestRequest
 
 internal class SFRestRequest : BaseRestRequest, IRestRequest
 {
-    private static MediaTypeWithQualityHeaderValue applicationSnowflake = new("application/snowflake");
-    private static MediaTypeWithQualityHeaderValue applicationJson = new("application/json");
+    private static readonly MediaTypeWithQualityHeaderValue applicationSnowflake = new("application/snowflake");
+    private static readonly MediaTypeWithQualityHeaderValue applicationJson = new("application/json");
 
     private const string SF_AUTHORIZATION_HEADER = "Authorization";
     private const string SF_SERVICE_NAME_HEADER = "X-Snowflake-Service";

@@ -6,7 +6,7 @@ namespace Snowflake.Data.Tests.Mock;
 
 internal class MockBrowser : IWebBrowserRunner
 {
-    private HttpClient _httpClient;
+    private readonly HttpClient _httpClient;
 
     public MockBrowser()
     {

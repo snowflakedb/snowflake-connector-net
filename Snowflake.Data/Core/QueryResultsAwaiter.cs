@@ -36,7 +36,7 @@ internal sealed class QueryResultsAwaiter
 
     private static readonly Regex s_uuidRegex = new("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
 
-    private QueryResultsRetryConfig _queryResultsRetryConfig;
+    private readonly QueryResultsRetryConfig _queryResultsRetryConfig;
 
     internal static readonly QueryResultsAwaiter Instance = new();
 

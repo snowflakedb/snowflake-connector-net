@@ -18,7 +18,7 @@ public class SnowflakeDbDataReader : DbDataReader
 
     private SnowflakeDbCommand dbCommand;
 
-    private SFBaseResultSet resultSet;
+    private readonly SFBaseResultSet resultSet;
 
     private bool isClosed;
 

@@ -8,11 +8,11 @@ namespace Snowflake.Data.Client;
 
 public class SnowflakeDbTransaction : DbTransaction
 {
-    private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbTransaction>();
+    private readonly SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbTransaction>();
 
-    private IsolationLevel isolationLevel;
+    private readonly IsolationLevel isolationLevel;
 
-    private SnowflakeDbConnection connection;
+    private readonly SnowflakeDbConnection connection;
 
     private bool disposed = false;
     private bool isCommittedOrRollbacked = false;

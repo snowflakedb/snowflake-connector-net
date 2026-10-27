@@ -243,7 +243,7 @@ static class SFDataConverter
         }
     }
 
-    static int[] powersOf10 =  {
+    static readonly int[] powersOf10 =  {
         1,
         10,
         100,

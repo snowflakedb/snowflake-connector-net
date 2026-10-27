@@ -221,7 +221,7 @@ internal sealed class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
     /// </summary>
     private class PasswordFinder : IPasswordFinder
     {
-        private string password;
+        private readonly string password;
 
         public PasswordFinder(string password)
         {

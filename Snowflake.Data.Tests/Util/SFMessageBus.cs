@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.Util;
 public sealed class SFDelayedMessageBus(IMessageBus innerBus) : IMessageBus
 {
     private readonly List<IMessageSinkMessage> _messages = [];
-    private static TestPerformanceRecorder s_performanceRecorder = new ();
+    private static readonly TestPerformanceRecorder s_performanceRecorder = new ();
 
     public bool QueueMessage(IMessageSinkMessage message)
     {
@@ -50,7 +50,7 @@ public class SFMessageBus : IMessageBus
 
     public int SkippedCount { get; private set; }
 
-    private static TestPerformanceRecorder s_performanceRecorder = new();
+    private static readonly TestPerformanceRecorder s_performanceRecorder = new();
 
     public SFMessageBus(IMessageBus messageBusImplementation, int retriesCount)
     {

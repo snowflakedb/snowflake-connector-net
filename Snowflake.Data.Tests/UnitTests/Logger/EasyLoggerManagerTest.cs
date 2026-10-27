@@ -43,7 +43,7 @@ public sealed class EasyLoggerManagerTest : IDisposable
     private const string ErrorMessage = "Easy logging Error message";
     private static readonly string s_logsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
-    private static AsyncLocal<string> _directoryLogPath = new();
+    private static readonly AsyncLocal<string> _directoryLogPath = new();
 
     public EasyLoggerManagerTest()
     {

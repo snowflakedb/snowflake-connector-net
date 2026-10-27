@@ -34,7 +34,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
     /// <summary>
     /// The cloud blob client to use to upload and download data on Azure.
     /// </summary>
-    private BlobServiceClient blobServiceClient;
+    private readonly BlobServiceClient blobServiceClient;
 
     /// <summary>
     /// Azure client without client-side encryption.

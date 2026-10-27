@@ -13,7 +13,7 @@ class SFMultiStatementsResultSet : SFBaseResultSet
 
     private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFMultiStatementsResultSet>();
 
-    private string[] resultIds;
+    private readonly string[] resultIds;
 
     private SFBaseResultSet curResultSet;
 

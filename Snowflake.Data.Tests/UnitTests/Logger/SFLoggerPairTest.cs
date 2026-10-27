@@ -158,8 +158,8 @@ public class SFLoggerPairTest : IDisposable
 
     private class TestAppender : SFAppender
     {
-        public List<string> LoggedMessages = new();
-        public List<Exception> LoggedExceptions = new();
+        public readonly List<string> LoggedMessages = new();
+        public readonly List<Exception> LoggedExceptions = new();
 
         public void Append(string logLevel, string message, Type type, Exception ex = null)
         {

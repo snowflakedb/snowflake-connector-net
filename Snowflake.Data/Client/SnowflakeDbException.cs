@@ -16,7 +16,7 @@ public sealed class SnowflakeDbException : DbException
     // Sql states not coming directly from the server.
     internal static string CONNECTION_FAILURE_SSTATE = "08006";
 
-    static private ResourceManager rm = new("Snowflake.Data.Core.ErrorMessages",
+    static private readonly ResourceManager rm = new("Snowflake.Data.Core.ErrorMessages",
         typeof(SnowflakeDbException).Assembly);
 
 #pragma warning disable CS0108, CS0114 // TODO SNOW-3662960

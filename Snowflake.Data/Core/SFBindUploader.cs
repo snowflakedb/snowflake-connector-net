@@ -28,17 +28,17 @@ class SFBindUploader
     private const string ACCOUNT_AZURE = "azure";
     private const string ACCOUNT_LOCAL = "localhost";
 
-    private static long inputStreamBufferSize = 1024 * 1024 * 10;
+    private static readonly long inputStreamBufferSize = 1024 * 1024 * 10;
 
     private int fileCount = 0;
 
-    private SFSession session;
+    private readonly SFSession session;
 
     private string requestId;
 
-    private SFLogger logger = SFLoggerFactory.GetLogger<SFBindUploader>();
+    private readonly SFLogger logger = SFLoggerFactory.GetLogger<SFBindUploader>();
 
-    private string stagePath;
+    private readonly string stagePath;
 
     public SFBindUploader(SFSession session, string requestId)
     {

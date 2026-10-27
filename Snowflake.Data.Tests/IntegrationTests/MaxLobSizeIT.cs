@@ -54,16 +54,16 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
     private const int LobRandomRange = 100000 + 1; // range to use for generating random numbers (0 - 100000)
 
     private static readonly string[] s_colName = { "C1", "C2", "C3" };
-    private static AsyncLocal<string> t_tableName = new();
-    private static AsyncLocal<string> t_insertQuery = new();
-    private static AsyncLocal<string> t_positionalBindingInsertQuery = new();
-    private static AsyncLocal<string> t_namedBindingInsertQuery = new();
-    private static AsyncLocal<string> t_selectQuery = new();
-    private static AsyncLocal<string> t_fileName = new();
-    private static AsyncLocal<string> t_inputFilePath = new();
-    private static AsyncLocal<string> t_outputFilePath = new();
-    private static AsyncLocal<List<string>> t_filesToDelete = new();
-    private static AsyncLocal<string[]> t_colData = new();
+    private static readonly AsyncLocal<string> t_tableName = new();
+    private static readonly AsyncLocal<string> t_insertQuery = new();
+    private static readonly AsyncLocal<string> t_positionalBindingInsertQuery = new();
+    private static readonly AsyncLocal<string> t_namedBindingInsertQuery = new();
+    private static readonly AsyncLocal<string> t_selectQuery = new();
+    private static readonly AsyncLocal<string> t_fileName = new();
+    private static readonly AsyncLocal<string> t_inputFilePath = new();
+    private static readonly AsyncLocal<string> t_outputFilePath = new();
+    private static readonly AsyncLocal<List<string>> t_filesToDelete = new();
+    private static readonly AsyncLocal<string[]> t_colData = new();
 
     public MaxLobSizeIT(MaxLobSizeITTestFixture maxLobeFixture) : base(maxLobeFixture)
     {
@@ -297,7 +297,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
         }
     }
 
-    static IEnumerable<int> LobSizeTestCases = new[]
+    static readonly IEnumerable<int> LobSizeTestCases = new[]
     {
         OriginSize,
         MediumSize,

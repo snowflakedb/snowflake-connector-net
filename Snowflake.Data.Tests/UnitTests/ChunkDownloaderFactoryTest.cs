@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using System.Threading;
 public sealed class ChunkDownloaderFactoryTest : IDisposable
 {
-    int ChunkDownloaderVersionDefault = SFConfiguration.Instance().GetChunkDownloaderVersion();
+    readonly int ChunkDownloaderVersionDefault = SFConfiguration.Instance().GetChunkDownloaderVersion();
 
     public void Dispose()
     {

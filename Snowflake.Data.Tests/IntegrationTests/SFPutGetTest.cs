@@ -54,7 +54,7 @@ public class SFPutGetTest : SFBaseTestAsync, IClassFixture<SFPutGetTestFixture>,
     private const long NumberOfRows = 4;
     private static readonly string[] s_colName = { "C1", "C2", "C3" };
     private static readonly string[] s_colData = { "FIRST", "SECOND", "THIRD" };
-    private string s_outputDirectory;
+    private readonly string s_outputDirectory;
 
     private string t_schemaName;
     private string t_tableName;

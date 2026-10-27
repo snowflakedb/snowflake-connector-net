@@ -77,12 +77,12 @@ class SFReusableChunk : BaseResultChunk
         private static readonly int NULL_VALUE = -100;
 
         internal int blockCount;
-        private static int blockLengthBits = 23;
-        private static int blockLength = 1 << blockLengthBits;
+        private static readonly int blockLengthBits = 23;
+        private static readonly int blockLength = 1 << blockLengthBits;
 
         internal int metaBlockCount;
-        private static int metaBlockLengthBits = 15;
-        private static int metaBlockLength = 1 << metaBlockLengthBits;
+        private static readonly int metaBlockLengthBits = 15;
+        private static readonly int metaBlockLength = 1 << metaBlockLengthBits;
 
         private readonly List<byte[]> data = new();
         private readonly List<int[]> offsets = new();

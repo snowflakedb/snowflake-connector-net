@@ -78,7 +78,7 @@ class SFS3Client : ISFRemoteStorageClient
     /// <summary>
     /// The underlying S3 client.
     /// </summary>
-    private AmazonS3Client S3Client;
+    private readonly AmazonS3Client S3Client;
 
     /// <summary>
     /// S3 client without client-side encryption.

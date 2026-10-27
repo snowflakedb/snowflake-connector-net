@@ -12,7 +12,7 @@ public sealed class SFDbAdaptorIT : SFBaseTestAsync
 {
     private readonly SFBaseTestAsyncFixture _fixture;
     private IDbDataAdapter _adapter;
-    private SnowflakeDbCommand _command;
+    private readonly SnowflakeDbCommand _command;
 
     public SFDbAdaptorIT(SFBaseTestAsyncFixture fixture) : base(fixture)
     {

@@ -9,7 +9,7 @@ public class SnowflakeDbParameter : DbParameter
 {
     public SFDataType SFDataType { get; set; }
 
-    private SFDataType OriginType;
+    private readonly SFDataType OriginType;
 
     private DbType _dbType;
 
