@@ -16,7 +16,7 @@ internal sealed class MockRetryUntilRestTimeoutRestRequester : RestRequester, IM
         _forceTimeoutAlsoForLoginRequests = forceTimeoutAlsoForLoginRequests;
     }
 
-    public void setHttpClient(HttpClient httpClient)
+    public void SetHttpClient(HttpClient httpClient)
     {
         HttpClient = httpClient;
     }

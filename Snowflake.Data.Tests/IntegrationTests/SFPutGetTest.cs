@@ -773,7 +773,7 @@ public class SFPutGetTest : SFBaseTestAsync, IClassFixture<SFPutGetTestFixture>,
         {
             using (var processedOutputStream = IsCompressedByTheDriver() ? Unzip(outputStream) : outputStream)
             {
-                return splitLines(processedOutputStream);
+                return SplitLines(processedOutputStream);
             }
         }
     }
@@ -788,7 +788,7 @@ public class SFPutGetTest : SFBaseTestAsync, IClassFixture<SFPutGetTestFixture>,
         }
     }
 
-    private static string[] splitLines(Stream stream)
+    private static string[] SplitLines(Stream stream)
     {
         var bytes = new byte[stream.Length];
         stream.Position = 0;

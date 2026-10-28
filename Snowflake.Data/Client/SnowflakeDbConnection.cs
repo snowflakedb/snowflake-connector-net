@@ -250,7 +250,7 @@ public class SnowflakeDbConnection : DbConnection
         {
             var returnedToPool = TryToReturnSessionToPool();
             if (!returnedToPool)
-                SfSession.close();
+                SfSession.Close();
 
             logger.Debug("Session closed successfully");
             SfSession = null;

@@ -14,7 +14,7 @@ namespace Snowflake.Data.Client;
 
 public class SnowflakeDbDataReader : DbDataReader
 {
-    static private readonly SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbDataReader>();
+    private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbDataReader>();
 
     private SnowflakeDbCommand dbCommand;
 
@@ -406,7 +406,7 @@ public class SnowflakeDbDataReader : DbDataReader
     public override void Close()
     {
         base.Close();
-        resultSet.close();
+        resultSet.Close();
         isClosed = true;
     }
 

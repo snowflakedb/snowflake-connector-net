@@ -14,7 +14,7 @@ internal class DelegatingMockRestRequester : IMockRestRequester
         _inner = new RestRequester(httpClient);
     }
 
-    public void setHttpClient(HttpClient httpClient)
+    public void SetHttpClient(HttpClient httpClient)
     {
         // No-op: client configured at construction
     }

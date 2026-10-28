@@ -76,7 +76,7 @@ internal class SessionPropertiesWithDefaultValuesExtractor
         }
         if (!preExtractValidation(valueString))
         {
-            return handleFailedValidation(defaultValue, valueString, property);
+            return HandleFailedValidation(defaultValue, valueString, property);
         }
         T value;
         try
@@ -95,12 +95,12 @@ internal class SessionPropertiesWithDefaultValuesExtractor
         }
         if (!postExtractValidation(value))
         {
-            return handleFailedValidation(defaultValue, value, property);
+            return HandleFailedValidation(defaultValue, value, property);
         }
         return value;
     }
 
-    private TResult handleFailedValidation<TResult, TValue>(
+    private TResult HandleFailedValidation<TResult, TValue>(
         TResult defaultValue,
         TValue value,
         SFSessionProperty property)

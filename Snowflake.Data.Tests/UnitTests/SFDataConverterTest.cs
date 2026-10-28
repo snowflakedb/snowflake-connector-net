@@ -145,10 +145,10 @@ public sealed class SFDataConverterTest
             inputTime = DateTime.ParseExact(inputTimeStr, "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
         }
         var dtExpected = inputTime.Date;
-        internalTestConvertDate(dtExpected, DateTime.SpecifyKind(inputTime, (DateTimeKind)kind));
+        InternalTestConvertDate(dtExpected, DateTime.SpecifyKind(inputTime, (DateTimeKind)kind));
     }
 
-    private void internalTestConvertDate(DateTime dtExpected, DateTime testValue)
+    private void InternalTestConvertDate(DateTime dtExpected, DateTime testValue)
     {
         var result = SFDataConverter.CSharpTypeValToSfTypeVal(System.Data.DbType.Date, testValue);
         // Convert result to DateTime for easier interpretation

@@ -33,7 +33,7 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 
     public override int Add(object value)
     {
-        parameterList.Add(tryCastThrow(value));
+        parameterList.Add(TryCastThrow(value));
         return parameterList.Count - 1;
     }
 
@@ -49,7 +49,7 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
         IEnumerator e = values.GetEnumerator();
         while (e.MoveNext())
         {
-            parameterList.Add(tryCastThrow(e.Current));
+            parameterList.Add(TryCastThrow(e.Current));
         }
     }
 
@@ -65,7 +65,7 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 
     public override bool Contains(object value)
     {
-        SnowflakeDbParameter parameter = tryCast(value);
+        SnowflakeDbParameter parameter = TryCast(value);
         return parameter != null && parameterList.Contains(parameter);
     }
 
@@ -95,18 +95,18 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 
     public override int IndexOf(object value)
     {
-        SnowflakeDbParameter parameter = tryCast(value);
+        SnowflakeDbParameter parameter = TryCast(value);
         return parameter == null ? -1 : parameterList.IndexOf(parameter);
     }
 
     public override void Insert(int index, object value)
     {
-        parameterList.Insert(index, tryCastThrow(value));
+        parameterList.Insert(index, TryCastThrow(value));
     }
 
     public override void Remove(object value)
     {
-        parameterList.Remove(tryCastThrow(value));
+        parameterList.Remove(TryCastThrow(value));
     }
 
     public override void RemoveAt(string parameterName)
@@ -134,15 +134,15 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
     protected override void SetParameter(string parameterName, DbParameter value)
     {
         int index = IndexOf(parameterName);
-        parameterList[index] = tryCastThrow(value);
+        parameterList[index] = TryCastThrow(value);
     }
 
     protected override void SetParameter(int index, DbParameter value)
     {
-        parameterList[index] = tryCastThrow(value);
+        parameterList[index] = TryCastThrow(value);
     }
 
-    private SnowflakeDbParameter tryCast(object parameter)
+    private SnowflakeDbParameter TryCast(object parameter)
     {
         if (parameter.GetType() != typeof(SnowflakeDbParameter))
         {
@@ -154,7 +154,7 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
         }
     }
 
-    private SnowflakeDbParameter tryCastThrow(object parameter)
+    private SnowflakeDbParameter TryCastThrow(object parameter)
     {
         if (parameter.GetType() != typeof(SnowflakeDbParameter))
         {

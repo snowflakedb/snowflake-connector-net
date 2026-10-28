@@ -27,7 +27,7 @@ internal sealed class HeartBeatBackground
         isHeartBeatEnd = true;
     }
 
-    internal static int getQueueLength()
+    internal static int GetQueueLength()
     {
         lock (heartBeatLock)
         {
@@ -39,7 +39,7 @@ internal sealed class HeartBeatBackground
         }
     }
 
-    internal static void setValidity(long validity)
+    internal static void SetValidity(long validity)
     {
         masterTokenValidationTimeInSec = validity;
     }
@@ -59,12 +59,12 @@ internal sealed class HeartBeatBackground
         }
     }
 
-    private long getHeartBeatInterval(long masterTokenValidationTime)
+    private long GetHeartBeatInterval(long masterTokenValidationTime)
     {
         return masterTokenValidationTime / 4;
     }
 
-    public void addConnection(SFSession conn, long masterTokenValidityInSecs)
+    public void AddConnection(SFSession conn, long masterTokenValidityInSecs)
     {
         lock (heartBeatLock)
         {
@@ -83,13 +83,13 @@ internal sealed class HeartBeatBackground
             }
             if (heartBeatThread == null)
             {
-                heartBeatThread = new Thread(heartBeatAll) { IsBackground = true };
+                heartBeatThread = new Thread(HeartBeatAll) { IsBackground = true };
                 heartBeatThread.Start();
             }
         }
     }
 
-    public void removeConnection(SFSession conn)
+    public void RemoveConnection(SFSession conn)
     {
         lock (heartBeatLock)
         {
@@ -97,13 +97,13 @@ internal sealed class HeartBeatBackground
         }
     }
 
-    void heartBeatAll()
+    void HeartBeatAll()
     {
         while (true)
         {
             List<SFSession> copyOfHeartBeatQueue = new List<SFSession>();
 
-            long heartBeatInterval = getHeartBeatInterval(masterTokenValidationTimeInSec);
+            long heartBeatInterval = GetHeartBeatInterval(masterTokenValidationTimeInSec);
             Thread.Sleep(TimeSpan.FromSeconds(heartBeatInterval));
 
             if (isHeartBeatEnd)
@@ -120,7 +120,7 @@ internal sealed class HeartBeatBackground
 
             for (int i = 0; i < copyOfHeartBeatQueue.Count(); i++)
             {
-                copyOfHeartBeatQueue[i].heartbeat();
+                copyOfHeartBeatQueue[i].Heartbeat();
             }
         }
     }

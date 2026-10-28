@@ -869,7 +869,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     }
 
     [SFFact]
-    public async Task testPutArrayBindAsync()
+    public async Task TestPutArrayBindAsync()
     {
         var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
         await ArrayBindTest(_fixture.ConnectionString + "poolingEnabled=false", tableName, 7500).ConfigureAwait(false);
@@ -1039,7 +1039,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     }
 
     [SFFact]
-    public async Task testExecuteScalarAsyncSelect()
+    public async Task TestExecuteScalarAsyncSelect()
     {
         var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
         CancellationTokenSource externalCancel = new CancellationTokenSource();
@@ -1078,7 +1078,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     }
 
     [SFFact(SkipCondition.SkipOnCloudAWS | SkipCondition.SkipOnCloudAzure, RetriesCount = RetriesCount.Thrice)]
-    public async Task testExecuteLargeQueryWithGcsDownscopedToken()
+    public async Task TestExecuteLargeQueryWithGcsDownscopedToken()
     {
         using (var conn = new SnowflakeDbConnection())
         {

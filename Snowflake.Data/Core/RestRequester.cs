@@ -35,7 +35,7 @@ internal interface IRestRequester
 
 internal interface IMockRestRequester : IRestRequester
 {
-    void setHttpClient(HttpClient httpClient);
+    void SetHttpClient(HttpClient httpClient);
 }
 
 internal class RestRequester : IRestRequester

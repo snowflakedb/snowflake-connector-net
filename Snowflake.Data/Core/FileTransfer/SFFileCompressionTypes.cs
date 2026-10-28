@@ -89,7 +89,7 @@ internal class SFFileCompressionTypes
         /// </summary>
         /// <param name="header"></param>
         /// <returns></returns>
-        public bool matchMagicNumber(byte[] header)
+        public bool MatchMagicNumber(byte[] header)
         {
             if (MagicNumbers is { Length: > 0 })
                 foreach (byte[] m in MagicNumbers)
@@ -167,7 +167,7 @@ internal class SFFileCompressionTypes
 #endif
         stream.Position = 0;
 
-        var compType = compressionTypes.FirstOrDefault(x => x.matchMagicNumber(header));
+        var compType = compressionTypes.FirstOrDefault(x => x.MatchMagicNumber(header));
         return compType == default ? NONE : compType;
     }
 
@@ -186,7 +186,7 @@ internal class SFFileCompressionTypes
 
         foreach (var compType in compressionTypes)
         {
-            if (!compType.matchMagicNumber(header))
+            if (!compType.MatchMagicNumber(header))
                 continue;
 
             // Found the compression type for this file

@@ -23,7 +23,7 @@ class MockRemoteStorageClient
     [ThreadStatic] static string t_encryptedStreamIV = null;
     [ThreadStatic] static string t_encryptedStreamKey = null;
 
-    static internal void SetEncryptionData(Stream stream, string iv, string key)
+    internal static void SetEncryptionData(Stream stream, string iv, string key)
     {
         t_encryptedStream = stream;
         t_encryptedStreamIV = iv;
@@ -33,7 +33,7 @@ class MockRemoteStorageClient
     // Sets up the mock sequence when Remote Storage uploads a file
     // 1. Get the file header
     // 2. Upload the file
-    static internal HttpWebResponse SequenceResponseForUploadFile(ref bool firstRequest, HttpStatusCode statusCode, HttpStatusCode statusCodeAfterRetry)
+    internal static HttpWebResponse SequenceResponseForUploadFile(ref bool firstRequest, HttpStatusCode statusCode, HttpStatusCode statusCodeAfterRetry)
     {
         try
         {
@@ -53,7 +53,7 @@ class MockRemoteStorageClient
     }
 
     // Create a mock response for GetFileHeader
-    static internal HttpWebResponse CreateResponseForFileHeader(HttpStatusCode httpStatusCode)
+    internal static HttpWebResponse CreateResponseForFileHeader(HttpStatusCode httpStatusCode)
     {
         var response = new Mock<HttpWebResponse>();
 
@@ -74,7 +74,7 @@ class MockRemoteStorageClient
     }
 
     // Create a mock response for UploadFile
-    static internal HttpWebResponse CreateResponseForUploadFile(HttpStatusCode httpStatusCode)
+    internal static HttpWebResponse CreateResponseForUploadFile(HttpStatusCode httpStatusCode)
     {
         var response = new Mock<HttpWebResponse>();
 
@@ -89,7 +89,7 @@ class MockRemoteStorageClient
     }
 
     // Create a mock response for DownloadFile
-    static internal HttpWebResponse CreateResponseForDownloadFile(HttpStatusCode httpStatusCode)
+    internal static HttpWebResponse CreateResponseForDownloadFile(HttpStatusCode httpStatusCode)
     {
         var response = new Mock<HttpWebResponse>();
 

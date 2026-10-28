@@ -47,7 +47,7 @@ class SFBindUploader
         this.stagePath = "@" + STAGE_NAME + "/" + requestId;
     }
 
-    public string getStagePath()
+    public string GetStagePath()
     {
         return this.stagePath;
     }

@@ -46,7 +46,7 @@ class SFReusableChunk : BaseResultChunk
 
     public override UTF8Buffer ExtractCell(int columnIndex)
     {
-        return data.get(_currentRowIndex * ColumnCount + columnIndex);
+        return data.Get(_currentRowIndex * ColumnCount + columnIndex);
     }
 
     public void AddCell(string val)
@@ -57,7 +57,7 @@ class SFReusableChunk : BaseResultChunk
 
     public void AddCell(byte[] bytes, int length)
     {
-        data.add(bytes, length);
+        data.Add(bytes, length);
     }
 
     internal override bool Next()
@@ -103,7 +103,7 @@ class SFReusableChunk : BaseResultChunk
             currentDatOffset = 0;
             nextIndex = 0;
             this.blockCount = 1; // init with 1 block only
-            this.metaBlockCount = getMetaBlock(rowCount * colCount - 1) + 1;
+            this.metaBlockCount = GetMetaBlock(rowCount * colCount - 1) + 1;
         }
 
         internal void Clear()
@@ -126,10 +126,10 @@ class SFReusableChunk : BaseResultChunk
             nextIndex = 0;
         }
 
-        public UTF8Buffer get(int index)
+        public UTF8Buffer Get(int index)
         {
-            int block = getMetaBlock(index);
-            int blockIndex = getMetaBlockIndex(index);
+            int block = GetMetaBlock(index);
+            int blockIndex = GetMetaBlockIndex(index);
 
             if (block < 0 || block >= lengths.Count)
                 return null;
@@ -144,20 +144,20 @@ class SFReusableChunk : BaseResultChunk
             }
             else
             {
-                int offset = offsets[getMetaBlock(index)]
-                    [getMetaBlockIndex(index)];
+                int offset = offsets[GetMetaBlock(index)]
+                    [GetMetaBlockIndex(index)];
 
                 // Create string from the char arrays
-                if (spaceLeftOnBlock(offset) < length)
+                if (SpaceLeftOnBlock(offset) < length)
                 {
                     int copied = 0;
                     byte[] cell = new byte[length];
                     while (copied < length)
                     {
                         int copySize
-                            = Math.Min(length - copied, spaceLeftOnBlock(offset + copied));
-                        Array.Copy(data[getBlock(offset + copied)],
-                            getBlockOffset(offset + copied),
+                            = Math.Min(length - copied, SpaceLeftOnBlock(offset + copied));
+                        Array.Copy(data[GetBlock(offset + copied)],
+                            GetBlockOffset(offset + copied),
                             cell, copied,
                             copySize);
 
@@ -167,17 +167,17 @@ class SFReusableChunk : BaseResultChunk
                 }
                 else
                 {
-                    return new UTF8Buffer(data[getBlock(offset)], getBlockOffset(offset), length);
+                    return new UTF8Buffer(data[GetBlock(offset)], GetBlockOffset(offset), length);
                 }
             }
         }
 
-        public void add(byte[] bytes, int length)
+        public void Add(byte[] bytes, int length)
         {
             // check if a new block for data is needed
-            if (getBlock(currentDatOffset) == blockCount - 1)
+            if (GetBlock(currentDatOffset) == blockCount - 1)
             {
-                var neededSize = length - spaceLeftOnBlock(currentDatOffset);
+                var neededSize = length - SpaceLeftOnBlock(currentDatOffset);
                 while (neededSize >= 0)
                 {
                     blockCount++;
@@ -186,35 +186,35 @@ class SFReusableChunk : BaseResultChunk
             }
             if (data.Count < blockCount || offsets.Count < metaBlockCount)
             {
-                allocateArrays();
+                AllocateArrays();
             }
 
             if (bytes == null)
             {
-                lengths[getMetaBlock(nextIndex)]
-                    [getMetaBlockIndex(nextIndex)] = NULL_VALUE;
+                lengths[GetMetaBlock(nextIndex)]
+                    [GetMetaBlockIndex(nextIndex)] = NULL_VALUE;
             }
             else
             {
                 int offset = currentDatOffset;
 
                 // store offset and length
-                int block = getMetaBlock(nextIndex);
-                int index = getMetaBlockIndex(nextIndex);
+                int block = GetMetaBlock(nextIndex);
+                int index = GetMetaBlockIndex(nextIndex);
                 offsets[block][index] = offset;
                 lengths[block][index] = length;
 
                 // copy bytes to data array
                 int copied = 0;
-                if (spaceLeftOnBlock(offset) < length)
+                if (SpaceLeftOnBlock(offset) < length)
                 {
                     while (copied < length)
                     {
                         int copySize
-                            = Math.Min(length - copied, spaceLeftOnBlock(offset + copied));
+                            = Math.Min(length - copied, SpaceLeftOnBlock(offset + copied));
                         Array.Copy(bytes, copied,
-                            data[getBlock(offset + copied)],
-                            getBlockOffset(offset + copied),
+                            data[GetBlock(offset + copied)],
+                            GetBlockOffset(offset + copied),
                             copySize);
                         copied += copySize;
                     }
@@ -222,40 +222,40 @@ class SFReusableChunk : BaseResultChunk
                 else
                 {
                     Array.Copy(bytes, 0,
-                        data[getBlock(offset)],
-                        getBlockOffset(offset), length);
+                        data[GetBlock(offset)],
+                        GetBlockOffset(offset), length);
                 }
                 currentDatOffset += length;
             }
             nextIndex++;
         }
 
-        private static int getBlock(int offset)
+        private static int GetBlock(int offset)
         {
             return offset >> blockLengthBits;
         }
 
-        private static int getBlockOffset(int offset)
+        private static int GetBlockOffset(int offset)
         {
             return offset & (blockLength - 1);
         }
 
-        private static int spaceLeftOnBlock(int offset)
+        private static int SpaceLeftOnBlock(int offset)
         {
-            return blockLength - getBlockOffset(offset);
+            return blockLength - GetBlockOffset(offset);
         }
 
-        private static int getMetaBlock(int index)
+        private static int GetMetaBlock(int index)
         {
             return index >> metaBlockLengthBits;
         }
 
-        private static int getMetaBlockIndex(int index)
+        private static int GetMetaBlockIndex(int index)
         {
             return index & (metaBlockLength - 1);
         }
 
-        private void allocateArrays()
+        private void AllocateArrays()
         {
             while (data.Count < blockCount)
             {

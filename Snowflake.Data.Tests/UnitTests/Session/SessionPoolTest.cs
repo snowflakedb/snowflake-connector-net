@@ -329,7 +329,7 @@ public sealed class SessionPoolTest
         // arrange
         var connectionString = "account=testAccount;user=testUser;password=testPassword;";
         var session = CreateSessionWithCurrentStartTime(connectionString, new MockRestSessionExpired());
-        session.startHeartBeatForThisSession();
+        session.StartHeartBeatForThisSession();
         var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
         pool.SetTimeout(0);
         pool._idleSessions.Add(session);
@@ -347,7 +347,7 @@ public sealed class SessionPoolTest
         // arrange
         var connectionString = "account=testAccount;user=testUser;password=testPassword;";
         var session = CreateSessionWithCurrentStartTime(connectionString, new MockRestSessionExpired());
-        session.startHeartBeatForThisSession();
+        session.StartHeartBeatForThisSession();
         var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
         pool.SetTimeout(0);
         pool._idleSessions.Add(session);
@@ -373,7 +373,7 @@ public sealed class SessionPoolTest
         // arrange
         var connectionString = "account=testAccount;user=testUser;password=testPassword;";
         var session = CreateSessionWithCurrentStartTime(connectionString, new MockRestSessionExpired());
-        session.stopHeartBeatForThisSession();
+        session.StopHeartBeatForThisSession();
         var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
         pool.SetTimeout(0);
         pool._idleSessions.Add(session);

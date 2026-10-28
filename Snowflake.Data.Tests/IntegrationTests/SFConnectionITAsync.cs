@@ -758,7 +758,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         // one connection per second will be closed
         var connectionString = _fixture.ConnectionString + "maxPoolSize=20;ExpirationTimeout=5;CLIENT_SESSION_KEEP_ALIVE=true";
         // heart beat interval is validity/4 so send out per 5 seconds
-        HeartBeatBackground.setValidity(20);
+        HeartBeatBackground.SetValidity(20);
         try
         {
             for (int i = 0; i < connCount; i++)
@@ -772,7 +772,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
                 // roughly should only have 5 sessions in pool stay alive
                 // check for 10 in case of bad timing, also much less than the
                 // pool max size to ensure it's unpooled because of expire
-                Assert.True(HeartBeatBackground.getQueueLength() < 10);
+                Assert.True(HeartBeatBackground.GetQueueLength() < 10);
             }
         }
         catch

@@ -277,7 +277,7 @@ internal class SFSession
     internal SFSession(String connectionString, SessionPropertiesContext sessionContext, EasyLoggingStarter easyLoggingStarter, IMockRestRequester mockRestRequester) : this(connectionString, sessionContext, easyLoggingStarter)
     {
         // Inject the HttpClient to use with the Mock requester
-        mockRestRequester.setHttpClient(restRequester.GetHttpClient());
+        mockRestRequester.SetHttpClient(restRequester.GetHttpClient());
         // Override the Rest requester with the mock for testing
         restRequester = mockRestRequester;
     }
@@ -341,12 +341,12 @@ internal class SFSession
         await _authenticator.Value.AuthenticateAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    internal void close()
+    internal void Close()
     {
         // Nothing to do if the session is not open
         if (!IsEstablished()) return;
         logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
-        stopHeartBeatForThisSession();
+        StopHeartBeatForThisSession();
         SnowflakeTelemetryModule.Unregister(sessionId);
         var closeSessionRequest = PrepareCloseSessionRequest();
         PostCloseSession(closeSessionRequest, restRequester);
@@ -358,7 +358,7 @@ internal class SFSession
         // Nothing to do if the session is not open
         if (!IsEstablished()) return;
         logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
-        stopHeartBeatForThisSession();
+        StopHeartBeatForThisSession();
         var closeSessionRequest = PrepareCloseSessionRequest();
         Task.Run(() =>
         {
@@ -373,7 +373,7 @@ internal class SFSession
         // Nothing to do if the session is not open
         if (!IsEstablished()) return;
         logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
-        stopHeartBeatForThisSession();
+        StopHeartBeatForThisSession();
         await SnowflakeTelemetryModule.UnregisterAsync(sessionId, cancellationToken).ConfigureAwait(false);
         var closeSessionRequest = PrepareCloseSessionRequest();
 
@@ -425,10 +425,10 @@ internal class SFSession
 
     internal bool IsEstablished() => sessionToken != null;
 
-    internal void renewSession()
+    internal void RenewSession()
     {
         logger.Info("Renew the session.");
-        var response = restRequester.Post<RenewSessionResponse>(getRenewSessionRequest());
+        var response = restRequester.Post<RenewSessionResponse>(GetRenewSessionRequest());
         if (!response.success)
         {
             SnowflakeDbException e = new SnowflakeDbException("",
@@ -445,12 +445,12 @@ internal class SFSession
         }
     }
 
-    internal async Task renewSessionAsync(CancellationToken cancellationToken)
+    internal async Task RenewSessionAsync(CancellationToken cancellationToken)
     {
         logger.Info("Renew the session.");
         var response =
             await restRequester.PostAsync<RenewSessionResponse>(
-                getRenewSessionRequest(),
+                GetRenewSessionRequest(),
                 cancellationToken
             ).ConfigureAwait(false);
         if (!response.success)
@@ -468,7 +468,7 @@ internal class SFSession
         }
     }
 
-    internal SFRestRequest getRenewSessionRequest()
+    internal SFRestRequest GetRenewSessionRequest()
     {
         RenewSessionRequest postBody = new RenewSessionRequest()
         {
@@ -524,11 +524,11 @@ internal class SFSession
             bool keepAlive = Boolean.Parse(ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE].ToString());
             if (keepAlive)
             {
-                startHeartBeatForThisSession();
+                StartHeartBeatForThisSession();
             }
             else
             {
-                stopHeartBeatForThisSession();
+                StopHeartBeatForThisSession();
             }
         }
         if ((!_disableQueryContextCache) &&
@@ -650,7 +650,7 @@ internal class SFSession
 
     internal bool SessionPropertiesChanged => sessionPropertiesChanged;
 
-    internal void startHeartBeatForThisSession()
+    internal void StartHeartBeatForThisSession()
     {
         if (!this.isHeartBeatEnabled)
         {
@@ -661,16 +661,16 @@ internal class SFSession
                 var DEFAULT_TIMEOUT_IN_SECOND = 14400;
                 this.masterValidityInSeconds = DEFAULT_TIMEOUT_IN_SECOND;
             }
-            heartBeatBg.addConnection(this, this.masterValidityInSeconds);
+            heartBeatBg.AddConnection(this, this.masterValidityInSeconds);
             this.isHeartBeatEnabled = true;
         }
     }
-    internal void stopHeartBeatForThisSession()
+    internal void StopHeartBeatForThisSession()
     {
         if (this.isHeartBeatEnabled)
         {
             HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
-            heartBeatBg.removeConnection(this);
+            heartBeatBg.RemoveConnection(this);
             this.isHeartBeatEnabled = false;
         }
 
@@ -696,7 +696,7 @@ internal class SFSession
         this.arrayBindStageThreshold = arrayBindStageThreshold;
     }
 
-    internal void heartbeat()
+    internal void Heartbeat()
     {
         logger.Debug("heartbeat");
 
@@ -746,7 +746,7 @@ internal class SFSession
                         logger.Debug($"SFSession ::heartbeat Session ID: {sessionId} session token expired and retry heartbeat");
                         try
                         {
-                            renewSession();
+                            RenewSession();
                             retry = true;
                             continue;
                         }

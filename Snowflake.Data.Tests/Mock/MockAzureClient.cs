@@ -21,7 +21,7 @@ class MockAzureClient
     internal const int ContentLength = 9999;
 
     // Creates the Azure exception for mock requests
-    static internal Exception CreateMockAzureError(string key)
+    internal static Exception CreateMockAzureError(string key)
     {
         HttpStatusCode statusCode = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), key);
         RequestFailedException azureError = new RequestFailedException((int)statusCode, AzureErrorMessage);
@@ -30,7 +30,7 @@ class MockAzureClient
     }
 
     // Creates the Azure response for blob properties requests
-    static internal Response<BlobProperties> createMockResponseForBlobProperties(string key)
+    internal static Response<BlobProperties> CreateMockResponseForBlobProperties(string key)
     {
         if (key == HttpStatusCode.OK.ToString())
         {
@@ -65,7 +65,7 @@ class MockAzureClient
     }
 
     // Create the Azure response based for bloc content info requests
-    static internal Response<BlobContentInfo> createMockResponseForBlobContentInfo(string key)
+    internal static Response<BlobContentInfo> CreateMockResponseForBlobContentInfo(string key)
     {
         if (key == HttpStatusCode.OK.ToString())
         {

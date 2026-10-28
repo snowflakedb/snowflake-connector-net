@@ -22,7 +22,7 @@ public class SFSessionTest
         var restRequester = new MockSessionGone();
         SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
         sfSession.Open();
-        sfSession.close();
+        sfSession.Close();
     }
 
     [SFFact]
@@ -406,6 +406,6 @@ public class SFSessionTest
         session.Open();
 
         // act & assert
-        session.heartbeat();
+        session.Heartbeat();
     }
 }

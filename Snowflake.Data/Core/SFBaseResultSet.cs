@@ -74,7 +74,7 @@ abstract class SFBaseResultSet
 
     internal abstract string GetString(int ordinal);
 
-    internal void close()
+    internal void Close()
     {
         isClosed = true;
     }

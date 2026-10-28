@@ -505,7 +505,7 @@ public class SnowflakeDbCommand : DbCommand
         }
     }
 
-    private static Dictionary<string, BindingDTO> convertToBindList(List<SnowflakeDbParameter> parameters)
+    private static Dictionary<string, BindingDTO> ConvertToBindList(List<SnowflakeDbParameter> parameters)
     {
         if (parameters == null || parameters.Count == 0)
         {
@@ -594,14 +594,14 @@ public class SnowflakeDbCommand : DbCommand
     {
         CheckIfCommandTextIsSet();
         SetStatement();
-        return sfStatement.Execute(statementContext, convertToBindList(parameterCollection.parameterList));
+        return sfStatement.Execute(statementContext, ConvertToBindList(parameterCollection.parameterList));
     }
 
     private Task<SFBaseResultSet> ExecuteInternalAsync(StatementContext statementContext, CancellationToken cancellationToken)
     {
         CheckIfCommandTextIsSet();
         SetStatement();
-        return sfStatement.ExecuteAsync(statementContext, convertToBindList(parameterCollection.parameterList), cancellationToken);
+        return sfStatement.ExecuteAsync(statementContext, ConvertToBindList(parameterCollection.parameterList), cancellationToken);
     }
 
     private void CheckIfCommandTextIsSet()

@@ -116,7 +116,7 @@ public sealed class SFAzureClientTest
                     {
                         var mockBlobClient = new Mock<BlobClient>();
                         mockBlobClient.Setup(client => client.GetProperties(It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()))
-                            .Returns(() => MockAzureClient.createMockResponseForBlobProperties(key));
+                            .Returns(() => MockAzureClient.CreateMockResponseForBlobProperties(key));
 
                         return mockBlobClient.Object;
                     });
@@ -151,7 +151,7 @@ public sealed class SFAzureClientTest
                     {
                         var mockBlobClient = new Mock<BlobClient>();
                         mockBlobClient.Setup(client => client.GetPropertiesAsync(It.IsAny<BlobRequestConditions>(), It.IsAny<CancellationToken>()))
-                            .Returns(async () => await Task.Run(() => MockAzureClient.createMockResponseForBlobProperties(key)).ConfigureAwait(false));
+                            .Returns(async () => await Task.Run(() => MockAzureClient.CreateMockResponseForBlobProperties(key)).ConfigureAwait(false));
 
                         return mockBlobClient.Object;
                     });
@@ -208,7 +208,7 @@ public sealed class SFAzureClientTest
                     {
                         var mockBlobClient = new Mock<BlobClient>();
                         mockBlobClient.Setup(client => client.Upload(It.IsAny<Stream>(), It.IsAny<BlobUploadOptions>(), It.IsAny<CancellationToken>()))
-                            .Returns(() => MockAzureClient.createMockResponseForBlobContentInfo(key));
+                            .Returns(() => MockAzureClient.CreateMockResponseForBlobContentInfo(key));
 
                         return mockBlobClient.Object;
                     });
@@ -255,7 +255,7 @@ public sealed class SFAzureClientTest
                     {
                         var mockBlobClient = new Mock<BlobClient>();
                         mockBlobClient.Setup(client => client.UploadAsync(It.IsAny<Stream>(), It.IsAny<BlobUploadOptions>(), It.IsAny<CancellationToken>()))
-                            .Returns(async () => await Task.Run(() => MockAzureClient.createMockResponseForBlobContentInfo(key)).ConfigureAwait(false));
+                            .Returns(async () => await Task.Run(() => MockAzureClient.CreateMockResponseForBlobContentInfo(key)).ConfigureAwait(false));
 
                         return mockBlobClient.Object;
                     });

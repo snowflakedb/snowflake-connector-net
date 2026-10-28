@@ -24,7 +24,7 @@ class SFMultiStatementsResultSet : SFBaseResultSet
     {
         this.sfStatement = sfStatement;
         this.resultIds = responseData.resultIds.Split(',');
-        updateSessionStatus(responseData);
+        UpdateSessionStatus(responseData);
         queryId = responseData.queryId;
 
         NextResult();
@@ -67,7 +67,7 @@ class SFMultiStatementsResultSet : SFBaseResultSet
             curResultSet = null;
         }
 
-        updateResultMetadata();
+        UpdateResultMetadata();
         return curResultSet != null;
     }
 
@@ -82,7 +82,7 @@ class SFMultiStatementsResultSet : SFBaseResultSet
             curResultSet = null;
         }
 
-        updateResultMetadata();
+        UpdateResultMetadata();
         return (curResultSet != null);
     }
 
@@ -105,7 +105,7 @@ class SFMultiStatementsResultSet : SFBaseResultSet
         return curResultSet.Rewind();
     }
 
-    private void updateSessionStatus(QueryExecResponseData responseData)
+    private void UpdateSessionStatus(QueryExecResponseData responseData)
     {
         SFSession session = this.sfStatement.SfSession;
         session.UpdateSessionProperties(responseData);
@@ -113,7 +113,7 @@ class SFMultiStatementsResultSet : SFBaseResultSet
         session.UpdateQueryContextCache(responseData.QueryContext);
     }
 
-    private void updateResultMetadata()
+    private void UpdateResultMetadata()
     {
         if (curResultSet != null)
         {

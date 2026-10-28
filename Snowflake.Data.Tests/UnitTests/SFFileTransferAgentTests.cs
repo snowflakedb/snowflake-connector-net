@@ -178,8 +178,8 @@ public class SFFileTransferAgentTest : IDisposable
             _responseData);
 
         // Act
-        _fileTransferAgent.execute();
-        SFResultSet result = _fileTransferAgent.result();
+        _fileTransferAgent.Execute();
+        SFResultSet result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -205,8 +205,8 @@ public class SFFileTransferAgentTest : IDisposable
             _responseData);
 
         // Act
-        await _fileTransferAgent.executeAsync(CancellationToken.None).ConfigureAwait(false);
-        SFResultSet result = _fileTransferAgent.result();
+        await _fileTransferAgent.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
+        SFResultSet result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -235,8 +235,8 @@ public class SFFileTransferAgentTest : IDisposable
             new BorrowedMemoryStream(memoryStream, false));
 
         // Act
-        _fileTransferAgent.execute();
-        SFResultSet result = _fileTransferAgent.result();
+        _fileTransferAgent.Execute();
+        SFResultSet result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -262,8 +262,8 @@ public class SFFileTransferAgentTest : IDisposable
         );
 
         // Act
-        await _fileTransferAgent.executeAsync(CancellationToken.None).ConfigureAwait(false);
-        SFResultSet result = _fileTransferAgent.result();
+        await _fileTransferAgent.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
+        SFResultSet result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -288,8 +288,8 @@ public class SFFileTransferAgentTest : IDisposable
         );
 
         // Act
-        _fileTransferAgent.execute();
-        SFResultSet result = _fileTransferAgent.result();
+        _fileTransferAgent.Execute();
+        SFResultSet result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -319,8 +319,8 @@ public class SFFileTransferAgentTest : IDisposable
         );
 
         // Act
-        _fileTransferAgent.execute();
-        SFResultSet result = _fileTransferAgent.result();
+        _fileTransferAgent.Execute();
+        SFResultSet result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -351,8 +351,8 @@ public class SFFileTransferAgentTest : IDisposable
             mockEnv.Object);
 
         // Act
-        _fileTransferAgent.execute();
-        SFResultSet result = _fileTransferAgent.result();
+        _fileTransferAgent.Execute();
+        SFResultSet result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert - compression still happens but via temp files, not in-memory
@@ -385,8 +385,8 @@ public class SFFileTransferAgentTest : IDisposable
             mockEnv.Object);
 
         // Act
-        _fileTransferAgent.execute();
-        var result = _fileTransferAgent.result();
+        _fileTransferAgent.Execute();
+        var result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert — dest (compressed) must be smaller than source (raw)
@@ -428,8 +428,8 @@ public class SFFileTransferAgentTest : IDisposable
             new BorrowedMemoryStream(memoryStream, false));
 
         // Act
-        _fileTransferAgent.execute();
-        var result = _fileTransferAgent.result();
+        _fileTransferAgent.Execute();
+        var result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert - only the file name (not the directory) is preserved with "stream." prefix
@@ -455,8 +455,8 @@ public class SFFileTransferAgentTest : IDisposable
             new BorrowedMemoryStream(memoryStream, true));
 
         // Act
-        _fileTransferAgent.execute();
-        var result = _fileTransferAgent.result();
+        _fileTransferAgent.Execute();
+        var result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -489,8 +489,8 @@ public class SFFileTransferAgentTest : IDisposable
             new BorrowedMemoryStream(gzippedStream, false));
 
         // Act
-        _fileTransferAgent.execute();
-        var result = _fileTransferAgent.result();
+        _fileTransferAgent.Execute();
+        var result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert - caller's stream must not be disposed
@@ -532,8 +532,8 @@ public class SFFileTransferAgentTest : IDisposable
         );
 
         // Act
-        _fileTransferAgent.execute();
-        SFResultSet result = _fileTransferAgent.result();
+        _fileTransferAgent.Execute();
+        SFResultSet result = _fileTransferAgent.Result();
 
         // Assert
         for (int index = 0; index < numberOfFiles; index++)
@@ -582,8 +582,8 @@ public class SFFileTransferAgentTest : IDisposable
         );
 
         // Act
-        _fileTransferAgent.execute();
-        SFResultSet result = _fileTransferAgent.result();
+        _fileTransferAgent.Execute();
+        SFResultSet result = _fileTransferAgent.Result();
 
         // Assert
         for (int i = 0; i < numberOfDirectories; i++)
@@ -633,8 +633,8 @@ public class SFFileTransferAgentTest : IDisposable
         );
 
         // Act
-        _fileTransferAgent.execute();
-        SFResultSet result = _fileTransferAgent.result();
+        _fileTransferAgent.Execute();
+        SFResultSet result = _fileTransferAgent.Result();
 
         // Assert
         for (int i = 0; i < numberOfDirectories; i++)
@@ -687,7 +687,7 @@ public class SFFileTransferAgentTest : IDisposable
         );
 
         // Act
-        SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.execute());
+        SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.Execute());
 
         // Assert
         Assert.Equal(_responseData.queryId, ex.QueryId);
@@ -725,8 +725,8 @@ public class SFFileTransferAgentTest : IDisposable
         );
 
         // Act
-        _fileTransferAgent.execute();
-        SFResultSet result = _fileTransferAgent.result();
+        _fileTransferAgent.Execute();
+        SFResultSet result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -750,8 +750,8 @@ public class SFFileTransferAgentTest : IDisposable
         );
 
         // Act
-        await _fileTransferAgent.executeAsync(CancellationToken.None).ConfigureAwait(false);
-        SFResultSet result = _fileTransferAgent.result();
+        await _fileTransferAgent.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
+        SFResultSet result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -782,7 +782,7 @@ public class SFFileTransferAgentTest : IDisposable
         );
 
         // Act
-        SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.execute());
+        SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.Execute());
 
         // Assert
         Assert.Equal(_responseData.queryId, ex.QueryId);
@@ -814,7 +814,7 @@ public class SFFileTransferAgentTest : IDisposable
         );
 
         // Act
-        SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.execute());
+        SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.Execute());
 
         // Assert
         Assert.Equal(_responseData.queryId, ex.QueryId);
@@ -851,7 +851,7 @@ public class SFFileTransferAgentTest : IDisposable
 
     private void TestGetFilePathFromPutCommand(string query, string expectedFilePath)
     {
-        var actualFilePath = SFFileTransferAgent.getFilePathFromPutCommand(query);
+        var actualFilePath = SFFileTransferAgent.GetFilePathFromPutCommand(query);
         Assert.Equal(expectedFilePath, actualFilePath);
     }
 }

@@ -162,7 +162,7 @@ class SFGCSClient : ISFRemoteStorageClient
     internal WebRequest FormBaseRequest(SFFileMetadata fileMetadata, string method)
     {
         string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
-            generateFileURL(fileMetadata.stageInfo, fileMetadata.RemoteFileName()) :
+            GenerateFileUrl(fileMetadata.stageInfo, fileMetadata.RemoteFileName()) :
             fileMetadata.presignedUrl;
 
 #pragma warning disable SYSLIB0014 // TODO SNOW-3662960
@@ -200,7 +200,7 @@ class SFGCSClient : ISFRemoteStorageClient
 
             using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
             {
-                return handleGetFileHeaderResponse(response, fileMetadata);
+                return HandleGetFileHeaderResponse(response, fileMetadata);
             }
         }
         catch (WebException ex)
@@ -240,7 +240,7 @@ class SFGCSClient : ISFRemoteStorageClient
 
             using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
             {
-                return handleGetFileHeaderResponse(response, fileMetadata);
+                return HandleGetFileHeaderResponse(response, fileMetadata);
             }
         }
         catch (WebException ex)
@@ -254,7 +254,7 @@ class SFGCSClient : ISFRemoteStorageClient
         return null;
     }
 
-    internal FileHeader handleGetFileHeaderResponse(HttpWebResponse response, SFFileMetadata fileMetadata)
+    internal FileHeader HandleGetFileHeaderResponse(HttpWebResponse response, SFFileMetadata fileMetadata)
     {
         var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
         var contentLength = response.Headers.GetValues("content-length");
@@ -268,7 +268,7 @@ class SFGCSClient : ISFRemoteStorageClient
         };
     }
 
-    internal string generateFileURL(PutGetStageInfo stageInfo, string fileName)
+    internal string GenerateFileUrl(PutGetStageInfo stageInfo, string fileName)
     {
         var storageHostPath = ExtractStorageHostPath(stageInfo);
         var gcsLocation = ExtractBucketNameAndPath(stageInfo.location);

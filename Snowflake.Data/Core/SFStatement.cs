@@ -318,7 +318,7 @@ class SFStatement
     /// </summary>
     /// <param name="timeout">query timeout. 0 means no timeout</param>
     /// <param name="externalCancellationToken">cancellation token from upper layer</param>
-    private void registerQueryCancellationCallback(int timeout, CancellationToken externalCancellationToken)
+    private void RegisterQueryCancellationCallback(int timeout, CancellationToken externalCancellationToken)
     {
         SetTimeout(timeout);
         _linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_timeoutTokenSource.Token,
@@ -348,7 +348,7 @@ class SFStatement
         if (IsPutOrGetCommand(trimmedSql))
             throw new NotImplementedException("Get and Put are not supported in async calls.  Use Execute() instead of ExecuteAsync().");
 
-        registerQueryCancellationCallback(statementContext.CommandTimeout, cancellationToken);
+        RegisterQueryCancellationCallback(statementContext.CommandTimeout, cancellationToken);
         var linkedToken = _linkedCancellationTokenSource.Token;
 
         var arrayBindingThreshold = 0;
@@ -369,7 +369,7 @@ class SFStatement
                 AssignQueryRequestId();
                 SFBindUploader uploader = new SFBindUploader(SfSession, _requestId);
                 await uploader.UploadAsync(bindings, linkedToken).ConfigureAwait(false);
-                _bindStage = uploader.getStagePath();
+                _bindStage = uploader.GetStagePath();
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -483,13 +483,13 @@ class SFStatement
                 : new SFFileTransferAgent(trimmedSql, SfSession, response.data);
 
             // Start the file transfer
-            fileTransferAgent.execute();
+            fileTransferAgent.Execute();
 
             if (response.data != null)
                 _lastQueryId = response.data.queryId;
 
             // Get the results of the upload/download
-            return fileTransferAgent.result();
+            return fileTransferAgent.Result();
         }
         catch (SnowflakeDbException ex)
         {
@@ -538,7 +538,7 @@ class SFStatement
                     AssignQueryRequestId();
                     var uploader = new SFBindUploader(SfSession, _requestId);
                     uploader.Upload(bindings);
-                    _bindStage = uploader.getStagePath();
+                    _bindStage = uploader.GetStagePath();
                 }
                 // A rejected TLS configuration is not a reason to fall back to binds in the
                 // payload - that would silently drop the requested TLS restriction.
@@ -688,7 +688,7 @@ class SFStatement
         where TResponse : BaseQueryExecResponse<TResponseData>
         where TResponseData : IQueryExecResponseData
     {
-        registerQueryCancellationCallback(statementContext.CommandTimeout, CancellationToken.None);
+        RegisterQueryCancellationCallback(statementContext.CommandTimeout, CancellationToken.None);
 
         string queryId = null;
         try
@@ -776,7 +776,7 @@ class SFStatement
         where T : BaseQueryExecResponse<U>
         where U : IQueryExecResponseData
     {
-        registerQueryCancellationCallback(statementContext.CommandTimeout, cancellationToken);
+        RegisterQueryCancellationCallback(statementContext.CommandTimeout, cancellationToken);
         var linkedToken = _linkedCancellationTokenSource.Token;
 
         string queryId = null;
@@ -1091,9 +1091,9 @@ class SFStatement
             null);
 
         var fileTransferAgent = new SFFileTransferAgent(sql, SfSession, response.data, new BorrowedMemoryStream(_uploadStream, true));
-        fileTransferAgent.execute();
+        fileTransferAgent.Execute();
 
-        return fileTransferAgent.result();
+        return fileTransferAgent.Result();
     }
 
     internal async Task<SFBaseResultSet> ExecuteTransferAsync(string sql, CancellationToken cancellationToken)
@@ -1106,9 +1106,9 @@ class SFStatement
                 cancellationToken).ConfigureAwait(false);
 
         var fileTransferAgent = new SFFileTransferAgent(sql, SfSession, response.data, new BorrowedMemoryStream(_uploadStream, true));
-        fileTransferAgent.execute();
+        fileTransferAgent.Execute();
 
-        return fileTransferAgent.result();
+        return fileTransferAgent.Result();
     }
 
     internal string GetQueryId() => _lastQueryId;
@@ -1148,7 +1148,7 @@ class SFStatement
 
         if (!response.IsSessionExpired()) return false;
         _logger.Info("Request failed with session expired, trying to renew the session.");
-        await SfSession.renewSessionAsync(cancellationToken).ConfigureAwait(false);
+        await SfSession.RenewSessionAsync(cancellationToken).ConfigureAwait(false);
 
         return true;
     }
@@ -1161,7 +1161,7 @@ class SFStatement
 
         if (!response.IsSessionExpired()) return false;
         _logger.Info("Request failed with session expired, trying to renew the session.");
-        SfSession.renewSession();
+        SfSession.RenewSession();
 
         return true;
     }

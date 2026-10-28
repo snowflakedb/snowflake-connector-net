@@ -128,7 +128,7 @@ internal class HttpClientConfig
 
 internal sealed class HttpUtil
 {
-    static internal readonly int MAX_BACKOFF = 16;
+    internal static readonly int MAX_BACKOFF = 16;
     private static readonly int s_baseBackOffTime = 1;
     private static readonly int s_exponentialFactor = 2;
     private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
@@ -699,7 +699,7 @@ internal sealed class HttpUtil
         /// </summary>
         interface IRule
         {
-            void apply(NameValueCollection queryParams);
+            void Apply(NameValueCollection queryParams);
         }
 
         /// <summary>
@@ -714,7 +714,7 @@ internal sealed class HttpUtil
                 retryCount = 1;
             }
 
-            void IRule.apply(NameValueCollection queryParams)
+            void IRule.Apply(NameValueCollection queryParams)
             {
                 if (retryCount == 1)
                 {
@@ -734,7 +734,7 @@ internal sealed class HttpUtil
         /// </summary>
         class RequestUUIDRule : IRule
         {
-            void IRule.apply(NameValueCollection queryParams)
+            void IRule.Apply(NameValueCollection queryParams)
             {
                 queryParams.Set(RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString());
             }
@@ -757,7 +757,7 @@ internal sealed class HttpUtil
                 _retryReason = reason;
             }
 
-            void IRule.apply(NameValueCollection queryParams)
+            void IRule.Apply(NameValueCollection queryParams)
             {
                 var retryCode = ((int)_retryReason).ToString();
                 queryParams.Set(RestParams.SF_QUERY_RETRY_REASON, retryCode);
@@ -819,7 +819,7 @@ internal sealed class HttpUtil
                     ((RetryReasonRule)rule).SetRetryReason(retryReason);
                 }
 
-                rule.apply(queryParams);
+                rule.Apply(queryParams);
             }
 
             uriBuilder.Query = queryParams.ToString();
@@ -1075,7 +1075,7 @@ internal sealed class HttpUtil
     internal static Exception UnpackAggregateException(Exception exception) =>
         exception is AggregateException ? ((AggregateException)exception).InnerException : exception;
 
-    static private Exception GetInnerMostException(Exception exception)
+    private static Exception GetInnerMostException(Exception exception)
     {
         var innermostException = exception;
         while (innermostException.InnerException != null && innermostException != innermostException.InnerException)
@@ -1182,7 +1182,7 @@ internal sealed class HttpUtil
     /// </summary>
     /// <param name="curWaitTime">The current retry backoff time.</param>
     /// <returns>The new jitter amount.</returns>
-    static internal double GetJitter(double curWaitTime)
+    internal static double GetJitter(double curWaitTime)
     {
         double multiplicationFactor = ChooseRandom(-1, 1);
         double jitterAmount = 0.5 * curWaitTime * multiplicationFactor;
@@ -1207,7 +1207,7 @@ internal sealed class HttpUtil
     /// </summary>
     /// <param name="endpoint">The endpoint to check.</param>
     /// <returns>True if the endpoint is a login request, false otherwise.</returns>
-    static internal bool IsLoginEndpoint(string endpoint)
+    internal static bool IsLoginEndpoint(string endpoint)
     {
         return null != s_supportedEndpointsForRetryPolicy.FirstOrDefault(ep => endpoint.Equals(ep));
     }
@@ -1218,7 +1218,7 @@ internal sealed class HttpUtil
     /// <param name="host">The host url to check.</param>
     /// <param name="endpoint">The endpoint to check.</param>
     /// <returns>True if the endpoint is an okta sso saml request, false otherwise.</returns>
-    static internal bool IsOktaSSORequest(string host, string endpoint)
+    internal static bool IsOktaSSORequest(string host, string endpoint)
     {
         return host.Contains(OktaUrl.DOMAIN) && endpoint.Contains(OktaUrl.SSO_SAML_PATH);
     }

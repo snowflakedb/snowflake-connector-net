@@ -20,7 +20,7 @@ internal abstract class MockBaseRestRequester : IMockRestRequester
 
     public virtual HttpResponseMessage Get(IRestRequest request) => null;
 
-    public virtual void setHttpClient(HttpClient httpClient) { }
+    public virtual void SetHttpClient(HttpClient httpClient) { }
 
     public virtual HttpClient GetHttpClient() => null;
 }

@@ -78,7 +78,7 @@ public class QueryContextCacheTest
         Assert.True(size == MaxCapacity);
 
         // Compare elements
-        SortedSet<QueryContextElement> elements = _qcc.getElements();
+        SortedSet<QueryContextElement> elements = _qcc.GetElements();
         int i = 0;
         foreach (QueryContextElement elem in elements)
         {

@@ -220,7 +220,7 @@ internal class QueryContextCache
      *
      * @return TreeSet containing cache elements
      */
-    public SortedSet<QueryContextElement> getElements()
+    public SortedSet<QueryContextElement> GetElements()
     {
         return _cacheSet;
     }

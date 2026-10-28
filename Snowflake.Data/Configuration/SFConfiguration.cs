@@ -13,7 +13,7 @@ public class SFConfiguration
         ChunkParserVersion = 3;
     }
 
-    private readonly static SFConfiguration Config = new();
+    private static readonly SFConfiguration Config = new();
 
     public static SFConfiguration Instance()
     {

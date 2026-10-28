@@ -37,7 +37,7 @@ internal sealed class MockHangingQueryRestRequester : IMockRestRequester, IDispo
     /// <summary>The cancel request captured by <see cref="Post{T}"/>, for asserting RestTimeout etc.</summary>
     internal SFRestRequest LastCancelRequest { get; private set; }
 
-    public void setHttpClient(HttpClient httpClient)
+    public void SetHttpClient(HttpClient httpClient)
     {
         _inner = new RestRequester(httpClient);
     }

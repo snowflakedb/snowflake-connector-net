@@ -105,7 +105,7 @@ sealed class SessionPool : IDisposable
                     _idleSessions.Remove(item);
                     try
                     {
-                        Task.Run(() => item.close());
+                        Task.Run(() => item.Close());
                     }
                     catch (Exception ex)
                     {
@@ -384,21 +384,21 @@ sealed class SessionPool : IDisposable
                         s_logger.Debug($"keep alive enabled: renewing session {session.sessionId}{PoolIdentification()}");
                         try
                         {
-                            session.renewSession();
+                            session.RenewSession();
                             _busySessionsCounter.Increase();
                             return session;
                         }
                         catch (Exception e)
                         {
                             s_logger.Error($"failed to renew session {session.sessionId}{PoolIdentification()} due to error: {e.Message}");
-                            Task.Run(() => session.close());
+                            Task.Run(() => session.Close());
                             i--;
                         }
                     }
                     else
                     {
                         s_logger.Debug($"keep alive disabled: closing the expired session {session.sessionId}{PoolIdentification()}");
-                        Task.Run(() => session.close());
+                        Task.Run(() => session.Close());
                         i--;
                     }
                 }
@@ -662,7 +662,7 @@ sealed class SessionPool : IDisposable
         {
             try
             {
-                session.close();
+                session.Close();
             }
             catch (Exception ex)
             {

@@ -77,7 +77,7 @@ class EncryptionProvider
             transferConfiguration);
 
         // Encrypt file key
-        byte[] encryptedFileKey = encryptFileKey(decodedMasterKey, keyData);
+        byte[] encryptedFileKey = EncryptFileKey(decodedMasterKey, keyData);
 
         // Store encryption metadata information
         MaterialDescriptor matDesc = new MaterialDescriptor
@@ -103,7 +103,7 @@ class EncryptionProvider
     /// <param name="masterKey">The key to use for encryption.</param>
     /// <param name="unencryptedFileKey">The file key to encrypt.</param>
     /// <returns>The encrypted key.</returns>
-    private static byte[] encryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
+    private static byte[] EncryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
     {
         using (Aes aes = Aes.Create())
         {
@@ -195,7 +195,7 @@ class EncryptionProvider
         string tempFileName = Path.Combine(TempUtil.GetTempPath(), Path.GetFileName(inFile));
 
         // Create decipher with file key, iv bytes, and AES CBC
-        byte[] decryptedFileKey = decryptFileKey(decodedMasterKey, keyBytes);
+        byte[] decryptedFileKey = DecryptFileKey(decodedMasterKey, keyBytes);
 
         // Create key decipher with decoded key and AES ECB
         using (var decryptedBytesStreamPair = CreateDecryptedBytesStream(
@@ -220,7 +220,7 @@ class EncryptionProvider
     /// <param name="masterKey">The key to use for encryption.</param>
     /// <param name="unencryptedFileKey">The file key to encrypt.</param>
     /// <returns>The encrypted key.</returns>
-    private static byte[] decryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
+    private static byte[] DecryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
     {
         using (Aes aes = Aes.Create())
         {

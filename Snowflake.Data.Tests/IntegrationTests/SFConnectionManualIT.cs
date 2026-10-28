@@ -1028,7 +1028,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
     }
 
     [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
-    public async Task testMulitpleConnectionInParallel()
+    public async Task TestMulitpleConnectionInParallel()
     {
         string baseConnectionString = _fixture.ConnectionString + $";CONNECTION_TIMEOUT=30;";
         string authenticatedProxy = String.Format("useProxy =true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};",
