@@ -95,9 +95,11 @@ internal sealed class SFEnvironment
             libcVersion = libcInfo.Version,
         };
 
-        DriverVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        DriverVersion = FormatDriverVersion(Assembly.GetExecutingAssembly().GetName().Version);
         DriverName = ".NET";
     }
+
+    internal static string FormatDriverVersion(Version version) => version.ToString(3);
 
     //temporary change for pretend as ODBC
     internal static string DriverName { get; set; }

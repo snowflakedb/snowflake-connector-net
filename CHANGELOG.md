@@ -2,6 +2,7 @@
 
 # Changelog
 - Upcoming release
+  - Bug fix: `CLIENT_APP_VERSION` / `SFEnvironment.DriverVersion` now always reports a 3-part `Major.Minor.Patch` string so `ACCOUNT_USAGE.SESSIONS` matches `SYSTEM$CLIENT_VERSION_INFO()`. (SNOW-1041547)
   - Bug fix: GET file decryption now disposes the intermediate decrypt stream when decryption fails, so any spilled temporary file is deleted immediately. (SNOW-1900757)
 - v6.4.0
   - Added `LOG_QUERY_TEXT`, `LOG_QUERY_PARAMETERS`, and `LOG_MAX_QUERY_LENGTH` connection string properties for opt-in query text and bind parameter logging. When enabled, SQL query text and/or parameter values are logged at INFO level before each query execution. Configurable via connection string, TOML config, or programmatically via `SnowflakeDbLoggerConfig.SetLogQueryText()`, `SetLogQueryParameters()`, and `SetLogMaxQueryLength()`. All logged content passes through the driver's secret masking pipeline.

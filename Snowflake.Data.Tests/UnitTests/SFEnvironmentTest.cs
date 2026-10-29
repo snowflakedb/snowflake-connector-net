@@ -222,6 +222,32 @@ public sealed class SFEnvironmentTest
         }
     }
 
+    [SFFact]
+    public void TestFormatDriverVersionStrips4PartTo3Part()
+    {
+        Assert.Equal("2.0.8", SFEnvironment.FormatDriverVersion(new Version(2, 0, 8, 0)));
+    }
+
+    [SFFact]
+    public void TestFormatDriverVersionPreserves3Part()
+    {
+        Assert.Equal("6.4.0", SFEnvironment.FormatDriverVersion(new Version(6, 4, 0)));
+    }
+
+    [SFFact]
+    public void TestDriverVersionMatchesThreePartFormat()
+    {
+        Assert.Matches(@"^\d+\.\d+\.\d+$", SFEnvironment.DriverVersion);
+    }
+
+    [SFFact]
+    public void TestDriverVersionMatchesAssemblyVersion()
+    {
+        var expected = SFEnvironment.FormatDriverVersion(
+            typeof(SFEnvironment).Assembly.GetName().Version);
+        Assert.Equal(expected, SFEnvironment.DriverVersion);
+    }
+
     private BaseAuthenticator CreateAuthenticator(string connectionString)
     {
         var session = new SFSession(connectionString, new SessionPropertiesContext());
