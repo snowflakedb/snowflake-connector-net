@@ -548,9 +548,9 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
     [InlineData("9999-12-30 23:59:59.9999999", 5)]
     [InlineData("1982-01-18 16:20:00.6666666", null)]
     [InlineData("1982-01-18 16:20:00.6666666", 3)]
-    //[InlineData("1969-07-21 02:56:15.1234567", null)] //parsing fails with dates with second fractions before the unix epoch
-    [InlineData("1969-07-21 02:56:15.0000000", 1)] //dates w/o second fractions before the unix epoch are fine
-    //[InlineData("1900-09-03 12:12:12.1212121", null)] // fails
+    [InlineData("1969-07-21 02:56:15.1234567", null)]
+    [InlineData("1969-07-21 02:56:15.0000000", 1)]
+    [InlineData("1900-09-03 12:12:12.1212121", null)]
     [InlineData("1900-09-03 12:12:12.0000000", 1)]
     public async Task TestGetTimestampNTZ(string inputTimeStr, int? precision)
     {
