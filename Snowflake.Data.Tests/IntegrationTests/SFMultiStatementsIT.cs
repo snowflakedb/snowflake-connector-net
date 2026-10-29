@@ -730,4 +730,80 @@ public abstract class SFMultiStatementsIT : SFBaseTestAsync
             await conn.CloseAsync().ConfigureAwait(false);
         }
     }
+
+    [SFFact]
+    public async Task TestMultipleUseStatements()
+    {
+        using (var conn = new SnowflakeDbConnection())
+        {
+            conn.ConnectionString = _fixture.ConnectionString;
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
+
+            var cmd = conn.CreateCommand();
+            var param = cmd.CreateParameter();
+            param.ParameterName = "MULTI_STATEMENT_COUNT";
+            param.DbType = DbType.Int16;
+            param.Value = 3;
+            cmd.Parameters.Add(param);
+            cmd.CommandText = $"use schema {_fixture.testConfig.schema}; use schema {_fixture.testConfig.schema}; select 1";
+            var reader = cmd.ExecuteReader();
+
+            Assert.True(reader.HasRows);
+            Assert.Equal(0, reader.RecordsAffected);
+
+            Assert.True(reader.NextResult());
+            Assert.True(reader.HasRows);
+            Assert.Equal(0, reader.RecordsAffected);
+
+            Assert.True(reader.NextResult());
+            Assert.True(reader.Read());
+            Assert.Equal(1, reader.GetInt32(0));
+            Assert.False(reader.Read());
+
+            Assert.False(reader.NextResult());
+
+            reader.Close();
+            await conn.CloseAsync().ConfigureAwait(false);
+        }
+    }
+
+    [SFFact]
+    public async Task TestSelectWithMultiStatementCountZero()
+    {
+        using (var conn = new SnowflakeDbConnection())
+        {
+            conn.ConnectionString = _fixture.ConnectionString;
+            await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+            SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
+
+            var cmd = conn.CreateCommand();
+            var param = cmd.CreateParameter();
+            param.ParameterName = "MULTI_STATEMENT_COUNT";
+            param.DbType = DbType.Int16;
+            param.Value = 0;
+            cmd.Parameters.Add(param);
+            cmd.CommandText = "select 1; select 2; select 3";
+            var reader = cmd.ExecuteReader();
+
+            Assert.True(reader.Read());
+            Assert.Equal(1, reader.GetInt32(0));
+            Assert.False(reader.Read());
+
+            Assert.True(reader.NextResult());
+            Assert.True(reader.Read());
+            Assert.Equal(2, reader.GetInt32(0));
+            Assert.False(reader.Read());
+
+            Assert.True(reader.NextResult());
+            Assert.True(reader.Read());
+            Assert.Equal(3, reader.GetInt32(0));
+            Assert.False(reader.Read());
+
+            Assert.False(reader.NextResult());
+
+            reader.Close();
+            await conn.CloseAsync().ConfigureAwait(false);
+        }
+    }
 }
