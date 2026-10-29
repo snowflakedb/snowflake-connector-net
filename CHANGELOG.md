@@ -1,6 +1,8 @@
 #### For the official .NET Release Notes please refer to https://docs.snowflake.com/en/release-notes/clients-drivers/dotnet
 
 # Changelog
+- Upcoming release
+  - Bug fix: GET file decryption now disposes the intermediate decrypt stream when decryption fails, so any spilled temporary file is deleted immediately. (SNOW-1900757)
 - v6.4.0
   - Added `LOG_QUERY_TEXT`, `LOG_QUERY_PARAMETERS`, and `LOG_MAX_QUERY_LENGTH` connection string properties for opt-in query text and bind parameter logging. When enabled, SQL query text and/or parameter values are logged at INFO level before each query execution. Configurable via connection string, TOML config, or programmatically via `SnowflakeDbLoggerConfig.SetLogQueryText()`, `SetLogQueryParameters()`, and `SetLogMaxQueryLength()`. All logged content passes through the driver's secret masking pipeline.
   - `SaveCredentials` in the Windows Credential Manager backend now validates the token size against the OS-imposed 2560-byte blob limit before writing and checks the `CredWrite` return value after writing. Previously, an oversized or otherwise rejected token was silently discarded, causing the browser OAuth flow to re-prompt on restart. (SNOW-4199956)

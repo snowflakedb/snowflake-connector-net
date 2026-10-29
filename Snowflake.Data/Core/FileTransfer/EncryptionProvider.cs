@@ -263,20 +263,31 @@ class EncryptionProvider
             var targetStream = transferConfiguration.MaxBytesInMemory == -1
                 ? (Stream)new MemoryStream()
                 : new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir);
-            using (var decryptor = aes.CreateDecryptor())
-            {
-                CryptoStream cryptoStream = new CryptoStream(targetStream, decryptor, CryptoStreamMode.Write);
-                using (Stream inStream = File.OpenRead(inFile))
-                {
-                    inStream.CopyTo(cryptoStream);
-                }
-                cryptoStream.FlushFinalBlock();
 
-                return new StreamPair
+            // On success, ownership of targetStream transfers to the caller (via StreamPair).
+            // On failure, we must dispose it here to delete any FileBackedOutputStream spill file.
+            try
+            {
+                using (var decryptor = aes.CreateDecryptor())
                 {
-                    MainStream = targetStream,
-                    HelperStream = cryptoStream // cryptoStream cannot be closed here because it would close target stream as well
-                };
+                    CryptoStream cryptoStream = new CryptoStream(targetStream, decryptor, CryptoStreamMode.Write);
+                    using (Stream inStream = File.OpenRead(inFile))
+                    {
+                        inStream.CopyTo(cryptoStream);
+                    }
+                    cryptoStream.FlushFinalBlock();
+
+                    return new StreamPair
+                    {
+                        MainStream = targetStream,
+                        HelperStream = cryptoStream // cryptoStream cannot be closed here because it would close target stream as well
+                    };
+                }
+            }
+            catch
+            {
+                targetStream.Dispose();
+                throw;
             }
         }
     }

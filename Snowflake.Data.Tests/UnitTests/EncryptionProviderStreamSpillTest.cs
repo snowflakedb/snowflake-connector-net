@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using Xunit;
 using Snowflake.Data.Core;
@@ -111,6 +112,57 @@ public sealed class EncryptionProviderStreamSpillTest
         finally
         {
             File.Delete(tmpFile);
+        }
+    }
+
+    [SFFact]
+    public void TestCbcDecryptErrorRemovesSpilledTemporaryFile()
+    {
+        // arrange
+        var spillDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(spillDir);
+        var inputFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        try
+        {
+            var config = new FileTransferConfiguration
+            {
+                TempDir = spillDir,
+                MaxBytesInMemory = 16
+            };
+            var encryptionMetadata = new SFEncryptionMetadata();
+            byte[] encrypted;
+            using (var result = EncryptionProvider.EncryptStream(
+                       new MemoryStream(s_plainTextBytes),
+                       s_encryptionMaterial,
+                       encryptionMetadata,
+                       config))
+            {
+                result.MainStream.Position = 0;
+                using var encryptedCopy = new MemoryStream();
+                result.MainStream.CopyTo(encryptedCopy);
+                encrypted = encryptedCopy.ToArray();
+            }
+
+            encrypted[encrypted.Length - 1] ^= 0xFF;
+            File.WriteAllBytes(inputFile, encrypted);
+
+            // act
+            Assert.ThrowsAny<CryptographicException>(() =>
+                EncryptionProvider.DecryptFile(inputFile, s_encryptionMaterial, encryptionMetadata, config));
+
+            // assert — FileBackedOutputStream spill files must be deleted on decrypt failure
+            Assert.Empty(Directory.GetFiles(spillDir, "FileBackedOutputStream_*"));
+        }
+        finally
+        {
+            if (File.Exists(inputFile))
+            {
+                File.Delete(inputFile);
+            }
+            if (Directory.Exists(spillDir))
+            {
+                Directory.Delete(spillDir, true);
+            }
         }
     }
 
