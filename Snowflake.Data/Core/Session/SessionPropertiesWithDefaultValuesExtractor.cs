@@ -23,7 +23,7 @@ internal class SessionPropertiesWithDefaultValuesExtractor
     public bool ExtractBooleanWithDefaultValue(SFSessionProperty property) =>
         ExtractPropertyWithDefaultValue(
             property,
-            Boolean.Parse,
+            bool.Parse,
             s => true,
             b => true
         );

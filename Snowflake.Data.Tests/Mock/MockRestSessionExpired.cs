@@ -10,13 +10,13 @@ using Snowflake.Data.Core;
 
 internal class MockRestSessionExpired : MockBaseRestRequester
 {
-    private static readonly String EXPIRED_SESSION_TOKEN = "session_expired_token";
+    private static readonly string EXPIRED_SESSION_TOKEN = "session_expired_token";
 
-    internal static readonly String NEW_SESSION_TOKEN = "new_session_token";
+    internal static readonly string NEW_SESSION_TOKEN = "new_session_token";
 
-    private static readonly String TOKEN_FMT = "Snowflake Token=\"{0}\"";
+    private static readonly string TOKEN_FMT = "Snowflake Token=\"{0}\"";
 
-    internal static readonly String THROW_ERROR_TOKEN = "throw_error_token";
+    internal static readonly string THROW_ERROR_TOKEN = "throw_error_token";
 
     internal static readonly int SESSION_EXPIRED_CODE = 390112;
 
@@ -46,7 +46,7 @@ internal class MockRestSessionExpired : MockBaseRestRequester
         }
         else if (sfRequest.jsonBody is QueryRequest)
         {
-            if (sfRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, EXPIRED_SESSION_TOKEN)))
+            if (sfRequest.authorizationToken.Equals(string.Format(TOKEN_FMT, EXPIRED_SESSION_TOKEN)))
             {
                 FirstTimeRequestID = ExtractRequestID(sfRequest.Url.Query);
                 QueryExecResponse queryExecResponse = new QueryExecResponse
@@ -56,7 +56,7 @@ internal class MockRestSessionExpired : MockBaseRestRequester
                 };
                 return Task.FromResult<T>((T)(object)queryExecResponse);
             }
-            else if (sfRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, NEW_SESSION_TOKEN)))
+            else if (sfRequest.authorizationToken.Equals(string.Format(TOKEN_FMT, NEW_SESSION_TOKEN)))
             {
                 SecondTimeRequestID = ExtractRequestID(sfRequest.Url.Query);
                 QueryExecResponse queryExecResponse = new QueryExecResponse
@@ -146,7 +146,7 @@ internal class MockRestSessionExpired : MockBaseRestRequester
             };
             return Task.FromResult<T>((T)(object)queryExecResponse);
         }
-        if (sfRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, EXPIRED_SESSION_TOKEN)))
+        if (sfRequest.authorizationToken.Equals(string.Format(TOKEN_FMT, EXPIRED_SESSION_TOKEN)))
         {
             QueryExecResponse queryExecResponse = new QueryExecResponse
             {
@@ -155,7 +155,7 @@ internal class MockRestSessionExpired : MockBaseRestRequester
             };
             return Task.FromResult<T>((T)(object)queryExecResponse);
         }
-        if (sfRequest.authorizationToken.Equals(String.Format(TOKEN_FMT, NEW_SESSION_TOKEN)))
+        if (sfRequest.authorizationToken.Equals(string.Format(TOKEN_FMT, NEW_SESSION_TOKEN)))
         {
             QueryExecResponse queryExecResponse = new QueryExecResponse
             {

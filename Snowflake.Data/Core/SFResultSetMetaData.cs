@@ -86,7 +86,7 @@ class SFResultSetMetaData
             int indexCounter = 0;
             foreach (ExecResponseRowType rowType in rowTypes)
             {
-                if (String.Compare(rowType.name, targetColumnName, false) == 0)
+                if (string.Compare(rowType.name, targetColumnName, false) == 0)
                 {
                     logger.Info($"Found column name {targetColumnName} under index {indexCounter}");
                     columnNameToIndexCache[targetColumnName] = indexCounter;

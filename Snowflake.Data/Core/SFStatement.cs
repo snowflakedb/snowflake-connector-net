@@ -235,7 +235,7 @@ class SFStatement
             Url = queryUri,
             authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
             serviceName = SfSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
-                ? (String)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]
+                ? (string)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]
                 : null,
             jsonBody = postBody,
             HttpTimeout = Timeout.InfiniteTimeSpan,
@@ -251,7 +251,7 @@ class SFStatement
         return new SFRestRequest()
         {
             Url = uri,
-            authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
+            authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
             HttpTimeout = Timeout.InfiniteTimeSpan,
             RestTimeout = Timeout.InfiniteTimeSpan,
             SessionId = SfSession.sessionId
@@ -260,7 +260,7 @@ class SFStatement
 
     private SFRestRequest BuildResultRequestWithId(string resultId)
     {
-        string resultPath = String.Format(SF_QUERY_RESULT_PATH, resultId);
+        string resultPath = string.Format(SF_QUERY_RESULT_PATH, resultId);
         return BuildResultRequest(resultPath);
     }
 
@@ -864,7 +864,7 @@ class SFStatement
             Url = queryUri,
             authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
             serviceName = SfSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
-                ? (String)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]
+                ? (string)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]
                 : null,
             HttpTimeout = Timeout.InfiniteTimeSpan,
             RestTimeout = Timeout.InfiniteTimeSpan,
@@ -1055,7 +1055,7 @@ class SFStatement
         }
     }
 
-    private static Boolean IsArrayBind(Dictionary<string, BindingDTO> binding)
+    private static bool IsArrayBind(Dictionary<string, BindingDTO> binding)
     {
         if (binding == null || binding.Count == 0)
         {

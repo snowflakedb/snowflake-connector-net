@@ -9,7 +9,7 @@ using LockObject =
 #if NET10_0_OR_GREATER
     System.Threading.Lock;
 #else
-System.Object;
+object;
 #endif
 
 namespace Snowflake.Data.Telemetry;

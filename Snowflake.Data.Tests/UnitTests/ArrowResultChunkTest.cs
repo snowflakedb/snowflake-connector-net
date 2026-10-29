@@ -331,7 +331,7 @@ public sealed partial class ArrowResultChunkTest
     [SFFact]
     public void TestExtractCellReturnsDecimal()
     {
-        var testValues = new decimal[] { 0, 100, -100, Decimal.MaxValue, Decimal.MinValue };
+        var testValues = new decimal[] { 0, 100, -100, decimal.MaxValue, decimal.MinValue };
         var sfType = SFDataType.FIXED;
 
         for (var scale = 0; scale <= 9; ++scale)
@@ -343,7 +343,7 @@ public sealed partial class ArrowResultChunkTest
     [SFFact]
     public void TestExtractCellReturnsNumber64()
     {
-        var testValues = new long[] { 0, 100, -100, Int64.MaxValue, Int64.MinValue };
+        var testValues = new long[] { 0, 100, -100, long.MaxValue, long.MinValue };
         var sfType = SFDataType.FIXED;
 
         for (var scale = 0; scale <= 9; ++scale)
@@ -400,7 +400,7 @@ public sealed partial class ArrowResultChunkTest
     [SFFact]
     public void TestExtractCellReturnsNumber32()
     {
-        var testValues = new int[] { 0, 100, -100, Int32.MaxValue, Int32.MinValue };
+        var testValues = new int[] { 0, 100, -100, int.MaxValue, int.MinValue };
         var sfType = SFDataType.FIXED;
 
         for (var scale = 0; scale <= 9; ++scale)
@@ -412,7 +412,7 @@ public sealed partial class ArrowResultChunkTest
     [SFFact]
     public void TestExtractCellReturnsNumber16()
     {
-        var testValues = new short[] { 0, 100, -100, Int16.MaxValue, Int16.MinValue };
+        var testValues = new short[] { 0, 100, -100, short.MaxValue, short.MinValue };
         var sfType = SFDataType.FIXED;
 
         for (var scale = 0; scale <= 9; ++scale)
@@ -446,7 +446,7 @@ public sealed partial class ArrowResultChunkTest
     [SFFact]
     public void TestExtractCellReturnsReal()
     {
-        var testValues = new double[] { 0, Double.MinValue, Double.MaxValue };
+        var testValues = new double[] { 0, double.MinValue, double.MaxValue };
         var sfType = SFDataType.REAL;
         var scale = 0;
 

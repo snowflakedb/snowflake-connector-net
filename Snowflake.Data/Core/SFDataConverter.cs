@@ -70,11 +70,11 @@ static class SFDataConverter
         try
         {
             // The most common conversions are checked first for maximum performance
-            if (destType == typeof(Int64))
+            if (destType == typeof(long))
             {
                 return FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length);
             }
-            else if (destType == typeof(Int32))
+            else if (destType == typeof(int))
             {
                 return FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset, srcVal.length);
             }
@@ -98,7 +98,7 @@ static class SFDataConverter
             {
                 return ConvertToDateTimeOffset(srcVal, srcType, sessionTimezone);
             }
-            else if (destType == typeof(Boolean))
+            else if (destType == typeof(bool))
             {
                 var val = srcVal.Buffer[srcVal.offset];
                 return val == '1' || val == 't' || val == 'T';
@@ -108,11 +108,11 @@ static class SFDataConverter
                 return srcType == SFDataType.BINARY ?
                     HexToBytes(srcVal.ToString()) : srcVal.GetBytes();
             }
-            else if (destType == typeof(Int16))
+            else if (destType == typeof(short))
             {
                 // Use checked keyword to make sure we generate an OverflowException if conversion fails
                 int result = FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset, srcVal.length);
-                return checked((Int16)result);
+                return checked((short)result);
             }
             else if (destType == typeof(byte))
             {

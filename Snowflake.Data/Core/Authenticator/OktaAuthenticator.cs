@@ -363,18 +363,18 @@ internal class IdpTokenRestRequest : BaseRestRequest, IRestRequest
 class IdpTokenRequest
 {
     [JsonProperty(PropertyName = "username")]
-    internal String Username { get; set; }
+    internal string Username { get; set; }
 
     [JsonProperty(PropertyName = "password")]
-    internal String Password { get; set; }
+    internal string Password { get; set; }
 }
 
 class IdpTokenResponse
 {
     [JsonProperty(PropertyName = "cookieToken")]
-    internal String CookieToken { get; set; }
+    internal string CookieToken { get; set; }
     [JsonProperty(PropertyName = "sessionToken")]
-    internal String SessionToken { get; set; }
+    internal string SessionToken { get; set; }
 }
 
 class SamlRestRequest : BaseRestRequest, IRestRequest

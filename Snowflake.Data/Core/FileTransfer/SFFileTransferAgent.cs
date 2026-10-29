@@ -132,7 +132,7 @@ class SFFileTransferAgent
     /// <summary>
     /// Placeholder threshold value using max long value.
     /// </summary>
-    private readonly long DATA_SIZE_THRESHOLD = Int64.MaxValue;
+    private readonly long DATA_SIZE_THRESHOLD = long.MaxValue;
 
     /// <summary>
     /// Constructor.

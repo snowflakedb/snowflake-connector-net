@@ -84,7 +84,7 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
         int index = 0;
         foreach (SnowflakeDbParameter parameter in parameterList)
         {
-            if (String.Compare(parameterName, parameter.ParameterName) == 0)
+            if (string.Compare(parameterName, parameter.ParameterName) == 0)
             {
                 return index;
             }

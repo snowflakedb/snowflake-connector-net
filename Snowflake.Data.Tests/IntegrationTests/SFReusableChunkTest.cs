@@ -55,7 +55,7 @@ public class SFReusableChunkTest : SFBaseTestAsync
                 {
                     var obj = new object[reader.FieldCount];
                     reader.GetValues(obj);
-                    var val = obj[0] ?? System.String.Empty;
+                    var val = obj[0] ?? string.Empty;
                     // Count rows that don't contain literal "u007f" or "\u007fu" strings
                     // (The actual data contains DEL character but not these literal strings)
                     if (!val.ToString().Contains("u007f") && !val.ToString()!.Contains("\u007fu"))
@@ -176,7 +176,7 @@ select parse_json('{{
             {
                 var obj = new object[reader.FieldCount];
                 reader.GetValues(obj);
-                var val = obj[0] ?? System.String.Empty;
+                var val = obj[0] ?? string.Empty;
                 // Count rows that don't contain literal "u007f" or "\u007fu" strings
                 if (!val.ToString()!.Contains("u007f") && !val.ToString()!.Contains("\u007fu"))
                 {
@@ -237,7 +237,7 @@ select parse_json('{{
                     {
                         var obj = new object[reader.FieldCount];
                         reader.GetValues(obj);
-                        var val = obj[0] ?? System.String.Empty;
+                        var val = obj[0] ?? string.Empty;
                         if (!val.ToString()!.Contains("u007f") && !val.ToString().Contains("\u007fu"))
                         {
                             rowCount++;

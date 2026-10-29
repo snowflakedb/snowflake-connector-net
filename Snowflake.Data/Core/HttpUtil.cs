@@ -440,14 +440,14 @@ internal sealed class HttpUtil
             WebProxy proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort));
 
             // Add credential if provided
-            if (!String.IsNullOrEmpty(config.ProxyUser))
+            if (!string.IsNullOrEmpty(config.ProxyUser))
             {
                 ICredentials credentials = new NetworkCredential(config.ProxyUser, config.ProxyPassword);
                 proxy.Credentials = credentials;
             }
 
             // Add bypasslist if provided
-            if (!String.IsNullOrEmpty(config.NoProxyList))
+            if (!string.IsNullOrEmpty(config.NoProxyList))
             {
                 string[] bypassList = config.NoProxyList.Split(
                     new char[] { '|' },

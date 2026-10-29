@@ -907,7 +907,7 @@ public class SFBindTestIT : SFBaseTestAsync
     [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Europe/Warsaw")]
     [InlineData(ResultFormat.ARROW, SFTableType.Standard, SFDataType.TIMESTAMP_LTZ, 6, DbType.DateTimeOffset, FormatYmdHmsZ, "Asia/Tokyo")]
 
-    public async Task TestDateTimeBinding(ResultFormat resultFormat, SFTableType tableType, SFDataType columnType, Int32? columnPrecision, DbType bindingType, string comparisonFormat, string? timeZone)
+    public async Task TestDateTimeBinding(ResultFormat resultFormat, SFTableType tableType, SFDataType columnType, int? columnPrecision, DbType bindingType, string comparisonFormat, string? timeZone)
     {
         // Arrange
         string[] timestamps =
@@ -933,7 +933,7 @@ public class SFBindTestIT : SFBaseTestAsync
                 conn.ExecuteNonQuery($"alter session set TIMEZONE = '{timeZone}'");
 
             // prepare initial column
-            var columns = new List<String> { "id number(10,0) not null primary key" };
+            var columns = new List<string> { "id number(10,0) not null primary key" };
             var sql_columns = "id";
             var sql_values = "?";
 
@@ -1060,7 +1060,7 @@ public class SFBindTestIT : SFBaseTestAsync
         }
     }
 
-    private static string ColumnTypeWithPrecision(SFDataType columnType, Int32? columnPrecision)
+    private static string ColumnTypeWithPrecision(SFDataType columnType, int? columnPrecision)
         => columnPrecision != null ? $"{columnType}({columnPrecision})" : $"{columnType}";
 }
 

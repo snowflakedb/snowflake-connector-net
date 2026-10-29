@@ -33,7 +33,7 @@ internal abstract class BaseRestRequest : IRestRequest
 
     internal Uri Url { get; set; }
 
-    public String SessionId { get; set; }
+    public string SessionId { get; set; }
 
     internal TimeSpan HttpTimeout
     {
@@ -113,11 +113,11 @@ internal class SFRestRequest : BaseRestRequest, IRestRequest
         HttpTimeout = TimeSpan.FromSeconds(s_defaultHttpSecondsTimeout);
     }
 
-    internal Object jsonBody { get; set; }
+    internal object jsonBody { get; set; }
 
-    internal String authorizationToken { get; set; }
+    internal string authorizationToken { get; set; }
 
-    internal String serviceName { get; set; }
+    internal string serviceName { get; set; }
 
     internal bool isPutGet { get; set; }
 
@@ -129,7 +129,7 @@ internal class SFRestRequest : BaseRestRequest, IRestRequest
 
     public override string ToString()
     {
-        return String.Format("SFRestRequest {{url: {0}, request body: {1} }}", Url.ToString(),
+        return string.Format("SFRestRequest {{url: {0}, request body: {1} }}", Url.ToString(),
             jsonBody.ToString());
     }
 
@@ -182,30 +182,30 @@ class AuthenticatorRequest
 
     public override string ToString()
     {
-        return String.Format("AuthenticatorRequest {{data: {0} }}", Data.ToString());
+        return string.Format("AuthenticatorRequest {{data: {0} }}", Data.ToString());
     }
 }
 
 class AuthenticatorRequestData
 {
     [JsonProperty(PropertyName = "ACCOUNT_NAME", NullValueHandling = NullValueHandling.Ignore)]
-    internal String AccountName { get; set; }
+    internal string AccountName { get; set; }
 
     [JsonProperty(PropertyName = "AUTHENTICATOR")]
-    internal String Authenticator { get; set; }
+    internal string Authenticator { get; set; }
 
     [JsonProperty(PropertyName = "BROWSER_MODE_REDIRECT_PORT", NullValueHandling = NullValueHandling.Ignore)]
-    internal String BrowserModeRedirectPort { get; set; }
+    internal string BrowserModeRedirectPort { get; set; }
 
     [JsonProperty(PropertyName = "CLIENT_APP_ID", NullValueHandling = NullValueHandling.Ignore)]
-    internal String DriverName { get; set; }
+    internal string DriverName { get; set; }
 
     [JsonProperty(PropertyName = "CLIENT_APP_VERSION", NullValueHandling = NullValueHandling.Ignore)]
-    internal String DriverVersion { get; set; }
+    internal string DriverVersion { get; set; }
 
     public override string ToString()
     {
-        return String.Format("AuthenticatorRequestData {{ACCOUNT_NAME: {0} }}",
+        return string.Format("AuthenticatorRequestData {{ACCOUNT_NAME: {0} }}",
             AccountName.ToString());
     }
 }
@@ -217,35 +217,35 @@ class LoginRequest
 
     public override string ToString()
     {
-        return String.Format("LoginRequest {{data: {0} }}", data.ToString());
+        return string.Format("LoginRequest {{data: {0} }}", data.ToString());
     }
 }
 
 class LoginRequestData
 {
     [JsonProperty(PropertyName = "CLIENT_APP_ID")]
-    internal String clientAppId { get; set; }
+    internal string clientAppId { get; set; }
 
     [JsonProperty(PropertyName = "CLIENT_APP_VERSION")]
-    internal String clientAppVersion { get; set; }
+    internal string clientAppVersion { get; set; }
 
     [JsonProperty(PropertyName = "ACCOUNT_NAME", NullValueHandling = NullValueHandling.Ignore)]
-    internal String accountName { get; set; }
+    internal string accountName { get; set; }
 
     [JsonProperty(PropertyName = "LOGIN_NAME", NullValueHandling = NullValueHandling.Ignore)]
-    internal String loginName { get; set; }
+    internal string loginName { get; set; }
 
     [JsonProperty(PropertyName = "PASSWORD", NullValueHandling = NullValueHandling.Ignore)]
-    internal String password { get; set; }
+    internal string password { get; set; }
 
     [JsonProperty(PropertyName = "AUTHENTICATOR", NullValueHandling = NullValueHandling.Ignore)]
-    internal String Authenticator { get; set; }
+    internal string Authenticator { get; set; }
 
     [JsonProperty(PropertyName = "CLIENT_ENVIRONMENT")]
     internal LoginRequestClientEnv clientEnv { get; set; }
 
     [JsonProperty(PropertyName = "RAW_SAML_RESPONSE", NullValueHandling = NullValueHandling.Ignore)]
-    internal String RawSamlResponse { get; set; }
+    internal string RawSamlResponse { get; set; }
 
     [JsonProperty(PropertyName = "TOKEN", NullValueHandling = NullValueHandling.Ignore)]
     internal string Token { get; set; }
@@ -266,14 +266,14 @@ class LoginRequestData
     internal string SpcsToken { get; set; }
 
     [JsonProperty(PropertyName = "SESSION_PARAMETERS", NullValueHandling = NullValueHandling.Ignore)]
-    internal Dictionary<SFSessionParameter, Object> SessionParameters { get; set; }
+    internal Dictionary<SFSessionParameter, object> SessionParameters { get; set; }
 
     [JsonIgnore]
     internal TimeSpan? HttpTimeout { get; set; }
 
     public override string ToString()
     {
-        return String.Format("LoginRequestData {{ClientAppVersion: {0},\n AccountName: {1},\n loginName: {2},\n ClientEnv: {3},\n authenticator: {4} }}",
+        return string.Format("LoginRequestData {{ClientAppVersion: {0},\n AccountName: {1},\n loginName: {2},\n ClientEnv: {3},\n authenticator: {4} }}",
             clientAppVersion, accountName, loginName, clientEnv.ToString(), Authenticator);
     }
 }
@@ -281,13 +281,13 @@ class LoginRequestData
 internal class LoginRequestClientEnv
 {
     [JsonProperty(PropertyName = "APPLICATION")]
-    internal String application { get; set; }
+    internal string application { get; set; }
 
     [JsonProperty(PropertyName = "OS_VERSION")]
-    internal String osVersion { get; set; }
+    internal string osVersion { get; set; }
 
     [JsonProperty(PropertyName = "NET_RUNTIME")]
-    internal String netRuntime { get; set; }
+    internal string netRuntime { get; set; }
 
     [JsonProperty(PropertyName = "NET_VERSION")]
     internal string netVersion { get; set; }
@@ -333,7 +333,7 @@ internal class LoginRequestClientEnv
 
     public override string ToString()
     {
-        return String.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, CERT_REVOCATION_CHECK_MODE: {4}, APPLICATION_PATH: {5} }}",
+        return string.Format("{{ APPLICATION: {0}, OS_VERSION: {1}, NET_RUNTIME: {2}, NET_VERSION: {3}, CERT_REVOCATION_CHECK_MODE: {4}, APPLICATION_PATH: {5} }}",
             application, osVersion, netRuntime, netVersion, certRevocationCheckMode, applicationPath);
     }
 

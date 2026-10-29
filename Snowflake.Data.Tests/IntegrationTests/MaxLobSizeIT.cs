@@ -467,7 +467,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
     {
         int bufferSize = sizeInBytes / 2;
         Random rand = new Random();
-        Byte[] bytes = new Byte[bufferSize];
+        byte[] bytes = new byte[bufferSize];
         rand.NextBytes(bytes);
 
         // Convert to hex and remove the '-' character for the correct string length

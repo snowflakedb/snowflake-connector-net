@@ -139,12 +139,12 @@ internal static class JsonToStructuredTypeConverter
             {
                 return ushort.Parse(value);
             }
-            if (fieldType == typeof(Int32) || fieldType == typeof(Int32?))
+            if (fieldType == typeof(int) || fieldType == typeof(int?))
             {
                 var bytes = Encoding.UTF8.GetBytes(value);
                 return FastParser.FastParseInt32(bytes, 0, bytes.Length);
             }
-            if (fieldType == typeof(Int64) || fieldType == typeof(Int64?))
+            if (fieldType == typeof(long) || fieldType == typeof(long?))
             {
                 var bytes = Encoding.UTF8.GetBytes(value);
                 return FastParser.FastParseInt64(bytes, 0, bytes.Length);

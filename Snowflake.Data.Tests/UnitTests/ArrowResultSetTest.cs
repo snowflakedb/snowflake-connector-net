@@ -143,7 +143,7 @@ public sealed class ArrowResultSetTest
     [SFFact]
     public void TestGetDecimal()
     {
-        var testValues = new decimal[] { 0, 100, -100, Decimal.MaxValue, Decimal.MinValue };
+        var testValues = new decimal[] { 0, 100, -100, decimal.MaxValue, decimal.MinValue };
 
         TestGetNumber(testValues);
     }
@@ -151,7 +151,7 @@ public sealed class ArrowResultSetTest
     [SFFact]
     public void TestGetNumber64()
     {
-        var testValues = new long[] { 0, 100, -100, Int64.MaxValue, Int64.MinValue };
+        var testValues = new long[] { 0, 100, -100, long.MaxValue, long.MinValue };
 
         TestGetNumber(testValues);
     }
@@ -159,7 +159,7 @@ public sealed class ArrowResultSetTest
     [SFFact]
     public void TestGetNumber32()
     {
-        var testValues = new int[] { 0, 100, -100, Int32.MaxValue, Int32.MinValue };
+        var testValues = new int[] { 0, 100, -100, int.MaxValue, int.MinValue };
 
         TestGetNumber(testValues);
     }
@@ -167,7 +167,7 @@ public sealed class ArrowResultSetTest
     [SFFact]
     public void TestGetNumber16()
     {
-        var testValues = new short[] { 0, 100, -100, Int16.MaxValue, Int16.MinValue };
+        var testValues = new short[] { 0, 100, -100, short.MaxValue, short.MinValue };
 
         TestGetNumber(testValues);
     }
@@ -207,11 +207,11 @@ public sealed class ArrowResultSetTest
                 var expectedInteger = (long)expectedValue;
 
                 Assert.Equal(expectedInteger, _arrowResultSet.GetInt64(ColumnIndex));
-                if (expectedInteger >= Int32.MinValue && expectedInteger <= Int32.MaxValue)
+                if (expectedInteger >= int.MinValue && expectedInteger <= int.MaxValue)
                     Assert.Equal(expectedInteger, _arrowResultSet.GetInt32(ColumnIndex));
                 else
                     Assert.Throws<OverflowException>(() => _arrowResultSet.GetInt32(ColumnIndex));
-                if (expectedInteger >= Int16.MinValue && expectedInteger <= Int16.MaxValue)
+                if (expectedInteger >= short.MinValue && expectedInteger <= short.MaxValue)
                     Assert.Equal(expectedInteger, _arrowResultSet.GetInt16(ColumnIndex));
                 else
                     Assert.Throws<OverflowException>(() => _arrowResultSet.GetInt16(ColumnIndex));
@@ -244,7 +244,7 @@ public sealed class ArrowResultSetTest
     [SFFact]
     public void TestGetReal()
     {
-        var testValues = new double[] { 0, Double.MinValue, Double.MaxValue };
+        var testValues = new double[] { 0, double.MinValue, double.MaxValue };
 
         PrepareTestCase(SFDataType.REAL, 0, testValues);
 
@@ -317,7 +317,7 @@ public sealed class ArrowResultSetTest
             Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
             char[] buffer = new char[1000];
             var len = _arrowResultSet.GetChars(ColumnIndex, 0, buffer, 0, buffer.Length);
-            var str = new String(buffer, 0, (int)len);
+            var str = new string(buffer, 0, (int)len);
             Assert.Equal(testValue, str);
             Assert.Equal(testValue.Length, str.Length);
         }

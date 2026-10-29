@@ -47,7 +47,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn.ConnectionString
                 = _fixture.ConnectionStringWithoutAuth
-                  + String.Format(
+                  + string.Format(
                       ";authenticator={0};user={1};password={2};",
                       _fixture.testConfig.oktaUrl,
                       _fixture.testConfig.oktaUser,
@@ -65,7 +65,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn.ConnectionString
                 = _fixture.ConnectionStringWithoutAuth
-                  + String.Format(
+                  + string.Format(
                       ";authenticator={0};user={1};password={2};",
                       _fixture.testConfig.oktaUrl,
                       _fixture.testConfig.oktaUser,
@@ -79,7 +79,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn.ConnectionString
                 = _fixture.ConnectionStringWithoutAuth
-                  + String.Format(
+                  + string.Format(
                       ";authenticator={0};user={1};password={2};",
                       _fixture.testConfig.oktaUrl,
                       _fixture.testConfig.oktaUser,
@@ -476,7 +476,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             {
                 conn.ConnectionString
                     = _fixture.ConnectionStringWithoutAuth
-                      + String.Format(
+                      + string.Format(
                           ";authenticator=oauth;token={0}",
                           _fixture.testConfig.expOauthToken);
                 await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
@@ -498,7 +498,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn.ConnectionString
                 = _fixture.ConnectionString
-                  + String.Format(
+                  + string.Format(
                       ";useProxy=true;proxyHost={0};proxyPort={1}",
                       _fixture.testConfig.proxyHost,
                       _fixture.testConfig.proxyPort);
@@ -514,7 +514,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn.ConnectionString
                 = _fixture.ConnectionString
-                  + String.Format(
+                  + string.Format(
                       ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3}",
                       _fixture.testConfig.authProxyHost,
                       _fixture.testConfig.authProxyPort,
@@ -532,7 +532,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn.ConnectionString
                 = _fixture.ConnectionString
-                  + String.Format(
+                  + string.Format(
                       ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};nonProxyHosts={4}",
                       _fixture.testConfig.authProxyHost,
                       _fixture.testConfig.authProxyPort,
@@ -551,7 +551,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         using (var conn1 = new SnowflakeDbConnection())
         {
             conn1.ConnectionString = _fixture.ConnectionString
-                                     + String.Format(
+                                     + string.Format(
                                          ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3}",
                                          _fixture.testConfig.authProxyHost,
                                          _fixture.testConfig.authProxyPort,
@@ -571,7 +571,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         using (var conn3 = new SnowflakeDbConnection())
         {
             conn3.ConnectionString = _fixture.ConnectionString
-                                     + String.Format(
+                                     + string.Format(
                                          ";useProxy=true;proxyHost={0};proxyPort={1}",
                                          _fixture.testConfig.proxyHost,
                                          _fixture.testConfig.proxyPort);
@@ -599,7 +599,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         using (var conn5 = new SnowflakeDbConnection())
         {
             conn5.ConnectionString = ConnectionStringModifier.DisableCrlRevocationCheck(_fixture.ConnectionString
-                                                                                        + String.Format(
+                                                                                        + string.Format(
                                                                                             ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};",
                                                                                             _fixture.testConfig.authProxyHost,
                                                                                             _fixture.testConfig.authProxyPort,
@@ -622,7 +622,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn7.ConnectionString
                 = _fixture.ConnectionString
-                  + String.Format(
+                  + string.Format(
                       ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};nonProxyHosts={4}",
                       _fixture.testConfig.authProxyHost,
                       _fixture.testConfig.authProxyPort,
@@ -647,7 +647,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn9.ConnectionString
                 = ConnectionStringModifier.DisableCrlRevocationCheck(_fixture.ConnectionString)
-                  + String.Format(
+                  + string.Format(
                       ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};nonProxyHosts={4};",
                       _fixture.testConfig.authProxyHost,
                       _fixture.testConfig.authProxyPort,
@@ -664,7 +664,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn10.ConnectionString
                 = _fixture.ConnectionString
-                  + String.Format(
+                  + string.Format(
                       ";useProxy=true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};nonProxyHosts={4}",
                       _fixture.testConfig.authProxyHost,
                       _fixture.testConfig.authProxyPort,
@@ -787,7 +787,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
     {
         using (var conn = new SnowflakeDbConnection())
         {
-            conn.ConnectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
+            conn.ConnectionString = string.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
                                                   "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};authenticator={10};",
                 _fixture.testConfig.protocol,
                 _fixture.testConfig.host,
@@ -815,7 +815,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn.ConnectionString
                 = _fixture.ConnectionStringWithoutAuth
-                  + String.Format(
+                  + string.Format(
                       ";authenticator=snowflake_jwt;user={0};private_key_file={1}",
                       _fixture.testConfig.jwtAuthUser,
                       _fixture.testConfig.pemFilePath);
@@ -831,7 +831,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn.ConnectionString
                 = _fixture.ConnectionStringWithoutAuth
-                  + String.Format(
+                  + string.Format(
                       ";authenticator=snowflake_jwt;user={0};private_key_file={1}",
                       _fixture.testConfig.jwtAuthUser,
                       _fixture.testConfig.p8FilePath);
@@ -847,7 +847,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn.ConnectionString
                 = _fixture.ConnectionStringWithoutAuth
-                  + String.Format(
+                  + string.Format(
                       ";authenticator=snowflake_jwt;user={0};private_key_file={1};private_key_pwd={2}",
                       _fixture.testConfig.jwtAuthUser,
                       _fixture.testConfig.pwdProtectedPrivateKeyFilePath,
@@ -864,7 +864,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn.ConnectionString
                 = _fixture.ConnectionStringWithoutAuth
-                  + String.Format(
+                  + string.Format(
                       ";authenticator=snowflake_jwt;user={0};private_key={1}",
                       _fixture.testConfig.jwtAuthUser,
                       _fixture.testConfig.privateKey);
@@ -880,7 +880,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn.ConnectionString
                 = _fixture.ConnectionStringWithoutAuth
-                  + String.Format(
+                  + string.Format(
                       ";authenticator=snowflake_jwt;user={0};private_key={1};private_key_pwd={2}",
                       _fixture.testConfig.jwtAuthUser,
                       _fixture.testConfig.pwdProtectedPrivateKey,
@@ -899,7 +899,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             {
                 conn.ConnectionString
                     = _fixture.ConnectionStringWithoutAuth
-                      + String.Format(
+                      + string.Format(
                           ";authenticator=snowflake_jwt;user={0};private_key_pwd={1}",
                           _fixture.testConfig.jwtAuthUser,
                           _fixture.testConfig.privateKeyFilePwd);
@@ -924,7 +924,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             {
                 conn.ConnectionString
                     = _fixture.ConnectionStringWithoutAuth
-                      + String.Format(
+                      + string.Format(
                           ";authenticator=snowflake_jwt;user={0};private_key_file={1};private_key_pwd=Invalid",
                           _fixture.testConfig.jwtAuthUser,
                           _fixture.testConfig.pwdProtectedPrivateKeyFilePath);
@@ -948,7 +948,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             {
                 conn.ConnectionString
                     = _fixture.ConnectionStringWithoutAuth
-                      + String.Format(
+                      + string.Format(
                           ";authenticator=snowflake_jwt;user={0};private_key_file={1}",
                           _fixture.testConfig.jwtAuthUser,
                           _fixture.testConfig.pwdProtectedPrivateKeyFilePath);
@@ -972,7 +972,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             {
                 conn.ConnectionString
                     = _fixture.ConnectionStringWithoutAuth
-                      + String.Format(
+                      + string.Format(
                           ";authenticator=snowflake_jwt;user={0};private_key_file={1}",
                           "WrongUser",
                           _fixture.testConfig.pemFilePath);
@@ -996,7 +996,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             {
                 conn.ConnectionString
                     = _fixture.ConnectionStringWithoutAuth
-                      + String.Format(
+                      + string.Format(
                           ";authenticator=snowflake_jwt;user={0};private_key_file={1};private_key_pwd={2}",
                           "WrongUser",
                           _fixture.testConfig.pwdProtectedPrivateKeyFilePath,
@@ -1019,7 +1019,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         {
             conn.ConnectionString
                 = _fixture.ConnectionStringWithoutAuth
-                  + String.Format(
+                  + string.Format(
                       ";authenticator=oauth;token={0}",
                       _fixture.testConfig.oauthToken);
             await conn.OpenAsync(CancellationToken).ConfigureAwait(false);
@@ -1031,7 +1031,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
     public async Task TestMulitpleConnectionInParallel()
     {
         string baseConnectionString = _fixture.ConnectionString + $";CONNECTION_TIMEOUT=30;";
-        string authenticatedProxy = String.Format("useProxy =true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};",
+        string authenticatedProxy = string.Format("useProxy =true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};",
             _fixture.testConfig.authProxyHost,
             _fixture.testConfig.authProxyPort,
             _fixture.testConfig.authProxyUser,

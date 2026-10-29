@@ -129,7 +129,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     {
         using (var conn = new SnowflakeDbConnection())
         {
-            conn.ConnectionString = String.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
+            conn.ConnectionString = string.Format("scheme={0};host={1};port={2};certRevocationCheckMode=enabled;" +
                                                   "account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
                 _fixture.testConfig.protocol,
                 _fixture.testConfig.host,
@@ -270,12 +270,12 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestConnectViaSecureString()
     {
-        String[] connEntries = _fixture.ConnectionString.Split(';');
-        String connectionStringWithoutPassword = "";
+        string[] connEntries = _fixture.ConnectionString.Split(';');
+        string connectionStringWithoutPassword = "";
         using (var conn = new SnowflakeDbConnection())
         {
             var password = new System.Security.SecureString();
-            foreach (String entry in connEntries)
+            foreach (string entry in connEntries)
             {
                 if (!entry.StartsWith("password="))
                 {
@@ -597,7 +597,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             {
                 conn.ConnectionString
                     = _fixture.ConnectionStringWithoutAuth
-                      + String.Format(
+                      + string.Format(
                           ";authenticator={0};user=test;password=test;MAXHTTPRETRIES={1};RETRY_TIMEOUT={2};",
                           oktaUrl,
                           expectedMaxRetryCount,
@@ -741,7 +741,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         {
             conn.ConnectionString
                 = _fixture.ConnectionString
-                  + String.Format(
+                  + string.Format(
                       ";useProxy=true;proxyHost=Invalid;proxyPort=8080;nonProxyHosts={0}",
                       $"*.foo.com %7C{_fixture.testConfig.account}.snowflakecomputing.com|*{_fixture.testConfig.host}*");
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
@@ -789,7 +789,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         {
             // No timeout
             int timeoutSec = 0;
-            string infiniteLoginTimeOut = String.Format(_fixture.ConnectionString + ";connection_timeout={0};maxHttpRetries=0",
+            string infiniteLoginTimeOut = string.Format(_fixture.ConnectionString + ";connection_timeout={0};maxHttpRetries=0",
                 timeoutSec);
 
             conn.ConnectionString = infiniteLoginTimeOut;
@@ -828,7 +828,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         using (var conn = new MockSnowflakeDbConnection(session => new KeyPairAuthenticator(session, session.restRequester)))
         {
             int timeoutSec = 5;
-            string loginTimeOut5sec = String.Format(_fixture.ConnectionString + "connection_timeout={0};maxHttpRetries=0",
+            string loginTimeOut5sec = string.Format(_fixture.ConnectionString + "connection_timeout={0};maxHttpRetries=0",
                 timeoutSec);
             conn.ConnectionString = loginTimeOut5sec;
 
@@ -889,7 +889,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             {
                 int connectionTimeout = 5;
                 int retryTimeout = 1;
-                conn.ConnectionString = String.Format(_fixtureHere.ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
+                conn.ConnectionString = string.Format(_fixtureHere.ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
                     connectionTimeout, retryTimeout);
 
                 Assert.Equal(ConnectionState.Closed, conn.State);
@@ -1188,7 +1188,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             {
                 conn.ConnectionString
                     = _fixture.ConnectionStringWithoutAuth
-                      + String.Format(
+                      + string.Format(
                           ";authenticator={0};user=test;password=test;MAXHTTPRETRIES={1};RETRY_TIMEOUT={2};",
                           oktaUrl,
                           expectedMaxRetryCount,

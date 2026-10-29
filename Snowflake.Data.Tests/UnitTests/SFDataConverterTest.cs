@@ -153,7 +153,7 @@ public sealed class SFDataConverterTest
         var result = SFDataConverter.CSharpTypeValToSfTypeVal(System.Data.DbType.Date, testValue);
         // Convert result to DateTime for easier interpretation
         var unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        DateTime dtResult = unixEpoch.AddMilliseconds(Int64.Parse(result.Item2));
+        DateTime dtResult = unixEpoch.AddMilliseconds(long.Parse(result.Item2));
         Assert.Equal(dtExpected, dtResult);
     }
 
@@ -164,8 +164,8 @@ public sealed class SFDataConverterTest
     [InlineData("999999999999999999")]
     public void TestConvertToInt64(string s)
     {
-        Int64 actual = (Int64)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int64)));
-        Int64 expected = Convert.ToInt64(s);
+        long actual = (long)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(long)));
+        long expected = Convert.ToInt64(s);
         Assert.Equal(expected, actual);
     }
 
@@ -176,8 +176,8 @@ public sealed class SFDataConverterTest
     [InlineData("0")]
     public void TestConvertToInt32(string s)
     {
-        Int32 actual = (Int32)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int32)));
-        Int32 expected = Convert.ToInt32(s);
+        int actual = (int)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(int)));
+        int expected = Convert.ToInt32(s);
         Assert.Equal(expected, actual);
     }
 
@@ -188,8 +188,8 @@ public sealed class SFDataConverterTest
     [InlineData("0")]
     public void TestConvertToInt16(string s)
     {
-        Int16 actual = (Int16)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int16)));
-        Int16 expected = Convert.ToInt16(s);
+        short actual = (short)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(short)));
+        short expected = Convert.ToInt16(s);
         Assert.Equal(expected, actual);
     }
 
@@ -216,7 +216,7 @@ public sealed class SFDataConverterTest
     [InlineData("-32769")]
     public void TestOverflowInt16(string s)
     {
-        Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int16))));
+        Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(short))));
     }
 
     [SFTheory]
@@ -224,7 +224,7 @@ public sealed class SFDataConverterTest
     [InlineData("-2147483649")]
     public void TestOverflowInt32(string s)
     {
-        Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int32))));
+        Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(int))));
     }
 
     [SFTheory]
@@ -232,7 +232,7 @@ public sealed class SFDataConverterTest
     [InlineData("-9223372036854775809")]
     public void TestOverflowInt64(string s)
     {
-        Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int64))));
+        Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(long))));
     }
 
     [SFTheory]
@@ -302,9 +302,9 @@ public sealed class SFDataConverterTest
     [InlineData("NaN")]
     public void TestInvalidConversionInvalidInt(string s)
     {
-        Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int32))));
-        Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int64))));
-        Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int16))));
+        Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(int))));
+        Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(long))));
+        Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(short))));
         Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(byte))));
     }
 
@@ -835,7 +835,7 @@ public sealed class SFDataConverterTest
     [InlineData("-9223372036854775809")]  // Int64.MinValue - 1
     public void TestOverflowInt64WithFlagReturnsString(string s)
     {
-        var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int64), allowOverflow: true));
+        var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(long), allowOverflow: true));
         Assert.Equal(s, result);
     }
 
@@ -844,7 +844,7 @@ public sealed class SFDataConverterTest
     [InlineData("-2147483649")]  // Int32.MinValue - 1
     public void TestOverflowInt32WithFlagReturnsString(string s)
     {
-        var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int32), allowOverflow: true));
+        var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(int), allowOverflow: true));
         Assert.Equal(s, result);
     }
 
@@ -853,7 +853,7 @@ public sealed class SFDataConverterTest
     [InlineData("-32769")]  // Int16.MinValue - 1
     public void TestOverflowInt16WithFlagReturnsString(string s)
     {
-        var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int16), allowOverflow: true));
+        var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(short), allowOverflow: true));
         Assert.Equal(s, result);
     }
 
@@ -891,7 +891,7 @@ public sealed class SFDataConverterTest
     public void TestOverflowWithoutFlagStillThrows(string s)
     {
         Assert.Throws<OverflowException>(() =>
-            SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int64))));
+            SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(long))));
     }
 
     [SFTheory]
@@ -900,7 +900,7 @@ public sealed class SFDataConverterTest
     public void TestNoOverflowWithFlagReturnsTypedValue(string s)
     {
         // When there's no overflow, flag has no effect — returns the typed value normally
-        var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(Int64), allowOverflow: true));
+        var result = SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(long), allowOverflow: true));
         Assert.Equal(Convert.ToInt64(s), result);
     }
 }

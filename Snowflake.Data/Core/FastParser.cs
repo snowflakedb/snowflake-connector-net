@@ -9,7 +9,7 @@ internal class FastParser
 {
     private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<FastParser>();
 
-    public static Int64 FastParseInt64(byte[] s, int offset, int len)
+    public static long FastParseInt64(byte[] s, int offset, int len)
     {
         if (s == null)
         {
@@ -18,7 +18,7 @@ internal class FastParser
             throw ex;
         }
 
-        Int64 result = 0;
+        long result = 0;
         int i = offset;
         bool isMinus = false;
         if (len > 0 && s[i] == '-')
@@ -29,7 +29,7 @@ internal class FastParser
         int end = len + offset;
         for (; i < end; i++)
         {
-            if ((UInt64)result > (0x7fffffffffffffff / 10))
+            if ((ulong)result > (0x7fffffffffffffff / 10))
                 throw new OverflowException();
             int c = s[i] - '0';
             if (c < 0 || c > 9)
@@ -50,7 +50,7 @@ internal class FastParser
         return result;
     }
 
-    public static Int32 FastParseInt32(byte[] s, int offset, int len)
+    public static int FastParseInt32(byte[] s, int offset, int len)
     {
         if (s == null)
         {
@@ -59,7 +59,7 @@ internal class FastParser
             throw ex;
         }
 
-        Int32 result = 0;
+        int result = 0;
         int i = offset;
         bool isMinus = false;
         if (len > 0 && s[i] == '-')
@@ -70,7 +70,7 @@ internal class FastParser
         int end = len + offset;
         for (; i < end; i++)
         {
-            if ((UInt32)result > (0x7fffffff / 10))
+            if ((uint)result > (0x7fffffff / 10))
                 throw new OverflowException();
             int c = s[i] - '0';
             if (c < 0 || c > 9)
@@ -130,8 +130,8 @@ internal class FastParser
         {
             decimalPos -= offset;
             int decimalLen = len - decimalPos - 1;
-            Int64 intPart = 0;
-            Int64 decimalPart = 0;
+            long intPart = 0;
+            long decimalPart = 0;
             try
             {
                 intPart = FastParseInt64(s, offset, decimalPos);

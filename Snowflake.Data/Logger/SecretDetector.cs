@@ -135,7 +135,7 @@ internal class SecretDetector : ISecretDetector
     {
         var result = new Mask(false, text, null);
 
-        if (String.IsNullOrEmpty(text))
+        if (string.IsNullOrEmpty(text))
         {
             return result;
         }

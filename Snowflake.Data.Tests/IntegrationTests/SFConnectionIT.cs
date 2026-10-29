@@ -26,7 +26,7 @@ public sealed class SFConnectionIT : SFBaseTestAsync
         using (var conn = new MockSnowflakeDbConnection(session => new KeyPairAuthenticator(session, session.restRequester)))
         {
             int timeoutSec = 5;
-            string loginTimeOut5sec = String.Format(_fixture.ConnectionString + "connection_timeout={0};maxHttpRetries=0",
+            string loginTimeOut5sec = string.Format(_fixture.ConnectionString + "connection_timeout={0};maxHttpRetries=0",
                 timeoutSec);
 
             conn.ConnectionString = loginTimeOut5sec;
@@ -88,7 +88,7 @@ public sealed class SFConnectionIT : SFBaseTestAsync
             {
                 int connectionTimeout = 5;
                 int retryTimeout = 1;
-                string loginTimeOut5sec = String.Format(_fixtureHere.ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
+                string loginTimeOut5sec = string.Format(_fixtureHere.ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
                     connectionTimeout, retryTimeout);
 
                 conn.ConnectionString = loginTimeOut5sec;
@@ -209,7 +209,7 @@ public sealed class SFConnectionIT : SFBaseTestAsync
             {
                 conn.ConnectionString
                     = _fixture.ConnectionStringWithoutAuth
-                      + String.Format(
+                      + string.Format(
                           ";authenticator={0};user=test;password=test;MAXHTTPRETRIES={1};RETRY_TIMEOUT={2};",
                           oktaUrl,
                           expectedMaxRetryCount,

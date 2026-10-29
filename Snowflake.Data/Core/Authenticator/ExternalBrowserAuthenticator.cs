@@ -491,7 +491,7 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 
     private string GenerateProofKey()
     {
-        Byte[] randomness = new Byte[32];
+        byte[] randomness = new byte[32];
         using (var rng = RandomNumberGenerator.Create())
         {
             rng.GetBytes(randomness);

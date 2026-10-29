@@ -764,7 +764,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     public async Task TestRowsAffected()
     {
         var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
-        String[] testCommands =
+        string[] testCommands =
         {
             $"create or replace table {tableName}(cola int, colb string)",
             $"insert into {tableName} values(1, 'a'),(2, 'b')",

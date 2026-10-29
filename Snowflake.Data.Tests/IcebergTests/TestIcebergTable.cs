@@ -502,22 +502,22 @@ public abstract class TestIcebergTable : SFBaseTestAsync
             var mismatch = $"Mismatch on column {idx}: {column}";
             switch (expected)
             {
-                case Int32 i32:
+                case int i32:
                     Assert.Equal(i32, actualRow.GetInt32(idx));
                     break;
-                case Int64 i64:
+                case long i64:
                     Assert.Equal(i64, actualRow.GetInt64(idx));
                     break;
-                case Decimal dec:
+                case decimal dec:
                     Assert.Equal(dec, actualRow.GetDecimal(idx));
                     break;
                 case float flt:
                     Assert.Equal(flt, actualRow.GetFloat(idx));
                     break;
-                case String str:
+                case string str:
                     Assert.Equal(str, actualRow.GetString(idx));
                     break;
-                case Boolean bl:
+                case bool bl:
                     Assert.Equal(bl, actualRow.GetBoolean(idx));
                     break;
                 case DateTime dt:

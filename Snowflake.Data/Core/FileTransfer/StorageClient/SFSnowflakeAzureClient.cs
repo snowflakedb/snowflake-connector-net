@@ -495,13 +495,13 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
                  ex.Status == (int)HttpStatusCode.PreconditionFailed ||
                  ex.Status == (int)HttpStatusCode.RequestedRangeNotSatisfiable)
         {
-            String error = $"Unrecoverable HTTP status for file upload operation: {ex.Status} {ex.ErrorCode}";
+            string error = $"Unrecoverable HTTP status for file upload operation: {ex.Status} {ex.ErrorCode}";
             Logger.Error(error);
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
         }
         else
         {
-            String error = $"Unexpected HTTP status for file upload operation: {ex.Status} {ex.ErrorCode}";
+            string error = $"Unexpected HTTP status for file upload operation: {ex.Status} {ex.ErrorCode}";
             Logger.Error(error);
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
         }
@@ -522,7 +522,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
         }
         else
         {
-            String error = $"Unexpected HTTP status for file download operation: {ex.Status} {ex.ErrorCode}";
+            string error = $"Unexpected HTTP status for file download operation: {ex.Status} {ex.ErrorCode}";
             Logger.Error(error);
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
         }

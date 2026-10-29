@@ -103,7 +103,7 @@ internal class SFSession
         _poolConfig.PoolingEnabled = isEnabled;
     }
 
-    internal String _queryTag;
+    internal string _queryTag;
 
     internal SecureString _mfaToken;
 
@@ -172,7 +172,7 @@ internal class SFSession
         }
     }
 
-    internal readonly Dictionary<SFSessionParameter, Object> ParameterMap;
+    internal readonly Dictionary<SFSessionParameter, object> ParameterMap;
 
     internal Uri BuildLoginUrl()
     {
@@ -193,13 +193,13 @@ internal class SFSession
     /// </summary>
     /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
     internal SFSession(
-        String connectionString,
+        string connectionString,
         SessionPropertiesContext sessionContext) : this(connectionString, sessionContext, EasyLoggingStarter.Instance)
     {
     }
 
     internal SFSession(
-        String connectionString,
+        string connectionString,
         SessionPropertiesContext sessionContext,
         EasyLoggingStarter easyLoggingStarter)
     {
@@ -270,11 +270,11 @@ internal class SFSession
         return httpClientConfig;
     }
 
-    internal SFSession(String connectionString, SessionPropertiesContext sessionContext, IMockRestRequester restRequester) : this(connectionString, sessionContext, EasyLoggingStarter.Instance, restRequester)
+    internal SFSession(string connectionString, SessionPropertiesContext sessionContext, IMockRestRequester restRequester) : this(connectionString, sessionContext, EasyLoggingStarter.Instance, restRequester)
     {
     }
 
-    internal SFSession(String connectionString, SessionPropertiesContext sessionContext, EasyLoggingStarter easyLoggingStarter, IMockRestRequester mockRestRequester) : this(connectionString, sessionContext, easyLoggingStarter)
+    internal SFSession(string connectionString, SessionPropertiesContext sessionContext, EasyLoggingStarter easyLoggingStarter, IMockRestRequester mockRestRequester) : this(connectionString, sessionContext, easyLoggingStarter)
     {
         // Inject the HttpClient to use with the Mock requester
         mockRestRequester.SetHttpClient(restRequester.GetHttpClient());
@@ -298,7 +298,7 @@ internal class SFSession
     {
         // If there is an "application" setting, verify that it matches the expect pattern
         properties.TryGetValue(SFSessionProperty.APPLICATION, out string applicationNameSetting);
-        if (!String.IsNullOrEmpty(applicationNameSetting) && !APPLICATION_REGEX.IsMatch(applicationNameSetting))
+        if (!string.IsNullOrEmpty(applicationNameSetting) && !APPLICATION_REGEX.IsMatch(applicationNameSetting))
         {
             throw new SnowflakeDbException(
                 SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
@@ -517,11 +517,11 @@ internal class SFSession
         if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
         {
             string val = ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD].ToString();
-            this.arrayBindStageThreshold = Int32.Parse(val);
+            this.arrayBindStageThreshold = int.Parse(val);
         }
         if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE))
         {
-            bool keepAlive = Boolean.Parse(ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE].ToString());
+            bool keepAlive = bool.Parse(ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE].ToString());
             if (keepAlive)
             {
                 StartHeartBeatForThisSession();
@@ -535,7 +535,7 @@ internal class SFSession
             (ParameterMap.ContainsKey(SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE)))
         {
             string val = ParameterMap[SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE].ToString();
-            _queryContextCacheSize = Int32.Parse(val);
+            _queryContextCacheSize = int.Parse(val);
             _queryContextCache.SetCapacity(_queryContextCacheSize);
         }
 

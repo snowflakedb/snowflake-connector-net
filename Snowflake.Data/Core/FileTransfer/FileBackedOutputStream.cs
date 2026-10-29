@@ -63,7 +63,7 @@ internal class FileBackedOutputStream : Stream
         base.Dispose(disposing);
     }
 
-    internal String GetFileName()
+    internal string GetFileName()
     {
         return _fileName;
     }

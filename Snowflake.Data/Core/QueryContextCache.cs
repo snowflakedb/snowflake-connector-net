@@ -29,7 +29,7 @@ internal class QueryContextElement
         Context = context;
     }
 
-    public override bool Equals(Object obj)
+    public override bool Equals(object obj)
     {
         if (obj == null || !(obj is QueryContextElement))
         {

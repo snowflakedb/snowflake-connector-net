@@ -1666,16 +1666,16 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
                     Assert.Equal(Convert.ToSingle(testValue), reader.GetFloat(0));
                     if (!testValue.Contains('.'))
                     {
-                        decimal value = Decimal.Parse(testValue);
-                        if (value >= Int64.MinValue && value <= Int64.MaxValue)
+                        decimal value = decimal.Parse(testValue);
+                        if (value >= long.MinValue && value <= long.MaxValue)
                             Assert.Equal(Convert.ToInt64(testValue), reader.GetInt64(0));
                         else
                             Assert.Throws<OverflowException>(() => reader.GetInt64(0));
-                        if (value >= Int32.MinValue && value <= Int32.MaxValue)
+                        if (value >= int.MinValue && value <= int.MaxValue)
                             Assert.Equal(Convert.ToInt32(testValue), reader.GetInt32(0));
                         else
                             Assert.Throws<OverflowException>(() => reader.GetInt32(0));
-                        if (value >= Int16.MinValue && value <= Int16.MaxValue)
+                        if (value >= short.MinValue && value <= short.MaxValue)
                             Assert.Equal(Convert.ToInt16(testValue), reader.GetInt16(0));
                         else
                             Assert.Throws<OverflowException>(() => reader.GetInt16(0));

@@ -180,15 +180,15 @@ public abstract class VectorTypesIT : SFBaseTestAsync
 
             using (DbCommand command = conn.CreateCommand())
             {
-                command.CommandText = $"SELECT [{Int32.MinValue}, {Int32.MaxValue}]::VECTOR(INT, 2) as vec;";
+                command.CommandText = $"SELECT [{int.MinValue}, {int.MaxValue}]::VECTOR(INT, 2) as vec;";
                 var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
 
                 Assert.True(reader.Read());
-                Assert.Equal($"[{Int32.MinValue},{Int32.MaxValue}]", reader.GetString(0));
+                Assert.Equal($"[{int.MinValue},{int.MaxValue}]", reader.GetString(0));
 
                 var arr = reader.GetArray<int>(0);
-                Assert.Equal(Int32.MinValue, arr[0]);
-                Assert.Equal(Int32.MaxValue, arr[1]);
+                Assert.Equal(int.MinValue, arr[0]);
+                Assert.Equal(int.MaxValue, arr[1]);
             }
         }
     }

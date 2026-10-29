@@ -30,7 +30,7 @@ public class QueryContextCacheTest
         InitCacheWithDataWithContext(Context);
     }
 
-    private void InitCacheWithDataWithContext(String context)
+    private void InitCacheWithDataWithContext(string context)
     {
         _qcc = new QueryContextCache(MaxCapacity);
         _expectedIDs = new long[MaxCapacity];

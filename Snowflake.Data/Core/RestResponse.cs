@@ -11,7 +11,7 @@ namespace Snowflake.Data.Core;
 abstract class BaseRestResponse
 {
     [JsonProperty(PropertyName = "message")]
-    internal String message { get; set; }
+    internal string message { get; set; }
 
 
     [JsonProperty(PropertyName = "code", NullValueHandling = NullValueHandling.Ignore)]
@@ -128,7 +128,7 @@ internal class RenewSessionResponseData
     internal int masterTokenValidityInSeconds { get; set; }
 
     [JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
-    internal Int64 sessionId { get; set; }
+    internal long sessionId { get; set; }
 }
 
 internal class SessionInfo
@@ -172,10 +172,10 @@ internal class QueryExecResponseData : IQueryExecResponseData
     internal string[,] rowSet { get; set; }
 
     [JsonProperty(PropertyName = "total", NullValueHandling = NullValueHandling.Ignore)]
-    internal Int64 total { get; set; }
+    internal long total { get; set; }
 
     [JsonProperty(PropertyName = "returned", NullValueHandling = NullValueHandling.Ignore)]
-    internal Int64 returned { get; set; }
+    internal long returned { get; set; }
 
     [JsonProperty(PropertyName = "queryId", NullValueHandling = NullValueHandling.Ignore)]
     public string queryId { get; set; }
@@ -202,7 +202,7 @@ internal class QueryExecResponseData : IQueryExecResponseData
     internal int numberOfBinds { get; set; }
 
     [JsonProperty(PropertyName = "statementTypeId", NullValueHandling = NullValueHandling.Ignore)]
-    internal Int64 statementTypeId { get; set; }
+    internal long statementTypeId { get; set; }
 
     [JsonProperty(PropertyName = "version", NullValueHandling = NullValueHandling.Ignore)]
     internal int version { get; set; }
@@ -224,7 +224,7 @@ internal class QueryExecResponseData : IQueryExecResponseData
     internal string progressDesc { get; set; }
 
     [JsonProperty(PropertyName = "queryAbortAfterSecs", NullValueHandling = NullValueHandling.Ignore)]
-    internal Int64 queryAbortAfterSecs { get; set; }
+    internal long queryAbortAfterSecs { get; set; }
 
     // multiple statements response data
     [JsonProperty(PropertyName = "resultIds", NullValueHandling = NullValueHandling.Ignore)]
@@ -286,19 +286,19 @@ internal class ExecResponseRowType
     internal string name { get; set; }
 
     [JsonProperty(PropertyName = "byteLength", NullValueHandling = NullValueHandling.Ignore)]
-    internal Int64 byteLength { get; set; }
+    internal long byteLength { get; set; }
 
     [JsonProperty(PropertyName = "length", NullValueHandling = NullValueHandling.Ignore)]
-    internal Int64 length { get; set; }
+    internal long length { get; set; }
 
     [JsonProperty(PropertyName = "type")]
     internal string type { get; set; }
 
     [JsonProperty(PropertyName = "scale", NullValueHandling = NullValueHandling.Ignore)]
-    internal Int64 scale { get; set; }
+    internal long scale { get; set; }
 
     [JsonProperty(PropertyName = "precision", NullValueHandling = NullValueHandling.Ignore)]
-    internal Int64 precision { get; set; }
+    internal long precision { get; set; }
 
     [JsonProperty(PropertyName = "nullable")]
     internal bool nullable { get; set; }
@@ -313,7 +313,7 @@ internal class FieldMetadata
     internal string name { get; set; }
 
     [JsonProperty(PropertyName = "byteLength", NullValueHandling = NullValueHandling.Ignore)]
-    private Int64 byteLength { get; set; }
+    private long byteLength { get; set; }
 
     [JsonProperty(PropertyName = "typeName")]
     internal string typeName { get; set; }
@@ -322,10 +322,10 @@ internal class FieldMetadata
     internal string type { get; set; }
 
     [JsonProperty(PropertyName = "scale", NullValueHandling = NullValueHandling.Ignore)]
-    internal Int64 scale { get; set; }
+    internal long scale { get; set; }
 
     [JsonProperty(PropertyName = "precision", NullValueHandling = NullValueHandling.Ignore)]
-    internal Int64 precision { get; set; }
+    internal long precision { get; set; }
 
     [JsonProperty(PropertyName = "nullable")]
     internal bool nullable { get; set; }
@@ -415,7 +415,7 @@ internal class PutGetResponseData : IQueryExecResponseData
     internal List<NameValueParameter> parameters { get; set; }
 
     [JsonProperty(PropertyName = "statementTypeId", NullValueHandling = NullValueHandling.Ignore)]
-    internal Int64 statementTypeId { get; set; }
+    internal long statementTypeId { get; set; }
 }
 
 internal class PutGetStageInfo

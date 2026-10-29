@@ -37,7 +37,7 @@ public class SnowflakeDbConnection : DbConnection
     // Likely this should be a non-static one and the Mutex as well (if
     // it's needed) since the stage is created per session
     // Will fix that in a separated PR though as it's a different issue
-    private static Boolean _isArrayBindStageCreated;
+    private static bool _isArrayBindStageCreated;
 
     private readonly TomlConnectionBuilder _tomlConnectionBuilder;
 
@@ -146,7 +146,7 @@ public class SnowflakeDbConnection : DbConnection
     /// <summary>
     /// Gets the Snowflake server version if the connection is open; otherwise, returns an empty string.
     /// </summary>
-    public override string ServerVersion => IsOpen() ? SfSession.serverVersion : String.Empty;
+    public override string ServerVersion => IsOpen() ? SfSession.serverVersion : string.Empty;
 
     /// <summary>
     /// Gets the current state of the connection.

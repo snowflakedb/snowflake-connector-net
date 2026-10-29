@@ -185,7 +185,7 @@ class SFSessionPropertyAttr : Attribute
     public bool IsSecret { get; set; } = false;
 }
 
-class SFSessionProperties : Dictionary<SFSessionProperty, String>
+class SFSessionProperties : Dictionary<SFSessionProperty, string>
 {
     private static SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
 
@@ -300,7 +300,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, String>
         {
             try
             {
-                useProxy = Boolean.Parse(properties[SFSessionProperty.USEPROXY]);
+                useProxy = bool.Parse(properties[SFSessionProperty.USEPROXY]);
             }
             catch (Exception e)
             {

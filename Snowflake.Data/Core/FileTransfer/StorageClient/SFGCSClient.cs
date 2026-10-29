@@ -355,7 +355,7 @@ class SFGCSClient : ISFRemoteStorageClient
         request.Headers.Add(GCS_METADATA_SFC_DIGEST, fileMetadata.sha256Digest);
         if (fileMetadata.stageInfo.isClientSideEncrypted)
         {
-            String encryptionData = GetUploadEncryptionData(ref fileMetadata, encryptionMetadata);
+            string encryptionData = GetUploadEncryptionData(ref fileMetadata, encryptionMetadata);
 
             request.Headers.Add(GCS_METADATA_MATDESC_KEY, encryptionMetadata.matDesc);
             request.Headers.Add(GCS_METADATA_ENCRYPTIONDATAPROP, encryptionData);
@@ -369,7 +369,7 @@ class SFGCSClient : ISFRemoteStorageClient
     /// </summary>
     /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
     /// <returns>Stream content.</returns>
-    private String GetUploadEncryptionData(ref SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
+    private string GetUploadEncryptionData(ref SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
     {
         // Create the encryption header value
         string encryptionData = JsonConvert.SerializeObject(new EncryptionData

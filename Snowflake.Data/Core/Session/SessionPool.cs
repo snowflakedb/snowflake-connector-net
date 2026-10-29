@@ -413,10 +413,10 @@ sealed class SessionPool : IDisposable
         return null;
     }
 
-    private SFSession NewNonPoolingSession(String connectionString, SessionPropertiesContext sessionContext) =>
+    private SFSession NewNonPoolingSession(string connectionString, SessionPropertiesContext sessionContext) =>
         NewSession(connectionString, sessionContext, _noPoolingSessionCreationTokenCounter.NewToken());
 
-    private SFSession NewSession(String connectionString, SessionPropertiesContext sessionContext, SessionCreationToken sessionCreationToken)
+    private SFSession NewSession(string connectionString, SessionPropertiesContext sessionContext, SessionCreationToken sessionCreationToken)
     {
         s_logger.Debug("SessionPool::NewSession" + PoolIdentification());
         try
@@ -459,12 +459,12 @@ sealed class SessionPool : IDisposable
     }
 
     private Task<SFSession> NewNonPoolingSessionAsync(
-        String connectionString,
+        string connectionString,
         SessionPropertiesContext sessionContext,
         CancellationToken cancellationToken) =>
         NewSessionAsync(connectionString, sessionContext, _noPoolingSessionCreationTokenCounter.NewToken(), cancellationToken);
 
-    private Task<SFSession> NewSessionAsync(String connectionString, SessionPropertiesContext sessionContext, SessionCreationToken sessionCreationToken, CancellationToken cancellationToken)
+    private Task<SFSession> NewSessionAsync(string connectionString, SessionPropertiesContext sessionContext, SessionCreationToken sessionCreationToken, CancellationToken cancellationToken)
     {
         s_logger.Debug("SessionPool::NewSessionAsync" + PoolIdentification());
         var session = SessionFactory.NewSession(connectionString, sessionContext);
