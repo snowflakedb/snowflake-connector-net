@@ -162,7 +162,7 @@ namespace Snowflake.Data.Core {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to "Could not read RSA private key {0} : {1}.".
+        ///   Looks up a localized string similar to "Could not read private key ({0}). {1}".
         /// </summary>
         internal static string JWT_ERROR_READING_PK
         {

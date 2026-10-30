@@ -7,6 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Snowflake.Data.Client;
 using System.Security.Cryptography;
 using System.IO;
+using System.Linq;
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Crypto;
@@ -124,17 +125,8 @@ internal sealed class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
             }
             catch (Exception e)
             {
-                throw new SnowflakeDbException(
-                    e,
-                    SFError.JWT_ERROR_READING_PK,
-                    args:
-                    [
-                        hasPkPath ? pkPath : "with value passed in connection string",
-                        (pkContent == null)
-                            ? e.ToString()
-                            : "incorrect private key value or " +
-                              "private key format: use \"\\n\" for newlines and double the equals sign."
-                    ]);
+                var detail = BuildPemDiagnostic(e, pkPath, pkContent);
+                throw new SnowflakeDbException(e, SFError.JWT_ERROR_READING_PK, args: [detail.Source, detail.Message]);
             }
         }
 
@@ -201,6 +193,26 @@ internal sealed class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
         var jwtToken = handler.WriteToken(token);
 
         return jwtToken;
+    }
+
+    internal static (string Message, string Source) BuildPemDiagnostic(Exception e, string pkPath, string pkContent)
+    {
+        var source = string.IsNullOrEmpty(pkPath) ? "inline PRIVATE_KEY connection-string value" : pkPath;
+        var exceptionLiteral = e.ToString();
+
+        if (string.IsNullOrEmpty(pkContent))
+            return (exceptionLiteral, source);
+
+        var message =
+            @"Incorrect private key value or private key format.
+If the key is passed via PRIVATE_KEY in the connection string, ensure it contains real newline characters (not the literal two-character sequence \n), and double any '=' characters in the base64 body (use '==').
+Verify the content was not corrupted during injection.";
+
+        string[] pwdFragments = ["pad block corrupted", "pkcs12", "decryption failed"];
+        if (pwdFragments.Any(exceptionLiteral.Contains))
+            message = "The private key appears to be encrypted or the passphrase is incorrect. Set the PRIVATE_KEY_PWD connection property to the correct passphrase.\n" + message;
+
+        return (message, source);
     }
 
     private static PemReader CreatePemReader(TextReader textReader, string privateKeyPassword)
