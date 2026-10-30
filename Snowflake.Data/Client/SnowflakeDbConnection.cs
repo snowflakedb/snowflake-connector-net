@@ -116,6 +116,11 @@ public class SnowflakeDbConnection : DbConnection
     }
 
     /// <summary>
+    /// Gets the Snowflake session id for this connection. The value is available after <see cref="Open"/> completes.
+    /// </summary>
+    public string SessionId => IsOpen() ? SfSession.sessionId : string.Empty;
+
+    /// <summary>
     /// Gets the name of the current database if the connection is open; otherwise, returns an empty string.
     /// </summary>
     public override string Database => IsOpen() ? SfSession.database : string.Empty;

@@ -291,6 +291,55 @@ public class SnowflakeDbConnectionTest
     }
 
     [SFFact]
+    public void TestSessionIdReturnsEmptyWhenConnectionIsNotOpen()
+    {
+        // Arrange
+        var conn = new SnowflakeDbConnection();
+        conn.ConnectionString = "account=test;user=test;password=test;";
+
+        // Act
+        var sessionId = conn.SessionId;
+
+        // Assert
+        Assert.Empty(sessionId);
+    }
+
+    [SFFact]
+    public void TestSessionIdReturnsValueWhenConnectionIsOpen()
+    {
+        // Arrange
+        var conn = new SnowflakeDbConnection();
+        conn.ConnectionString = "account=test;user=test;password=test;";
+        var session = new SFSession("account=test;user=test;password=test;", new SessionPropertiesContext())
+        {
+            sessionId = "mock-session-id-12345"
+        };
+        conn.SfSession = session;
+        conn._connectionState = ConnectionState.Open;
+
+        // Act
+        var sessionId = conn.SessionId;
+
+        // Assert
+        Assert.Equal("mock-session-id-12345", sessionId);
+    }
+
+    [SFFact]
+    public void TestSessionIdThrowsWhenSessionIsNullButStateIsOpen()
+    {
+        // Arrange
+        var conn = new SnowflakeDbConnection();
+        conn.ConnectionString = "account=test;user=test;password=test;";
+        conn._connectionState = ConnectionState.Open;
+
+        // Act
+        var sessionId = conn.SessionId;
+
+        // Assert
+        Assert.Empty(sessionId);
+    }
+
+    [SFFact]
     public void TestCloseWhenSessionCloseThrowsSetsStateToBroken()
     {
         // Arrange
