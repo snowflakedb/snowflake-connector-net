@@ -43,7 +43,7 @@ internal abstract class BaseOAuthAccessTokenRequest
         return BuildFormUrlEncodedContent(values);
     }
 
-    private FormUrlEncodedContent BuildFormUrlEncodedContent(Dictionary<string, string> values)
+    private static FormUrlEncodedContent BuildFormUrlEncodedContent(Dictionary<string, string> values)
     {
         var content = new FormUrlEncodedContent(values);
         content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");

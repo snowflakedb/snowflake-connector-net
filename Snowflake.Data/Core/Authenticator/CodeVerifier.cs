@@ -27,7 +27,7 @@ internal class CodeVerifier
         }
     }
 
-    private void ValidateLength(string value)
+    private static void ValidateLength(string value)
     {
         if ((value?.Length ?? 0) < 43)
             throw new ArgumentException("The code verifier must be at least 43 characters");
@@ -35,7 +35,7 @@ internal class CodeVerifier
             throw new ArgumentException("The code verifier must not be longer than 128 characters");
     }
 
-    private string SkipIllegalCharacters(string value)
+    private static string SkipIllegalCharacters(string value)
     {
         if (string.IsNullOrEmpty(value))
             return value;

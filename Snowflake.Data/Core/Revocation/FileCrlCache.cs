@@ -19,16 +19,14 @@ internal class FileCrlCache : ICrlCache
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<FileCrlCache>();
 
     private readonly FileCrlCacheConfig _config;
-    private readonly CrlParser _parser;
     private readonly FileOperations _fileOperations;
     private readonly UnixOperations _unixOperations;
     private readonly DirectoryOperations _directoryOperations;
     private readonly TimeSpan _removalDelay;
 
-    internal FileCrlCache(FileCrlCacheConfig config, CrlParser parser, FileOperations fileOperations, UnixOperations unixOperations, DirectoryOperations directoryOperations, TimeSpan removalDelay)
+    internal FileCrlCache(FileCrlCacheConfig config, FileOperations fileOperations, UnixOperations unixOperations, DirectoryOperations directoryOperations, TimeSpan removalDelay)
     {
         _config = config;
-        _parser = parser;
         _fileOperations = fileOperations;
         _unixOperations = unixOperations;
         _directoryOperations = directoryOperations;
@@ -39,7 +37,7 @@ internal class FileCrlCache : ICrlCache
     {
         var config = new FileCrlCacheConfig(EnvironmentFacade.Instance, UnixOperations.Instance);
         var parser = new CrlParser(EnvironmentFacade.Instance);
-        return new FileCrlCache(config, parser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance, removalDelay);
+        return new FileCrlCache(config, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance, removalDelay);
     }
 
     public Crl Get(string crlUrl)
@@ -67,7 +65,7 @@ internal class FileCrlCache : ICrlCache
 
                 try
                 {
-                    return _parser.Parse(fileBytes, fileInfo.LastWriteTimeUtc);
+                    return CrlParser.Parse(fileBytes, fileInfo.LastWriteTimeUtc);
                 }
                 catch (Exception exception)
                 {
@@ -173,7 +171,7 @@ internal class FileCrlCache : ICrlCache
         return Path.Combine(_config.DirectoryPath, encodedUrl);
     }
 
-    private string DecodeCrlUrlFromFilePath(string filePath)
+    private static string DecodeCrlUrlFromFilePath(string filePath)
     {
         var fileName = Path.GetFileName(filePath);
         return HttpUtility.UrlDecode(fileName, Encoding.UTF8);
@@ -288,7 +286,7 @@ internal class FileCrlCache : ICrlCache
                     {
                         var fileBytes = ReadCrlBytes(filePath);
                         var fileInfo = _fileOperations.GetFileInfo(filePath);
-                        var crl = _parser.Parse(fileBytes, fileInfo.LastWriteTimeUtc);
+                        var crl = CrlParser.Parse(fileBytes, fileInfo.LastWriteTimeUtc);
 
                         if (crl.NeedsReplacement(now, _removalDelay))
                         {

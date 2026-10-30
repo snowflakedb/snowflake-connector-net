@@ -331,7 +331,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
     }
 
 
-    private void RemoveOAuthCache(TestConfig testConfig)
+    private static void RemoveOAuthCache(TestConfig testConfig)
     {
         var idpUrl = testConfig.oauthTokenRequestUrl;
         var snowflakeHost = testConfig.host;

@@ -350,7 +350,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
         t_filesToDelete.Value.Add(t_outputFilePath.Value);
     }
 
-    async Task PutFile(SnowflakeDbConnection conn)
+    static async Task PutFile(SnowflakeDbConnection conn)
     {
         using (var command = conn.CreateCommand())
         {
@@ -367,7 +367,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
         }
     }
 
-    private async Task CopyIntoTableAsync(SnowflakeDbConnection conn)
+    private static async Task CopyIntoTableAsync(SnowflakeDbConnection conn)
     {
         using (var command = conn.CreateCommand())
         {
@@ -440,7 +440,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
         }
     }
 
-    private void CheckColumnMetadata(DbDataReader reader)
+    private static void CheckColumnMetadata(DbDataReader reader)
     {
         var dataTable = reader.GetSchemaTable();
 

@@ -109,7 +109,7 @@ internal class SFLoggerPair : SFLogger
         throw new NotImplementedException();
     }
 
-    private string FormatBrackets(string message)
+    private static string FormatBrackets(string message)
     {
         var sb = new StringBuilder(message).Replace("{", "{{").Replace("}", "}}");
         return sb.ToString();

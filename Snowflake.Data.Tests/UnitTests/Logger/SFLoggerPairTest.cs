@@ -130,7 +130,7 @@ public class SFLoggerPairTest : IDisposable
         loggerPair.Error("error log message", new Exception("test exception"));
     }
 
-    private SFLogger GetLogger()
+    private static SFLogger GetLogger()
     {
         var logger = SFLoggerFactory.GetLogger<SFLoggerPairTest>();
         EasyLoggerManager.AddConsoleAppender();

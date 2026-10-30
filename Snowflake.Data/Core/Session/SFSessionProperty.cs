@@ -226,11 +226,11 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
             SFSessionProperties prop = (SFSessionProperties)obj;
             foreach (SFSessionProperty sessionProperty in Enum.GetValues(typeof(SFSessionProperty)))
             {
-                if (this.ContainsKey(sessionProperty) ^ prop.ContainsKey(sessionProperty))
+                if (ContainsKey(sessionProperty) ^ prop.ContainsKey(sessionProperty))
                 {
                     return false;
                 }
-                if (!this.ContainsKey(sessionProperty))
+                if (!ContainsKey(sessionProperty))
                 {
                     continue;
                 }

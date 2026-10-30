@@ -78,7 +78,7 @@ public class WifLatestTest
         return string.Equals(s_provider, "GCP");
     }
 
-    private string GetGcpAccessToken()
+    private static string GetGcpAccessToken()
     {
         try
         {
@@ -111,7 +111,7 @@ public class WifLatestTest
         }
     }
 
-    private string ConnectAndQueryCurrentUser(string connectionString)
+    private static string ConnectAndQueryCurrentUser(string connectionString)
     {
         using (IDbConnection conn = new SnowflakeDbConnection())
         {
@@ -130,7 +130,7 @@ public class WifLatestTest
         }
     }
 
-    private void ConnectAndExecuteSimpleQuery(string connectionString)
+    private static void ConnectAndExecuteSimpleQuery(string connectionString)
     {
         using (IDbConnection conn = new SnowflakeDbConnection())
         {

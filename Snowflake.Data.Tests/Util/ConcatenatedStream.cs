@@ -16,10 +16,7 @@ class ConcatenatedStream : Stream
         this.streams = new Queue<Stream>(streams);
     }
 
-    public override bool CanRead
-    {
-        get { return true; }
-    }
+    public override bool CanRead => true;
 
     public override int Read(byte[] buffer, int offset, int count)
     {
@@ -35,36 +32,21 @@ class ConcatenatedStream : Stream
         return bytesRead;
     }
 
-    public override bool CanSeek
-    {
-        get { return false; }
-    }
+    public override bool CanSeek => false;
 
-    public override bool CanWrite
-    {
-        get { return false; }
-    }
+    public override bool CanWrite => false;
 
     public override void Flush()
     {
         throw new NotImplementedException();
     }
 
-    public override long Length
-    {
-        get { throw new NotImplementedException(); }
-    }
+    public override long Length => throw new NotImplementedException();
 
     public override long Position
     {
-        get
-        {
-            throw new NotImplementedException();
-        }
-        set
-        {
-            throw new NotImplementedException();
-        }
+        get => throw new NotImplementedException();
+        set => throw new NotImplementedException();
     }
 
     public override long Seek(long offset, SeekOrigin origin)

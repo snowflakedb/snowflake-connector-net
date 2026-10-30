@@ -22,7 +22,7 @@ internal class ObjectBuilderByPropertyOrder : IObjectBuilder
         _result = new List<Tuple<PropertyInfo, object>>();
     }
 
-    private bool IsIgnoredForPropertiesOrder(PropertyInfo property)
+    private static bool IsIgnoredForPropertiesOrder(PropertyInfo property)
     {
         var sfAnnotation = property.GetCustomAttributes<SnowflakeColumn>().FirstOrDefault();
         return sfAnnotation != null && sfAnnotation.IgnoreForPropertyOrder;

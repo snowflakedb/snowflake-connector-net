@@ -128,7 +128,7 @@ public class SnowflakeDbConnection : DbConnection
     /// <summary>
     /// Gets the connection timeout in seconds.
     /// </summary>
-    public override int ConnectionTimeout => this._connectionTimeout;
+    public override int ConnectionTimeout => _connectionTimeout;
 
     /// <summary>
     ///     If the connection to the database is closed, the DataSource returns whatever is contained
@@ -140,13 +140,7 @@ public class SnowflakeDbConnection : DbConnection
     ///     DBPROP_DATASOURCENAME is returned.
     ///     Note: not yet implemented
     /// </summary>
-    public override string DataSource
-    {
-        get
-        {
-            return "";
-        }
-    }
+    public override string DataSource => "";
 
     /// <summary>
     /// Gets the Snowflake server version if the connection is open; otherwise, returns an empty string.

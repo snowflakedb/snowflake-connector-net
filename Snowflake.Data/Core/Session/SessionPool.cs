@@ -162,7 +162,7 @@ sealed class SessionPool : IDisposable
         }
     }
 
-    private string ExtractSecureString(SecureString secret) =>
+    private static string ExtractSecureString(SecureString secret) =>
         secret == null ? string.Empty : SecureStringHelper.Decode(secret);
 
     internal SFSession GetSession(string connStr, SessionPropertiesContext sessionContext)

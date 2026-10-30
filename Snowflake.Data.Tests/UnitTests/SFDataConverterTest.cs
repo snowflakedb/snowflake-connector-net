@@ -14,7 +14,7 @@ public sealed class SFDataConverterTest
 {
     // Method with the same signature as before the performance work
     // Used by unit tests only
-    private UTF8Buffer ConvertToUTF8Buffer(string srcVal)
+    private static UTF8Buffer ConvertToUTF8Buffer(string srcVal)
     {
         // Create an UTF8Buffer with an offset to get better testing
         byte[] b1 = Encoding.UTF8.GetBytes(srcVal);
@@ -35,8 +35,8 @@ public sealed class SFDataConverterTest
 
             Thread.CurrentThread.CurrentCulture = ci;
 
-            System.Tuple<string, string> t =
-                SFDataConverter.CSharpTypeValToSfTypeVal(System.Data.DbType.Double, 1.2345);
+            Tuple<string, string> t =
+                SFDataConverter.CSharpTypeValToSfTypeVal(DbType.Double, 1.2345);
 
             Assert.Equal("REAL", t.Item1);
             Assert.Equal("1.2345", t.Item2);
@@ -148,9 +148,9 @@ public sealed class SFDataConverterTest
         InternalTestConvertDate(dtExpected, DateTime.SpecifyKind(inputTime, (DateTimeKind)kind));
     }
 
-    private void InternalTestConvertDate(DateTime dtExpected, DateTime testValue)
+    private static void InternalTestConvertDate(DateTime dtExpected, DateTime testValue)
     {
-        var result = SFDataConverter.CSharpTypeValToSfTypeVal(System.Data.DbType.Date, testValue);
+        var result = SFDataConverter.CSharpTypeValToSfTypeVal(DbType.Date, testValue);
         // Convert result to DateTime for easier interpretation
         var unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         DateTime dtResult = unixEpoch.AddMilliseconds(long.Parse(result.Item2));
@@ -328,7 +328,7 @@ public sealed class SFDataConverterTest
         Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(decimal))));
     }
 
-    private string DateTimeToLtzWireFormat(DateTime utcDateTime)
+    private static string DateTimeToLtzWireFormat(DateTime utcDateTime)
     {
         var tickDiff = utcDateTime.Ticks - SFDataConverter.UnixEpoch.Ticks;
         return (tickDiff / 10000000.0m).ToString(CultureInfo.InvariantCulture);

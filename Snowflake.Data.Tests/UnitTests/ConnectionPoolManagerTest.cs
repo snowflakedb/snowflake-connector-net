@@ -373,7 +373,7 @@ public class ConnectionPoolManagerTest
         Assert.DoesNotContain(password, serializedPool);
     }
 
-    private void EnsurePoolSize(string connectionString, SessionPropertiesContext sessionContext, int requiredCurrentSize)
+    private static void EnsurePoolSize(string connectionString, SessionPropertiesContext sessionContext, int requiredCurrentSize)
     {
         var connectionPoolManager = SnowflakeDbConnectionPool.ConnectionManager;
         var sessionPool = connectionPoolManager.GetPool(connectionString, sessionContext);

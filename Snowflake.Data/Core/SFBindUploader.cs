@@ -44,12 +44,12 @@ class SFBindUploader
     {
         this.session = session;
         this.requestId = requestId;
-        this.stagePath = "@" + STAGE_NAME + "/" + requestId;
+        stagePath = "@" + STAGE_NAME + "/" + requestId;
     }
 
     public string GetStagePath()
     {
-        return this.stagePath;
+        return stagePath;
     }
 
     public void Upload(Dictionary<string, BindingDTO> bindings)
@@ -193,7 +193,7 @@ class SFBindUploader
     private void UploadStream(ref MemoryStream stream, string destFileName)
     {
         CreateStage();
-        string stageName = this.stagePath;
+        string stageName = stagePath;
         if (stageName == null)
         {
             throw new Exception("Stage name is null.");
@@ -214,7 +214,7 @@ class SFBindUploader
     internal async Task UploadStreamAsync(MemoryStream stream, string destFileName, CancellationToken cancellationToken)
     {
         await CreateStageAsync(cancellationToken).ConfigureAwait(false);
-        string stageName = this.stagePath;
+        string stageName = stagePath;
         if (stageName == null)
         {
             throw new Exception("Stage name is null.");

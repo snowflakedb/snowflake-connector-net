@@ -19,9 +19,9 @@ internal class SessionPoolState
 
     public int Count() => _idleSessionsCount + _busySessionsCount + _sessionCreationsCount;
 
-    public int IdleSessionsCount { get => _idleSessionsCount; }
+    public int IdleSessionsCount => _idleSessionsCount;
 
-    public int BusySessionsCount { get => _busySessionsCount; }
+    public int BusySessionsCount => _busySessionsCount;
 
     public override string ToString()
     {

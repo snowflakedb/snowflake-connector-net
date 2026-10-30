@@ -21,7 +21,7 @@ internal class SessionPropertiesContext
         FillSecret(properties, SFSessionProperty.TOKEN, Token);
     }
 
-    private void FillSecret(SFSessionProperties properties, SFSessionProperty property, SecureString secret)
+    private static void FillSecret(SFSessionProperties properties, SFSessionProperty property, SecureString secret)
     {
         if (secret != null && secret.Length > 0)
         {

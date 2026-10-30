@@ -7,7 +7,7 @@ internal class EasyLoggingLevelMapper
 {
     public static readonly EasyLoggingLevelMapper Instance = new();
 
-    public LoggingEvent ToLoggingEventLevel(EasyLoggingLogLevel level)
+    public static LoggingEvent ToLoggingEventLevel(EasyLoggingLogLevel level)
     {
         switch (level)
         {

@@ -308,7 +308,7 @@ class SFStatement
 
     private void SetTimeout(int timeout)
     {
-        this._timeoutTokenSource =
+        _timeoutTokenSource =
             timeout > 0 ? new CancellationTokenSource(timeout * 1000) : new CancellationTokenSource(Timeout.InfiniteTimeSpan);
     }
 
@@ -979,7 +979,7 @@ class SFStatement
     /// </summary>
     /// <param name="originalSql">The original sql query.</param>
     /// <returns>The query without the blanks and comments at the beginning.</returns>
-    internal string TrimSql(string originalSql)
+    internal static string TrimSql(string originalSql)
     {
         char[] sqlQueryBuf = originalSql.ToCharArray();
         var builder = new StringBuilder();
@@ -1036,7 +1036,7 @@ class SFStatement
     /// </summary>
     /// <param name="query">The sql query.</param>
     /// <returns>The boolean value if the query is a PUT or GET command.</returns>
-    private bool IsPutOrGetCommand(string query)
+    private static bool IsPutOrGetCommand(string query)
     {
         return (query.Substring(0, 3).ToUpper() == "PUT") ||
                (query.Substring(0, 3).ToUpper() == "GET");

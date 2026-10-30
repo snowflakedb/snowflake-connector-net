@@ -47,14 +47,14 @@ public class SnowflakeDbDataAdapter : DbDataAdapter, IDbDataAdapter
 
     public new SnowflakeDbCommand SelectCommand
     {
-        get { return _selectCommand; }
-        set { _selectCommand = value; }
+        get => _selectCommand;
+        set => _selectCommand = value;
     }
 
     IDbCommand IDbDataAdapter.SelectCommand
     {
-        get { return _selectCommand; }
-        set { _selectCommand = (SnowflakeDbCommand)value; }
+        get => _selectCommand;
+        set => _selectCommand = (SnowflakeDbCommand)value;
     }
 
     IDbCommand IDbDataAdapter.UpdateCommand

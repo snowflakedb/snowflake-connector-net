@@ -18,7 +18,7 @@ public sealed class ChunkDownloaderFactoryTest : IDisposable
         SFConfiguration.Instance().ChunkDownloaderVersion = ChunkDownloaderVersionDefault; // Return to default version
     }
 
-    private QueryExecResponseData MockQueryRequestData()
+    private static QueryExecResponseData MockQueryRequestData()
     {
         return new QueryExecResponseData
         {
@@ -34,7 +34,7 @@ public sealed class ChunkDownloaderFactoryTest : IDisposable
         };
     }
 
-    private SFResultSet MockSFResultSet(QueryExecResponseData responseData, CancellationToken token)
+    private static SFResultSet MockSFResultSet(QueryExecResponseData responseData, CancellationToken token)
     {
         string connectionString = "user=user;password=password;account=account;";
         SFSession session = new SFSession(connectionString, new SessionPropertiesContext());

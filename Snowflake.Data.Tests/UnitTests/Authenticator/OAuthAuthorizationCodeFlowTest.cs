@@ -530,7 +530,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
         Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
     }
 
-    private SFSession PrepareSession(bool clientSecretInConnectionString = true, bool userInConnectionString = true, string connectionStringSuffix = "client_store_temporary_credential=true;")
+    private static SFSession PrepareSession(bool clientSecretInConnectionString = true, bool userInConnectionString = true, string connectionStringSuffix = "client_store_temporary_credential=true;")
     {
         var connectionString = GetAuthorizationCodeConnectionString(clientSecretInConnectionString, userInConnectionString) + connectionStringSuffix;
         var sessionContext = new SessionPropertiesContext
@@ -549,7 +549,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
         return session;
     }
 
-    private string GetAuthorizationCodeConnectionString(bool addOAuthClientSecret, bool addUser)
+    private static string GetAuthorizationCodeConnectionString(bool addOAuthClientSecret, bool addUser)
     {
         var authenticator = "oauth_authorization_code";
         var account = "testAccount";

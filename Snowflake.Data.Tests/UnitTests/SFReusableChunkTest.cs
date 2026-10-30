@@ -244,7 +244,7 @@ public class SFReusableChunkTest
         Assert.Equal(0, chunk.data.metaBlockCount);
     }
 
-    private async Task<SFReusableChunk> PrepareChunkAsync(string stringData, int colCount, int rowCount)
+    private static async Task<SFReusableChunk> PrepareChunkAsync(string stringData, int colCount, int rowCount)
     {
         byte[] bytes = Encoding.UTF8.GetBytes(stringData);
         Stream stream = new MemoryStream(bytes);

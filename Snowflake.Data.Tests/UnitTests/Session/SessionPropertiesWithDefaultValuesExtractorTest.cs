@@ -206,6 +206,6 @@ public class SessionPropertiesWithDefaultValuesExtractorTest
         Assert.Contains("Invalid value of parameter CONNECTION_TIMEOUT", thrown.Message);
     }
 
-    private int GetDefaultIntSessionProperty(SFSessionProperty property) =>
+    private static int GetDefaultIntSessionProperty(SFSessionProperty property) =>
         int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetDefaultValue());
 }

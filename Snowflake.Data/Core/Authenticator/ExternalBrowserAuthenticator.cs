@@ -105,7 +105,7 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
         logger.Debug("Send login request");
         try
         {
-            await base.LoginAsync(cancellationToken).ConfigureAwait(false);
+            await LoginAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (SnowflakeDbException e)
         {
@@ -143,7 +143,7 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
         logger.Debug("Send login request");
         try
         {
-            base.Login();
+            Login();
         }
         catch (SnowflakeDbException e)
         {
@@ -489,7 +489,7 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
         return loginUrl.ToString();
     }
 
-    private string GenerateProofKey()
+    private static string GenerateProofKey()
     {
         byte[] randomness = new byte[32];
         using (var rng = RandomNumberGenerator.Create())

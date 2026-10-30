@@ -208,7 +208,7 @@ public sealed class SFRemoteStorageClientTest : IDisposable
         Assert.Equal(ResultStatus.SKIPPED.ToString(), _fileMetadata.resultStatus);
     }
 
-    private Mock<WebRequest> CreateBaseMockClient()
+    private static Mock<WebRequest> CreateBaseMockClient()
     {
         // Setup the mock GCS client for remote storage tests
         var mockWebRequest = new Mock<WebRequest>();

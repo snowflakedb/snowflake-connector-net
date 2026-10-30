@@ -80,7 +80,7 @@ internal sealed class SFEnvironment
     static SFEnvironment()
     {
         MinicoreDisabled = EnvironmentFacade.Instance.GetBool(EnvVars.DisableMinicore);
-        Tools.PlatformDetection.EnsureStarted();
+        PlatformDetection.EnsureStarted();
         var libcInfo = LibcDetector.Instance.Detect();
         ClientEnv = new LoginRequestClientEnv()
         {

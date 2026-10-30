@@ -146,7 +146,7 @@ internal sealed class HttpUtil
         IncreaseLowDefaultConnectionLimitOfServicePointManager();
     }
 
-    internal void IncreaseLowDefaultConnectionLimitOfServicePointManager()
+    internal static void IncreaseLowDefaultConnectionLimitOfServicePointManager()
     {
 #if !NET9_0_OR_GREATER // ServicePointManager has no effect on HttpClient from net9
         var currentLimit = ServicePointManager.DefaultConnectionLimit;
@@ -209,7 +209,7 @@ internal sealed class HttpUtil
     internal HttpClient CreateNewHttpClient(HttpClientConfig config, DelegatingHandler customDelegatingHandlerWrapper = null) =>
         CreateNewHttpClient(config, SetupCustomHttpHandler(config), customDelegatingHandlerWrapper);
 
-    internal HttpClient CreateNewHttpClient(HttpClientConfig config, HttpMessageHandler messageHandler, DelegatingHandler customDelegatingHandlerWrapper = null)
+    internal static HttpClient CreateNewHttpClient(HttpClientConfig config, HttpMessageHandler messageHandler, DelegatingHandler customDelegatingHandlerWrapper = null)
     {
         RejectAutoRedirect(messageHandler);
         if (customDelegatingHandlerWrapper != null)
@@ -610,7 +610,7 @@ internal sealed class HttpUtil
         }
     }
 
-    internal HttpClientHandler CreateFallbackHttpClientHandler(HttpClientConfig config, Exception cause, bool canApplyTlsProtocols)
+    internal static HttpClientHandler CreateFallbackHttpClientHandler(HttpClientConfig config, Exception cause, bool canApplyTlsProtocols)
     {
         if (!canApplyTlsProtocols)
         {
@@ -649,7 +649,7 @@ internal sealed class HttpUtil
         return handler;
     }
 
-    private HttpClientHandler CreateHttpClientHandlerWithDotnetCrlCheck(HttpClientConfig config)
+    private static HttpClientHandler CreateHttpClientHandlerWithDotnetCrlCheck(HttpClientConfig config)
     {
         logger.Debug("Creating HttpClientHandler without CRL check customizations");
         return new HttpClientHandler

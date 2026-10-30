@@ -135,7 +135,7 @@ public class OAuthAuthorizationCodeAuthenticatorTest
         Assert.Equal(expectedUrlInException, urlInException);
     }
 
-    private OAuthAuthorizationCodeAuthenticator PrepareAuthenticator(
+    private static OAuthAuthorizationCodeAuthenticator PrepareAuthenticator(
         IWebBrowserRunner browserRunner,
         WebListenerStarter listenerStarter,
         string additionalParameters)
@@ -154,7 +154,7 @@ public class OAuthAuthorizationCodeAuthenticatorTest
         return authenticator;
     }
 
-    private string GetAuthorizationCodeConnectionString(string additionalConnectionStringPart)
+    private static string GetAuthorizationCodeConnectionString(string additionalConnectionStringPart)
     {
         var authenticator = "oauth_authorization_code";
         var user = "testUser";

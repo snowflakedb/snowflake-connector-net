@@ -239,7 +239,7 @@ public class ConnectionMultiplePoolsIT : SFBaseTestAsync, IDisposable
         Assert.Equal(0, pool.GetCurrentState().BusySessionsCount);
     }
 
-    private SnowflakeDbConnection OpenConnection(string connectionString)
+    private static SnowflakeDbConnection OpenConnection(string connectionString)
     {
         var connection = new SnowflakeDbConnection();
         connection.ConnectionString = connectionString;
@@ -247,7 +247,7 @@ public class ConnectionMultiplePoolsIT : SFBaseTestAsync, IDisposable
         return connection;
     }
 
-    private async Task<SnowflakeDbConnection> OpenConnectionAsync(string connectionString)
+    private static async Task<SnowflakeDbConnection> OpenConnectionAsync(string connectionString)
     {
         var connection = new SnowflakeDbConnection();
         connection.ConnectionString = connectionString;

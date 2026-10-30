@@ -152,7 +152,7 @@ public abstract class SFDbDataReaderGetEnumeratorIT : SFBaseTestAsync
         }
     }
 
-    private async Task DropTestTableAndCloseConnectionAsync(DbConnection conn, string tableName)
+    private static async Task DropTestTableAndCloseConnectionAsync(DbConnection conn, string tableName)
     {
         var cmd = conn.CreateCommand();
         cmd.CommandText = $"drop table if exists {tableName}";
@@ -181,7 +181,7 @@ public abstract class SFDbDataReaderGetEnumeratorIT : SFBaseTestAsync
         return conn;
     }
 
-    private async Task CloseConnectionAsync(DbConnection conn)
+    private static async Task CloseConnectionAsync(DbConnection conn)
     {
         SessionParameterAlterer.RestoreResultFormat(conn);
         await conn.CloseAsync().ConfigureAwait(false);

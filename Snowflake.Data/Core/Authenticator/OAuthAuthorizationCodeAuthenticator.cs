@@ -149,7 +149,7 @@ You can close this window now and go back where you started from.
         }
     }
 
-    private Result<OAuthAuthorizationCodeResponse, IBrowserError> ValidateAndExtractAuthorizationCodeResult(HttpListenerRequest request, string expectedState)
+    private static Result<OAuthAuthorizationCodeResponse, IBrowserError> ValidateAndExtractAuthorizationCodeResult(HttpListenerRequest request, string expectedState)
     {
         if (request.HttpMethod != "GET")
         {
@@ -215,7 +215,7 @@ You can close this window now and go back where you started from.
         });
     }
 
-    private string BadRequestError(string error) => BrowserErrorResponseTemplate.Replace("{error}", error);
+    private static string BadRequestError(string error) => BrowserErrorResponseTemplate.Replace("{error}", error);
 
 
     internal HttpListener StartListenerUpdatingRedirectUri(OAuthAuthorizationCodeRequest request)
@@ -227,7 +227,7 @@ You can close this window now and go back where you started from.
         return listenerForDefaultRedirectUri.Listener;
     }
 
-    private string AddSlashToNonEmptyUrl(string url)
+    private static string AddSlashToNonEmptyUrl(string url)
     {
         if (string.IsNullOrEmpty(url))
             return url;

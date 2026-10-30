@@ -40,7 +40,7 @@ internal sealed class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
 
     internal KeyPairAuthenticator(SFSession session, IRestRequester customRequester) : base(session, customRequester)
     {
-        this.Session = session;
+        Session = session;
         _rsaProvider = new RSACryptoServiceProvider();
     }
 
@@ -64,7 +64,7 @@ internal sealed class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
     public void Authenticate()
     {
         s_logger.Debug("Send login request");
-        base.Login();
+        Login();
     }
 
     protected override string AuthName => AUTH_NAME;
@@ -143,7 +143,7 @@ internal sealed class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
         // Generating the token
         var now = DateTime.UtcNow;
         var dtDateTime =
-            new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+            new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         var secondsSinceEpoch = (long)((now - dtDateTime).TotalSeconds);
 
         /*

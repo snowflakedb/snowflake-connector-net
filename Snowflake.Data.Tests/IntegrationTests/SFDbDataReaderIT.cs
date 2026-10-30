@@ -627,7 +627,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             p1.ParameterName = "1";
             p1.Value = insertValue;
             p1.DbType = DbType.DateTimeOffset;
-            p1.SFDataType = Core.SFDataType.TIMESTAMP_LTZ;
+            p1.SFDataType = SFDataType.TIMESTAMP_LTZ;
             cmd.Parameters.Add(p1);
 
             var count = cmd.ExecuteNonQuery();
@@ -1975,7 +1975,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
         return conn;
     }
 
-    private async Task CloseConnectionAsync(DbConnection conn)
+    private static async Task CloseConnectionAsync(DbConnection conn)
     {
         SessionParameterAlterer.RestoreResultFormat(conn);
         await conn.CloseAsync().ConfigureAwait(false);

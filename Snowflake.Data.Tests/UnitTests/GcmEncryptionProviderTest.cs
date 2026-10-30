@@ -303,10 +303,10 @@ public class GcmEncryptionProviderTest
         }
     }
 
-    private string ExtractContent(Stream stream) =>
+    private static string ExtractContent(Stream stream) =>
         Encoding.UTF8.GetString(ExtractContentBytes(stream));
 
-    private byte[] ExtractContentBytes(Stream stream)
+    private static byte[] ExtractContentBytes(Stream stream)
     {
         var memoryStream = new MemoryStream();
         stream.Position = 0;

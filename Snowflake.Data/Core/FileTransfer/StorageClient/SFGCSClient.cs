@@ -116,7 +116,7 @@ class SFGCSClient : ISFRemoteStorageClient
         }
     }
 
-    private Google.Cloud.Storage.V1.StorageClient BuildStorageClient(StorageClientBuilder builder, PutGetStageInfo stageInfo)
+    private static Google.Cloud.Storage.V1.StorageClient BuildStorageClient(StorageClientBuilder builder, PutGetStageInfo stageInfo)
     {
         var gcsCustomEndpoint = stageInfo.GcsCustomEndpoint();
         if (!string.IsNullOrEmpty(gcsCustomEndpoint))
@@ -254,7 +254,7 @@ class SFGCSClient : ISFRemoteStorageClient
         return null;
     }
 
-    internal FileHeader HandleGetFileHeaderResponse(HttpWebResponse response, SFFileMetadata fileMetadata)
+    internal static FileHeader HandleGetFileHeaderResponse(HttpWebResponse response, SFFileMetadata fileMetadata)
     {
         var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
         var contentLength = response.Headers.GetValues("content-length");
@@ -278,7 +278,7 @@ class SFGCSClient : ISFRemoteStorageClient
         return link;
     }
 
-    private string ExtractStorageHostPath(PutGetStageInfo stageInfo)
+    private static string ExtractStorageHostPath(PutGetStageInfo stageInfo)
     {
         var gcsEndpoint = stageInfo.GcsCustomEndpoint();
         var storageHostPath = string.IsNullOrEmpty(gcsEndpoint) ? "https://storage.googleapis.com/" : gcsEndpoint;
@@ -369,7 +369,7 @@ class SFGCSClient : ISFRemoteStorageClient
     /// </summary>
     /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
     /// <returns>Stream content.</returns>
-    private string GetUploadEncryptionData(ref SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
+    private static string GetUploadEncryptionData(ref SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
     {
         // Create the encryption header value
         string encryptionData = JsonConvert.SerializeObject(new EncryptionData
@@ -468,7 +468,7 @@ class SFGCSClient : ISFRemoteStorageClient
     /// </summary>
     /// <param name="response">The HTTP response message.</param>
     /// <param name="fileMetadata">The GCS file metadata.</param>
-    private void HandleDownloadResponse(HttpWebResponse response, SFFileMetadata fileMetadata)
+    private static void HandleDownloadResponse(HttpWebResponse response, SFFileMetadata fileMetadata)
     {
         WebHeaderCollection headers = response.Headers;
 
@@ -502,7 +502,7 @@ class SFGCSClient : ISFRemoteStorageClient
     /// <param name="ex">The file header exception.</param>
     /// <param name="fileMetadata">The GCS file metadata.</param>
     /// <returns>File Metadata</returns>
-    private SFFileMetadata HandleFileHeaderErrForPresignedUrls(WebException ex, SFFileMetadata fileMetadata)
+    private static SFFileMetadata HandleFileHeaderErrForPresignedUrls(WebException ex, SFFileMetadata fileMetadata)
     {
         Logger.Error("Failed to get file header for presigned url: " + ex.Message);
 
@@ -528,7 +528,7 @@ class SFGCSClient : ISFRemoteStorageClient
     /// <param name="ex">The file header exception.</param>
     /// <param name="fileMetadata">The GCS file metadata.</param>
     /// <returns>File Metadata</returns>
-    private SFFileMetadata HandleFileHeaderErrForGeneratedUrls(WebException ex, SFFileMetadata fileMetadata)
+    private static SFFileMetadata HandleFileHeaderErrForGeneratedUrls(WebException ex, SFFileMetadata fileMetadata)
     {
         Logger.Error("Failed to get file header for non-presigned url: " + ex.Message);
 
@@ -563,7 +563,7 @@ class SFGCSClient : ISFRemoteStorageClient
     /// <param name="ex">The file header exception.</param>
     /// <param name="fileMetadata">The GCS file metadata.</param>
     /// <returns>File Metadata</returns>
-    private SFFileMetadata HandleUploadFileErr(WebException ex, SFFileMetadata fileMetadata)
+    private static SFFileMetadata HandleUploadFileErr(WebException ex, SFFileMetadata fileMetadata)
     {
         Logger.Error("Failed to upload file: " + ex.Message);
 
@@ -597,7 +597,7 @@ class SFGCSClient : ISFRemoteStorageClient
     /// <param name="ex">The file header exception.</param>
     /// <param name="fileMetadata">The GCS file metadata.</param>
     /// <returns>File Metadata</returns>
-    private SFFileMetadata HandleDownloadFileErr(WebException ex, SFFileMetadata fileMetadata)
+    private static SFFileMetadata HandleDownloadFileErr(WebException ex, SFFileMetadata fileMetadata)
     {
         Logger.Error("Failed to download file: " + ex.Message);
 

@@ -33,38 +33,38 @@ public class BaseOAuthFlowTest
     protected const string SnowflakeHost = WiremockRunner.Host;
     protected const string ClientSecret = "123";
 
-    internal void AssertSessionSuccessfullyCreated(SFSession session)
+    internal static void AssertSessionSuccessfullyCreated(SFSession session)
     {
         Assert.Equal(SessionId, session.sessionId);
         Assert.Equal(MasterToken, session.masterToken);
         Assert.Equal(SessionToken, session.sessionToken);
     }
 
-    protected int InMemoryCacheCount()
+    protected static int InMemoryCacheCount()
     {
         var credentialManager = (SFCredentialManagerInMemoryImpl)SnowflakeCredentialManagerFactory.GetCredentialManager();
         return credentialManager.GetCount();
     }
 
-    internal string ExtractTokenFromCache(TokenType tokenType)
+    internal static string ExtractTokenFromCache(TokenType tokenType)
     {
         var cacheKey = BuildOAuthCacheKey(tokenType);
         return SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(cacheKey);
     }
 
-    internal void SaveTokenToCache(TokenType tokenType, string token)
+    internal static void SaveTokenToCache(TokenType tokenType, string token)
     {
         var cacheKey = BuildOAuthCacheKey(tokenType);
         SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(cacheKey, token);
     }
 
-    internal void RemoveTokenFromCache(TokenType tokenType)
+    internal static void RemoveTokenFromCache(TokenType tokenType)
     {
         var cacheKey = BuildOAuthCacheKey(tokenType);
         SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(cacheKey);
     }
 
-    private string BuildOAuthCacheKey(TokenType tokenType) =>
+    private static string BuildOAuthCacheKey(TokenType tokenType) =>
         SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
             TokenType: tokenType,
             Idp: s_externalTokenRequestUrl,

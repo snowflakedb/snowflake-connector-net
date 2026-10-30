@@ -545,7 +545,7 @@ public class StructuredTypesWithEmbeddedUnstructuredIT : StructuredTypesIT
         };
     }
 
-    private async Task<TimeZoneInfo> GetTimeZoneAsync(SnowflakeDbConnection connection)
+    private static async Task<TimeZoneInfo> GetTimeZoneAsync(SnowflakeDbConnection connection)
     {
         using (var command = connection.CreateCommand())
         {
@@ -557,7 +557,7 @@ public class StructuredTypesWithEmbeddedUnstructuredIT : StructuredTypesIT
         }
     }
 
-    private string ToOffsetString(TimeSpan timeSpan)
+    private static string ToOffsetString(TimeSpan timeSpan)
     {
         var offsetString = timeSpan.ToString();
         var secondsIndex = offsetString.LastIndexOf(":");
@@ -567,7 +567,7 @@ public class StructuredTypesWithEmbeddedUnstructuredIT : StructuredTypesIT
             : "+" + offsetWithoutSeconds;
     }
 
-    private async Task SetTimePrecisionAsync(SnowflakeDbConnection connection, int precision)
+    private static async Task SetTimePrecisionAsync(SnowflakeDbConnection connection, int precision)
     {
         using (var command = connection.CreateCommand())
         {

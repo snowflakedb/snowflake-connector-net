@@ -114,8 +114,8 @@ public class SnowflakeAuthorizationCodeTest
         }
         finally
         {
-            authTestHelper.RemoveTokenFromCache(tokenEndpoint, host, _login, role, TokenType.OAuthAccessToken);
-            authTestHelper.RemoveTokenFromCache(tokenEndpoint, host, _login, role, TokenType.OAuthRefreshToken);
+            AuthTestHelper.RemoveTokenFromCache(tokenEndpoint, host, _login, role, TokenType.OAuthAccessToken);
+            AuthTestHelper.RemoveTokenFromCache(tokenEndpoint, host, _login, role, TokenType.OAuthRefreshToken);
         }
     }
 

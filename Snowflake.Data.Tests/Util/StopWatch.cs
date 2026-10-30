@@ -13,10 +13,7 @@ internal class StopWatch
     private long _startMillis;
     private long _stopMillis;
 
-    public long ElapsedMilliseconds
-    {
-        get => _stopMillis - _startMillis;
-    }
+    public long ElapsedMilliseconds => _stopMillis - _startMillis;
 
     public void Start()
     {

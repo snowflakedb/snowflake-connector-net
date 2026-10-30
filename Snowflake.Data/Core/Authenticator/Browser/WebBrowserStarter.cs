@@ -27,7 +27,7 @@ internal class WebBrowserStarter
         _runner.Run(uri);
     }
 
-    private void ValidateUrl(Url url)
+    private static void ValidateUrl(Url url)
     {
         Match urlMatch = Regex.Match(url.Value, UrlRegexString, RegexOptions.IgnoreCase);
         if (!urlMatch.Success || !Uri.IsWellFormedUriString(url.Value, UriKind.Absolute))

@@ -51,7 +51,7 @@ public abstract class ConnectionPoolCommonIT : SFBaseTestAsync, IDisposable
         t2.Join();
     }
 
-    async Task ThreadProcess1(string connstr)
+    static async Task ThreadProcess1(string connstr)
     {
         var conn1 = new SnowflakeDbConnection();
         conn1.ConnectionString = connstr;
@@ -61,7 +61,7 @@ public abstract class ConnectionPoolCommonIT : SFBaseTestAsync, IDisposable
         Assert.Equal(ConnectionState.Closed, conn1.State);
     }
 
-    async Task ThreadProcess2(string connstr)
+    static async Task ThreadProcess2(string connstr)
     {
         var conn1 = new SnowflakeDbConnection();
         conn1.ConnectionString = connstr;

@@ -113,7 +113,7 @@ internal class ArrowResultChunk : BaseResultChunk
     /// Validate that a batch's declared length matches actual column data.
     /// Throws exception on corrupted data to trigger download retry.
     /// </summary>
-    private void ValidateBatch(RecordBatch batch)
+    private static void ValidateBatch(RecordBatch batch)
     {
         if (batch == null)
         {
@@ -503,12 +503,12 @@ internal class ArrowResultChunk : BaseResultChunk
         throw new NotSupportedException($"Type {srcType} is not supported.");
     }
 
-    private long ExtractEpoch(long value, long scale)
+    private static long ExtractEpoch(long value, long scale)
     {
         return value / s_powersOf10[scale];
     }
 
-    private long ExtractFraction(long value, long scale)
+    private static long ExtractFraction(long value, long scale)
     {
         return ((value % s_powersOf10[scale]) * s_powersOf10[9 - scale]);
     }
@@ -648,7 +648,7 @@ internal class ArrowResultChunk : BaseResultChunk
     /// - Variable-length BINARY for the significand (2's complement big endian)
     /// Returns string to preserve full precision (up to 38 digits).
     /// </summary>
-    private string ExtractDecfloat(int columnIndex, IArrowArray column, int index)
+    private static string ExtractDecfloat(int columnIndex, IArrowArray column, int index)
     {
         var structArray = (StructArray)column;
         var exponentArray = (Int16Array)structArray.Fields[0];

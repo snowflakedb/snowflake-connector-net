@@ -11,7 +11,7 @@ public class SFAuthenticatorFactoryTest
 {
     IAuthenticator _authenticator;
 
-    private IAuthenticator GetAuthenticator(string authenticatorName, string extraParams = "")
+    private static IAuthenticator GetAuthenticator(string authenticatorName, string extraParams = "")
     {
         string connectionString = $"account=test;user=test;password=test;authenticator={authenticatorName};{extraParams}";
         SFSession session = new SFSession(connectionString, new SessionPropertiesContext());

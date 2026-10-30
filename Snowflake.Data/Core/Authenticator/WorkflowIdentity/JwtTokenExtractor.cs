@@ -9,7 +9,7 @@ internal class JwtTokenExtractor
 {
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<JwtTokenExtractor>();
 
-    public JwtSecurityToken ReadJwtToken(string token, Func<string, SnowflakeDbException> exceptionBuilder)
+    public static JwtSecurityToken ReadJwtToken(string token, Func<string, SnowflakeDbException> exceptionBuilder)
     {
         var handler = new JwtSecurityTokenHandler();
         try

@@ -452,7 +452,7 @@ public sealed class SFGCSClientTest
         var fileMetadata = new SFFileMetadata();
 
         // act
-        var fileHeader = client.HandleGetFileHeaderResponse(response.Object, fileMetadata);
+        var fileHeader = SFGCSClient.HandleGetFileHeaderResponse(response.Object, fileMetadata);
 
         // assert
         Assert.Equal(ResultStatus.UPLOADED.ToString(), fileMetadata.resultStatus);

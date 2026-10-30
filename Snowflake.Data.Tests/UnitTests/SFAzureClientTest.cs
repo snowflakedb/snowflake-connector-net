@@ -411,7 +411,7 @@ public sealed class SFAzureClientTest
         _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockBlobServiceClient.Object);
 
         // act
-        var fileHeader = _client.HandleFileHeaderResponse(ref _fileMetadata, blobProperties);
+        var fileHeader = SFSnowflakeAzureClient.HandleFileHeaderResponse(ref _fileMetadata, blobProperties);
 
         // assert
         Assert.Equal("something", fileHeader.digest);
@@ -442,7 +442,7 @@ public sealed class SFAzureClientTest
         _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockBlobServiceClient.Object);
 
         // act
-        var fileHeader = _client.HandleFileHeaderResponse(ref _fileMetadata, blobProperties);
+        var fileHeader = SFSnowflakeAzureClient.HandleFileHeaderResponse(ref _fileMetadata, blobProperties);
 
         // assert
         Assert.Null(fileHeader.digest);
@@ -474,7 +474,7 @@ public sealed class SFAzureClientTest
         _fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
 
         // act
-        _client.HandleFileHeaderResponse(ref _fileMetadata, blobProperties);
+        SFSnowflakeAzureClient.HandleFileHeaderResponse(ref _fileMetadata, blobProperties);
 
         // assert - DOWNLOADED must not be overwritten with UPLOADED
         Assert.Equal(ResultStatus.DOWNLOADED.ToString(), _fileMetadata.resultStatus);
@@ -501,7 +501,7 @@ public sealed class SFAzureClientTest
         _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockBlobServiceClient.Object);
 
         // act
-        var thrown = Assert.Throws<KeyNotFoundException>(() => _client.HandleFileHeaderResponse(ref _fileMetadata, blobProperties));
+        var thrown = Assert.Throws<KeyNotFoundException>(() => SFSnowflakeAzureClient.HandleFileHeaderResponse(ref _fileMetadata, blobProperties));
 
         // assert
         Assert.Contains("The given key 'matdesc' was not present in the dictionary.", thrown.Message);

@@ -28,7 +28,7 @@ public class SnowflakeDbParameter : DbParameter
 
     public SnowflakeDbParameter(int ParameterIndex, SFDataType SFDataType)
     {
-        this.ParameterName = ParameterIndex.ToString();
+        ParameterName = ParameterIndex.ToString();
         this.SFDataType = SFDataType;
     }
 
@@ -57,10 +57,7 @@ public class SnowflakeDbParameter : DbParameter
 
     public override ParameterDirection Direction
     {
-        get
-        {
-            return ParameterDirection.Input;
-        }
+        get => ParameterDirection.Input;
 
         set
         {

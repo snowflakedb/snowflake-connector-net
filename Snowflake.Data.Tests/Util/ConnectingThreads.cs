@@ -133,7 +133,7 @@ class ConnectingThread
         }
     }
 
-    private void Sleep(long millis)
+    private static void Sleep(long millis)
     {
         if (millis <= 0)
         {

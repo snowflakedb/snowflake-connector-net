@@ -81,7 +81,7 @@ class MockS3Client
         if (statusCode == HttpStatusCode.OK.ToString())
         {
             var getObjectResponse = new GetObjectResponse();
-            byte[] bytes = Encoding.UTF8.GetBytes(MockS3Client.S3FileContent);
+            byte[] bytes = Encoding.UTF8.GetBytes(S3FileContent);
             getObjectResponse.ResponseStream = new MemoryStream(bytes);
 
             return Task.FromResult(getObjectResponse);

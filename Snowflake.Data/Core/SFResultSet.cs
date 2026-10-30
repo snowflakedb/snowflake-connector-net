@@ -45,7 +45,7 @@ class SFResultSet : SFBaseResultSet
 
             queryId = responseData.queryId;
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             s_logger.Error("Result set error queryId=" + responseData.queryId, ex);
             throw;
@@ -64,9 +64,9 @@ class SFResultSet : SFBaseResultSet
         ErrorDetails = 7
     }
 
-    public void InitializePutGetRowType(List<ExecResponseRowType> rowType)
+    public static void InitializePutGetRowType(List<ExecResponseRowType> rowType)
     {
-        foreach (PutGetResponseRowTypeInfo t in System.Enum.GetValues(typeof(PutGetResponseRowTypeInfo)))
+        foreach (PutGetResponseRowTypeInfo t in Enum.GetValues(typeof(PutGetResponseRowTypeInfo)))
         {
             rowType.Add(new ExecResponseRowType()
             {
@@ -187,7 +187,7 @@ class SFResultSet : SFBaseResultSet
 
     private void UpdateSessionStatus(QueryExecResponseData responseData)
     {
-        SFSession session = this.sfStatement.SfSession;
+        SFSession session = sfStatement.SfSession;
         session.UpdateSessionProperties(responseData);
         session.UpdateSessionParameterMap(responseData.parameters);
         session.UpdateQueryContextCache(responseData.QueryContext);
@@ -344,7 +344,7 @@ class SFResultSet : SFBaseResultSet
 
         if ((null != buffer) && (bufferOffset > buffer.Length))
         {
-            throw new System.ArgumentException("Destination buffer is not long enough. " +
+            throw new ArgumentException("Destination buffer is not long enough. " +
                                                "Check the buffer offset, length, and the buffer's lower bounds.", "buffer");
         }
 
@@ -361,7 +361,7 @@ class SFResultSet : SFBaseResultSet
 
         if (dataOffset > data.Length)
         {
-            throw new System.ArgumentException("Source data is not long enough. " +
+            throw new ArgumentException("Source data is not long enough. " +
                                                "Check the data offset, length, and the data's lower bounds.", "dataOffset");
         }
         else

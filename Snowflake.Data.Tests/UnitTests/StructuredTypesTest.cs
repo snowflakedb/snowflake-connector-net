@@ -19,7 +19,7 @@ public class StructuredTypesTest
         var csharpType = expected.GetType();
 
         // act
-        var result = timeConverter.Convert(value, sfType, csharpType, TimeZoneInfo.Local);
+        var result = TimeConverter.Convert(value, sfType, csharpType, TimeZoneInfo.Local);
 
         // assert
         Assert.Equal(expected, result);
@@ -70,7 +70,7 @@ public class StructuredTypesTest
         var csharpType = expected.GetType();
         var tz = TimeZoneConverter.TZConvert.GetTimeZoneInfo(tzName);
 
-        var result = timeConverter.Convert(value, sfType, csharpType, tz);
+        var result = TimeConverter.Convert(value, sfType, csharpType, tz);
 
         Assert.Equal(expected, result);
         if (csharpType == typeof(DateTime))
@@ -146,7 +146,7 @@ public class StructuredTypesTest
         var timeConverter = new TimeConverter();
 
         var ex = Assert.Throws<StructuredTypesReadingException>(() =>
-            timeConverter.Convert("2024-01-01 00:00:00 +0:00", SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), null));
+            TimeConverter.Convert("2024-01-01 00:00:00 +0:00", SFDataType.TIMESTAMP_LTZ, typeof(DateTimeOffset), null));
 
         Assert.Contains("Session timezone is required", ex.Message);
     }
@@ -157,7 +157,7 @@ public class StructuredTypesTest
         var timeConverter = new TimeConverter();
         var tokyoTz = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Asia/Tokyo");
 
-        var result = timeConverter.Convert("2024-01-01 00:00:00 +0:00", SFDataType.TIMESTAMP_LTZ, typeof(string), tokyoTz);
+        var result = TimeConverter.Convert("2024-01-01 00:00:00 +0:00", SFDataType.TIMESTAMP_LTZ, typeof(string), tokyoTz);
 
         Assert.Equal("2024-01-01 00:00:00 +0:00", result);
     }

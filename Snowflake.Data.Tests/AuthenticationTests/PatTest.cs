@@ -79,7 +79,7 @@ public class PatTest
         return patToken;
     }
 
-    private string GenerateRandomSuffix()
+    private static string GenerateRandomSuffix()
     {
         return DateTime.Now.ToString("yyyyMMddHHmmssfff");
     }

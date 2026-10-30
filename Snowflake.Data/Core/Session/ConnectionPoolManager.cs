@@ -180,7 +180,7 @@ internal sealed class ConnectionPoolManager : IConnectionManager
         return _connectionManagerFactory.CreateConnectionManager(requestedPoolType);
     }
 
-    private string GetPoolKey(string connectionString, SecureString password, SecureString clientSecret, SecureString token)
+    private static string GetPoolKey(string connectionString, SecureString password, SecureString clientSecret, SecureString token)
     {
         var passwordPart = password != null && password.Length > 0
             ? ";password=" + SecureStringHelper.Decode(password) + ";"

@@ -15,21 +15,9 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
         parameterList = new List<SnowflakeDbParameter>();
     }
 
-    public override int Count
-    {
-        get
-        {
-            return parameterList.Count;
-        }
-    }
+    public override int Count => parameterList.Count;
 
-    public override object SyncRoot
-    {
-        get
-        {
-            throw new NotImplementedException();
-        }
-    }
+    public override object SyncRoot => throw new NotImplementedException();
 
     public override int Add(object value)
     {
@@ -142,7 +130,7 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
         parameterList[index] = TryCastThrow(value);
     }
 
-    private SnowflakeDbParameter TryCast(object parameter)
+    private static SnowflakeDbParameter TryCast(object parameter)
     {
         if (parameter.GetType() != typeof(SnowflakeDbParameter))
         {
@@ -154,7 +142,7 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
         }
     }
 
-    private SnowflakeDbParameter TryCastThrow(object parameter)
+    private static SnowflakeDbParameter TryCastThrow(object parameter)
     {
         if (parameter.GetType() != typeof(SnowflakeDbParameter))
         {

@@ -19,13 +19,13 @@ class BasicAuthenticator : BaseAuthenticator, IAuthenticator
     /// <see cref="IAuthenticator.AuthenticateAsync"/>
     async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
     {
-        await base.LoginAsync(cancellationToken).ConfigureAwait(false);
+        await LoginAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <see cref="IAuthenticator.Authenticate"/>
     void IAuthenticator.Authenticate()
     {
-        base.Login();
+        Login();
     }
 
     protected override string AuthName => s_AuthName;

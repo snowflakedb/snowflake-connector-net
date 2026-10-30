@@ -25,7 +25,7 @@ public class CrlCacheManagerTest
     const string CrlUrl1 = "http://snowflakecomputing.com/crl1.crl";
     const string CrlUrl2 = "http://snowflakecomputing.com/crl2.crl";
 
-    private void SetUp()
+    private static void SetUp()
     {
         var cacheDir = GetCrlCacheDirectory();
         if (Directory.Exists(cacheDir))

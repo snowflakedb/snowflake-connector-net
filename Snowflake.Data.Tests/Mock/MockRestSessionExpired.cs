@@ -179,7 +179,7 @@ internal class MockRestSessionExpired : MockBaseRestRequester
         return Task.FromResult<T>((T)(object)null);
     }
 
-    private string ExtractRequestID(string queries)
+    private static string ExtractRequestID(string queries)
     {
         int start = queries.IndexOf("requestId=");
         start += 10;

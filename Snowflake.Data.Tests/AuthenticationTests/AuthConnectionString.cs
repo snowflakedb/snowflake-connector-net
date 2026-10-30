@@ -160,7 +160,7 @@ static class AuthConnectionString
 
         var properties = GetBaseConnectionParameters();
         properties.Add(SFSessionProperty.AUTHENTICATOR, "snowflake_jwt");
-        properties.Add(SFSessionProperty.USER, AuthConnectionString.SsoUser);
+        properties.Add(SFSessionProperty.USER, SsoUser);
         properties.Add(SFSessionProperty.PRIVATE_KEY_FILE, privateKeyPath);
         return properties;
     }

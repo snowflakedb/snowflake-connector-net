@@ -184,7 +184,7 @@ class OktaAuthenticator : BaseAuthenticator, IAuthenticator
         ThrowRetryLimitException(retryCount, timeoutElapsed, lastRetryException);
     }
 
-    private void HandleAuthenticatorException(Exception ex, HttpResponseMessage samlRawResponse, ref int retryCount, ref int timeoutElapsed)
+    private static void HandleAuthenticatorException(Exception ex, HttpResponseMessage samlRawResponse, ref int retryCount, ref int timeoutElapsed)
     {
         if (IsPostbackUrlNotFound(ex))
         {
@@ -219,7 +219,7 @@ class OktaAuthenticator : BaseAuthenticator, IAuthenticator
             DriverName = ".NET"
         };
 
-        return base.BuildTimeoutRequest(fedUrl, new AuthenticatorRequest { Data = data }, null);
+        return BuildTimeoutRequest(fedUrl, new AuthenticatorRequest { Data = data }, null);
     }
 
     private IdpTokenRestRequest BuildIdpTokenRestRequest(Uri tokenUrl)
@@ -312,7 +312,7 @@ class OktaAuthenticator : BaseAuthenticator, IAuthenticator
         return retryCount < _maxRetryCount && !TimeoutHelper.IsExpired(elapsedMillis, _maxRetryTimeout);
     }
 
-    private bool IsPostbackUrlNotFound(Exception ex)
+    private static bool IsPostbackUrlNotFound(Exception ex)
     {
         if (ex is SnowflakeDbException error)
         {

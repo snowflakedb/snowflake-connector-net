@@ -16,7 +16,7 @@ internal class CertificateCrlDistributionPointsExtractor
     {
     }
 
-    public string[] Extract(X509Certificate2 certificate)
+    public static string[] Extract(X509Certificate2 certificate)
     {
         var extensions = certificate.Extensions;
         if (extensions == null)
@@ -33,7 +33,7 @@ internal class CertificateCrlDistributionPointsExtractor
         return Array.Empty<string>();
     }
 
-    private Asn1Object ReadAsn1Object(byte[] rawData)
+    private static Asn1Object ReadAsn1Object(byte[] rawData)
     {
         using (var asn1InputStream = new Asn1InputStream(rawData))
         {
@@ -41,7 +41,7 @@ internal class CertificateCrlDistributionPointsExtractor
         }
     }
 
-    private string[] ReadCrlDistributionPoints(CrlDistPoint crlDistPoint) =>
+    private static string[] ReadCrlDistributionPoints(CrlDistPoint crlDistPoint) =>
         crlDistPoint.GetDistributionPoints()
             .Select(distributionPoint => distributionPoint.DistributionPointName)
             .Where(distributionPointName => distributionPointName != null)

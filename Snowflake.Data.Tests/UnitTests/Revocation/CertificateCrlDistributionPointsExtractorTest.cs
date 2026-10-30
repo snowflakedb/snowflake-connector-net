@@ -17,7 +17,7 @@ public class CertificateCrlDistributionPointsExtractorTest
         var crlExtractor = new CertificateCrlDistributionPointsExtractor();
 
         // act
-        var crlUrls = crlExtractor.Extract(certificate);
+        var crlUrls = CertificateCrlDistributionPointsExtractor.Extract(certificate);
 
         // assert
         Assert.Equal(testCase.ExpectedCrlUrls.Length, crlUrls.Length);

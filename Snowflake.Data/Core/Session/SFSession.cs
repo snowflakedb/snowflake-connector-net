@@ -294,7 +294,7 @@ internal class SFSession
         return !forbiddenAuthenticators.Any(f => f.Invoke(authenticator));
     }
 
-    private void ValidateApplicationName(SFSessionProperties properties)
+    private static void ValidateApplicationName(SFSessionProperties properties)
     {
         // If there is an "application" setting, verify that it matches the expect pattern
         properties.TryGetValue(SFSessionProperty.APPLICATION, out string applicationNameSetting);
@@ -472,7 +472,7 @@ internal class SFSession
     {
         RenewSessionRequest postBody = new RenewSessionRequest()
         {
-            oldSessionToken = this.sessionToken,
+            oldSessionToken = sessionToken,
             requestType = "RENEW"
         };
 
@@ -517,7 +517,7 @@ internal class SFSession
         if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
         {
             string val = ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD].ToString();
-            this.arrayBindStageThreshold = int.Parse(val);
+            arrayBindStageThreshold = int.Parse(val);
         }
         if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE))
         {
@@ -652,26 +652,26 @@ internal class SFSession
 
     internal void StartHeartBeatForThisSession()
     {
-        if (!this.isHeartBeatEnabled)
+        if (!isHeartBeatEnabled)
         {
             HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
-            if (this.masterValidityInSeconds == 0)
+            if (masterValidityInSeconds == 0)
             {
                 //In case server doesnot provide the default timeout
                 var DEFAULT_TIMEOUT_IN_SECOND = 14400;
-                this.masterValidityInSeconds = DEFAULT_TIMEOUT_IN_SECOND;
+                masterValidityInSeconds = DEFAULT_TIMEOUT_IN_SECOND;
             }
-            heartBeatBg.AddConnection(this, this.masterValidityInSeconds);
-            this.isHeartBeatEnabled = true;
+            heartBeatBg.AddConnection(this, masterValidityInSeconds);
+            isHeartBeatEnabled = true;
         }
     }
     internal void StopHeartBeatForThisSession()
     {
-        if (this.isHeartBeatEnabled)
+        if (isHeartBeatEnabled)
         {
             HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
-            heartBeatBg.RemoveConnection(this);
-            this.isHeartBeatEnabled = false;
+            HeartBeatBackground.RemoveConnection(this);
+            isHeartBeatEnabled = false;
         }
 
     }
@@ -683,12 +683,12 @@ internal class SFSession
 
     public void SetArrayBindStage(string arrayBindStage)
     {
-        this.arrayBindStage = string.Format("{0}.{1}.{2}", this.database, this.schema, arrayBindStage);
+        this.arrayBindStage = string.Format("{0}.{1}.{2}", database, schema, arrayBindStage);
     }
 
     public int GetArrayBindStageThreshold()
     {
-        return this.arrayBindStageThreshold;
+        return arrayBindStageThreshold;
     }
 
     public void SetArrayBindStageThreshold(int arrayBindStageThreshold)

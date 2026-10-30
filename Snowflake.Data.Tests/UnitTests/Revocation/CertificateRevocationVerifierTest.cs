@@ -212,7 +212,7 @@ public class CertificateRevocationVerifierTest : RevocationTests
         MockByteResponseForGet(restRequester, DigiCertCrlUrl2, crlBytes);
         var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
         var environmentOperation = new Mock<IEnvironmentFacade>();
-        var verifier = new CertificateRevocationVerifier(config, Core.Tools.TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
+        var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
         // act
         var result = verifier.CheckCertRevocation(certificate, expectedCrlUrls, parentCertificate);
@@ -237,14 +237,14 @@ public class CertificateRevocationVerifierTest : RevocationTests
         var bouncyCrl = CertificateGenerator.GenerateCrl(signatureAlgorithm, privateKeyToSignCrl, rootSubject, DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddDays(7), DateTime.UtcNow.AddDays(-1));
         var environmentOperation = new Mock<IEnvironmentFacade>();
         var crlParser = new CrlParser(environmentOperation.Object);
-        var crl = crlParser.Create(bouncyCrl, DateTime.UtcNow);
+        var crl = CrlParser.Create(bouncyCrl, DateTime.UtcNow);
         var config = GetHttpConfig();
         var restRequester = new Mock<IRestRequester>();
         var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
         var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
         // act
-        var result = verifier.IsCrlSignatureValid(crl, parentCertificate);
+        var result = CertificateRevocationVerifier.IsCrlSignatureValid(crl, parentCertificate);
 
         // assert
         Assert.Equal(signCrlWithCaPrivateKey, result);
@@ -295,7 +295,7 @@ public class CertificateRevocationVerifierTest : RevocationTests
         var verifier = new CertificateRevocationVerifier(config, TimeProvider.Instance, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
         // act
-        var isShortLived = verifier.IsShortLived(certificate);
+        var isShortLived = CertificateRevocationVerifier.IsShortLived(certificate);
 
         // assert
         Assert.Equal(expectedResult, isShortLived);
@@ -318,7 +318,7 @@ public class CertificateRevocationVerifierTest : RevocationTests
         var crl = new Crl { IssuerName = certificate.IssuerName.Name, IssuerNameRawData = crlIssuerRaw };
 
         // act
-        var isEquivalent = verifier.IsIssuerEquivalent(crl, certificate);
+        var isEquivalent = CertificateRevocationVerifier.IsIssuerEquivalent(crl, certificate);
 
         // assert
         Assert.Equal(expectEquivalent, isEquivalent);
@@ -336,7 +336,7 @@ public class CertificateRevocationVerifierTest : RevocationTests
             CertificateGenerator.SHA256WithRsaAlgorithm, certKeys[1].Private, rootSubject,
             now.AddHours(-1), now.AddHours(24), now.AddHours(-1));
         var environmentOperation = new Mock<IEnvironmentFacade>();
-        var crl = new CrlParser(environmentOperation.Object).Parse(bcCrl.GetEncoded(), now);
+        var crl = CrlParser.Parse(bcCrl.GetEncoded(), now);
         var config = GetHttpConfig();
         var restRequester = new Mock<IRestRequester>();
         var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
@@ -344,7 +344,7 @@ public class CertificateRevocationVerifierTest : RevocationTests
             config, TimeProvider.Instance, restRequester.Object,
             CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
-        Assert.True(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
+        Assert.True(CertificateRevocationVerifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
     }
 
     [SFFact]
@@ -362,7 +362,7 @@ public class CertificateRevocationVerifierTest : RevocationTests
             rootSubject,
             now.AddHours(-1), now.AddHours(24), now.AddHours(-1));
         var environmentOperation = new Mock<IEnvironmentFacade>();
-        var crl = new CrlParser(environmentOperation.Object).Parse(bcCrl.GetEncoded(), now);
+        var crl = CrlParser.Parse(bcCrl.GetEncoded(), now);
         var config = GetHttpConfig();
         var restRequester = new Mock<IRestRequester>();
         var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
@@ -370,7 +370,7 @@ public class CertificateRevocationVerifierTest : RevocationTests
             config, TimeProvider.Instance, restRequester.Object,
             CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
-        Assert.True(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
+        Assert.True(CertificateRevocationVerifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
     }
 
     [SFFact]
@@ -389,7 +389,7 @@ public class CertificateRevocationVerifierTest : RevocationTests
             rootSubject,
             now.AddHours(-1), now.AddHours(24), now.AddHours(-1));
         var environmentOperation = new Mock<IEnvironmentFacade>();
-        var crl = new CrlParser(environmentOperation.Object).Parse(bcCrl.GetEncoded(), now);
+        var crl = CrlParser.Parse(bcCrl.GetEncoded(), now);
         var config = GetHttpConfig();
         var restRequester = new Mock<IRestRequester>();
         var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
@@ -397,7 +397,7 @@ public class CertificateRevocationVerifierTest : RevocationTests
             config, TimeProvider.Instance, restRequester.Object,
             CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
-        Assert.False(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
+        Assert.False(CertificateRevocationVerifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
     }
 
     [SFFact]
@@ -416,7 +416,7 @@ public class CertificateRevocationVerifierTest : RevocationTests
             rootSubject,
             now.AddHours(-1), now.AddHours(24), now.AddHours(-1));
         var environmentOperation = new Mock<IEnvironmentFacade>();
-        var crl = new CrlParser(environmentOperation.Object).Parse(bcCrl.GetEncoded(), now);
+        var crl = CrlParser.Parse(bcCrl.GetEncoded(), now);
         var config = GetHttpConfig();
         var restRequester = new Mock<IRestRequester>();
         var crlRepository = new CrlRepository(config.EnableCRLInMemoryCaching, config.EnableCRLDiskCaching);
@@ -424,7 +424,7 @@ public class CertificateRevocationVerifierTest : RevocationTests
             config, TimeProvider.Instance, restRequester.Object,
             CertificateCrlDistributionPointsExtractor.Instance, new CrlParser(environmentOperation.Object), crlRepository);
 
-        Assert.True(verifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
+        Assert.True(CertificateRevocationVerifier.IsAuthorityKeyIdentifierConsistent(crl, parentCertificate));
     }
 
     private static HttpRequestException NotFoundHttpExceptionProvider() =>
@@ -536,7 +536,7 @@ public class CertificateRevocationVerifierTest : RevocationTests
         var crlParser = new CrlParser(environmentOperation.Object);
 
         // Pre-populate cache with valid CRL
-        var cachedCrlObject = crlParser.Create(validCrl, now.AddHours(-25));
+        var cachedCrlObject = CrlParser.Create(validCrl, now.AddHours(-25));
         crlRepository.Set(expectedCrlUrls[0], cachedCrlObject);
 
         var verifier = new CertificateRevocationVerifier(config, timeProvider.Object, restRequester.Object, CertificateCrlDistributionPointsExtractor.Instance, crlParser, crlRepository);
@@ -548,7 +548,7 @@ public class CertificateRevocationVerifierTest : RevocationTests
         Assert.Equal(CertRevocationCheckResult.CertUnrevoked, result);
     }
 
-    private HttpClientConfig GetHttpConfig(CertRevocationCheckMode checkMode = CertRevocationCheckMode.Enabled, long crlDownloadMaxSize = 20971520) =>
+    private static HttpClientConfig GetHttpConfig(CertRevocationCheckMode checkMode = CertRevocationCheckMode.Enabled, long crlDownloadMaxSize = 20971520) =>
         new(
             null,
             new SFSessionRetryProperties(default, false, false, default, 3, true),

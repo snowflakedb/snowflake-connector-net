@@ -118,7 +118,7 @@ internal class CertificateRevocationVerifier
                 continue;
             }
             s_logger.Debug($"Checking certificate revocation status for certificate: {certificate.Subject} on position: {index} in chain: '{chainSubjects}'");
-            var crlUrls = _crlExtractor.Extract(certificate);
+            var crlUrls = CertificateCrlDistributionPointsExtractor.Extract(certificate);
             if (!ContainsAnyValue(crlUrls))
             {
                 if (_allowCertificatesWithoutCrlUrl)
@@ -147,10 +147,10 @@ internal class CertificateRevocationVerifier
         return chainResult;
     }
 
-    internal bool IsShortLived(X509Certificate2 certificate) =>
+    internal static bool IsShortLived(X509Certificate2 certificate) =>
         IsShortLived(certificate.NotBefore.ToUniversalTime(), certificate.NotAfter.ToUniversalTime());
 
-    private bool IsShortLived(DateTime notBeforeUtc, DateTime notAfterUtc)
+    private static bool IsShortLived(DateTime notBeforeUtc, DateTime notAfterUtc)
     {
         // see Short-lived Subscriber Certificate section in: https://cabforum.org/working-groups/server/baseline-requirements/requirements/
         if (notBeforeUtc < new DateTime(2024, 3, 15, 0, 0, 0, DateTimeKind.Utc))
@@ -164,7 +164,7 @@ internal class CertificateRevocationVerifier
         return notAfterUtc < firstNotAfterWhenCertIsNotShortLived;
     }
 
-    private bool ContainsAnyValue(string[] values)
+    private static bool ContainsAnyValue(string[] values)
     {
         if (values.Length == 0)
             return false;
@@ -268,7 +268,7 @@ internal class CertificateRevocationVerifier
         && IsAuthorityKeyIdentifierConsistent(crl, parentCertificate)
         && IsIssuerDistributionPointValid(crl, crlUrl);
 
-    internal bool IsCrlSignatureValid(Crl crl, X509Certificate2 parentCertificate)
+    internal static bool IsCrlSignatureValid(Crl crl, X509Certificate2 parentCertificate)
     {
         try
         {
@@ -285,7 +285,7 @@ internal class CertificateRevocationVerifier
         }
     }
 
-    private AsymmetricKeyParameter ExtractSubjectPublicKeyInfo(X509Certificate2 certificate)
+    private static AsymmetricKeyParameter ExtractSubjectPublicKeyInfo(X509Certificate2 certificate)
     {
         // 1. the simplest way would be just to use parentCertificate.PublicKey.ExportSubjectPublicKeyInfo(); but it is not available for .netstandard 2.0
         // 2. another way would be to convert the certificate to Bouncy Castle type:
@@ -309,7 +309,7 @@ internal class CertificateRevocationVerifier
         }
     }
 
-    private Asn1Encodable ExtractPublicKeyParameters(X509Certificate2 certificate)
+    private static Asn1Encodable ExtractPublicKeyParameters(X509Certificate2 certificate)
     {
         var parameters = certificate.PublicKey.EncodedParameters;
         if (parameters == null)
@@ -318,7 +318,7 @@ internal class CertificateRevocationVerifier
         return asnStream.ReadObject();
     }
 
-    private bool IsIssuerDistributionPointValid(Crl crl, string crlUrl)
+    private static bool IsIssuerDistributionPointValid(Crl crl, string crlUrl)
     {
         var crlIdps = crl.IssuerDistributionPoints;
         if (crlIdps.Length == 0)
@@ -326,7 +326,7 @@ internal class CertificateRevocationVerifier
         return crlIdps.Any(crlUrl.Equals);
     }
 
-    internal bool IsIssuerEquivalent(Crl crl, X509Certificate2 certificate)
+    internal static bool IsIssuerEquivalent(Crl crl, X509Certificate2 certificate)
     {
         // Compare DER-encoded issuer names directly (same approach as JDBC X500Principal.equals()).
         var certIssuerBytes = certificate.IssuerName?.RawData;
@@ -337,7 +337,7 @@ internal class CertificateRevocationVerifier
         return certIssuerBytes.SequenceEqual(crlIssuerBytes);
     }
 
-    internal bool IsAuthorityKeyIdentifierConsistent(Crl crl, X509Certificate2 parentCertificate)
+    internal static bool IsAuthorityKeyIdentifierConsistent(Crl crl, X509Certificate2 parentCertificate)
     {
         if (crl?.BouncyCastleCrl == null || parentCertificate == null)
             return false;
@@ -427,7 +427,7 @@ internal class CertificateRevocationVerifier
 
         try
         {
-            var crl = _crlParser.Parse(crlBytes, now);
+            var crl = CrlParser.Parse(crlBytes, now);
             if (crl == null)
                 s_logger.Error($"Parsing crl failed for the crl downloaded from: {crlUrl}");
             return crl;

@@ -177,7 +177,7 @@ public class AuthTestHelper
         }
     }
 
-    private void StartNodeProcess(string path, TimeSpan timeout)
+    private static void StartNodeProcess(string path, TimeSpan timeout)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -204,7 +204,7 @@ public class AuthTestHelper
         }
     }
 
-    internal void RemoveTokenFromCache(string idpUrl, string snowflakeHost, string user, string role, TokenType tokenType)
+    internal static void RemoveTokenFromCache(string idpUrl, string snowflakeHost, string user, string role, TokenType tokenType)
     {
         var cacheKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
             TokenType: tokenType,

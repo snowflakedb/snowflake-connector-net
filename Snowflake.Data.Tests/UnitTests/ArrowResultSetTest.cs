@@ -510,7 +510,7 @@ public sealed class ArrowResultSetTest
         _arrowResultSet = new ArrowResultSet(responseData, sfStatement, CancellationToken.None);
     }
 
-    private QueryExecResponseData PrepareResponseData(RecordBatch recordBatch, SFDataType sfType, long scale)
+    private static QueryExecResponseData PrepareResponseData(RecordBatch recordBatch, SFDataType sfType, long scale)
     {
         return new QueryExecResponseData
         {
@@ -529,7 +529,7 @@ public sealed class ArrowResultSetTest
         };
     }
 
-    private string ConvertToBase64String(RecordBatch recordBatch)
+    private static string ConvertToBase64String(RecordBatch recordBatch)
     {
         if (recordBatch == null)
             return "";
@@ -588,7 +588,7 @@ public sealed class ArrowResultSetTest
         Assert.Null(exception);
     }
 
-    private SFStatement PrepareStatement()
+    private static SFStatement PrepareStatement()
     {
         SFSession session = new SFSession("user=user;password=password;account=account;", new SessionPropertiesContext());
         return new SFStatement(session);

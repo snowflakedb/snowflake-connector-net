@@ -327,7 +327,7 @@ class SFS3Client : ISFRemoteStorageClient
     /// <param name="fileMetadata">The S3 file metadata.</param>
     /// <param name="response">The Amazon S3 response.</param>
     /// <returns>The file header of the S3 file.</returns>
-    internal FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, GetObjectMetadataResponse response)
+    internal static FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, GetObjectMetadataResponse response)
     {
         // Update the result status of the file metadata
         fileMetadata.resultStatus = nameof(ResultStatus.UPLOADED);
@@ -347,7 +347,7 @@ class SFS3Client : ISFRemoteStorageClient
         };
     }
 
-    private string GetMetadataCaseInsensitive(MetadataCollection metadataCollection, string metadataKey)
+    private static string GetMetadataCaseInsensitive(MetadataCollection metadataCollection, string metadataKey)
     {
         var value = metadataCollection[metadataKey];
         if (value != null)

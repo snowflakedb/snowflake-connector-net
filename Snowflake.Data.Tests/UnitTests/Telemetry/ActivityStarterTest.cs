@@ -379,7 +379,7 @@ public sealed class ActivityStarterTest : IDisposable
         Assert.Equal(session.sessionId, activity.GetTagItem(TelemetryTags.SessionId));
     }
 
-    private SFSession CreateSession(string sessionIdPrefix, string warehouse, string role, string database, bool telemetryEnabled)
+    private static SFSession CreateSession(string sessionIdPrefix, string warehouse, string role, string database, bool telemetryEnabled)
     {
         var sessionId = sessionIdPrefix + Guid.NewGuid().ToString("N");
         var connectionStr = "authenticator=snowflake;account=some_account;user=some_user;"

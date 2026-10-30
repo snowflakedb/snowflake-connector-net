@@ -188,7 +188,7 @@ public sealed class SnowflakeTelemetryModuleTest : IDisposable
         SnowflakeTelemetryModule.Unregister(sessionId);
     }
 
-    private SnowflakeDbCommand CreateCommand(SFSession session)
+    private static SnowflakeDbCommand CreateCommand(SFSession session)
     {
         var snowflakeDbConnection = new SnowflakeDbConnection("someConnectionString")
         {

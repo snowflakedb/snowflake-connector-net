@@ -16,7 +16,7 @@ internal class EasyLoggerManager
 
     public virtual void ReconfigureEasyLogging(EasyLoggingLogLevel easyLoggingLogLevel, string logsPath)
     {
-        var sfLoggerLevel = _levelMapper.ToLoggingEventLevel(easyLoggingLogLevel);
+        var sfLoggerLevel = EasyLoggingLevelMapper.ToLoggingEventLevel(easyLoggingLogLevel);
         lock (_lockForExclusiveConfigure)
         {
             SFLoggerImpl.SetLevel(sfLoggerLevel);
@@ -34,7 +34,7 @@ internal class EasyLoggerManager
 
     internal void ResetEasyLogging(EasyLoggingLogLevel easyLoggingLogLevel)
     {
-        var sfLoggerLevel = _levelMapper.ToLoggingEventLevel(easyLoggingLogLevel);
+        var sfLoggerLevel = EasyLoggingLevelMapper.ToLoggingEventLevel(easyLoggingLogLevel);
         lock (_lockForExclusiveConfigure)
         {
             SFLoggerImpl.SetLevel(sfLoggerLevel);

@@ -222,7 +222,7 @@ internal class WebBrowserListener<T> : IDisposable
         WriteMessageToBrowser(response, errorResponseBytes);
     }
 
-    private void WriteMessageToBrowser(HttpListenerResponse response, byte[] responseBytes)
+    private static void WriteMessageToBrowser(HttpListenerResponse response, byte[] responseBytes)
     {
         try
         {

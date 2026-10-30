@@ -51,7 +51,7 @@ public sealed class SFEnvironmentTest
 
         Assert.NotNull(applicationPath);
         Assert.NotEmpty(applicationPath);
-        Assert.True(System.IO.Path.IsPathRooted(applicationPath));
+        Assert.True(Path.IsPathRooted(applicationPath));
 
         var lowerPath = applicationPath.ToLower();
 #if NETFRAMEWORK
@@ -248,7 +248,7 @@ public sealed class SFEnvironmentTest
         Assert.Equal(expected, SFEnvironment.DriverVersion);
     }
 
-    private BaseAuthenticator CreateAuthenticator(string connectionString)
+    private static BaseAuthenticator CreateAuthenticator(string connectionString)
     {
         var session = new SFSession(connectionString, new SessionPropertiesContext());
         return (BaseAuthenticator)session.GetAuthenticator();

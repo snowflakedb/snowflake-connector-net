@@ -73,7 +73,7 @@ public sealed class RedirectUnitTest
         await AssertResponseId(response, expectedQueryId).ConfigureAwait(false);
     }
 
-    private HttpClient CreateHttpClientForRetry()
+    private static HttpClient CreateHttpClientForRetry()
     {
         var config = new HttpClientConfig(
             null,
@@ -100,7 +100,7 @@ public sealed class RedirectUnitTest
         return request;
     }
 
-    private async Task AssertResponseId(HttpResponseMessage response, string expectedQueryId)
+    private static async Task AssertResponseId(HttpResponseMessage response, string expectedQueryId)
     {
         var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         var result = JsonConvert.DeserializeObject<QueryExecResponse>(json, JsonUtils.JsonSettings);

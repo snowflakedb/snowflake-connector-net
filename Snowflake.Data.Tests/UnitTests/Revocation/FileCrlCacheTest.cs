@@ -22,7 +22,6 @@ public class FileCrlCacheTest : RevocationTests
     private static readonly DateTime s_nextUpdate = new(2026, 8, 10, 0, 0, 0, DateTimeKind.Utc);
     private static readonly DateTime s_revocationTime = s_thisUpdate;
     private static readonly DateTime s_downloadTime = new(2025, 8, 15, 8, 21, 33, DateTimeKind.Utc);
-    private static readonly CrlParser s_crlParser = new(TimeSpan.FromDays(10), TimeSpan.Zero);
     private static readonly TimeSpan s_removalDelay = TimeSpan.FromDays(7);
 
     [SFFact]
@@ -32,7 +31,7 @@ public class FileCrlCacheTest : RevocationTests
         var crl = CreateCrl();
         var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
         var cacheConfig = CreateFileCrlCacheConfig(tempDirectory);
-        var cache = new FileCrlCache(cacheConfig, s_crlParser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance,
+        var cache = new FileCrlCache(cacheConfig, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance,
             s_removalDelay);
         try
         {
@@ -63,7 +62,7 @@ public class FileCrlCacheTest : RevocationTests
         var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
         var fileName = Path.Combine(tempDirectory, HttpUtility.UrlEncode(CrlUrl, Encoding.UTF8));
         var cacheConfig = CreateFileCrlCacheConfig(tempDirectory);
-        var cache = new FileCrlCache(cacheConfig, s_crlParser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance,
+        var cache = new FileCrlCache(cacheConfig, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance,
             s_removalDelay);
         try
         {
@@ -90,7 +89,7 @@ public class FileCrlCacheTest : RevocationTests
         var crl = CreateCrl();
         var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
         var cacheConfig = CreateFileCrlCacheConfig(tempDirectory);
-        var cache = new FileCrlCache(cacheConfig, s_crlParser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance,
+        var cache = new FileCrlCache(cacheConfig, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance,
             s_removalDelay);
         try
         {
@@ -118,7 +117,7 @@ public class FileCrlCacheTest : RevocationTests
         var crl = CreateCrl();
         var tempDirectory = Path.Combine(Path.GetTempPath(), $"crl_cache_{Path.GetRandomFileName()}");
         var cacheConfig = CreateFileCrlCacheConfig(tempDirectory);
-        var cache = new FileCrlCache(cacheConfig, s_crlParser, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance,
+        var cache = new FileCrlCache(cacheConfig, FileOperations.Instance, UnixOperations.Instance, DirectoryOperations.Instance,
             s_removalDelay);
         try
         {
@@ -157,7 +156,7 @@ public class FileCrlCacheTest : RevocationTests
         var fileOperations = new Mock<FileOperations>();
         var unixOperations = new Mock<UnixOperations>();
         var directoryOperations = new Mock<DirectoryOperations>();
-        var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
+        var cache = new FileCrlCache(cacheConfig, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
             s_removalDelay);
         fileOperations
             .Setup(f => f.Exists(fileName))
@@ -187,7 +186,7 @@ public class FileCrlCacheTest : RevocationTests
         var fileOperations = new Mock<FileOperations>();
         var unixOperations = new Mock<UnixOperations>();
         var directoryOperations = new Mock<DirectoryOperations>();
-        var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
+        var cache = new FileCrlCache(cacheConfig, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
             s_removalDelay);
         fileOperations
             .Setup(f => f.Exists(fileName))
@@ -211,7 +210,7 @@ public class FileCrlCacheTest : RevocationTests
         var fileOperations = new Mock<FileOperations>();
         var unixOperations = new Mock<UnixOperations>();
         var directoryOperations = new Mock<DirectoryOperations>();
-        var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
+        var cache = new FileCrlCache(cacheConfig, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
             s_removalDelay);
         fileOperations
             .Setup(f => f.Exists(fileName))
@@ -239,7 +238,7 @@ public class FileCrlCacheTest : RevocationTests
         var fileOperations = new Mock<FileOperations>();
         var unixOperations = new Mock<UnixOperations>();
         var directoryOperations = new Mock<DirectoryOperations>();
-        var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
+        var cache = new FileCrlCache(cacheConfig, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
             s_removalDelay);
 
         // act
@@ -263,7 +262,7 @@ public class FileCrlCacheTest : RevocationTests
         var fileOperations = new Mock<FileOperations>();
         var unixOperations = new Mock<UnixOperations>();
         var directoryOperations = new Mock<DirectoryOperations>();
-        var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
+        var cache = new FileCrlCache(cacheConfig, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
             s_removalDelay);
         fileOperations
             .Setup(f => f.WriteAllBytes(fileName, crl.GetEncoded()))
@@ -290,7 +289,7 @@ public class FileCrlCacheTest : RevocationTests
         var fileOperations = new Mock<FileOperations>();
         var unixOperations = new Mock<UnixOperations>();
         var directoryOperations = new Mock<DirectoryOperations>();
-        var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
+        var cache = new FileCrlCache(cacheConfig, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
             s_removalDelay);
         directoryOperations
             .Setup(d => d.Exists(tempDirectory))
@@ -318,7 +317,7 @@ public class FileCrlCacheTest : RevocationTests
         var fileOperations = new Mock<FileOperations>();
         var unixOperations = new Mock<UnixOperations>();
         var directoryOperations = new Mock<DirectoryOperations>();
-        var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
+        var cache = new FileCrlCache(cacheConfig, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
             s_removalDelay);
         fileOperations
             .Setup(f => f.Exists(fileName))
@@ -347,7 +346,7 @@ public class FileCrlCacheTest : RevocationTests
         var fileOperations = new Mock<FileOperations>();
         var unixOperations = new Mock<UnixOperations>();
         var directoryOperations = new Mock<DirectoryOperations>();
-        var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
+        var cache = new FileCrlCache(cacheConfig, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
             s_removalDelay);
         fileOperations
             .Setup(f => f.Exists(fileName))
@@ -374,7 +373,7 @@ public class FileCrlCacheTest : RevocationTests
         var fileOperations = new Mock<FileOperations>();
         var unixOperations = new Mock<UnixOperations>();
         var directoryOperations = new Mock<DirectoryOperations>();
-        var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
+        var cache = new FileCrlCache(cacheConfig, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
             s_removalDelay);
         unixOperations
             .Setup(u => u.GetDirectoryInfo(tempDirectory))
@@ -405,7 +404,7 @@ public class FileCrlCacheTest : RevocationTests
         var fileOperations = new Mock<FileOperations>();
         var unixOperations = new Mock<UnixOperations>();
         var directoryOperations = new Mock<DirectoryOperations>();
-        var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
+        var cache = new FileCrlCache(cacheConfig, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
             s_removalDelay);
         unixOperations
             .Setup(u => u.GetDirectoryInfo(tempDirectory))
@@ -437,7 +436,7 @@ public class FileCrlCacheTest : RevocationTests
         var fileOperations = new Mock<FileOperations>();
         var unixOperations = new Mock<UnixOperations>();
         var directoryOperations = new Mock<DirectoryOperations>();
-        var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
+        var cache = new FileCrlCache(cacheConfig, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
             s_removalDelay);
         unixOperations
             .Setup(u => u.GetDirectoryInfo(tempDirectory))
@@ -477,7 +476,7 @@ public class FileCrlCacheTest : RevocationTests
         var fileOperations = new Mock<FileOperations>();
         var unixOperations = new Mock<UnixOperations>();
         var directoryOperations = new Mock<DirectoryOperations>();
-        var cache = new FileCrlCache(cacheConfig, s_crlParser, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
+        var cache = new FileCrlCache(cacheConfig, fileOperations.Object, unixOperations.Object, directoryOperations.Object,
             s_removalDelay);
         unixOperations
             .Setup(u => u.GetDirectoryInfo(tempDirectory))
@@ -509,7 +508,7 @@ public class FileCrlCacheTest : RevocationTests
         fileOperations.Verify(f => f.SetLastWriteTimeUtc(fileName, s_downloadTime), Times.Never());
     }
 
-    private FileCrlCacheConfig CreateFileCrlCacheConfig(string tempDirectory)
+    private static FileCrlCacheConfig CreateFileCrlCacheConfig(string tempDirectory)
     {
         bool isWindows;
         long unixUserId;
@@ -530,13 +529,13 @@ public class FileCrlCacheTest : RevocationTests
         return new FileCrlCacheConfig(tempDirectory, isWindows, unixUserId, unixGroupId);
     }
 
-    private Crl CreateCrl()
+    private static Crl CreateCrl()
     {
         var x509Crl = CertificateGenerator.GenerateCrl(IssuerCa, s_thisUpdate, s_nextUpdate, s_revocationTime);
-        return s_crlParser.Create(x509Crl, s_downloadTime);
+        return CrlParser.Create(x509Crl, s_downloadTime);
     }
 
-    private void AssertCrlsAreEqual(Crl expected, Crl actual)
+    private static void AssertCrlsAreEqual(Crl expected, Crl actual)
     {
         Assert.Equal(expected.DownloadTime, actual.DownloadTime);
         Assert.Equal(expected.ThisUpdate, actual.ThisUpdate);

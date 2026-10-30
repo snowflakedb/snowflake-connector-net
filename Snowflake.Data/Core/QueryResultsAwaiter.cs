@@ -50,14 +50,14 @@ internal sealed class QueryResultsAwaiter
         _queryResultsRetryConfig = queryResultsRetryConfig;
     }
 
-    internal QueryStatus GetQueryStatus(SnowflakeDbConnection connection, string queryId)
+    internal static QueryStatus GetQueryStatus(SnowflakeDbConnection connection, string queryId)
     {
         ValidateQueryId(queryId);
         var sfStatement = new SFStatement(connection.SfSession);
         return sfStatement.GetQueryStatus(queryId);
     }
 
-    internal async Task<QueryStatus> GetQueryStatusAsync(SnowflakeDbConnection connection, string queryId, CancellationToken cancellationToken)
+    internal static async Task<QueryStatus> GetQueryStatusAsync(SnowflakeDbConnection connection, string queryId, CancellationToken cancellationToken)
     {
         ValidateQueryId(queryId);
         var sfStatement = new SFStatement(connection.SfSession);
@@ -134,7 +134,7 @@ internal sealed class QueryResultsAwaiter
         }
     }
 
-    private void AbortQuery(SnowflakeDbConnection connection, string queryId, bool isAsync)
+    private static void AbortQuery(SnowflakeDbConnection connection, string queryId, bool isAsync)
     {
         try
         {
@@ -156,7 +156,7 @@ internal sealed class QueryResultsAwaiter
         }
     }
 
-    private async Task CancelQueryByIdAsync(SnowflakeDbConnection connection, string queryId)
+    private static async Task CancelQueryByIdAsync(SnowflakeDbConnection connection, string queryId)
     {
         ValidateQueryId(queryId);
         s_logger.Debug($"Sending cancel query request for query id {queryId}");
@@ -166,7 +166,7 @@ internal sealed class QueryResultsAwaiter
         s_logger.Debug($"Cancel query request sent successfully for query id {queryId}");
     }
 
-    private void CancelQueryById(SnowflakeDbConnection connection, string queryId)
+    private static void CancelQueryById(SnowflakeDbConnection connection, string queryId)
     {
         ValidateQueryId(queryId);
         s_logger.Debug($"Sending cancel query request for query id {queryId}");

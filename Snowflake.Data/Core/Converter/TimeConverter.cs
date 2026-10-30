@@ -5,7 +5,7 @@ namespace Snowflake.Data.Core.Converter;
 
 internal class TimeConverter
 {
-    public object Convert(string value, SFDataType timestampType, Type fieldType, TimeZoneInfo sessionTimezone)
+    public static object Convert(string value, SFDataType timestampType, Type fieldType, TimeZoneInfo sessionTimezone)
     {
         if (fieldType == typeof(string))
         {

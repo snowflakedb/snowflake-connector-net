@@ -210,7 +210,7 @@ public class HttpUtilTest
         var config = CreateConfigWithTlsProtocols(null, null);
 
         // act
-        var handler = HttpUtil.Instance.CreateFallbackHttpClientHandler(
+        var handler = HttpUtil.CreateFallbackHttpClientHandler(
             config, new PlatformNotSupportedException(), canApplyTlsProtocols: false);
 
         // assert
@@ -280,7 +280,7 @@ public class HttpUtilTest
             .Respond(HttpStatusCode.OK);
 
         var config = new HttpClientConfig(default, default, default, 20, default);
-        var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
+        var client = HttpUtil.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
         var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
         request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
         request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
@@ -306,7 +306,7 @@ public class HttpUtilTest
             .Respond(HttpStatusCode.OK);
 
         var config = new HttpClientConfig(default, default, default, 20, default);
-        var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
+        var client = HttpUtil.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
         var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
         request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
         request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
@@ -332,7 +332,7 @@ public class HttpUtilTest
             .Respond(HttpStatusCode.OK);
 
         var config = new HttpClientConfig(default, default, default, 20, default);
-        var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
+        var client = HttpUtil.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
         var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
         request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
         request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
@@ -361,7 +361,7 @@ public class HttpUtilTest
             .Respond(HttpStatusCode.OK);
 
         var config = new HttpClientConfig(default, default, default, 20, default);
-        var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
+        var client = HttpUtil.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
         var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
         request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
         request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
@@ -383,7 +383,7 @@ public class HttpUtilTest
             .Respond(_ => new HttpResponseMessage(HttpStatusCode.Ambiguous)); // 300, no Location
 
         var config = new HttpClientConfig(default, default, default, 20, default);
-        var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
+        var client = HttpUtil.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
         var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/queries/v1/query-request");
         request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
         request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
@@ -413,7 +413,7 @@ public class HttpUtilTest
             });
 
         var config = new HttpClientConfig(default, default, default, 20, default);
-        var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
+        var client = HttpUtil.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
         var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request");
         request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
         request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
@@ -442,7 +442,7 @@ public class HttpUtilTest
             });
 
         var config = new HttpClientConfig(default, default, default, 20, default);
-        var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
+        var client = HttpUtil.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
         var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request");
         request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(60));
         request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(300));
@@ -477,7 +477,7 @@ public class HttpUtilTest
             });
 
         var config = new HttpClientConfig(default, default, default, 20, default);
-        var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
+        var client = HttpUtil.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
         var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request");
         request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(30));
         request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
@@ -509,7 +509,7 @@ public class HttpUtilTest
 
         //
         var config = new HttpClientConfig(default, new SFSessionRetryProperties(default, DisableRetry: true, default, default, default, default), default, 20, default);
-        var client = HttpUtil.Instance.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
+        var client = HttpUtil.CreateNewHttpClient(config, new CustomDelegatingHandler(mockHttp), null);
         var request = new HttpRequestMessage(HttpMethod.Post, "https://test.snowflakecomputing.com/session/v1/login-request");
         request.SetOption(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(16));
         request.SetOption(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY, TimeSpan.FromSeconds(120));
@@ -547,7 +547,7 @@ public class HttpUtilTest
         var config = CreateConfigWithTlsProtocols("tls13", "tls13");
 
         // act - a runtime rejecting only CheckCertificateRevocationList still applies TLS protocols
-        var handler = HttpUtil.Instance.CreateFallbackHttpClientHandler(
+        var handler = HttpUtil.CreateFallbackHttpClientHandler(
             config, new PlatformNotSupportedException(), canApplyTlsProtocols: true);
 
         // assert
@@ -564,7 +564,7 @@ public class HttpUtilTest
         var cause = new PlatformNotSupportedException();
 
         // act
-        var exception = Assert.Throws<SnowflakeDbException>(() => HttpUtil.Instance.CreateFallbackHttpClientHandler(
+        var exception = Assert.Throws<SnowflakeDbException>(() => HttpUtil.CreateFallbackHttpClientHandler(
             config, cause, canApplyTlsProtocols: false));
 
         // assert - no silent fallback to the protocols chosen by the OS
@@ -581,7 +581,7 @@ public class HttpUtilTest
         var config = CreateConfigWithTlsProtocols(null, null);
 
         // act
-        var handler = HttpUtil.Instance.CreateFallbackHttpClientHandler(
+        var handler = HttpUtil.CreateFallbackHttpClientHandler(
             config, new PlatformNotSupportedException(), canApplyTlsProtocols: false);
 
         // assert - protocol selection is left to the OS instead of failing
@@ -594,7 +594,7 @@ public class HttpUtilTest
         // arrange - callers that fall back on failure (e.g. the bind stage upload) must let this
         // one through, otherwise the requested TLS restriction is silently dropped
         var config = CreateConfigWithTlsProtocols("tls13", "tls13");
-        var tlsException = Assert.Throws<SnowflakeDbException>(() => HttpUtil.Instance.CreateFallbackHttpClientHandler(
+        var tlsException = Assert.Throws<SnowflakeDbException>(() => HttpUtil.CreateFallbackHttpClientHandler(
             config, new PlatformNotSupportedException(), canApplyTlsProtocols: false));
 
         // act, assert
@@ -655,7 +655,7 @@ public class HttpUtilTest
         try
         {
             // act
-            HttpUtil.Instance.IncreaseLowDefaultConnectionLimitOfServicePointManager();
+            HttpUtil.IncreaseLowDefaultConnectionLimitOfServicePointManager();
 
             // assert
             Assert.Equal(expectedLimit, ServicePointManager.DefaultConnectionLimit);
@@ -677,7 +677,7 @@ public class HttpUtilTest
         try
         {
             // act
-            HttpUtil.Instance.IncreaseLowDefaultConnectionLimitOfServicePointManager();
+            HttpUtil.IncreaseLowDefaultConnectionLimitOfServicePointManager();
 
             // assert
             Assert.Equal(HttpUtil.DefaultConnectionLimit, ServicePointManager.DefaultConnectionLimit);

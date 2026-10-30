@@ -68,7 +68,7 @@ internal class WorkflowIdentityGcpAttestationRetriever : WorkloadIdentityAttesta
             response = GetIdentityResponse(request);
         }
 
-        var token = new JwtTokenExtractor().ReadJwtToken(response, AttestationError);
+        var token = JwtTokenExtractor.ReadJwtToken(response, AttestationError);
         var issuer = token.Issuer;
         var subject = token.Subject;
         if (string.IsNullOrEmpty(issuer) || string.IsNullOrEmpty(subject))

@@ -15,15 +15,15 @@ internal class UTF8Buffer
     public UTF8Buffer(byte[] Buffer, int Offset, int Length)
     {
         this.Buffer = Buffer;
-        this.offset = Offset;
-        this.length = Length;
+        offset = Offset;
+        length = Length;
     }
 
     public UTF8Buffer(byte[] Buffer)
     {
         this.Buffer = Buffer;
-        this.offset = 0;
-        this.length = Buffer.Length;
+        offset = 0;
+        length = Buffer.Length;
     }
 
     public override string ToString() => UTF8.GetString(Buffer, offset, length);

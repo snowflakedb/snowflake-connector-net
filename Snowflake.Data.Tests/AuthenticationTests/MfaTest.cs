@@ -31,6 +31,6 @@ public class MfaTest
         cacheTestHelper.VerifyExceptionIsNotThrown();
 
         var mfaHost = parameters[SFSessionProperty.HOST];
-        authTestHelper.RemoveTokenFromCache(mfaHost, mfaHost, parameters[SFSessionProperty.USER], string.Empty, TokenType.MFAToken);
+        AuthTestHelper.RemoveTokenFromCache(mfaHost, mfaHost, parameters[SFSessionProperty.USER], string.Empty, TokenType.MFAToken);
     }
 }

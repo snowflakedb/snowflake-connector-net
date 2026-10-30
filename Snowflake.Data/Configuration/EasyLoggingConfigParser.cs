@@ -50,7 +50,7 @@ internal class EasyLoggingConfigParser
         }
     }
 
-    private ClientConfig TryToParseFile(string fileContent)
+    private static ClientConfig TryToParseFile(string fileContent)
     {
         try
         {
@@ -67,7 +67,7 @@ internal class EasyLoggingConfigParser
         }
     }
 
-    private void Validate(ClientConfig config)
+    private static void Validate(ClientConfig config)
     {
         if (config.CommonProps.LogLevel != null)
         {
@@ -95,7 +95,7 @@ internal class EasyLoggingConfigParser
         }
     }
 
-    private void CheckForUnknownFields(string fileContent)
+    private static void CheckForUnknownFields(string fileContent)
     {
         // Parse the specified config file and get the key-value pairs from the "common" section
         List<string> knownProperties = typeof(ClientConfigCommonProps).GetProperties()

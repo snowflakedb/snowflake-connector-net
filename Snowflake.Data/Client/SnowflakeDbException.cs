@@ -26,13 +26,7 @@ public sealed class SnowflakeDbException : DbException
 
     public string QueryId { get; set; }
 
-    public override int ErrorCode
-    {
-        get
-        {
-            return VendorCode;
-        }
-    }
+    public override int ErrorCode => VendorCode;
 
     public SnowflakeDbException(string sqlState, int vendorCode, string errorMessage, string queryId)
         : base(FormatExceptionMessage(errorMessage, vendorCode, sqlState, queryId))

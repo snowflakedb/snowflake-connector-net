@@ -59,7 +59,7 @@ internal sealed class HeartBeatBackground
         }
     }
 
-    private long GetHeartBeatInterval(long masterTokenValidationTime)
+    private static long GetHeartBeatInterval(long masterTokenValidationTime)
     {
         return masterTokenValidationTime / 4;
     }
@@ -89,7 +89,7 @@ internal sealed class HeartBeatBackground
         }
     }
 
-    public void RemoveConnection(SFSession conn)
+    public static void RemoveConnection(SFSession conn)
     {
         lock (heartBeatLock)
         {

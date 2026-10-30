@@ -42,7 +42,7 @@ internal class OAuthAccessTokenResponse
         }
     }
 
-    private void ValidateExpirationTime(string expiresIn, string tokenName, int maxExpiresIn)
+    private static void ValidateExpirationTime(string expiresIn, string tokenName, int maxExpiresIn)
     {
         if (string.IsNullOrEmpty(expiresIn) || !(int.TryParse(expiresIn, out var expiresInIntValue) && expiresInIntValue > 0))
         {

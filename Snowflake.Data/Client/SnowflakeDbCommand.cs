@@ -22,8 +22,6 @@ public class SnowflakeDbCommand : DbCommand
 
     private readonly SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
 
-    private readonly QueryResultsAwaiter _queryResultsAwaiter = QueryResultsAwaiter.Instance;
-
     public SnowflakeDbCommand()
     {
         logger.Debug("Constructing SnowflakeDbCommand class");
@@ -417,7 +415,7 @@ public class SnowflakeDbCommand : DbCommand
         using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.GetQueryStatus);
         try
         {
-            var status = _queryResultsAwaiter.GetQueryStatus(connection, queryId);
+            var status = QueryResultsAwaiter.GetQueryStatus(connection, queryId);
             activity?.SetSuccess();
             return status;
         }
@@ -440,7 +438,7 @@ public class SnowflakeDbCommand : DbCommand
         using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.GetQueryStatusAsync);
         try
         {
-            var status = await _queryResultsAwaiter.GetQueryStatusAsync(connection, queryId, cancellationToken).ConfigureAwait(false);
+            var status = await QueryResultsAwaiter.GetQueryStatusAsync(connection, queryId, cancellationToken).ConfigureAwait(false);
             activity?.SetSuccess();
             return status;
         }
@@ -463,7 +461,7 @@ public class SnowflakeDbCommand : DbCommand
 
         try
         {
-            Task task = _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, CancellationToken.None, false);
+            Task task = QueryResultsAwaiter.Instance.RetryUntilQueryResultIsAvailable(connection, queryId, CancellationToken.None, false);
             task.Wait();
 
             SFBaseResultSet resultSet = sfStatement.GetResultWithId(queryId);
@@ -491,7 +489,7 @@ public class SnowflakeDbCommand : DbCommand
 
         try
         {
-            await _queryResultsAwaiter.RetryUntilQueryResultIsAvailable(connection, queryId, cancellationToken, true).ConfigureAwait(false);
+            await QueryResultsAwaiter.Instance.RetryUntilQueryResultIsAvailable(connection, queryId, cancellationToken, true).ConfigureAwait(false);
 
             SFBaseResultSet resultSet = await sfStatement.GetResultWithIdAsync(queryId, cancellationToken).ConfigureAwait(false);
 

@@ -431,7 +431,7 @@ public sealed class ConnectionMultiplePoolsAsyncIT : SFBaseTestAsync, IDisposabl
         await Awaiter.WaitUntilConditionOrTimeout(() => pool.OngoingSessionCreationsCount() == 0, expectingToWaitAtMostForSessionCreations).ConfigureAwait(false);
     }
 
-    private async Task<SnowflakeDbConnection> OpenConnectionAsync(string connectionString)
+    private static async Task<SnowflakeDbConnection> OpenConnectionAsync(string connectionString)
     {
         var connection = new SnowflakeDbConnection();
         connection.ConnectionString = connectionString;

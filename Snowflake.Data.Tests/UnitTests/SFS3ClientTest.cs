@@ -362,7 +362,7 @@ public sealed class SFS3ClientTest
         response.Metadata.Add(SFS3Client.SFC_DIGEST.ToUpper(), "something");
 
         // act
-        var fileHeader = _client.HandleFileHeaderResponse(ref _fileMetadata, response);
+        var fileHeader = SFS3Client.HandleFileHeaderResponse(ref _fileMetadata, response);
 
         // assert
         Assert.Equal(nameof(ResultStatus.UPLOADED), _fileMetadata.resultStatus);
@@ -384,7 +384,7 @@ public sealed class SFS3ClientTest
         response.Metadata.Add(SFS3Client.AMZ_MATDESC, "description");
 
         // act
-        var fileHeader = _client.HandleFileHeaderResponse(ref _fileMetadata, response);
+        var fileHeader = SFS3Client.HandleFileHeaderResponse(ref _fileMetadata, response);
 
         // assert
         Assert.Equal(nameof(ResultStatus.UPLOADED), _fileMetadata.resultStatus);

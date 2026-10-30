@@ -108,14 +108,14 @@ public class ProgrammaticAccessTokenAuthenticationTest
         Assert.Contains("Programmatic access token is invalid.", thrown.Message);
     }
 
-    private SFSession PrepareSession()
+    private static SFSession PrepareSession()
     {
         var connectionString = GetPatConnectionString();
         var sessionContext = new SessionPropertiesContext();
         return new SFSession(connectionString, sessionContext);
     }
 
-    private string GetPatConnectionString()
+    private static string GetPatConnectionString()
     {
         var authenticator = "programmatic_access_token";
         var db = "testDb";
@@ -132,7 +132,7 @@ public class ProgrammaticAccessTokenAuthenticationTest
             .ToString();
     }
 
-    private void AssertSessionSuccessfullyCreated(SFSession session)
+    private static void AssertSessionSuccessfullyCreated(SFSession session)
     {
         Assert.Equal(SessionId, session.sessionId);
         Assert.Equal(MasterToken, session.masterToken);

@@ -280,7 +280,7 @@ public class SnowflakeCredentialManagerFactoryTest : IDisposable
     }
 
 
-    private void TearDown()
+    private static void TearDown()
     {
         SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
     }

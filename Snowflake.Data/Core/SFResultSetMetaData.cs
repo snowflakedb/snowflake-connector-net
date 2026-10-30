@@ -119,7 +119,7 @@ class SFResultSetMetaData
         return fields != null && fields.Count > 0;
     }
 
-    private SFDataType GetSFDataType(string type)
+    private static SFDataType GetSFDataType(string type)
     {
         SFDataType rslt;
         if (Enum.TryParse(type, true, out rslt))
@@ -129,7 +129,7 @@ class SFResultSetMetaData
             $"Unknown column type: {type}");
     }
 
-    private Type GetNativeTypeForColumn(SFDataType sfType, ExecResponseRowType col)
+    private static Type GetNativeTypeForColumn(SFDataType sfType, ExecResponseRowType col)
     {
         switch (sfType)
         {
@@ -172,7 +172,7 @@ class SFResultSetMetaData
         return rowTypes[targetIndex].name;
     }
 
-    private SFStatementType FindStatementTypeById(long id)
+    private static SFStatementType FindStatementTypeById(long id)
     {
         foreach (SFStatementType type in Enum.GetValues(typeof(SFStatementType)))
         {

@@ -102,8 +102,8 @@ class SFReusableChunk : BaseResultChunk
             savedColCount = colCount;
             currentDatOffset = 0;
             nextIndex = 0;
-            this.blockCount = 1; // init with 1 block only
-            this.metaBlockCount = GetMetaBlock(rowCount * colCount - 1) + 1;
+            blockCount = 1; // init with 1 block only
+            metaBlockCount = GetMetaBlock(rowCount * colCount - 1) + 1;
         }
 
         internal void Clear()

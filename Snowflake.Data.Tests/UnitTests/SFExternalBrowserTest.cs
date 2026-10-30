@@ -290,19 +290,19 @@ public sealed class SFExternalBrowserTest
                     using (var emptyMatchingPost = CreatePostRequest(uri, "https://test.snowflakecomputing.com"))
                     using (var emptyMatchingResponse = await s_httpClient.SendAsync(emptyMatchingPost).ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.OK, emptyMatchingResponse.StatusCode);
+                        Assert.Equal(HttpStatusCode.OK, emptyMatchingResponse.StatusCode);
                     }
 
                     using (var foreignOriginPost = CreateJsonPostRequest(uri, "https://other.snowflakecomputing.com", "{\"token\":\"ignored\"}"))
                     using (var foreignOriginResponse = await s_httpClient.SendAsync(foreignOriginPost).ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.Forbidden, foreignOriginResponse.StatusCode);
+                        Assert.Equal(HttpStatusCode.Forbidden, foreignOriginResponse.StatusCode);
                     }
 
                     using (var matchingOriginPost = CreateJsonPostRequest(uri, "https://test.snowflakecomputing.com", "{\"token\":\"post-json-token\",\"consent\":true}"))
                     using (var matchingOriginResponse = await s_httpClient.SendAsync(matchingOriginPost).ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.OK, matchingOriginResponse.StatusCode);
+                        Assert.Equal(HttpStatusCode.OK, matchingOriginResponse.StatusCode);
                         Assert.Equal("https://test.snowflakecomputing.com", matchingOriginResponse.Headers.GetValues("Access-Control-Allow-Origin").Single());
                     }
                 });
@@ -334,14 +334,14 @@ public sealed class SFExternalBrowserTest
                         foreignRequest.Headers.TryAddWithoutValidation("Origin", "https://other.snowflakecomputing.com");
                         using (var foreignResponse = await s_httpClient.SendAsync(foreignRequest).ConfigureAwait(false))
                         {
-                            Assert.Equal(System.Net.HttpStatusCode.Forbidden, foreignResponse.StatusCode);
+                            Assert.Equal(HttpStatusCode.Forbidden, foreignResponse.StatusCode);
                             Assert.False(foreignResponse.Headers.Contains("Access-Control-Allow-Origin"));
                         }
                     }
 
                     using (var validResponse = await s_httpClient.GetAsync(uri).ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.OK, validResponse.StatusCode);
+                        Assert.Equal(HttpStatusCode.OK, validResponse.StatusCode);
                     }
                 });
             });
@@ -372,7 +372,7 @@ public sealed class SFExternalBrowserTest
                         request.Headers.TryAddWithoutValidation("Origin", "null");
                         using (var response = await s_httpClient.SendAsync(request).ConfigureAwait(false))
                         {
-                            Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+                            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                             Assert.False(response.Headers.Contains("Access-Control-Allow-Origin"));
                         }
                     }
@@ -405,7 +405,7 @@ public sealed class SFExternalBrowserTest
                         request.Headers.TryAddWithoutValidation("Origin", "https://test.snowflakecomputing.com");
                         using (var response = await s_httpClient.SendAsync(request).ConfigureAwait(false))
                         {
-                            Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+                            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                             Assert.Equal("https://test.snowflakecomputing.com", response.Headers.GetValues("Access-Control-Allow-Origin").Single());
                         }
                     }
@@ -436,26 +436,26 @@ public sealed class SFExternalBrowserTest
                     using (var foreignPreflight = CreatePreflightRequest(uri, "https://other.snowflakecomputing.com", "POST", "Content-Type"))
                     using (var foreignResponse = await s_httpClient.SendAsync(foreignPreflight).ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.BadRequest, foreignResponse.StatusCode);
+                        Assert.Equal(HttpStatusCode.BadRequest, foreignResponse.StatusCode);
                         Assert.False(foreignResponse.Headers.Contains("Access-Control-Allow-Origin"));
                     }
 
                     using (var wrongMethodPreflight = CreatePreflightRequest(uri, "https://test.snowflakecomputing.com", "GET", "Content-Type"))
                     using (var wrongMethodResponse = await s_httpClient.SendAsync(wrongMethodPreflight).ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.BadRequest, wrongMethodResponse.StatusCode);
+                        Assert.Equal(HttpStatusCode.BadRequest, wrongMethodResponse.StatusCode);
                     }
 
                     using (var wrongHeadersPreflight = CreatePreflightRequest(uri, "https://test.snowflakecomputing.com", "POST", "X-Test"))
                     using (var wrongHeadersResponse = await s_httpClient.SendAsync(wrongHeadersPreflight).ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.BadRequest, wrongHeadersResponse.StatusCode);
+                        Assert.Equal(HttpStatusCode.BadRequest, wrongHeadersResponse.StatusCode);
                     }
 
                     using (var validPreflight = CreatePreflightRequest(uri, "https://test.snowflakecomputing.com", "post", "content-type"))
                     using (var validPreflightResponse = await s_httpClient.SendAsync(validPreflight).ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.NoContent, validPreflightResponse.StatusCode);
+                        Assert.Equal(HttpStatusCode.NoContent, validPreflightResponse.StatusCode);
                         Assert.Equal("https://test.snowflakecomputing.com", validPreflightResponse.Headers.GetValues("Access-Control-Allow-Origin").Single());
                         Assert.Equal("POST, GET, OPTIONS", validPreflightResponse.Headers.GetValues("Access-Control-Allow-Methods").Single());
                         Assert.Equal("content-type", validPreflightResponse.Headers.GetValues("Access-Control-Allow-Headers").Single());
@@ -463,7 +463,7 @@ public sealed class SFExternalBrowserTest
 
                     using (var validResponse = await s_httpClient.GetAsync(uri).ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.OK, validResponse.StatusCode);
+                        Assert.Equal(HttpStatusCode.OK, validResponse.StatusCode);
                     }
                 });
             });
@@ -492,18 +492,18 @@ public sealed class SFExternalBrowserTest
                     using (var noOriginPost = CreateJsonPostRequest(uri, null, "{\"token\":\"should-be-ignored\"}"))
                     using (var noOriginResponse = await s_httpClient.SendAsync(noOriginPost).ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.Forbidden, noOriginResponse.StatusCode);
+                        Assert.Equal(HttpStatusCode.Forbidden, noOriginResponse.StatusCode);
                     }
 
                     using (var nullOriginPost = CreateJsonPostRequest(uri, "null", "{\"token\":\"also-ignored\"}"))
                     using (var nullOriginResponse = await s_httpClient.SendAsync(nullOriginPost).ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.Forbidden, nullOriginResponse.StatusCode);
+                        Assert.Equal(HttpStatusCode.Forbidden, nullOriginResponse.StatusCode);
                     }
 
                     using (var validGetResponse = await s_httpClient.GetAsync(uri).ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.OK, validGetResponse.StatusCode);
+                        Assert.Equal(HttpStatusCode.OK, validGetResponse.StatusCode);
                     }
                 });
             });
@@ -532,17 +532,17 @@ public sealed class SFExternalBrowserTest
                     var callbackRoot = uri.GetLeftPart(UriPartial.Authority) + "/";
                     using (var originlessRoot = await s_httpClient.GetAsync(callbackRoot).ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.OK, originlessRoot.StatusCode);
+                        Assert.Equal(HttpStatusCode.OK, originlessRoot.StatusCode);
                     }
 
                     using (var favicon = await s_httpClient.GetAsync(callbackRoot + "favicon.ico").ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.OK, favicon.StatusCode);
+                        Assert.Equal(HttpStatusCode.OK, favicon.StatusCode);
                     }
 
                     using (var validResponse = await s_httpClient.GetAsync(uri).ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.OK, validResponse.StatusCode);
+                        Assert.Equal(HttpStatusCode.OK, validResponse.StatusCode);
                     }
                 });
             });
@@ -715,7 +715,7 @@ public sealed class SFExternalBrowserTest
             ThrowInvalidIdToken = true
         };
         var sfSession = new SFSession($"CLIENT_STORE_TEMPORARY_CREDENTIAL=true;account=test;user={user};password=test;authenticator=externalbrowser;host={host}", new SessionPropertiesContext(), restRequester);
-        SFExternalBrowserTest.SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
+        SetAuthenticatorWithMockBrowser(sfSession, t_browserRunner.Object);
 
         Assert.Equal(invalidIdToken, SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(key));
 
@@ -760,12 +760,12 @@ public sealed class SFExternalBrowserTest
                     using (var deleteRequest = new HttpRequestMessage(HttpMethod.Delete, uri))
                     using (var deleteResponse = await s_httpClient.SendAsync(deleteRequest).ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.MethodNotAllowed, deleteResponse.StatusCode);
+                        Assert.Equal(HttpStatusCode.MethodNotAllowed, deleteResponse.StatusCode);
                     }
 
                     using (var validResponse = await s_httpClient.GetAsync(uri).ConfigureAwait(false))
                     {
-                        Assert.Equal(System.Net.HttpStatusCode.OK, validResponse.StatusCode);
+                        Assert.Equal(HttpStatusCode.OK, validResponse.StatusCode);
                     }
                 });
             });
@@ -831,7 +831,7 @@ public sealed class WebBrowserListenerControlFlowTest
     [SFFact]
     public void TestThatRequestHandlerExceptionPropagatesFromBrowserListener()
     {
-        var endpoints = new[] { $"http://{System.Net.IPAddress.Loopback}:{GetFreePort()}/" };
+        var endpoints = new[] { $"http://{IPAddress.Loopback}:{GetFreePort()}/" };
         var httpListener = new HttpListener();
         foreach (var ep in endpoints) httpListener.Prefixes.Add(ep);
         httpListener.Start();
@@ -853,7 +853,7 @@ public sealed class WebBrowserListenerControlFlowTest
     [SFFact]
     public void TestThatGracefulShutdownDuringContinueListeningDoesNotThrow()
     {
-        var endpoints = new[] { $"http://{System.Net.IPAddress.Loopback}:{GetFreePort()}/" };
+        var endpoints = new[] { $"http://{IPAddress.Loopback}:{GetFreePort()}/" };
         var httpListener = new HttpListener();
         foreach (var ep in endpoints) httpListener.Prefixes.Add(ep);
         httpListener.Start();
@@ -862,7 +862,7 @@ public sealed class WebBrowserListenerControlFlowTest
         int requestCount = 0;
         Func<HttpListenerContext, Result<string, IBrowserError>?> handler = ctx =>
         {
-            if (System.Threading.Interlocked.Increment(ref requestCount) == 1)
+            if (Interlocked.Increment(ref requestCount) == 1)
             {
                 ctx.Response.StatusCode = 200;
                 ctx.Response.ContentLength64 = 0;
@@ -887,9 +887,9 @@ public sealed class WebBrowserListenerControlFlowTest
 
     private static int GetFreePort()
     {
-        var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        var listener = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
         listener.Start();
-        int port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
         listener.Stop();
         return port;
     }

@@ -274,7 +274,7 @@ public class ConnectionPoolConfigExtractorTest
         Assert.Equal(expectedChangedSession, result.ChangedSession);
     }
 
-    private ConnectionPoolConfig ExtractConnectionPoolConfig(string connectionString) =>
+    private static ConnectionPoolConfig ExtractConnectionPoolConfig(string connectionString) =>
         SessionPool.ExtractConfig(connectionString, new SessionPropertiesContext()).Item1;
 
     public class TimeoutTestCase

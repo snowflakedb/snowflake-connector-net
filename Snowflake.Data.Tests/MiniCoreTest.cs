@@ -23,7 +23,7 @@ public class MiniCoreTest : SFBaseTestAsync, IDisposable
         SFEnvironment.MinicoreDisabled = _originalMinicoreState;
     }
 
-    private async Task WaitForMiniCoreToLoad()
+    private static async Task WaitForMiniCoreToLoad()
     {
         SfMiniCore.StartLoading();
         for (int i = 0; i < 100 && !SfMiniCore.IsLoaded; i++)

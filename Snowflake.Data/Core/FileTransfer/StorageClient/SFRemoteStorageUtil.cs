@@ -225,7 +225,7 @@ class SFRemoteStorageUtil
 
             // Failed to upload file, retrying
             double sleepingTime = Math.Min(Math.Pow(2, retry), 16);
-            System.Threading.Thread.Sleep(Convert.ToInt32(sleepingTime));
+            Thread.Sleep(Convert.ToInt32(sleepingTime));
         }
         else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY.ToString())
         {
@@ -233,7 +233,7 @@ class SFRemoteStorageUtil
 
             // Failed to upload file, retrying
             double sleepingTime = Math.Min(Math.Pow(2, retry), 16);
-            System.Threading.Thread.Sleep(Convert.ToInt32(sleepingTime));
+            Thread.Sleep(Convert.ToInt32(sleepingTime));
         }
     }
 
@@ -255,7 +255,7 @@ class SFRemoteStorageUtil
                 if (fileMetadata.resultStatus == ResultStatus.NOT_FOUND_FILE.ToString())
                 {
                     // Wait 1 second
-                    System.Threading.Thread.Sleep(1000);
+                    Thread.Sleep(1000);
                     continue;
                 }
                 break;
@@ -286,7 +286,7 @@ class SFRemoteStorageUtil
                     if (fileMetadata.resultStatus == ResultStatus.NOT_FOUND_FILE.ToString())
                     {
                         // Wait 1 second
-                        System.Threading.Thread.Sleep(1000);
+                        Thread.Sleep(1000);
                         continue;
                     }
                     break;
@@ -496,14 +496,14 @@ class SFRemoteStorageUtil
             fileMetadata.lastMaxConcurrency = maxConcurrency;
 
             int sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
-            System.Threading.Thread.Sleep(sleepingTime);
+            Thread.Sleep(sleepingTime);
         }
         else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY.ToString())
         {
             lastErr = fileMetadata.lastError;
 
             int sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
-            System.Threading.Thread.Sleep(sleepingTime);
+            Thread.Sleep(sleepingTime);
         }
     }
 

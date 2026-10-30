@@ -43,7 +43,7 @@ internal class EasyLoggingConfigFinder
 
     private string GetFilePathFromHomeDirectory() => SearchForConfigInDirectory(GetHomeDirectory, "home");
 
-    private string GetFilePathFromInputParameter(string filePath, string inputDescription)
+    private static string GetFilePathFromInputParameter(string filePath, string inputDescription)
     {
         if (string.IsNullOrEmpty(filePath))
         {

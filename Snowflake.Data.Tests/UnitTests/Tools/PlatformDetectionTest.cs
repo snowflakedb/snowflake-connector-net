@@ -28,7 +28,7 @@ public class PlatformDetectionTest : IDisposable
     private const string CloudRunJob = "CLOUD_RUN_JOB";
     private const string CloudRunExecution = "CLOUD_RUN_EXECUTION";
 
-    private void TearDown()
+    private static void TearDown()
     {
         Environment.SetEnvironmentVariable(LambdaTaskRoot, null);
         Environment.SetEnvironmentVariable(GithubActions, null);

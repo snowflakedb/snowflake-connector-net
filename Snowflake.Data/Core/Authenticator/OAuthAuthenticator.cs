@@ -24,7 +24,7 @@ class OAuthAuthenticator : BaseAuthenticator, IAuthenticator
     /// <param name="session">Session which created this authenticator</param>
     internal OAuthAuthenticator(SFSession session) : base(session)
     {
-        this.Session = session;
+        Session = session;
     }
 
     public static bool IsOAuthAuthenticator(string authenticator)
@@ -33,13 +33,13 @@ class OAuthAuthenticator : BaseAuthenticator, IAuthenticator
     /// <see cref="IAuthenticator.Authenticate"/>
     public void Authenticate()
     {
-        base.Login();
+        Login();
     }
 
     /// <see cref="IAuthenticator.AuthenticateAsync"/>
     public async Task AuthenticateAsync(CancellationToken cancellationToken)
     {
-        await base.LoginAsync(cancellationToken).ConfigureAwait(false);
+        await LoginAsync(cancellationToken).ConfigureAwait(false);
     }
 
     protected override string AuthName => AUTH_NAME;

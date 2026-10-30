@@ -41,7 +41,7 @@ public class AwaiterTest
         Assert.True(millis >= timeout.TotalMilliseconds);
     }
 
-    private async Task<long> MillisecondsOfWaiting(Func<bool> condition, TimeSpan timeout)
+    private static async Task<long> MillisecondsOfWaiting(Func<bool> condition, TimeSpan timeout)
     {
         var watch = new StopWatch();
         watch.Start();

@@ -189,27 +189,27 @@ internal static class JsonToStructuredTypeConverter
         if (IsTimestampNtzMetadata(fieldMetadata))
         {
             var value = json.Value<string>();
-            return s_timeConverter.Convert(value, SFDataType.TIMESTAMP_NTZ, fieldType, sessionTimezone);
+            return TimeConverter.Convert(value, SFDataType.TIMESTAMP_NTZ, fieldType, sessionTimezone);
         }
         if (IsTimestampLtzMetadata(fieldMetadata))
         {
             var value = json.Value<string>();
-            return s_timeConverter.Convert(value, SFDataType.TIMESTAMP_LTZ, fieldType, sessionTimezone);
+            return TimeConverter.Convert(value, SFDataType.TIMESTAMP_LTZ, fieldType, sessionTimezone);
         }
         if (IsTimestampTzMetadata(fieldMetadata))
         {
             var value = json.Value<string>();
-            return s_timeConverter.Convert(value, SFDataType.TIMESTAMP_TZ, fieldType, sessionTimezone);
+            return TimeConverter.Convert(value, SFDataType.TIMESTAMP_TZ, fieldType, sessionTimezone);
         }
         if (IsTimeMetadata(fieldMetadata))
         {
             var value = json.Value<string>();
-            return s_timeConverter.Convert(value, SFDataType.TIME, fieldType, sessionTimezone);
+            return TimeConverter.Convert(value, SFDataType.TIME, fieldType, sessionTimezone);
         }
         if (IsDateMetadata(fieldMetadata))
         {
             var value = json.Value<string>();
-            return s_timeConverter.Convert(value, SFDataType.DATE, fieldType, sessionTimezone);
+            return TimeConverter.Convert(value, SFDataType.DATE, fieldType, sessionTimezone);
         }
         if (IsBinaryMetadata(fieldMetadata))
         {

@@ -113,8 +113,8 @@ public class OktaAuthorizationCodeTest
         }
         finally
         {
-            authTestHelper.RemoveTokenFromCache(idpUrl, host, _login, role, TokenType.OAuthAccessToken);
-            authTestHelper.RemoveTokenFromCache(idpUrl, host, _login, role, TokenType.OAuthRefreshToken);
+            AuthTestHelper.RemoveTokenFromCache(idpUrl, host, _login, role, TokenType.OAuthAccessToken);
+            AuthTestHelper.RemoveTokenFromCache(idpUrl, host, _login, role, TokenType.OAuthRefreshToken);
         }
     }
 }

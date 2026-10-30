@@ -476,7 +476,7 @@ class ArrowResultSet : SFBaseResultSet
 
         if (buffer != null && bufferOffset > buffer.Length)
         {
-            throw new System.ArgumentException(
+            throw new ArgumentException(
                 "Destination buffer is not long enough. Check the buffer offset, length, and the buffer's lower bounds.",
                 nameof(buffer));
         }
@@ -502,7 +502,7 @@ class ArrowResultSet : SFBaseResultSet
 
         if (dataOffset > data.Length)
         {
-            throw new System.ArgumentException(
+            throw new ArgumentException(
                 "Source data is not long enough. Check the data offset, length, and the data's lower bounds.",
                 nameof(dataOffset));
         }

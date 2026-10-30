@@ -164,14 +164,14 @@ public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
         Assert.Contains("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)", thrown.Message);
     }
 
-    private void AssertAccessTokenSetInAuthenticator(SFSession session, string expectedAccessToken = AccessToken)
+    private static void AssertAccessTokenSetInAuthenticator(SFSession session, string expectedAccessToken = AccessToken)
     {
         var authenticator = (OAuthClientCredentialsAuthenticator)session.GetAuthenticator();
         Assert.NotNull(authenticator.AccessToken);
         Assert.Equal(expectedAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
     }
 
-    private SFSession PrepareSession(bool clientSecretInConnectionString = true, bool userInConnectionString = true, string connectionStringSuffix = "client_store_temporary_credential=true;")
+    private static SFSession PrepareSession(bool clientSecretInConnectionString = true, bool userInConnectionString = true, string connectionStringSuffix = "client_store_temporary_credential=true;")
     {
         var connectionString = GetClientCredentialsConnectionString(clientSecretInConnectionString, userInConnectionString) + connectionStringSuffix;
         var sessionContext = new SessionPropertiesContext
@@ -181,7 +181,7 @@ public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
         return new SFSession(connectionString, sessionContext);
     }
 
-    private string GetClientCredentialsConnectionString(bool addOAuthClientSecret, bool addUser)
+    private static string GetClientCredentialsConnectionString(bool addOAuthClientSecret, bool addUser)
     {
         var authenticator = "oauth_client_credentials";
         var account = "testAccount";

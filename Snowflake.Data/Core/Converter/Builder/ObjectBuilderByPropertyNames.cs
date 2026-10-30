@@ -25,7 +25,7 @@ internal class ObjectBuilderByPropertyNames : IObjectBuilder
         }
     }
 
-    private string GetSnowflakeName(PropertyInfo propertyInfo)
+    private static string GetSnowflakeName(PropertyInfo propertyInfo)
     {
         var sfAnnotation = propertyInfo.GetCustomAttributes<SnowflakeColumn>().FirstOrDefault();
         return string.IsNullOrEmpty(sfAnnotation?.Name) ? propertyInfo.Name : sfAnnotation.Name;

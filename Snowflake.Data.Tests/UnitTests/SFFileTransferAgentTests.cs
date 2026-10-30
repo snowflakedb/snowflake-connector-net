@@ -160,7 +160,7 @@ public class SFFileTransferAgentTest : IDisposable
 
     }
 
-    private string GetResultValue(SFResultSet result, SFResultSet.PutGetResponseRowTypeInfo typeInfo)
+    private static string GetResultValue(SFResultSet result, SFResultSet.PutGetResponseRowTypeInfo typeInfo)
     {
         return result.GetObjectInternal((int)typeInfo).ToString();
     }
@@ -849,7 +849,7 @@ public class SFFileTransferAgentTest : IDisposable
         TestGetFilePathFromPutCommand("PUT 'file://" + s_filePathWithSpaces + "'  @TestStage", s_filePathWithSpaces);
     }
 
-    private void TestGetFilePathFromPutCommand(string query, string expectedFilePath)
+    private static void TestGetFilePathFromPutCommand(string query, string expectedFilePath)
     {
         var actualFilePath = SFFileTransferAgent.GetFilePathFromPutCommand(query);
         Assert.Equal(expectedFilePath, actualFilePath);

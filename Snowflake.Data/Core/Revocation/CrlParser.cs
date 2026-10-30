@@ -34,7 +34,7 @@ internal class CrlParser
 
     internal TimeSpan GetCleanupInterval() => _crlCacheRemovalDelay;
 
-    public Crl Parse(byte[] bytes, DateTime now)
+    public static Crl Parse(byte[] bytes, DateTime now)
     {
         var crlParser = new X509CrlParser();
         var parsedCrl = crlParser.ReadCrl(bytes);
@@ -44,7 +44,7 @@ internal class CrlParser
         return crl;
     }
 
-    public Crl Create(X509Crl crl, DateTime now)
+    public static Crl Create(X509Crl crl, DateTime now)
     {
         var revokedCertificates = crl.GetRevokedCertificates()?.Select(cert => ConvertToHexadecimalString(cert.SerialNumber)) ?? [];
         var revokedCertificatesSet = new HashSet<string>(revokedCertificates, StringComparer.OrdinalIgnoreCase);
@@ -61,7 +61,7 @@ internal class CrlParser
         };
     }
 
-    private string[] ReadIdpFromCrl(X509Crl crl)
+    private static string[] ReadIdpFromCrl(X509Crl crl)
     {
         var idpExtension = crl.GetExtensionValue(X509Extensions.IssuingDistributionPoint);
         if (idpExtension == null)
@@ -75,7 +75,7 @@ internal class CrlParser
         return names;
     }
 
-    internal string ConvertToHexadecimalString(BigInteger value)
+    internal static string ConvertToHexadecimalString(BigInteger value)
     {
         var bytes = value.ToByteArray();
         var hexString =

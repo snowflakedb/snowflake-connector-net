@@ -65,7 +65,7 @@ public class OktaAuthenticatorTest
             .Respond(HttpStatusCode.OK);
 
         var config = new HttpClientConfig(null, default, default, 20, default);
-        var httpClient = HttpUtil.Instance.CreateNewHttpClient(config, mockHttp);
+        var httpClient = HttpUtil.CreateNewHttpClient(config, mockHttp);
         var restRequester = new DelegatingMockRestRequester(httpClient);
         var sfSession = new SFSession(
             "account=testaccount;user=testUser;password=testPassword;authenticator=https://company.okta.com;host=testaccount.snowflakecomputing.com",
@@ -108,7 +108,7 @@ public class OktaAuthenticatorTest
             .Respond(HttpStatusCode.OK);
 
         var config = new HttpClientConfig(null, default, default, 20, default);
-        var httpClient = HttpUtil.Instance.CreateNewHttpClient(config, mockHttp);
+        var httpClient = HttpUtil.CreateNewHttpClient(config, mockHttp);
         var restRequester = new DelegatingMockRestRequester(httpClient);
         var sfSession = new SFSession(
             "account=testaccount;user=testUser;password=testPassword;authenticator=https://company.okta.com;host=testaccount.snowflakecomputing.com",
@@ -150,7 +150,7 @@ public class OktaAuthenticatorTest
             .Respond(HttpStatusCode.OK);
 
         var config = new HttpClientConfig(null, default, default, 20, default);
-        var httpClient = HttpUtil.Instance.CreateNewHttpClient(config, mockHttp);
+        var httpClient = HttpUtil.CreateNewHttpClient(config, mockHttp);
         var restRequester = new DelegatingMockRestRequester(httpClient);
         var sfSession = new SFSession(
             "account=testaccount;user=testUser;password=testPassword;authenticator=https://company.okta.com;host=testaccount.snowflakecomputing.com",
@@ -181,7 +181,7 @@ public class OktaAuthenticatorTest
             postbackUrl: "https://TestAccount.Snowflakecomputing.COM/fed/login").ConfigureAwait(false);
     }
 
-    private async Task RunOktaPostbackValidationAsync(string postbackUrl)
+    private static async Task RunOktaPostbackValidationAsync(string postbackUrl)
     {
         var mockHttp = new MockHttpMessageHandler();
 
@@ -222,7 +222,7 @@ public class OktaAuthenticatorTest
             }));
 
         var config = new HttpClientConfig(null, default, default, 20, default);
-        var httpClient = HttpUtil.Instance.CreateNewHttpClient(config, mockHttp);
+        var httpClient = HttpUtil.CreateNewHttpClient(config, mockHttp);
         var restRequester = new DelegatingMockRestRequester(httpClient);
         var sfSession = new SFSession(
             "account=testaccount;user=testUser;password=testPassword;authenticator=https://company.okta.com;host=testaccount.snowflakecomputing.com",

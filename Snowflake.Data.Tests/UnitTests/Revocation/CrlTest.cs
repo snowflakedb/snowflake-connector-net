@@ -32,7 +32,7 @@ public sealed class CrlTest : RevocationTests
         var expectedCrlDistributionPoints = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
 
         // act
-        var crl = crlParser.Parse(crlBytes, now);
+        var crl = CrlParser.Parse(crlBytes, now);
 
         // assert
         Assert.Equal(now, crl.DownloadTime);
@@ -61,7 +61,7 @@ public sealed class CrlTest : RevocationTests
         var envFacade = new Mock<IEnvironmentFacade>();
         var crlParser = new CrlParser(envFacade.Object);
         var now = DateTimeOffset.Parse(nowString).UtcDateTime;
-        var crl = crlParser.Parse(crlBytes, now);
+        var crl = CrlParser.Parse(crlBytes, now);
 
         // act
         var isExpired = crl.NeedsReplacement(now, TimeSpan.FromDays(365));
@@ -111,7 +111,7 @@ public sealed class CrlTest : RevocationTests
         var envFacade = new Mock<IEnvironmentFacade>();
         var crlParser = new CrlParser(envFacade.Object);
         var now = new DateTime(2025, 7, 25, 16, 57, 0, DateTimeKind.Utc);
-        var crl = crlParser.Parse(crlBytes, now);
+        var crl = CrlParser.Parse(crlBytes, now);
         var cacheValidityTime = TimeSpan.FromDays(1);
         Assert.False(crl.NeedsReplacement(now, cacheValidityTime));
         var justAfterValidityTime = now.Add(cacheValidityTime).AddSeconds(1);
@@ -138,7 +138,7 @@ public sealed class CrlTest : RevocationTests
         var crlParser = new CrlParser(envFacade.Object);
 
         // act
-        var hexString = crlParser.ConvertToHexadecimalString(bigInt);
+        var hexString = CrlParser.ConvertToHexadecimalString(bigInt);
 
         // assert
         Assert.Equal(expectedHexString, hexString);
@@ -155,7 +155,7 @@ public sealed class CrlTest : RevocationTests
         var envFacade = new Mock<IEnvironmentFacade>();
         var crlParser = new CrlParser(envFacade.Object);
         var now = new DateTime(2010, 04, 10, 16, 57, 0, DateTimeKind.Utc);
-        var crl = crlParser.Parse(crlBytes, now);
+        var crl = CrlParser.Parse(crlBytes, now);
 
         // act
         var isRevoked = crl.IsRevoked(serialNumber);
@@ -209,9 +209,9 @@ public sealed class CrlTest : RevocationTests
         // Parse through production code path
         var envFacade = new Mock<IEnvironmentFacade>();
         var crlParser = new CrlParser(envFacade.Object);
-        var crl = crlParser.Create(bouncyCrl, now);
+        var crl = CrlParser.Create(bouncyCrl, now);
 
-        var bouncyCastleHex = crlParser.ConvertToHexadecimalString(serialAsBigInt);
+        var bouncyCastleHex = CrlParser.ConvertToHexadecimalString(serialAsBigInt);
         Assert.True(crl.RevokedCertificates.Contains(bouncyCastleHex), "CRL should contain the revoked serial");
 
         // act

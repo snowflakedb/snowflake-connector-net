@@ -9,7 +9,7 @@ public abstract class StructuredTypesIT : SFBaseTestAsync
 {
     protected StructuredTypesIT(SFBaseTestAsyncFixture fixture) : base(fixture) { }
 
-    protected async Task EnableStructuredTypesAsync(SnowflakeDbConnection connection, ResultFormat resultFormat = ResultFormat.JSON, bool nativeArrow = false)
+    protected static async Task EnableStructuredTypesAsync(SnowflakeDbConnection connection, ResultFormat resultFormat = ResultFormat.JSON, bool nativeArrow = false)
     {
         using (var command = connection.CreateCommand())
         {
@@ -29,7 +29,7 @@ public abstract class StructuredTypesIT : SFBaseTestAsync
         }
     }
 
-    protected string RemoveWhiteSpaces(string text)
+    protected static string RemoveWhiteSpaces(string text)
     {
         var charArrayWithoutWhiteSpaces = text.ToCharArray()
             .Where(c => !char.IsWhiteSpace(c))

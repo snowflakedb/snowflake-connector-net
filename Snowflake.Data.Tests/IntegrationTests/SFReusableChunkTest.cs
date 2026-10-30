@@ -118,7 +118,7 @@ select parse_json('{{
 
             var selectCommand = $"select * from {tableName}";
             cmd.CommandText = selectCommand;
-            cmd.CommandType = System.Data.CommandType.Text;
+            cmd.CommandType = CommandType.Text;
 
             rowCount = 0;
             using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);

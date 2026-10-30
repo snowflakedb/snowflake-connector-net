@@ -49,21 +49,9 @@ public class SnowflakeDbTransaction : DbTransaction
         connection.ExplicitTransaction = this;
     }
 
-    public override IsolationLevel IsolationLevel
-    {
-        get
-        {
-            return isolationLevel;
-        }
-    }
+    public override IsolationLevel IsolationLevel => isolationLevel;
 
-    protected override DbConnection DbConnection
-    {
-        get
-        {
-            return connection;
-        }
-    }
+    protected override DbConnection DbConnection => connection;
 
     public override void Commit()
     {
@@ -103,7 +91,7 @@ public class SnowflakeDbTransaction : DbTransaction
             // When there is no uncommitted transaction, Snowflake would just ignore the rollback request;
             if (!isCommittedOrRollbacked)
             {
-                this.Rollback();
+                Rollback();
             }
             isCommittedOrRollbacked = true;
             connection.ExplicitTransaction = null; // let GC clean it

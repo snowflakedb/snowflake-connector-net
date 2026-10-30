@@ -196,7 +196,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
     /// <param name="fileMetadata">The S3 file metadata.</param>
     /// <param name="response">The Amazon S3 response.</param>
     /// <returns>The file header of the S3 file.</returns>
-    internal FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, BlobProperties response)
+    internal static FileHeader HandleFileHeaderResponse(ref SFFileMetadata fileMetadata, BlobProperties response)
     {
         SFEncryptionMetadata encryptionMetadata = null;
         if (TryGetMetadataValueCaseInsensitive(response, "encryptiondata", out var encryptionDataStr))
@@ -223,7 +223,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
         };
     }
 
-    private bool TryGetMetadataValueCaseInsensitive(BlobProperties properties, string metadataKey, out string metadataValue)
+    private static bool TryGetMetadataValueCaseInsensitive(BlobProperties properties, string metadataKey, out string metadataValue)
     {
         if (properties.Metadata.TryGetValue(metadataKey, out metadataValue))
             return true;
@@ -234,7 +234,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
         return keysCaseInsensitive.Any() ? properties.Metadata.TryGetValue(keysCaseInsensitive.First(), out metadataValue) : false;
     }
 
-    private string GetMetadataValueCaseInsensitive(BlobProperties properties, string metadataKey, bool failIfNotFound = true)
+    private static string GetMetadataValueCaseInsensitive(BlobProperties properties, string metadataKey, bool failIfNotFound = true)
     {
         if (TryGetMetadataValueCaseInsensitive(properties, metadataKey, out var metadataValue))
             return metadataValue;
@@ -452,7 +452,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
         fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
     }
 
-    private SFFileMetadata HandleFileHeaderErr(RequestFailedException ex, SFFileMetadata fileMetadata)
+    private static SFFileMetadata HandleFileHeaderErr(RequestFailedException ex, SFFileMetadata fileMetadata)
     {
         if (ex.Status == (int)HttpStatusCode.BadRequest)
         {
@@ -470,7 +470,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
         return fileMetadata;
     }
 
-    private SFFileMetadata HandleUploadFileErr(RequestFailedException ex, SFFileMetadata fileMetadata)
+    private static SFFileMetadata HandleUploadFileErr(RequestFailedException ex, SFFileMetadata fileMetadata)
     {
         // 400
         if (ex.Status == (int)HttpStatusCode.BadRequest)
@@ -508,7 +508,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
         return fileMetadata;
     }
 
-    private SFFileMetadata HandleDownloadFileErr(RequestFailedException ex, SFFileMetadata fileMetadata)
+    private static SFFileMetadata HandleDownloadFileErr(RequestFailedException ex, SFFileMetadata fileMetadata)
     {
         if (ex.Status == (int)HttpStatusCode.Unauthorized)
         {

@@ -95,7 +95,7 @@ public class SFSessionTest
     public void TestThatConfiguresEasyLogging(string configPath)
     {
         // arrange
-        var easyLoggingStarter = new Moq.Mock<EasyLoggingStarter>();
+        var easyLoggingStarter = new Mock<EasyLoggingStarter>();
         var simpleConnectionString = "account=test;user=test;password=test;";
         var connectionString = configPath == null
             ? simpleConnectionString

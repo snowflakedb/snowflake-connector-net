@@ -115,14 +115,6 @@ public class SFStatementTest
         }
     }
 
-    private static SFStatement CreateStatementForTrimSql()
-    {
-        var restRequester = new Mock.MockRestSessionExpired();
-        var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
-        sfSession.Open();
-        return new SFStatement(sfSession);
-    }
-
     /// <summary>
     /// Ensure TrimSql stops reading the query when no more characters after a block comment
     /// </summary>
@@ -132,7 +124,7 @@ public class SFStatementTest
         const string SqlSource = "/*comment*/select 1/*comment*/";
         const string SqlExpected = "select 1";
 
-        Assert.Equal(SqlExpected, CreateStatementForTrimSql().TrimSql(SqlSource));
+        Assert.Equal(SqlExpected, SFStatement.TrimSql(SqlSource));
     }
 
     /// <summary>
@@ -144,7 +136,7 @@ public class SFStatementTest
         const string SqlSource = "/*comment\r\ncomment*/select 1/*comment\r\ncomment*/";
         const string SqlExpected = "select 1";
 
-        Assert.Equal(SqlExpected, CreateStatementForTrimSql().TrimSql(SqlSource));
+        Assert.Equal(SqlExpected, SFStatement.TrimSql(SqlSource));
     }
 
     /// <summary>
@@ -156,7 +148,7 @@ public class SFStatementTest
         const string SqlSource = "--comment\r\nselect 1\r\n--comment";
         const string SqlExpected = "select 1\r\n--comment";
 
-        Assert.Equal(SqlExpected, CreateStatementForTrimSql().TrimSql(SqlSource));
+        Assert.Equal(SqlExpected, SFStatement.TrimSql(SqlSource));
     }
 
     /// <summary>
@@ -168,7 +160,7 @@ public class SFStatementTest
         const string SqlSource = "--comment\r\nselect 1\r\n--comment\r\n";
         const string SqlExpected = "select 1";
 
-        Assert.Equal(SqlExpected, CreateStatementForTrimSql().TrimSql(SqlSource));
+        Assert.Equal(SqlExpected, SFStatement.TrimSql(SqlSource));
     }
 
     [SFTheory]

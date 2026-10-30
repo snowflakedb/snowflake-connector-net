@@ -23,7 +23,7 @@ class SFMultiStatementsResultSet : SFBaseResultSet
     public SFMultiStatementsResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
     {
         this.sfStatement = sfStatement;
-        this.resultIds = responseData.resultIds.Split(',');
+        resultIds = responseData.resultIds.Split(',');
         UpdateSessionStatus(responseData);
         queryId = responseData.queryId;
 
@@ -107,7 +107,7 @@ class SFMultiStatementsResultSet : SFBaseResultSet
 
     private void UpdateSessionStatus(QueryExecResponseData responseData)
     {
-        SFSession session = this.sfStatement.SfSession;
+        SFSession session = sfStatement.SfSession;
         session.UpdateSessionProperties(responseData);
         session.UpdateSessionParameterMap(responseData.parameters);
         session.UpdateQueryContextCache(responseData.QueryContext);

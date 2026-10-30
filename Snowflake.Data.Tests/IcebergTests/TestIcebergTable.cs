@@ -364,10 +364,10 @@ public abstract class TestIcebergTable : SFBaseTestAsync
         }
     }
 
-    private void CreateIcebergTable(SnowflakeDbConnection conn)
+    private static void CreateIcebergTable(SnowflakeDbConnection conn)
         => conn.ExecuteNonQuery($"create or replace iceberg table {TableNameIceberg} ({SqlCreateIcebergTableColumns}) {IcebergTableCreateFlags}");
 
-    private void CreateHybridTable(SnowflakeDbConnection conn)
+    private static void CreateHybridTable(SnowflakeDbConnection conn)
         => conn.ExecuteNonQuery($"create or replace hybrid table {TableNameHybrid} ({SqlCreateHybridTableColumns})");
 
     private void SetResultFormat(SnowflakeDbConnection conn)
@@ -380,7 +380,7 @@ public abstract class TestIcebergTable : SFBaseTestAsync
         return conn;
     }
 
-    private void InsertSingleRow(SnowflakeDbConnection conn, params object[] bindings)
+    private static void InsertSingleRow(SnowflakeDbConnection conn, params object[] bindings)
     {
         Assert.Equal(13, bindings.Length);
         var sqlInsert = $"insert into {TableNameIceberg} ({SqlColumnsSimpleTypes}) values (?,?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -403,7 +403,7 @@ public abstract class TestIcebergTable : SFBaseTestAsync
         }
     }
 
-    private void InsertManyRows(SnowflakeDbConnection conn, int times, params object[] bindings)
+    private static void InsertManyRows(SnowflakeDbConnection conn, int times, params object[] bindings)
     {
         Assert.Equal(13, bindings.Length);
         var sqlInsert = $"insert into {TableNameIceberg} ({SqlColumnsSimpleTypes}) values (?,?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -427,7 +427,7 @@ public abstract class TestIcebergTable : SFBaseTestAsync
         }
     }
 
-    private void InsertManyRowsWithNulls(SnowflakeDbConnection conn, int times, params object[] bindings)
+    private static void InsertManyRowsWithNulls(SnowflakeDbConnection conn, int times, params object[] bindings)
     {
         Assert.Equal(13, bindings.Length);
         var sqlInsert = $"insert into {TableNameIceberg} ({SqlColumnsSimpleTypes}) values (?,?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -476,7 +476,7 @@ public abstract class TestIcebergTable : SFBaseTestAsync
         }
     }
 
-    private void InsertHybridTableData(SnowflakeDbConnection conn)
+    private static void InsertHybridTableData(SnowflakeDbConnection conn)
     {
         using (var cmd = conn.CreateCommand($"insert into {TableNameHybrid} ({SqlColumnsHybridTypes}) values (?,?,?)"))
         {
@@ -487,7 +487,7 @@ public abstract class TestIcebergTable : SFBaseTestAsync
         }
     }
 
-    private void AssertRowValuesEqual(DbDataReader actualRow, string[] columns, params object[] expectedRow)
+    private static void AssertRowValuesEqual(DbDataReader actualRow, string[] columns, params object[] expectedRow)
     {
         foreach (var idx in Enumerable.Range(0, expectedRow.Length))
         {

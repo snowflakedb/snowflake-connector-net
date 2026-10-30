@@ -47,7 +47,7 @@ public sealed class SecretDetectorTest
         Assert.Equal("Test exception", mask.ErrStr);
     }
 
-    private void BasicMasking(string text, string expectedText)
+    private static void BasicMasking(string text, string expectedText)
     {
         var mask = SecretDetector.Instance.MaskSecrets(text);
         Assert.True(mask.IsMasked);
@@ -196,7 +196,7 @@ public sealed class SecretDetectorTest
         BasicMasking($"something=anything;private_key ={GetStringWithManyWeirdCharacters()}\r\nxxxxxx\r\nyyyyyy;someOtherProperty=someValue", @"something=anything;private_key =****");
     }
 
-    private string GetStringWithManyWeirdCharacters()
+    private static string GetStringWithManyWeirdCharacters()
     {
         var bytes = new byte[256];
         for (var i = 0; i < 256; i++)

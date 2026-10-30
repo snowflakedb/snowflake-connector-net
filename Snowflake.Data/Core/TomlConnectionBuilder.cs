@@ -73,7 +73,7 @@ internal class TomlConnectionBuilder
         return connectionStringBuilder.ToString();
     }
 
-    private string ConvertTomlValueToString(object value)
+    private static string ConvertTomlValueToString(object value)
     {
         if (value is bool boolValue)
         {

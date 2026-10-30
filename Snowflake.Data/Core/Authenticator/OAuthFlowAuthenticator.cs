@@ -162,10 +162,10 @@ internal abstract class OAuthFlowAuthenticator : BaseAuthenticator
         }
     }
 
-    protected bool IsAccessTokenExpiredOrInvalid(SnowflakeDbException exception) =>
+    protected static bool IsAccessTokenExpiredOrInvalid(SnowflakeDbException exception) =>
         OAuthTokenErrors.IsAccessTokenExpired(exception.ErrorCode) || OAuthTokenErrors.IsAccessTokenInvalid(exception.ErrorCode);
 
-    private Exception UnpackAggregateException(Exception exception) =>
+    private static Exception UnpackAggregateException(Exception exception) =>
         exception is AggregateException ? ((AggregateException)exception).InnerException : exception;
 
     private void HandleAccessTokenResponse(BaseOAuthAccessTokenRequest accessTokenRequest, OAuthAccessTokenResponse accessTokenResponse, OAuthCacheKeys cacheKeys)

@@ -24,7 +24,7 @@ internal class WorkflowIdentityOidcAttestationRetriever : WorkloadIdentityAttest
         JwtSecurityToken token;
         try
         {
-            token = new JwtTokenExtractor().ReadJwtToken(tokenParam, AttestationError);
+            token = JwtTokenExtractor.ReadJwtToken(tokenParam, AttestationError);
         }
         catch (Exception)
         {

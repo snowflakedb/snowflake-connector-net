@@ -765,7 +765,7 @@ class SFFileTransferAgent
     /// <returns>The list of file matching the input location</returns>
     /// <exception cref="DirectoryNotFoundException">Directory not found. Could not find a part of the pat </exception>
     /// <exception cref="FileNotFoundException">File not found or the path is pointing to a Directory</exception>
-    private List<string> ExpandFileNames(string location)
+    private static List<string> ExpandFileNames(string location)
     {
         location = ExpandHomeDirectoryIfNeeded(location);
         var fileName = Path.GetFileName(location);
@@ -920,7 +920,7 @@ class SFFileTransferAgent
     /// </summary>
     /// <param name="fileMetadata">The metadata for the file to compress.</param>
     /// <param name="uncompressedStream">Origin stream.</param>
-    private void CompressInMemoryWithGzip(SFFileMetadata fileMetadata, out BorrowedMemoryStream uncompressedStream)
+    private static void CompressInMemoryWithGzip(SFFileMetadata fileMetadata, out BorrowedMemoryStream uncompressedStream)
     {
         var compressed = new MemoryStream();
         fileMetadata.memoryStream.Position = 0;
@@ -941,7 +941,7 @@ class SFFileTransferAgent
     /// </summary>
     /// <param name="fileMetadata">The metadata for the file to compress.</param>
     /// <param name="memoryStream">Origin memory stream</param>
-    private void CompressFileWithGzip(SFFileMetadata fileMetadata, out BorrowedMemoryStream memoryStream)
+    private static void CompressFileWithGzip(SFFileMetadata fileMetadata, out BorrowedMemoryStream memoryStream)
     {
         if (!fileMetadata.canCompressSpillToFile)
         {
@@ -980,7 +980,7 @@ class SFFileTransferAgent
     /// Get digest and size of file to be uploaded.
     /// </summary>
     /// <param name="fileMetadata">The metadata for the file to get digest.</param>
-    private void GetDigestAndSizeForFile(SFFileMetadata fileMetadata)
+    private static void GetDigestAndSizeForFile(SFFileMetadata fileMetadata)
     {
 #pragma warning disable SYSLIB0021 // TODO SNOW-3662960
         using var sha256 = SHA256Managed.Create();
@@ -1443,7 +1443,7 @@ class SFFileTransferAgent
     /// </summary>
     /// <returns>The temporary directory name.</returns>
     /// Referenced from: https://stackoverflow.com/a/278457
-    public string GetTemporaryDirectory()
+    public static string GetTemporaryDirectory()
     {
         string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         Directory.CreateDirectory(tempDirectory);
@@ -1456,7 +1456,7 @@ class SFFileTransferAgent
     /// </summary>
     /// <param name="stageInfo">The stage info used to get the stage location type.</param>
     /// <returns>The storage client type.</returns>
-    public StorageClientType GetStorageClientType(PutGetStageInfo stageInfo)
+    public static StorageClientType GetStorageClientType(PutGetStageInfo stageInfo)
     {
         string stageLocationType = stageInfo.locationType;
 

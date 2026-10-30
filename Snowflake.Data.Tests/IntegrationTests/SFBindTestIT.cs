@@ -547,7 +547,7 @@ public class SFBindTestIT : SFBaseTestAsync
             conn.ConnectionString = _fixture.ConnectionString;
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            var fixtureTableName = _fixture.TableNameBaseName + System.Guid.NewGuid().ToString("N");
+            var fixtureTableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
             await _fixture.CreateOrReplaceTable(conn, fixtureTableName, new[]
             {
                 "cola INTEGER",
@@ -980,7 +980,7 @@ public class SFBindTestIT : SFBaseTestAsync
         }
     }
 
-    private void InsertSingleRecord(IDbConnection conn, string sqlInsert, DbType binding, int identifier, ExpectedTimestampWrapper ts)
+    private static void InsertSingleRecord(IDbConnection conn, string sqlInsert, DbType binding, int identifier, ExpectedTimestampWrapper ts)
     {
         using (var insert = conn.CreateCommand(sqlInsert))
         {
@@ -1018,7 +1018,7 @@ public class SFBindTestIT : SFBaseTestAsync
         }
     }
 
-    private void InsertMultipleRecords(IDbConnection conn, string sqlInsert, DbType binding, int initialIdentifier, ExpectedTimestampWrapper ts, int rowsCount, bool shouldUseBinding)
+    private static void InsertMultipleRecords(IDbConnection conn, string sqlInsert, DbType binding, int initialIdentifier, ExpectedTimestampWrapper ts, int rowsCount, bool shouldUseBinding)
     {
         using (var insert = conn.CreateCommand(sqlInsert))
         {

@@ -29,13 +29,13 @@ internal class MockLoginMFATokenCacheRestRequester : MockBaseRestRequester
         if (sfRequest.jsonBody is LoginRequest)
         {
             LoginRequests.Enqueue((LoginRequest)sfRequest.jsonBody);
-            var responseData = this.LoginResponses?.Any() != true ? new LoginResponseData()
+            var responseData = LoginResponses?.Any() != true ? new LoginResponseData()
             {
                 token = "session_token",
                 masterToken = "master_token",
                 authResponseSessionInfo = new SessionInfo(),
                 nameValueParameter = new List<NameValueParameter>()
-            } : this.LoginResponses.Dequeue();
+            } : LoginResponses.Dequeue();
             var authnResponse = new LoginResponse
             {
                 data = responseData,

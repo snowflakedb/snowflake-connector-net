@@ -306,7 +306,7 @@ public class SFCredentialManagerFileImplTest : SFBaseCredentialManagerTest
         }
     }
 
-    private SFCredentialManagerFileImpl CreateFileCredentialManagerWithMockedEnvironmentalVariables() =>
+    private static SFCredentialManagerFileImpl CreateFileCredentialManagerWithMockedEnvironmentalVariables() =>
         new(FileOperations.Instance, DirectoryOperations.Instance, UnixOperations.Instance, t_environmentOperations.Object);
 
     [SFFact(SkipCondition.SkipOnWindows)]

@@ -107,7 +107,7 @@ internal class EasyLoggingStarter
         return isAllowedToInitialize;
     }
 
-    private EasyLoggingLogLevel GetLogLevel(string logLevel)
+    private static EasyLoggingLogLevel GetLogLevel(string logLevel)
     {
         if (string.IsNullOrEmpty(logLevel))
         {
@@ -164,7 +164,7 @@ internal class EasyLoggingStarter
         return pathWithDotnetSubdirectory;
     }
 
-    private FileAccessPermissions GetLogFileUnixPermissions(string logFileUnixPermissions)
+    private static FileAccessPermissions GetLogFileUnixPermissions(string logFileUnixPermissions)
     {
         if (string.IsNullOrEmpty(logFileUnixPermissions))
         {

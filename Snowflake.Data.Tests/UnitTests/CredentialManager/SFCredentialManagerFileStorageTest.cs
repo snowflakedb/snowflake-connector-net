@@ -77,7 +77,7 @@ public class SFCredentialManagerFileStorageTest
         Assert.Contains(thrown.Message, "Unable to identify credential cache directory");
     }
 
-    private void AssertFileStorageForLocation(string directory, SFCredentialManagerFileStorage fileStorage)
+    private static void AssertFileStorageForLocation(string directory, SFCredentialManagerFileStorage fileStorage)
     {
         Assert.NotNull(fileStorage);
         Assert.Equal(directory, fileStorage.JsonCacheDirectory);
@@ -85,21 +85,21 @@ public class SFCredentialManagerFileStorageTest
         Assert.Equal(Path.Combine(directory, SFCredentialManagerFileStorage.CredentialCacheLockName), fileStorage.JsonCacheLockPath);
     }
 
-    private void MockSnowflakeCacheEnvironmentVariable()
+    private static void MockSnowflakeCacheEnvironmentVariable()
     {
         t_environmentOperations
             .Setup(e => e.GetString(EnvVars.TemporaryCredentialDir))
             .Returns(SnowflakeCacheLocation);
     }
 
-    private void MockCommonCacheEnvironmentVariable()
+    private static void MockCommonCacheEnvironmentVariable()
     {
         t_environmentOperations
             .Setup(e => e.GetString(EnvVars.CommonCacheDirectory))
             .Returns(CommonCacheLocation);
     }
 
-    private void MockHomeLocation()
+    private static void MockHomeLocation()
     {
         t_environmentOperations
             .Setup(e => e.GetFolderPath(Environment.SpecialFolder.UserProfile))

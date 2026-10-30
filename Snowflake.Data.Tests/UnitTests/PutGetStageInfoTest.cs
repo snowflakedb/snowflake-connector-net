@@ -41,7 +41,7 @@ public class PutGetStageInfoTest
         yield return new object[] { "US-CENTRAL1", true, "example.com", "example.com" };
     }
 
-    private PutGetStageInfo CreateGcsStageInfo(string region, bool useRegionalUrl, string endPoint) =>
+    private static PutGetStageInfo CreateGcsStageInfo(string region, bool useRegionalUrl, string endPoint) =>
         new()
         {
             locationType = SFRemoteStorageUtil.GCS_FS,

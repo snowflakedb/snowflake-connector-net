@@ -27,7 +27,7 @@ public class WorkloadIdentityFederationAuthenticatorTest
     private const string SessionId = "1234567890";
     private static readonly string s_SuccessfulMappingPath = Path.Combine(s_wifMappingPath, "snowflake_successful_login.json");
 
-    internal SFSession PrepareSession(
+    internal static SFSession PrepareSession(
         AttestationProvider? attestationProvider,
         string connectionStringSuffix,
         Action<Mock<IEnvironmentFacade>> environmentOperationsConfigurator,
@@ -117,7 +117,7 @@ public class WorkloadIdentityFederationAuthenticatorTest
             .Setup(t => t.UtcNow())
             .Returns(() => DateTime.UtcNow);
 
-    internal void SetupTime(Mock<TimeProvider> timeProvider, DateTime utcNow) =>
+    internal static void SetupTime(Mock<TimeProvider> timeProvider, DateTime utcNow) =>
         timeProvider
             .Setup(t => t.UtcNow())
             .Returns(utcNow);
@@ -133,14 +133,14 @@ public class WorkloadIdentityFederationAuthenticatorTest
             .Throws(() => new Exception("Not available"));
     }
 
-    internal void SetupSnowflakeAuthentication(IWiremockRunner runner, AttestationProvider provider, string accessToken) =>
+    internal static void SetupSnowflakeAuthentication(IWiremockRunner runner, AttestationProvider provider, string accessToken) =>
         runner.AddMappings(s_SuccessfulMappingPath,
             new StringTransformations()
                 .ThenTransform(s_accessTokenReplacement, accessToken)
                 .ThenTransform(s_WifProviderReplacement, provider.ToString())
         );
 
-    internal void AssertSessionSuccessfullyCreated(SFSession session)
+    internal static void AssertSessionSuccessfullyCreated(SFSession session)
     {
         Assert.Equal(SessionId, session.sessionId);
         Assert.Equal(MasterToken, session.masterToken);

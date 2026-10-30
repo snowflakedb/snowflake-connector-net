@@ -47,7 +47,7 @@ internal class WorkflowIdentityAzureAttestationRetriever : WorkloadIdentityAttes
         var request = PrepareRequest(snowflakeEntraResource);
         var accessToken = GetAccessToken(request);
 
-        var token = new JwtTokenExtractor().ReadJwtToken(accessToken, AttestationError);
+        var token = JwtTokenExtractor.ReadJwtToken(accessToken, AttestationError);
         var issuer = token.Issuer;
         var subject = token.Subject;
         if (string.IsNullOrEmpty(issuer) || string.IsNullOrEmpty(subject))

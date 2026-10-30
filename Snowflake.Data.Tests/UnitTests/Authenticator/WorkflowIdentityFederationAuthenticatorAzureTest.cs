@@ -362,14 +362,14 @@ public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadI
             SetupSystemTime,
             SetupAwsSdkDisabled);
 
-    private void ConfigureIdentityEndpoint(Mock<IEnvironmentFacade> environmentOperations)
+    private static void ConfigureIdentityEndpoint(Mock<IEnvironmentFacade> environmentOperations)
     {
         environmentOperations
             .Setup(e => e.GetString(EnvVars.WifEndpoint))
             .Returns(s_azureIdentityEndpoint);
     }
 
-    private void ConfigureIdentityHeader(Mock<IEnvironmentFacade> environmentOperations)
+    private static void ConfigureIdentityHeader(Mock<IEnvironmentFacade> environmentOperations)
     {
         environmentOperations
             .Setup(e => e.GetString(EnvVars.WifHeader))

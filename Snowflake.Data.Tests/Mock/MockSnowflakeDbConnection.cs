@@ -44,7 +44,7 @@ class MockSnowflakeDbConnection : SnowflakeDbConnection
         catch (Exception e)
         {
             // Otherwise when Dispose() is called, the close request would timeout.
-            _connectionState = System.Data.ConnectionState.Closed;
+            _connectionState = ConnectionState.Closed;
             logger.Error("Unable to connect", e);
             throw;
         }
