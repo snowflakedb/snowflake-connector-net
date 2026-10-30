@@ -172,6 +172,8 @@ internal enum SFSessionProperty
     LOG_QUERY_PARAMETERS,
     [SFSessionPropertyAttr(required = false)]
     LOG_MAX_QUERY_LENGTH,
+    [SFSessionPropertyAttr(required = false)]
+    SECONDARY_ROLES,
 }
 
 class SFSessionPropertyAttr : Attribute

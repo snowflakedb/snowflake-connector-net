@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Net;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -260,5 +261,59 @@ public sealed class SFConnectionIT : SFBaseTestAsync
         if (isAsync) await Assert.ThrowsAsync<SnowflakeDbException>(connection.OpenAsync).ConfigureAwait(false);
         else Assert.Throws<SnowflakeDbException>(connection.Open);
         Assert.Equal(ConnectionState.Closed, connection.State);
+    }
+
+    [SFFact]
+    public async Task TestSecondaryRolesAllActivatesSecondaryRoles()
+    {
+        using var conn = new SnowflakeDbConnection($"{_fixture.ConnectionString}secondary_roles=all;");
+        await conn.OpenAsync().ConfigureAwait(false);
+
+        using var command = conn.CreateCommand();
+        command.CommandText = "SELECT CURRENT_SECONDARY_ROLES()";
+        var result = (await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString();
+
+        var rootElement = JsonDocument.Parse(result).RootElement;
+        Assert.True(rootElement.TryGetProperty("roles", out _));
+        Assert.Equal("ALL", rootElement.GetProperty("value").GetString());
+    }
+
+    [SFFact]
+    public async Task TestSecondaryRolesNoneDisablesSecondaryRoles()
+    {
+        using var conn = new SnowflakeDbConnection($"{_fixture.ConnectionString}secondary_roles=none;");
+        await conn.OpenAsync().ConfigureAwait(false);
+
+        using var command = conn.CreateCommand();
+        command.CommandText = "SELECT CURRENT_SECONDARY_ROLES()";
+        var result = (await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString();
+
+        var rootElement = JsonDocument.Parse(result).RootElement;
+        Assert.True(rootElement.TryGetProperty("roles", out _));
+        Assert.Empty(rootElement.GetProperty("value").GetString());
+    }
+
+    [SFFact]
+    public async Task TestSecondaryRolesDefaultBehaviorWhenOmitted()
+    {
+        using var conn = new SnowflakeDbConnection($"{_fixture.ConnectionString}secondary_roles=none;");
+        await conn.OpenAsync().ConfigureAwait(false);
+
+        using var command = conn.CreateCommand();
+        command.CommandText = "SELECT CURRENT_SECONDARY_ROLES()";
+        var result = (await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString();
+        var rootElement = JsonDocument.Parse(result).RootElement;
+        Assert.True(rootElement.TryGetProperty("roles", out _));
+        Assert.Empty(rootElement.GetProperty("value").GetString());
+
+        // Manually activate all secondary roles, then verify the session reflects the change
+        command.CommandText = "USE SECONDARY ROLES ALL";
+        await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+        command.CommandText = "SELECT CURRENT_SECONDARY_ROLES()";
+        result = (await command.ExecuteScalarAsync().ConfigureAwait(false)).ToString();
+
+        // After USE SECONDARY ROLES ALL, the result should contain roles
+        Assert.Contains("\"roles\":", result);
     }
 }

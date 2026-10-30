@@ -187,8 +187,9 @@ internal abstract class BaseAuthenticator
             clientEnv = ClientEnv,
             SessionParameters = Session.ParameterMap,
             Authenticator = AuthName,
+            SecondaryRoles = Session.properties.TryGetValue(SFSessionProperty.SECONDARY_ROLES, out var secondaryRoles) ? secondaryRoles.ToUpperInvariant() : null,
+            SpcsToken = SpcsTokenProvider?.GetSpcsToken()
         };
-        data.SpcsToken = SpcsTokenProvider?.GetSpcsToken();
         SetSpecializedAuthenticatorData(ref data);
         return data;
     }

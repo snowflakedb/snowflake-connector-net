@@ -265,6 +265,9 @@ class LoginRequestData
     [JsonProperty(PropertyName = "SPCS_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
     internal string SpcsToken { get; set; }
 
+    [JsonProperty(PropertyName = "SECONDARY_ROLES", NullValueHandling = NullValueHandling.Ignore)]
+    internal string SecondaryRoles { get; set; }
+
     [JsonProperty(PropertyName = "SESSION_PARAMETERS", NullValueHandling = NullValueHandling.Ignore)]
     internal Dictionary<SFSessionParameter, object> SessionParameters { get; set; }
 

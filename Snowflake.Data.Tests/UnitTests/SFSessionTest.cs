@@ -408,4 +408,88 @@ public class SFSessionTest
         // act & assert
         session.Heartbeat();
     }
+
+    [SFTheory]
+    [InlineData("all", "ALL")]
+    [InlineData("none", "NONE")]
+    [InlineData("default", "DEFAULT")]
+    [InlineData("ALL", "ALL")]
+    [InlineData("Default", "DEFAULT")]
+    public void TestSecondaryRolesIncludedUppercasedInLoginPayload(string inputValue, string expectedValue)
+    {
+        // arrange
+        MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
+        SFSession sfSession = new SFSession(
+            $"account=test;user=test;password=test;secondary_roles={inputValue}",
+            new SessionPropertiesContext(),
+            restRequester);
+
+        // act
+        sfSession.Open();
+
+        // assert
+        Assert.Single(restRequester.LoginRequests);
+        var loginRequest = restRequester.LoginRequests[0];
+        Assert.Equal(expectedValue, loginRequest.data.SecondaryRoles);
+
+        var json = JsonConvert.SerializeObject(loginRequest, JsonUtils.JsonSettings);
+        Assert.Contains($"\"SECONDARY_ROLES\":\"{expectedValue}\"", json);
+    }
+
+    [SFFact]
+    public void TestSecondaryRolesOmittedWhenNotSet()
+    {
+        // arrange
+        MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
+        SFSession sfSession = new SFSession(
+            "account=test;user=test;password=test;",
+            new SessionPropertiesContext(),
+            restRequester);
+
+        // act
+        sfSession.Open();
+
+        // assert
+        Assert.Single(restRequester.LoginRequests);
+        var loginRequest = restRequester.LoginRequests[0];
+        Assert.Null(loginRequest.data.SecondaryRoles);
+
+        var json = JsonConvert.SerializeObject(loginRequest, JsonUtils.JsonSettings);
+        Assert.DoesNotContain("SECONDARY_ROLES", json);
+    }
+
+    [SFFact]
+    public void TestSecondaryRolesOmittedWhenEmpty()
+    {
+        // arrange
+        MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
+        SFSession sfSession = new SFSession(
+            "account=test;user=test;password=test;secondary_roles=",
+            new SessionPropertiesContext(),
+            restRequester);
+
+        // act
+        sfSession.Open();
+
+        // assert
+        Assert.Single(restRequester.LoginRequests);
+        var loginRequest = restRequester.LoginRequests[0];
+        Assert.Null(loginRequest.data.SecondaryRoles);
+
+        var json = JsonConvert.SerializeObject(loginRequest, JsonUtils.JsonSettings);
+        Assert.DoesNotContain("SECONDARY_ROLES", json);
+    }
+
+    [SFFact]
+    public void TestSecondaryRolesPropertyParsedFromConnectionString()
+    {
+        // arrange/act
+        var properties = SFSessionProperties.ParseConnectionString(
+            "account=test;user=test;password=test;secondary_roles=all;",
+            new SessionPropertiesContext());
+
+        // assert
+        Assert.True(properties.TryGetValue(SFSessionProperty.SECONDARY_ROLES, out var value));
+        Assert.Equal("all", value);
+    }
 }

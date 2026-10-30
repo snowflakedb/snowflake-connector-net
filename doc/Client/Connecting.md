@@ -292,6 +292,7 @@ Special characters in TOML values:
 | HOST                              | 🟢 Optional | Specifies the hostname for your account in the following format: \<ACCOUNT\>.snowflakecomputing.com. <br /> If no value is specified, the driver uses \<ACCOUNT\>.snowflakecomputing.com. |
 | PASSWORD                          | 🔶 Depends | Required if AUTHENTICATOR is set to `snowflake` (the default value) or the URL for native SSO through Okta. Ignored for all the other authentication types. |
 | ROLE                              | 🟢 Optional | |
+| SECONDARY_ROLES                   | 🟢 Optional | Activates [secondary roles](https://docs.snowflake.com/en/sql-reference/sql/use-secondary-roles) for the session at login. Accepted values: `ALL`, `NONE`, `DEFAULT`. The value is uppercased automatically. When omitted, the server default applies. |
 | SCHEMA                            | 🟢 Optional | |
 | USER                              | 🔶 Depends | If AUTHENTICATOR is set to `externalbrowser` this is optional. For native SSO through Okta, set this to the login name for your identity provider (IdP). |
 | WAREHOUSE                         | 🟢 Optional | |
