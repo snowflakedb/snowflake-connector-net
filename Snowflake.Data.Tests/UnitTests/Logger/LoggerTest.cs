@@ -138,11 +138,11 @@ public abstract class LoggerTest : IDisposable
         _logger.LogCritical(CriticalMessage);
 
         // assert
-        using (FileStream logFileStream = new FileStream(_logFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        using (var logFileStream = new FileStream(_logFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
         {
-            using (StreamReader logFileReader = new StreamReader(logFileStream))
+            using (var logFileReader = new StreamReader(logFileStream))
             {
-                string logLines = logFileReader.ReadToEnd();
+                var logLines = logFileReader.ReadToEnd();
                 Assert.Contains(DebugMessage, logLines);
                 Assert.Contains(InfoMessage, logLines);
                 Assert.Contains(WarnMessage, logLines);

@@ -12,7 +12,7 @@ public class OauthConnectionTest
 
     public OauthConnectionTest()
     {
-        string token = AuthConnectionString.GetOauthToken();
+        var token = AuthConnectionString.GetOauthToken();
         var parameters = AuthConnectionString.GetOauthConnectionString(token);
         _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
     }
@@ -29,9 +29,9 @@ public class OauthConnectionTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateUsingOauthInvalidToken()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
-        string token = "invalidToken";
+        var token = "invalidToken";
         var parameters = AuthConnectionString.GetOauthConnectionString(token);
         _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
@@ -42,9 +42,9 @@ public class OauthConnectionTest
     [SFFact(Skip = "Skipped, waits for SNOW-1893041")]
     public void TestAuthenticateUsingOauthMismatchedUser()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
-        string token = AuthConnectionString.GetOauthToken();
+        var token = AuthConnectionString.GetOauthToken();
         var parameters = AuthConnectionString.GetOauthConnectionString(token);
         parameters[SFSessionProperty.USER] = "fakeAccount";
         parameters.Add(SFSessionProperty.POOLINGENABLED, "false");

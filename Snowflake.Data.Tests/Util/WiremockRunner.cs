@@ -284,7 +284,7 @@ internal class WiremockRunner : IWiremockRunner
         }
         using (var sha256Encoder = SHA256.Create())
         {
-            byte[] sha256Hash = sha256Encoder.ComputeHash(bytes);
+            var sha256Hash = sha256Encoder.ComputeHash(bytes);
             var hash = BitConverter.ToString(sha256Hash).Replace("-", string.Empty);
             return expectedShaValue.Equals(hash, StringComparison.OrdinalIgnoreCase);
         }

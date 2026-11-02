@@ -26,10 +26,10 @@ internal class MockRestSessionExpired : MockBaseRestRequester
 
     public override Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
     {
-        SFRestRequest sfRequest = (SFRestRequest)request;
+        var sfRequest = (SFRestRequest)request;
         if (sfRequest.jsonBody is LoginRequest)
         {
-            LoginResponse authnResponse = new LoginResponse
+            var authnResponse = new LoginResponse
             {
                 data = new LoginResponseData()
                 {
@@ -49,7 +49,7 @@ internal class MockRestSessionExpired : MockBaseRestRequester
             if (sfRequest.authorizationToken.Equals(string.Format(TOKEN_FMT, EXPIRED_SESSION_TOKEN)))
             {
                 FirstTimeRequestID = ExtractRequestID(sfRequest.Url.Query);
-                QueryExecResponse queryExecResponse = new QueryExecResponse
+                var queryExecResponse = new QueryExecResponse
                 {
                     success = false,
                     code = SESSION_EXPIRED_CODE
@@ -59,7 +59,7 @@ internal class MockRestSessionExpired : MockBaseRestRequester
             else if (sfRequest.authorizationToken.Equals(string.Format(TOKEN_FMT, NEW_SESSION_TOKEN)))
             {
                 SecondTimeRequestID = ExtractRequestID(sfRequest.Url.Query);
-                QueryExecResponse queryExecResponse = new QueryExecResponse
+                var queryExecResponse = new QueryExecResponse
                 {
                     success = true,
                     data = new QueryExecResponseData
@@ -80,7 +80,7 @@ internal class MockRestSessionExpired : MockBaseRestRequester
             }
             else
             {
-                QueryExecResponse queryExecResponse = new QueryExecResponse
+                var queryExecResponse = new QueryExecResponse
                 {
                     success = false,
                     code = 1
@@ -136,10 +136,10 @@ internal class MockRestSessionExpired : MockBaseRestRequester
 
     public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
     {
-        SFRestRequest sfRequest = (SFRestRequest)request;
+        var sfRequest = (SFRestRequest)request;
         if (sfRequest.Url.ToString().Contains("retryId"))
         {
-            QueryExecResponse queryExecResponse = new QueryExecResponse
+            var queryExecResponse = new QueryExecResponse
             {
                 success = false,
                 code = SESSION_EXPIRED_CODE
@@ -148,7 +148,7 @@ internal class MockRestSessionExpired : MockBaseRestRequester
         }
         if (sfRequest.authorizationToken.Equals(string.Format(TOKEN_FMT, EXPIRED_SESSION_TOKEN)))
         {
-            QueryExecResponse queryExecResponse = new QueryExecResponse
+            var queryExecResponse = new QueryExecResponse
             {
                 success = false,
                 code = SESSION_EXPIRED_CODE
@@ -157,7 +157,7 @@ internal class MockRestSessionExpired : MockBaseRestRequester
         }
         if (sfRequest.authorizationToken.Equals(string.Format(TOKEN_FMT, NEW_SESSION_TOKEN)))
         {
-            QueryExecResponse queryExecResponse = new QueryExecResponse
+            var queryExecResponse = new QueryExecResponse
             {
                 success = true,
                 data = new QueryExecResponseData
@@ -181,7 +181,7 @@ internal class MockRestSessionExpired : MockBaseRestRequester
 
     private static string ExtractRequestID(string queries)
     {
-        int start = queries.IndexOf("requestId=");
+        var start = queries.IndexOf("requestId=");
         start += 10;
         return queries.Substring(start, 36);
     }

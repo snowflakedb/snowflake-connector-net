@@ -51,7 +51,7 @@ public abstract class SFMultiStatementsIT : SFBaseTestAsync
             cmd.Parameters.Add(param);
             cmd.CommandText = "select 1; select 2, 3; select 4, 5, 6;select true, false, null;" +
                               $"select '{testDate}'::DATETIME, '{testDate}'::TIMESTAMP_TZ, '{testTime}'::TIME";
-            IDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
 
             Assert.True(reader.Read());
             Assert.Equal(1, reader.GetDouble(0));
@@ -110,14 +110,14 @@ public abstract class SFMultiStatementsIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
-            DbCommand cmd = conn.CreateCommand();
+            var cmd = conn.CreateCommand();
             var param = cmd.CreateParameter();
             param.ParameterName = "MULTI_STATEMENT_COUNT";
             param.DbType = DbType.Int16;
             param.Value = 2;
             cmd.Parameters.Add(param);
             cmd.CommandText = "select 1; select 2, 3";
-            DbDataReader reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+            var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
             Assert.True(await reader.ReadAsync().ConfigureAwait(false));
             Assert.Equal(1, reader.GetDouble(0));
@@ -161,7 +161,7 @@ public abstract class SFMultiStatementsIT : SFBaseTestAsync
             cmd.Parameters.Add(stmtCountParam);
 
             // set parameter bindings
-            for (int i = 1; i <= 6; i++)
+            for (var i = 1; i <= 6; i++)
             {
                 var param = cmd.CreateParameter();
                 param.ParameterName = i.ToString();
@@ -170,7 +170,7 @@ public abstract class SFMultiStatementsIT : SFBaseTestAsync
                 cmd.Parameters.Add(param);
             }
             cmd.CommandText = "select ?; select ?, ?; select ?, ?, ?";
-            IDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
 
             Assert.True(reader.Read());
             Assert.Equal(1, reader.GetInt32(0));
@@ -206,7 +206,7 @@ public abstract class SFMultiStatementsIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
-            using (DbCommand cmd = conn.CreateCommand())
+            using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = $"create or replace table {tableName}(cola integer, colb string);" +
                                   $"insert into {tableName} values (?, ?);" +
@@ -258,7 +258,7 @@ public abstract class SFMultiStatementsIT : SFBaseTestAsync
                 p6.Value = "str3";
                 cmd.Parameters.Add(p6);
 
-                DbDataReader reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+                var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
                 // result of create
                 Assert.True(reader.HasRows);
@@ -364,7 +364,7 @@ public abstract class SFMultiStatementsIT : SFBaseTestAsync
                 p6.Value = "str3";
                 cmd.Parameters.Add(p6);
 
-                DbDataReader reader = cmd.ExecuteReader();
+                var reader = cmd.ExecuteReader();
 
                 //skip use statement
                 Assert.True(reader.NextResult());
@@ -421,7 +421,7 @@ public abstract class SFMultiStatementsIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
-            using (DbCommand cmd = conn.CreateCommand())
+            using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = $"create or replace temporary table {tableName}(cola integer, colb string);" +
                                   $"insert into {tableName} values (?, ?);" +
@@ -473,7 +473,7 @@ public abstract class SFMultiStatementsIT : SFBaseTestAsync
                 p6.Value = "str3";
                 cmd.Parameters.Add(p6);
 
-                int count = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                var count = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                 Assert.Equal(3, count);
             }
 
@@ -491,7 +491,7 @@ public abstract class SFMultiStatementsIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
-            using (DbCommand cmd = conn.CreateCommand())
+            using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = "select 1;" +
                                   $"create or replace temporary table {tableName}(c1 varchar);" +
@@ -512,7 +512,7 @@ public abstract class SFMultiStatementsIT : SFBaseTestAsync
                 stmtCountParam.Value = 11;
                 cmd.Parameters.Add(stmtCountParam);
 
-                DbDataReader reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+                var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
                 // result of select
                 Assert.True(reader.HasRows);
@@ -592,7 +592,7 @@ public abstract class SFMultiStatementsIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
-            using (DbCommand cmd = conn.CreateCommand())
+            using (var cmd = conn.CreateCommand())
             {
                 // MULTI_STATEMENT_COUNT=1
                 // multiple statements execution is disabled
@@ -681,7 +681,7 @@ public abstract class SFMultiStatementsIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             SessionParameterAlterer.SetResultFormat(conn, _resultFormat);
 
-            using (DbCommand cmd = conn.CreateCommand())
+            using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = "set query_tag = (select 'dummy_tag');" +
                                   "alter session set query_tag='dummy_tag';" +
@@ -709,13 +709,13 @@ public abstract class SFMultiStatementsIT : SFBaseTestAsync
                 stmtCountParam.Value = stmtCount;
                 cmd.Parameters.Add(stmtCountParam);
 
-                DbDataReader reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+                var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
 
                 // at least one row in the first result set
                 Assert.True(reader.HasRows);
                 Assert.True(reader.Read());
 
-                for (int i = 1; i < stmtCount; i++)
+                for (var i = 1; i < stmtCount; i++)
                 {
                     Assert.True(reader.NextResult());
 

@@ -105,7 +105,7 @@ public sealed class SFS3ClientTest
         _client = new SFS3Client(_fileMetadata.stageInfo, MaxRetry, Parallel, _proxyCredentials, mockAmazonS3Client.Object);
         _fileMetadata.client = _client;
         // Split LOCATION based on the first '/' character
-        string[] bucketAndKey = Location.Split(new[] { '/' }, 2);
+        var bucketAndKey = Location.Split(new[] { '/' }, 2);
 
         // Act
         var location = _client.ExtractBucketNameAndPath(_fileMetadata.stageInfo.location);
@@ -153,7 +153,7 @@ public sealed class SFS3ClientTest
         _fileMetadata.client = _client;
 
         // Act
-        FileHeader fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
+        var fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
 
         // Assert
         AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
@@ -399,7 +399,7 @@ public sealed class SFS3ClientTest
         var expectedResultStatus = (ResultStatus)expectedResultStatusInt;
         if (expectedResultStatus == ResultStatus.DOWNLOADED)
         {
-            string text = File.ReadAllText(t_downloadFileName);
+            var text = File.ReadAllText(t_downloadFileName);
             Assert.Equal(MockS3Client.S3FileContent, text);
             File.Delete(t_downloadFileName);
         }

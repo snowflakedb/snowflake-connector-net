@@ -169,7 +169,7 @@ public sealed partial class ArrowResultChunkTest
             .Append("Col1", false, col => col.Int32(array => array.AppendRange(Enumerable.Range(1, 10))))
             .Append("Col2", false, col => col.String(array =>
             {
-                for (int i = 0; i < 10; i++) array.Append($"val{i}");
+                for (var i = 0; i < 10; i++) array.Append($"val{i}");
             }))
             .Build();
 
@@ -199,7 +199,7 @@ public sealed partial class ArrowResultChunkTest
 
         var chunk = new ArrowResultChunk(batch);
 
-        for (int i = 0; i < 5; i++)
+        for (var i = 0; i < 5; i++)
         {
             Assert.True(chunk.Next(), $"Should be able to read row {i}");
             var val = chunk.ExtractCell(0, SFDataType.FIXED, 0, TimeZoneInfo.Utc);
@@ -243,7 +243,7 @@ public sealed partial class ArrowResultChunkTest
     [SFFact]
     public void TestResetClearsChunkData()
     {
-        ExecResponseChunk chunkInfo = new ExecResponseChunk()
+        var chunkInfo = new ExecResponseChunk()
         {
             url = "new_url",
             uncompressedSize = 100,
@@ -805,7 +805,7 @@ public sealed partial class ArrowResultChunkTest
 
     private static long ConvertTicksToInt64(long ticks, long scale)
     {
-        long ticksFromEpoch = ticks - SFDataConverter.UnixEpoch.Ticks;
+        var ticksFromEpoch = ticks - SFDataConverter.UnixEpoch.Ticks;
         if (scale <= 7)
             return ticksFromEpoch / (long)Math.Pow(10, 7 - scale);
         else
@@ -814,7 +814,7 @@ public sealed partial class ArrowResultChunkTest
 
     public static DateTime[] TruncateValues(DateTime[] testValues, int scale)
     {
-        DateTime[] ret = new DateTime[testValues.Length];
+        var ret = new DateTime[testValues.Length];
         for (var i = 0; i < testValues.Length; ++i)
             if (scale < 7)
                 ret[i] = testValues[i].AddTicks(-(testValues[i].Ticks % (long)Math.Pow(10, 7 - scale)));
@@ -823,7 +823,7 @@ public sealed partial class ArrowResultChunkTest
 
     public static DateTimeOffset[] TruncateValues(DateTimeOffset[] testValues, int scale)
     {
-        DateTimeOffset[] ret = new DateTimeOffset[testValues.Length];
+        var ret = new DateTimeOffset[testValues.Length];
         for (var i = 0; i < testValues.Length; ++i)
             if (scale < 7)
                 ret[i] = testValues[i].AddTicks(-(testValues[i].Ticks % (long)Math.Pow(10, 7 - scale)));

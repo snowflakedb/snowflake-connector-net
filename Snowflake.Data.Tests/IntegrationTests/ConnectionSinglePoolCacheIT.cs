@@ -35,7 +35,7 @@ public class ConnectionSinglePoolCacheIT : SFBaseTestAsync, IDisposable
     public void TestConcurrentConnectionPooling()
     {
         // add test case name in connection string to make in unique for each test case
-        string connStr = _fixture.ConnectionString + ";application=TestConcurrentConnectionPooling;";
+        var connStr = _fixture.ConnectionString + ";application=TestConcurrentConnectionPooling;";
         SnowflakeDbConnectionPool.SetMaxPoolSize(2);
         ConcurrentPoolingHelper(connStr, true);
     }
@@ -47,7 +47,7 @@ public class ConnectionSinglePoolCacheIT : SFBaseTestAsync, IDisposable
     public void TestConcurrentConnectionPoolingDispose()
     {
         // add test case name in connection string to make in unique for each test case
-        string connStr = _fixture.ConnectionString + ";application=TestConcurrentConnectionPoolingNoClose;";
+        var connStr = _fixture.ConnectionString + ";application=TestConcurrentConnectionPoolingNoClose;";
         SnowflakeDbConnectionPool.SetMaxPoolSize(2);
         ConcurrentPoolingHelper(connStr, false);
     }
@@ -59,7 +59,7 @@ public class ConnectionSinglePoolCacheIT : SFBaseTestAsync, IDisposable
         using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
             Assert.Equal(ConnectionState.Closed, conn.State);
-            CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
+            var connectionCancelToken = new CancellationTokenSource();
             await conn.OpenAsync(connectionCancelToken.Token).ConfigureAwait(false);
 
             // act
@@ -79,7 +79,7 @@ public class ConnectionSinglePoolCacheIT : SFBaseTestAsync, IDisposable
         using (var conn = new SnowflakeDbConnection(invalidConnectionString))
         {
             Assert.Equal(ConnectionState.Closed, conn.State);
-            CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
+            var connectionCancelToken = new CancellationTokenSource();
             try
             {
                 await conn.OpenAsync(connectionCancelToken.Token).ConfigureAwait(false);
@@ -102,7 +102,7 @@ public class ConnectionSinglePoolCacheIT : SFBaseTestAsync, IDisposable
         SnowflakeDbConnectionPool.SetMaxPoolSize(10);
         // make the connection string unique so it won't pick up connection
         // pooled by other test cases.
-        string connStr = _fixture.ConnectionString + "application=conn_pool_test_invalid_openasync";
+        var connStr = _fixture.ConnectionString + "application=conn_pool_test_invalid_openasync";
         using (var connection = new SnowflakeDbConnection())
         {
             connection.ConnectionString = connStr;
@@ -128,7 +128,7 @@ public class ConnectionSinglePoolCacheIT : SFBaseTestAsync, IDisposable
                 {
                     while (await reader.ReadAsync().ConfigureAwait(false))
                     {
-                        for (int i = 0; i < reader.FieldCount; i++)
+                        for (var i = 0; i < reader.FieldCount; i++)
                         {
                             // Process each column as appropriate
                             reader.GetFieldValue<object>(i);
@@ -159,7 +159,7 @@ public class ConnectionSinglePoolCacheIT : SFBaseTestAsync, IDisposable
         SnowflakeDbConnectionPool.SetTimeout(PoolTimeout);
 
         var threads = new Task[ThreadNum];
-        for (int i = 0; i < ThreadNum; i++)
+        for (var i = 0; i < ThreadNum; i++)
         {
             threads[i] = Task.Factory.StartNew(() =>
             {
@@ -172,12 +172,12 @@ public class ConnectionSinglePoolCacheIT : SFBaseTestAsync, IDisposable
     // thead to execute query with new connection in a loop
     private static void QueryExecutionThread(string connectionString, bool closeConnection)
     {
-        for (int i = 0; i < 10; i++)
+        for (var i = 0; i < 10; i++)
         {
             using (DbConnection conn = new SnowflakeDbConnection(connectionString))
             {
                 conn.Open();
-                using (DbCommand cmd = conn.CreateCommand())
+                using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "select 1, 2, 3";
                     try
@@ -186,7 +186,7 @@ public class ConnectionSinglePoolCacheIT : SFBaseTestAsync, IDisposable
                         {
                             while (reader.Read())
                             {
-                                for (int j = 0; j < reader.FieldCount; j++)
+                                for (var j = 0; j < reader.FieldCount; j++)
                                 {
                                     // Process each column as appropriate
                                     reader.GetFieldValue<object>(j);

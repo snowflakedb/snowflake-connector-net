@@ -12,8 +12,8 @@ public sealed class ConcatenatedStreamTest
 
     public ConcatenatedStreamTest()
     {
-        string data = "12345678";
-        byte[] bytes = Encoding.UTF8.GetBytes(data);
+        var data = "12345678";
+        var bytes = Encoding.UTF8.GetBytes(data);
         Stream stream = new MemoryStream(bytes);
 
         Stream openBracket = new MemoryStream(Encoding.UTF8.GetBytes(data));
@@ -85,14 +85,14 @@ public sealed class ConcatenatedStreamTest
     [SFFact]
     public void TestReadZeroByte()
     {
-        byte[] buffer = new byte[0];
+        var buffer = new byte[0];
         Assert.Equal(0, _concatStream.Read(buffer, 0, 0)); // Read 0 byte
     }
 
     [SFFact]
     public void TestReadBytes()
     {
-        byte[] buffer = new byte[3];
+        var buffer = new byte[3];
         Assert.Equal(1, _concatStream.Read(buffer, 0, 1)); // Read 1 byte
         Assert.Equal(2, _concatStream.Read(buffer, 0, 2)); // Read 2 bytes
         Assert.Equal(3, _concatStream.Read(buffer, 0, 3)); // Read 3 bytes
@@ -101,7 +101,7 @@ public sealed class ConcatenatedStreamTest
     [SFFact]
     public void TestReadMoreBytesThanBufferSize()
     {
-        byte[] buffer = new byte[3];
+        var buffer = new byte[3];
 
         try
         {

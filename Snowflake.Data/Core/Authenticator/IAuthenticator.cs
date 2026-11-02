@@ -210,7 +210,7 @@ internal class AuthenticatorFactory
     /// <exception cref="SnowflakeDbException">when authenticator is unknown</exception>
     internal static IAuthenticator GetAuthenticator(SFSession session)
     {
-        string type = session.properties[SFSessionProperty.AUTHENTICATOR];
+        var type = session.properties[SFSessionProperty.AUTHENTICATOR];
         if (BasicAuthenticator.IsBasicAuthenticator(type))
         {
             return new BasicAuthenticator(session);
@@ -226,7 +226,7 @@ internal class AuthenticatorFactory
                 (!session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent) || string.IsNullOrEmpty(pkContent)))
             {
                 // There is no PRIVATE_KEY_FILE defined, can't authenticate with key-pair
-                string invalidStringDetail =
+                var invalidStringDetail =
                     "Missing required PRIVATE_KEY_FILE or PRIVATE_KEY for key pair authentication";
                 var error = new SnowflakeDbException(
                     SFError.INVALID_CONNECTION_STRING,
@@ -243,7 +243,7 @@ internal class AuthenticatorFactory
             if (!session.properties.TryGetValue(SFSessionProperty.TOKEN, out var pkPath))
             {
                 // There is no TOKEN defined, can't authenticate with oauth
-                string invalidStringDetail =
+                var invalidStringDetail =
                     "Missing required TOKEN for Oauth authentication";
                 var error = new SnowflakeDbException(
                     SFError.INVALID_CONNECTION_STRING,

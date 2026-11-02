@@ -41,10 +41,10 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             // Data source is empty string for now
             Assert.Equal("", ((SnowflakeDbConnection)conn).DataSource);
 
-            string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
+            var serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
             if (!string.IsNullOrEmpty(serverVersion))
             {
-                string[] versionElements = serverVersion.Split('.');
+                var versionElements = serverVersion.Split('.');
                 Assert.Equal(3, versionElements.Length);
             }
 
@@ -60,7 +60,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         string[] invalidApplicationNames = { "1234test", "test$A", "test<script>" };
 
         // Valid names
-        foreach (string appName in validApplicationNames)
+        foreach (var appName in validApplicationNames)
         {
             using (var conn = new SnowflakeDbConnection())
             {
@@ -75,7 +75,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         }
 
         // Invalid names
-        foreach (string appName in invalidApplicationNames)
+        foreach (var appName in invalidApplicationNames)
         {
             using (var conn = new SnowflakeDbConnection())
             {
@@ -165,7 +165,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     [InlineData(false)]
     public async Task TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedBefore(bool explicitClose)
     {
-        for (int i = 0; i < 2; ++i)
+        for (var i = 0; i < 2; ++i)
         {
             s_logger.Debug($"Running try #{i}");
             SnowflakeDbConnection snowflakeConnection = null;
@@ -191,7 +191,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestConnectionIsNotMarkedAsOpenWhenWasNotCorrectlyOpenedWithUsingClause()
     {
-        for (int i = 0; i < 2; ++i)
+        for (var i = 0; i < 2; ++i)
         {
             s_logger.Debug($"Running try #{i}");
             SnowflakeDbConnection snowflakeConnection = null;
@@ -245,7 +245,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             using (IDbCommand cmd = conn1.CreateCommand())
             {
                 cmd.CommandText = $"SELECT count(*) FROM {tableName}";
-                IDataReader reader = cmd.ExecuteReader();
+                var reader = cmd.ExecuteReader();
                 Assert.True(reader.Read());
                 Assert.Equal(1, reader.GetInt32(0));
             }
@@ -270,12 +270,12 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestConnectViaSecureString()
     {
-        string[] connEntries = _fixture.ConnectionString.Split(';');
-        string connectionStringWithoutPassword = "";
+        var connEntries = _fixture.ConnectionString.Split(';');
+        var connectionStringWithoutPassword = "";
         using (var conn = new SnowflakeDbConnection())
         {
             var password = new System.Security.SecureString();
-            foreach (string entry in connEntries)
+            foreach (var entry in connEntries)
             {
                 if (!entry.StartsWith("password="))
                 {
@@ -285,7 +285,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
                 else
                 {
                     var pass = entry.Substring(9);
-                    foreach (char c in pass)
+                    foreach (var c in pass)
                     {
                         password.AppendChar(c);
                     }
@@ -307,12 +307,12 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     {
         using (var conn = new MockSnowflakeDbConnection(session => new KeyPairAuthenticator(session, session.restRequester)))
         {
-            string maxRetryConnStr = _fixture.ConnectionString + "maxHttpRetries=7";
+            var maxRetryConnStr = _fixture.ConnectionString + "maxHttpRetries=7";
 
             conn.ConnectionString = maxRetryConnStr;
 
             Assert.Equal(ConnectionState.Closed, conn.State);
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            var stopwatch = Stopwatch.StartNew();
             try
             {
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
@@ -373,7 +373,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
 
         using (var conn = new SnowflakeDbConnection())
         {
-            for (int i = 0; i < invalidStrings.Length; i++)
+            for (var i = 0; i < invalidStrings.Length; i++)
             {
                 try
                 {
@@ -553,14 +553,14 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestUnknownAuthenticator()
     {
-        string[] wrongAuthenticators = new string[]
+        var wrongAuthenticators = new string[]
         {
             "http://snowflakecomputing.okta.com",
             "https://snowflake.com",
             "unknown",
         };
 
-        foreach (string wrongAuthenticator in wrongAuthenticators)
+        foreach (var wrongAuthenticator in wrongAuthenticators)
         {
             try
             {
@@ -761,7 +761,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         HeartBeatBackground.SetValidity(20);
         try
         {
-            for (int i = 0; i < connCount; i++)
+            for (var i = 0; i < connCount; i++)
             {
                 using (var conn = new SnowflakeDbConnection())
                 {
@@ -788,15 +788,15 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         using (var conn = new MockSnowflakeDbConnection())
         {
             // No timeout
-            int timeoutSec = 0;
-            string infiniteLoginTimeOut = string.Format(_fixture.ConnectionString + ";connection_timeout={0};maxHttpRetries=0",
+            var timeoutSec = 0;
+            var infiniteLoginTimeOut = string.Format(_fixture.ConnectionString + ";connection_timeout={0};maxHttpRetries=0",
                 timeoutSec);
 
             conn.ConnectionString = infiniteLoginTimeOut;
 
             Assert.Equal(ConnectionState.Closed, conn.State);
 
-            CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
+            var connectionCancelToken = new CancellationTokenSource();
             var openTask = conn.OpenAsync(connectionCancelToken.Token);
 
             Assert.Equal(ConnectionState.Connecting, conn.State);
@@ -827,14 +827,14 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     {
         using (var conn = new MockSnowflakeDbConnection(session => new KeyPairAuthenticator(session, session.restRequester)))
         {
-            int timeoutSec = 5;
-            string loginTimeOut5sec = string.Format(_fixture.ConnectionString + "connection_timeout={0};maxHttpRetries=0",
+            var timeoutSec = 5;
+            var loginTimeOut5sec = string.Format(_fixture.ConnectionString + "connection_timeout={0};maxHttpRetries=0",
                 timeoutSec);
             conn.ConnectionString = loginTimeOut5sec;
 
             Assert.Equal(ConnectionState.Closed, conn.State);
 
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            var stopwatch = Stopwatch.StartNew();
             try
             {
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
@@ -848,7 +848,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
                 SnowflakeDbExceptionAssert.HasErrorCodeInExceptionChain(e, SFError.INTERNAL_ERROR);
             }
             stopwatch.Stop();
-            int delta = 50; // in case server time slower.
+            var delta = 50; // in case server time slower.
 
             // Should timeout after the defined timeout since retry count is infinite
             Assert.InRange(stopwatch.ElapsedMilliseconds, timeoutSec * 1000 - delta, long.MaxValue);
@@ -887,14 +887,14 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         {
             using (var conn = new MockSnowflakeDbConnection(s => new KeyPairAuthenticator(s, s.restRequester)))
             {
-                int connectionTimeout = 5;
-                int retryTimeout = 1;
+                var connectionTimeout = 5;
+                var retryTimeout = 1;
                 conn.ConnectionString = string.Format(_fixtureHere.ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
                     connectionTimeout, retryTimeout);
 
                 Assert.Equal(ConnectionState.Closed, conn.State);
 
-                Stopwatch stopwatch = Stopwatch.StartNew();
+                var stopwatch = Stopwatch.StartNew();
                 try
                 {
                     await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
@@ -909,7 +909,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
                 }
 
                 stopwatch.Stop();
-                int delta = 10; // in case server time slower.
+                var delta = 10; // in case server time slower.
 
                 // Should timeout after the defined timeout since retry count is infinite
                 Assert.InRange(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta, long.MaxValue);
@@ -1035,8 +1035,8 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         using (var conn = new SnowflakeDbConnection())
         {
             // Just a way to get a 404 on the login request and make sure there are no retry
-            string invalidConnectionString = "host=google.com/404;"
-                                             + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;certRevocationCheckMode=enabled;";
+            var invalidConnectionString = "host=google.com/404;"
+                                          + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;certRevocationCheckMode=enabled;";
 
             conn.ConnectionString = invalidConnectionString;
 
@@ -1212,7 +1212,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
     {
         using (var conn = new SnowflakeDbConnection())
         {
-            string expectedQueryTag = "Test QUERY_TAG 12345";
+            var expectedQueryTag = "Test QUERY_TAG 12345";
             conn.ConnectionString = _fixture.ConnectionString + $";query_tag={expectedQueryTag}";
 
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
@@ -1244,7 +1244,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         // On Mac/Linux OS the default credential manager is a file based one. Uncomment the following line to test in memory implementation.
         // SnowflakeCredentialManagerFactory.UseInMemoryCredentialManager();
         // arrange
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.Passcode = SecureStringHelper.Encode("$(set proper passcode)");
             // manual action: stop here in breakpoint to provide proper passcode by: conn.Passcode = SecureStringHelper.Encode("...");

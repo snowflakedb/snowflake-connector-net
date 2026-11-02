@@ -93,8 +93,8 @@ public class WifLatestTest
             };
 
             using var process = Process.Start(startInfo);
-            string token = process.StandardOutput.ReadToEnd();
-            string error = process.StandardError.ReadToEnd();
+            var token = process.StandardOutput.ReadToEnd();
+            var error = process.StandardError.ReadToEnd();
             process.WaitForExit();
 
             if (process.ExitCode == 0 && !string.IsNullOrWhiteSpace(token))
@@ -118,7 +118,7 @@ public class WifLatestTest
             conn.ConnectionString = connectionString;
             conn.Open();
             Assert.Equal(ConnectionState.Open, conn.State);
-            using (IDbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_USER()";
                 var result = command.ExecuteScalar();
@@ -137,7 +137,7 @@ public class WifLatestTest
             conn.ConnectionString = connectionString;
             conn.Open();
             Assert.Equal(ConnectionState.Open, conn.State);
-            using (IDbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT 1";
                 var result = command.ExecuteScalar();

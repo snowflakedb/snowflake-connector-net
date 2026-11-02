@@ -127,7 +127,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
             {
                 // act
                 command.CommandText = $"SELECT RANDSTR({size}, 124)";
-                string row = (string)await command.ExecuteScalarAsync(CancellationToken).ConfigureAwait(false);
+                var row = (string)await command.ExecuteScalarAsync(CancellationToken).ConfigureAwait(false);
 
                 // assert
                 Assert.Equal(size, row.Length);
@@ -444,7 +444,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
     {
         var dataTable = reader.GetSchemaTable();
 
-        DataRow row = dataTable.Rows[0];
+        var row = dataTable.Rows[0];
         Assert.Equal(s_colName[0], row[SchemaTableColumn.ColumnName]);
         Assert.Equal(0, row[SchemaTableColumn.ColumnOrdinal]);
         Assert.Equal(MaxLobSize, row[SchemaTableColumn.ColumnSize]);
@@ -465,9 +465,9 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
 
     private static string GenerateRandomString(int sizeInBytes)
     {
-        int bufferSize = sizeInBytes / 2;
-        Random rand = new Random();
-        byte[] bytes = new byte[bufferSize];
+        var bufferSize = sizeInBytes / 2;
+        var rand = new Random();
+        var bytes = new byte[bufferSize];
         rand.NextBytes(bytes);
 
         // Convert to hex and remove the '-' character for the correct string length

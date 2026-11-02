@@ -335,7 +335,7 @@ sealed class SessionPool : IDisposable
         s_logger.Info($"SessionPool::WaitForSession for {(long)_poolConfig.WaitingForIdleSessionTimeout.TotalMilliseconds} ms timeout" + PoolIdentification());
         _sessionPoolEventHandler.OnWaitingForSessionStarted(this);
         var beforeWaitingTimeMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        long nowTimeMillis = beforeWaitingTimeMillis;
+        var nowTimeMillis = beforeWaitingTimeMillis;
         while (GetPooling() && !_underDestruction && !TimeoutHelper.IsExpired(beforeWaitingTimeMillis, nowTimeMillis, _poolConfig.WaitingForIdleSessionTimeout)) // we loop to handle the case if someone overtook us after being woken or session which we were promised has just expired
         {
             var timeoutLeftMillis = TimeoutHelper.FiniteTimeoutLeftMillis(beforeWaitingTimeMillis, nowTimeMillis, _poolConfig.WaitingForIdleSessionTimeout);
@@ -369,11 +369,11 @@ sealed class SessionPool : IDisposable
 
     internal SFSession ExtractIdleSession(string connStr)
     {
-        for (int i = 0; i < _idleSessions.Count; i++)
+        for (var i = 0; i < _idleSessions.Count; i++)
         {
             if (_idleSessions[i].ConnectionString.Equals(connStr))
             {
-                SFSession session = _idleSessions[i];
+                var session = _idleSessions[i];
                 _idleSessions.RemoveAt(i);
                 var timeNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 if (session.IsExpired(_poolConfig.ExpirationTimeout, timeNow))
@@ -567,7 +567,7 @@ sealed class SessionPool : IDisposable
 
     private Tuple<bool, List<SessionCreationToken>> ReturnSessionToPool(SFSession session, bool ensureMinPoolSize)
     {
-        long timeNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var timeNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         if (session.IsNotOpen() || session.IsExpired(_poolConfig.ExpirationTimeout, timeNow) || session.IsInvalidatedForPooling())
         {
             lock (_sessionPoolLock)
@@ -658,7 +658,7 @@ sealed class SessionPool : IDisposable
             sessionsCopy = _idleSessions.ToArray();
             _idleSessions.Clear();
         }
-        foreach (SFSession session in sessionsCopy)
+        foreach (var session in sessionsCopy)
         {
             try
             {
@@ -680,7 +680,7 @@ sealed class SessionPool : IDisposable
             sessionsCopy = _idleSessions.ToArray();
             _idleSessions.Clear();
         }
-        foreach (SFSession session in sessionsCopy)
+        foreach (var session in sessionsCopy)
         {
             try
             {

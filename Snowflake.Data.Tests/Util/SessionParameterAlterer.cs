@@ -8,7 +8,7 @@ class SessionParameterAlterer
 {
     public static void SetResultFormat(IDbConnection conn, ResultFormat resultFormat)
     {
-        IDbCommand cmd = conn.CreateCommand();
+        var cmd = conn.CreateCommand();
         if (resultFormat == ResultFormat.ARROW)
             // ARROW_FORCE to set Arrow format regardless driver version
             cmd.CommandText = $"alter session set DOTNET_QUERY_RESULT_FORMAT = ARROW_FORCE";
@@ -28,7 +28,7 @@ class SessionParameterAlterer
 
     public static void RestoreResultFormat(IDbConnection conn)
     {
-        IDbCommand cmd = conn.CreateCommand();
+        var cmd = conn.CreateCommand();
         cmd.CommandText = "alter session set DOTNET_QUERY_RESULT_FORMAT = default";
         try
         {
@@ -44,14 +44,14 @@ class SessionParameterAlterer
 
     public static void SetPrefetchThreads(IDbConnection conn, int prefetchThreads)
     {
-        IDbCommand cmd = conn.CreateCommand();
+        var cmd = conn.CreateCommand();
         cmd.CommandText = $"alter session set CLIENT_PREFETCH_THREADS = {prefetchThreads}";
         cmd.ExecuteNonQuery();
     }
 
     public static void RestorePrefetchThreads(IDbConnection conn)
     {
-        IDbCommand cmd = conn.CreateCommand();
+        var cmd = conn.CreateCommand();
         cmd.CommandText = "alter session set CLIENT_PREFETCH_THREADS = default";
         cmd.ExecuteNonQuery();
     }

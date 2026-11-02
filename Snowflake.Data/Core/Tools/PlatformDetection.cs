@@ -102,7 +102,7 @@ internal static class PlatformDetection
         await Task.WhenAll(tasks).ConfigureAwait(false);
 
         var results = new bool?[tasks.Length];
-        for (int i = 0; i < tasks.Length; i++)
+        for (var i = 0; i < tasks.Length; i++)
             results[i] = tasks[i].Status == TaskStatus.RanToCompletion ? tasks[i].Result : (bool?)false;
 
         var detected = AggregateResults(names, results);
@@ -115,7 +115,7 @@ internal static class PlatformDetection
         if (names.Length != results.Length)
             s_logger.Info($"Platform detection names/results size mismatch ({names.Length} vs {results.Length}); reporting partial results.");
         var detected = new List<string>();
-        for (int i = 0; i < Math.Min(names.Length, results.Length); i++)
+        for (var i = 0; i < Math.Min(names.Length, results.Length); i++)
         {
             if (results[i] == true)
                 detected.Add(names[i]);

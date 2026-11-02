@@ -23,7 +23,7 @@ class ConcatenatedStream : Stream
         if (streams.Count == 0)
             return 0;
 
-        int bytesRead = streams.Peek().Read(buffer, offset, count);
+        var bytesRead = streams.Peek().Read(buffer, offset, count);
         if (bytesRead == 0)
         {
             streams.Dequeue().Dispose();

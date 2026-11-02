@@ -74,7 +74,7 @@ public class SFDbTransactionIT : SFBaseTestAsync
             // Transaction t1 would be disposed and rollback at this point, tuple inserted is not visible
             IDbCommand c2 = conn.CreateCommand();
             c2.CommandText = $"SELECT * FROM {tableName}";
-            IDataReader reader2 = c2.ExecuteReader();
+            var reader2 = c2.ExecuteReader();
             Assert.False(reader2.Read());
         }
     }
@@ -94,7 +94,7 @@ public class SFDbTransactionIT : SFBaseTestAsync
             "a INTEGER"
         }).ConfigureAwait(false);
 
-        using (DbTransaction transaction = await conn.BeginTransactionAsync().ConfigureAwait(false))
+        using (var transaction = await conn.BeginTransactionAsync().ConfigureAwait(false))
         {
             IDbCommand t1c1 = conn.CreateCommand();
             t1c1.Transaction = transaction;
@@ -116,9 +116,9 @@ public class SFDbTransactionIT : SFBaseTestAsync
 
         IDbCommand command1 = conn.CreateCommand();
         command1.CommandText = $"Select * from {tableName}";
-        IDataReader reader = command1.ExecuteReader();
+        var reader = command1.ExecuteReader();
 
-        int row = 0;
+        var row = 0;
         while (reader.Read())
         {
             var dataDate = reader.GetDateTime(0);
@@ -146,7 +146,7 @@ public class SFDbTransactionIT : SFBaseTestAsync
             "a INTEGER"
         }).ConfigureAwait(false);
 
-        using (DbTransaction transaction = conn.BeginTransaction())
+        using (var transaction = conn.BeginTransaction())
         {
             IDbCommand t1c1 = conn.CreateCommand();
             t1c1.Transaction = transaction;
@@ -155,7 +155,7 @@ public class SFDbTransactionIT : SFBaseTestAsync
             t1c1.Transaction.Commit();
         }
 
-        using (DbTransaction transaction2 = await conn.BeginTransactionAsync().ConfigureAwait(false))
+        using (var transaction2 = await conn.BeginTransactionAsync().ConfigureAwait(false))
         {
             IDbCommand t2c2 = conn.CreateCommand();
             t2c2.Transaction = transaction2;
@@ -166,9 +166,9 @@ public class SFDbTransactionIT : SFBaseTestAsync
 
         IDbCommand command1 = conn.CreateCommand();
         command1.CommandText = $"Select * from {tableName}";
-        IDataReader reader = command1.ExecuteReader();
+        var reader = command1.ExecuteReader();
 
-        int row = 0;
+        var row = 0;
         while (reader.Read())
         {
             var dataDate = reader.GetDateTime(0);

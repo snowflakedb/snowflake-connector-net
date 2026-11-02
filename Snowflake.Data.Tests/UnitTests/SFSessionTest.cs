@@ -20,7 +20,7 @@ public class SFSessionTest
     public void TestSessionGoneWhenClose()
     {
         var restRequester = new MockSessionGone();
-        SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+        var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
         sfSession.Open();
         sfSession.Close();
     }
@@ -29,7 +29,7 @@ public class SFSessionTest
     public void TestSessionGoneWhenCloseNonBlocking()
     {
         var restRequester = new MockSessionGone();
-        SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+        var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
         sfSession.Open();
         sfSession.CloseNonBlocking();
     }
@@ -38,11 +38,11 @@ public class SFSessionTest
     public void TestUpdateSessionProperties()
     {
         // arrange
-        string databaseName = "DB_TEST";
-        string schemaName = "SC_TEST";
-        string warehouseName = "WH_TEST";
-        string roleName = "ROLE_TEST";
-        QueryExecResponseData queryExecResponseData = new QueryExecResponseData
+        var databaseName = "DB_TEST";
+        var schemaName = "SC_TEST";
+        var warehouseName = "WH_TEST";
+        var roleName = "ROLE_TEST";
+        var queryExecResponseData = new QueryExecResponseData
         {
             finalSchemaName = schemaName,
             finalDatabaseName = databaseName,
@@ -51,7 +51,7 @@ public class SFSessionTest
         };
 
         // act
-        SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
+        var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
         sfSession.UpdateSessionProperties(queryExecResponseData);
 
         // assert
@@ -65,18 +65,18 @@ public class SFSessionTest
     public void TestSkipUpdateSessionPropertiesWhenPropertiesMissing()
     {
         // arrange
-        string databaseName = "DB_TEST";
-        string schemaName = "SC_TEST";
-        string warehouseName = "WH_TEST";
-        string roleName = "ROLE_TEST";
-        SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
+        var databaseName = "DB_TEST";
+        var schemaName = "SC_TEST";
+        var warehouseName = "WH_TEST";
+        var roleName = "ROLE_TEST";
+        var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
         sfSession.database = databaseName;
         sfSession.warehouse = warehouseName;
         sfSession.role = roleName;
         sfSession.schema = schemaName;
 
         // act
-        QueryExecResponseData queryExecResponseWithoutData = new QueryExecResponseData();
+        var queryExecResponseWithoutData = new QueryExecResponseData();
         sfSession.UpdateSessionProperties(queryExecResponseWithoutData);
 
         // assert
@@ -117,7 +117,7 @@ public class SFSessionTest
         var session = new SFSession(connectionString, new SessionPropertiesContext());
         var authenticator = session.GetAuthenticator();
         var key = ((ExternalBrowserAuthenticator)authenticator)._idTokenKey;
-        LoginResponse authnResponse = new LoginResponse
+        var authnResponse = new LoginResponse
         {
             data = new LoginResponseData()
             {
@@ -145,7 +145,7 @@ public class SFSessionTest
         var session = new SFSession(connectionString, new SessionPropertiesContext());
         var authenticator = session.GetAuthenticator();
         var key = ((ExternalBrowserAuthenticator)authenticator)._idTokenKey;
-        LoginResponse authnResponse = new LoginResponse
+        var authnResponse = new LoginResponse
         {
             data = new LoginResponseData()
             {
@@ -180,7 +180,7 @@ public class SFSessionTest
     public void TestSessionPropertyQuotationSafeUpdateOnServerResponse(string sessionInitialValue, string serverResponseFinalSessionValue, string unquotedExpectedFinalValue, bool wasChanged)
     {
         // Arrange
-        SFSession sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
+        var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext());
         var changedSessionValue = sessionInitialValue;
 
         // Act
@@ -198,8 +198,8 @@ public class SFSessionTest
     public void TestHandlePasswordWithQuotations()
     {
         // arrange
-        MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-        SFSession sfSession = new SFSession("account=test;user=test;password=test\"with'quotations{}", new SessionPropertiesContext(), restRequester);
+        var restRequester = new MockLoginStoringRestRequester();
+        var sfSession = new SFSession("account=test;user=test;password=test\"with'quotations{}", new SessionPropertiesContext(), restRequester);
 
         // act
         sfSession.Open();
@@ -222,8 +222,8 @@ public class SFSessionTest
     {
         // arrange
         var passcode = "123456";
-        MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-        SFSession sfSession = new SFSession($"account=test;user=test;password=test;passcode={passcode}", new SessionPropertiesContext(), restRequester);
+        var restRequester = new MockLoginStoringRestRequester();
+        var sfSession = new SFSession($"account=test;user=test;password=test;passcode={passcode}", new SessionPropertiesContext(), restRequester);
 
         // act
         sfSession.Open();
@@ -240,9 +240,9 @@ public class SFSessionTest
     {
         // arrange
         var passcode = "123456";
-        MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
+        var restRequester = new MockLoginStoringRestRequester();
         var sessionContext = new SessionPropertiesContext { Passcode = SecureStringHelper.Encode(passcode) };
-        SFSession sfSession = new SFSession($"account=test;user=test;password=test;", sessionContext, EasyLoggingStarter.Instance, restRequester);
+        var sfSession = new SFSession($"account=test;user=test;password=test;", sessionContext, EasyLoggingStarter.Instance, restRequester);
 
         // act
         sfSession.Open();
@@ -259,8 +259,8 @@ public class SFSessionTest
     {
         // arrange
         var passcode = "123456";
-        MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-        SFSession sfSession = new SFSession($"account=test;user=test;password=test{passcode};passcodeInPassword=true;", new SessionPropertiesContext(), restRequester);
+        var restRequester = new MockLoginStoringRestRequester();
+        var sfSession = new SFSession($"account=test;user=test;password=test{passcode};passcodeInPassword=true;", new SessionPropertiesContext(), restRequester);
 
         // act
         sfSession.Open();
@@ -276,8 +276,8 @@ public class SFSessionTest
     public void TestPushWhenNoPasscodeAndPasscodeInPasswordIsFalse()
     {
         // arrange
-        MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-        SFSession sfSession = new SFSession($"account=test;user=test;password=test;passcodeInPassword=false;", new SessionPropertiesContext(), restRequester);
+        var restRequester = new MockLoginStoringRestRequester();
+        var sfSession = new SFSession($"account=test;user=test;password=test;passcodeInPassword=false;", new SessionPropertiesContext(), restRequester);
 
         // act
         sfSession.Open();
@@ -293,8 +293,8 @@ public class SFSessionTest
     public void TestPushAsDefaultSecondaryAuthentication()
     {
         // arrange
-        MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-        SFSession sfSession = new SFSession($"account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
+        var restRequester = new MockLoginStoringRestRequester();
+        var sfSession = new SFSession($"account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
 
         // act
         sfSession.Open();
@@ -418,8 +418,8 @@ public class SFSessionTest
     public void TestSecondaryRolesIncludedUppercasedInLoginPayload(string inputValue, string expectedValue)
     {
         // arrange
-        MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-        SFSession sfSession = new SFSession(
+        var restRequester = new MockLoginStoringRestRequester();
+        var sfSession = new SFSession(
             $"account=test;user=test;password=test;secondary_roles={inputValue}",
             new SessionPropertiesContext(),
             restRequester);
@@ -440,8 +440,8 @@ public class SFSessionTest
     public void TestSecondaryRolesOmittedWhenNotSet()
     {
         // arrange
-        MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-        SFSession sfSession = new SFSession(
+        var restRequester = new MockLoginStoringRestRequester();
+        var sfSession = new SFSession(
             "account=test;user=test;password=test;",
             new SessionPropertiesContext(),
             restRequester);
@@ -462,8 +462,8 @@ public class SFSessionTest
     public void TestSecondaryRolesOmittedWhenEmpty()
     {
         // arrange
-        MockLoginStoringRestRequester restRequester = new MockLoginStoringRestRequester();
-        SFSession sfSession = new SFSession(
+        var restRequester = new MockLoginStoringRestRequester();
+        var sfSession = new SFSession(
             "account=test;user=test;password=test;secondary_roles=",
             new SessionPropertiesContext(),
             restRequester);

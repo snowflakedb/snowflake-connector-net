@@ -18,7 +18,7 @@ internal class WebBrowserRunner : IWebBrowserRunner
         var url = uri.AbsoluteUri;
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            ProcessStartInfo startInfo = new ProcessStartInfo();
+            var startInfo = new ProcessStartInfo();
             startInfo.FileName = System.IO.Path.Combine(Environment.SystemDirectory, "rundll32.exe");
             startInfo.Arguments = $"url.dll,FileProtocolHandler {url}";
             startInfo.UseShellExecute = false;

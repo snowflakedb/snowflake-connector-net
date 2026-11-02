@@ -84,9 +84,9 @@ public class SnowflakeDbDataReader : DbDataReader
         table.Columns.Add(SchemaTableColumn.AllowDBNull, typeof(bool));
         table.Columns.Add(SchemaTableColumn.ProviderType, typeof(SFDataType));
 
-        int columnOrdinal = 0;
-        SFResultSetMetaData sfResultSetMetaData = resultSet.sfResultSetMetaData;
-        foreach (ExecResponseRowType rowType in sfResultSetMetaData.rowTypes)
+        var columnOrdinal = 0;
+        var sfResultSetMetaData = resultSet.sfResultSetMetaData;
+        foreach (var rowType in sfResultSetMetaData.rowTypes)
         {
             var row = table.NewRow();
 
@@ -97,7 +97,7 @@ public class SnowflakeDbDataReader : DbDataReader
             row[SchemaTableColumn.NumericScale] = (int)rowType.scale;
             row[SchemaTableColumn.AllowDBNull] = rowType.nullable;
 
-            Tuple<SFDataType, Type> types = sfResultSetMetaData.GetTypesByIndex(columnOrdinal);
+            var types = sfResultSetMetaData.GetTypesByIndex(columnOrdinal);
             row[SchemaTableColumn.ProviderType] = types.Item1;
             row[SchemaTableColumn.DataType] = types.Item2;
 
@@ -215,8 +215,8 @@ public class SnowflakeDbDataReader : DbDataReader
 
     public override int GetValues(object[] values)
     {
-        int count = Math.Min(FieldCount, values.Length);
-        for (int i = 0; i < count; i++)
+        var count = Math.Min(FieldCount, values.Length);
+        for (var i = 0; i < count; i++)
         {
             values[i] = GetValue(i);
         }

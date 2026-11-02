@@ -76,8 +76,8 @@ public sealed class ConnectionMultiplePoolsAsyncIT : SFBaseTestAsync, IDisposabl
     {
         // make the connection string unique so it won't pick up connection
         // pooled by other test cases.
-        string connStr = _fixture.ConnectionString +
-                         "minPoolSize=0;maxPoolSize=10;application=conn_pool_test_invalid_openasync2;poolingEnabled=true";
+        var connStr = _fixture.ConnectionString +
+                      "minPoolSize=0;maxPoolSize=10;application=conn_pool_test_invalid_openasync2;poolingEnabled=true";
         using (var connection = new SnowflakeDbConnection())
         {
             connection.ConnectionString = connStr;
@@ -103,7 +103,7 @@ public sealed class ConnectionMultiplePoolsAsyncIT : SFBaseTestAsync, IDisposabl
                 {
                     while (await reader.ReadAsync().ConfigureAwait(false))
                     {
-                        for (int i = 0; i < reader.FieldCount; i++)
+                        for (var i = 0; i < reader.FieldCount; i++)
                         {
                             // Process each column as appropriate
                             reader.GetFieldValue<object>(i);
@@ -183,7 +183,7 @@ public sealed class ConnectionMultiplePoolsAsyncIT : SFBaseTestAsync, IDisposabl
     {
         // add test case name in connection string to make in unique for each test case
         // set short expiration timeout to cover the case that connection expired
-        string connStr = _fixture.ConnectionString + ";application=TestConcurrentConnectionPoolingAsync2;ExpirationTimeout=3;poolingEnabled=true";
+        var connStr = _fixture.ConnectionString + ";application=TestConcurrentConnectionPoolingAsync2;ExpirationTimeout=3;poolingEnabled=true";
         await ConnectionSinglePoolCacheAsyncIT.ConcurrentPoolingAsyncHelper(connStr, true, 5, 5, 3).ConfigureAwait(false);
     }
 
@@ -192,8 +192,8 @@ public sealed class ConnectionMultiplePoolsAsyncIT : SFBaseTestAsync, IDisposabl
     {
         // add test case name in connection string to make in unique for each test case
         // set short expiration timeout to cover the case that connection expired
-        string connStr = _fixture.ConnectionString +
-                         ";application=TestConcurrentConnectionPoolingDisposeAsync2;ExpirationTimeout=3;poolingEnabled=true";
+        var connStr = _fixture.ConnectionString +
+                      ";application=TestConcurrentConnectionPoolingDisposeAsync2;ExpirationTimeout=3;poolingEnabled=true";
         await ConnectionSinglePoolCacheAsyncIT.ConcurrentPoolingAsyncHelper(connStr, false, 5, 5, 3).ConfigureAwait(false);
     }
 

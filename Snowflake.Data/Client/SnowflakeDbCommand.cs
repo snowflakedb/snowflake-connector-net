@@ -142,7 +142,7 @@ public class SnowflakeDbCommand : DbCommand
                     activity?.AddTelemetryEvent(TelemetryEvents.DqlResultSetSkipped);
                     continue;
                 }
-                int count = resultSet.CalculateUpdateCount();
+                var count = resultSet.CalculateUpdateCount();
                 if (count < 0)
                 {
                     // exceeded max int, return -1
@@ -186,7 +186,7 @@ public class SnowflakeDbCommand : DbCommand
                     activity?.AddTelemetryEvent(TelemetryEvents.DqlResultSetSkipped);
                     continue;
                 }
-                int count = resultSet.CalculateUpdateCount();
+                var count = resultSet.CalculateUpdateCount();
                 if (count < 0)
                 {
                     activity?.AddTelemetryEvent(TelemetryEvents.RowCountNegative);
@@ -461,10 +461,10 @@ public class SnowflakeDbCommand : DbCommand
 
         try
         {
-            Task task = QueryResultsAwaiter.Instance.RetryUntilQueryResultIsAvailable(connection, queryId, CancellationToken.None, false);
+            var task = QueryResultsAwaiter.Instance.RetryUntilQueryResultIsAvailable(connection, queryId, CancellationToken.None, false);
             task.Wait();
 
-            SFBaseResultSet resultSet = sfStatement.GetResultWithId(queryId);
+            var resultSet = sfStatement.GetResultWithId(queryId);
 
             activity?.SetSuccess();
             return new SnowflakeDbDataReader(this, resultSet, false);
@@ -491,7 +491,7 @@ public class SnowflakeDbCommand : DbCommand
         {
             await QueryResultsAwaiter.Instance.RetryUntilQueryResultIsAvailable(connection, queryId, cancellationToken, true).ConfigureAwait(false);
 
-            SFBaseResultSet resultSet = await sfStatement.GetResultWithIdAsync(queryId, cancellationToken).ConfigureAwait(false);
+            var resultSet = await sfStatement.GetResultWithIdAsync(queryId, cancellationToken).ConfigureAwait(false);
 
             activity?.SetSuccess();
             return new SnowflakeDbDataReader(this, resultSet, false);
@@ -511,10 +511,10 @@ public class SnowflakeDbCommand : DbCommand
         }
         else
         {
-            Dictionary<string, BindingDTO> binding = new Dictionary<string, BindingDTO>();
-            foreach (SnowflakeDbParameter parameter in parameters)
+            var binding = new Dictionary<string, BindingDTO>();
+            foreach (var parameter in parameters)
             {
-                string bindingType = "";
+                var bindingType = "";
                 object bindingVal;
 
                 if (parameter.Value == null)
@@ -527,15 +527,15 @@ public class SnowflakeDbCommand : DbCommand
                     parameter.Value.GetType().GetElementType() != typeof(char) &&
                     parameter.Value.GetType().GetElementType() != typeof(byte))
                 {
-                    List<object> vals = new List<object>();
-                    foreach (object val in (Array)parameter.Value)
+                    var vals = new List<object>();
+                    foreach (var val in (Array)parameter.Value)
                     {
                         // if the user is using interface, SFDataType will be None and there will
                         // a conversion from DbType to SFDataType
                         // if the user is using concrete class, they should specify SFDataType.
                         if (parameter.SFDataType == SFDataType.None)
                         {
-                            Tuple<string, string> typeAndVal = SFDataConverter
+                            var typeAndVal = SFDataConverter
                                 .CSharpTypeValToSfTypeVal(parameter.DbType, val);
 
                             bindingType = typeAndVal.Item1;
@@ -553,7 +553,7 @@ public class SnowflakeDbCommand : DbCommand
                 {
                     if (parameter.SFDataType == SFDataType.None)
                     {
-                        Tuple<string, string> typeAndVal = SFDataConverter
+                        var typeAndVal = SFDataConverter
                             .CSharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
                         bindingType = typeAndVal.Item1;
                         bindingVal = typeAndVal.Item2;

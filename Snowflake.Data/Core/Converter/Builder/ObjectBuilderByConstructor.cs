@@ -40,7 +40,7 @@ internal class ObjectBuilderByConstructor : IObjectBuilder
 
     public object Build()
     {
-        object[] parameters = _result.ToArray();
+        var parameters = _result.ToArray();
         return Activator.CreateInstance(_type, parameters);
     }
 }

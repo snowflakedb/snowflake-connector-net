@@ -128,7 +128,7 @@ internal class UnixOperations
             validator?.Invoke(handle);
             using (var streamReader = new BinaryReader(handle, Encoding.ASCII))
             {
-                bool allRead = false;
+                var allRead = false;
                 while (!allRead)
                 {
                     var bytes = streamReader.ReadBytes(BufferSize);

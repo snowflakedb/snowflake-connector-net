@@ -49,8 +49,8 @@ class SFRemoteStorageUtil
     internal static ISFRemoteStorageClient GetRemoteStorage(PutGetResponseData response, ProxyCredentials proxyCredentials = null,
         SslProtocols tlsProtocols = SslProtocols.None, bool tlsProtocolsExplicitlyRequested = false)
     {
-        PutGetStageInfo stageInfo = response.stageInfo;
-        string stageLocationType = stageInfo.locationType;
+        var stageInfo = response.stageInfo;
+        var stageLocationType = stageInfo.locationType;
 
         // Create the storage type based on location type
         if (stageLocationType == LOCAL_FS)
@@ -87,23 +87,23 @@ class SFRemoteStorageUtil
     /// <param name="fileMetadata">The file metadata of the file to upload</param>
     internal static void UploadOneFile(SFFileMetadata fileMetadata)
     {
-        SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
+        var encryptionMetadata = new SFEncryptionMetadata();
         using (var fileBytesStreamPair = GetFileBytesStream(fileMetadata, encryptionMetadata))
         {
 
-            int maxConcurrency = fileMetadata.parallel;
-            int maxRetry = DEFAULT_MAX_RETRY;
+            var maxConcurrency = fileMetadata.parallel;
+            var maxRetry = DEFAULT_MAX_RETRY;
             Exception lastErr = null;
 
             // Attempt to upload and retry if fails
-            for (int retry = 0; retry < maxRetry; retry++)
+            for (var retry = 0; retry < maxRetry; retry++)
             {
-                ISFRemoteStorageClient client = fileMetadata.client;
+                var client = fileMetadata.client;
 
                 if (!fileMetadata.overwrite)
                 {
                     // Get the file metadata
-                    FileHeader fileHeader = client.GetFileHeader(fileMetadata);
+                    var fileHeader = client.GetFileHeader(fileMetadata);
                     if (fileHeader != null)
                     {
                         // File already exists
@@ -135,7 +135,7 @@ class SFRemoteStorageUtil
             }
             else
             {
-                string msg = "Unknown Error in uploading a file: " + fileMetadata.destFileName;
+                var msg = "Unknown Error in uploading a file: " + fileMetadata.destFileName;
                 throw new Exception(msg);
             }
         }
@@ -148,23 +148,23 @@ class SFRemoteStorageUtil
     /// <param name="cancellationToken">The cancellation token</param>
     internal static async Task UploadOneFileAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
     {
-        SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
+        var encryptionMetadata = new SFEncryptionMetadata();
         using (var fileBytesStreamPair = GetFileBytesStream(fileMetadata, encryptionMetadata))
         {
 
-            int maxConcurrency = fileMetadata.parallel;
-            int maxRetry = DEFAULT_MAX_RETRY;
+            var maxConcurrency = fileMetadata.parallel;
+            var maxRetry = DEFAULT_MAX_RETRY;
             Exception lastErr = null;
 
             // Attempt to upload and retry if fails
-            for (int retry = 0; retry < maxRetry; retry++)
+            for (var retry = 0; retry < maxRetry; retry++)
             {
-                ISFRemoteStorageClient client = fileMetadata.client;
+                var client = fileMetadata.client;
 
                 if (!fileMetadata.overwrite)
                 {
                     // Get the file metadata
-                    FileHeader fileHeader = await client.GetFileHeaderAsync(fileMetadata, cancellationToken)
+                    var fileHeader = await client.GetFileHeaderAsync(fileMetadata, cancellationToken)
                         .ConfigureAwait(false);
                     if (fileHeader != null)
                     {
@@ -199,7 +199,7 @@ class SFRemoteStorageUtil
             }
             else
             {
-                string msg = "Unknown Error in uploading a file: " + fileMetadata.destFileName;
+                var msg = "Unknown Error in uploading a file: " + fileMetadata.destFileName;
                 throw new Exception(msg);
             }
         }
@@ -224,7 +224,7 @@ class SFRemoteStorageUtil
             fileMetadata.lastMaxConcurrency = maxConcurrency;
 
             // Failed to upload file, retrying
-            double sleepingTime = Math.Min(Math.Pow(2, retry), 16);
+            var sleepingTime = Math.Min(Math.Pow(2, retry), 16);
             Thread.Sleep(Convert.ToInt32(sleepingTime));
         }
         else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY.ToString())
@@ -232,7 +232,7 @@ class SFRemoteStorageUtil
             lastErr = fileMetadata.lastError;
 
             // Failed to upload file, retrying
-            double sleepingTime = Math.Min(Math.Pow(2, retry), 16);
+            var sleepingTime = Math.Min(Math.Pow(2, retry), 16);
             Thread.Sleep(Convert.ToInt32(sleepingTime));
         }
     }
@@ -247,7 +247,7 @@ class SFRemoteStorageUtil
         UploadOneFile(fileMetadata);
         if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString())
         {
-            for (int count = 0; count < 10; count++)
+            for (var count = 0; count < 10; count++)
             {
                 // Get the file metadata
                 fileMetadata.client.GetFileHeader(fileMetadata);
@@ -270,15 +270,15 @@ class SFRemoteStorageUtil
     /// <param name="fileMetadata">The file metadata of the file to upload</param>
     internal static async Task UploadOneFileWithRetryAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
     {
-        bool breakFlag = false;
+        var breakFlag = false;
 
-        for (int count = 0; count < 10; count++)
+        for (var count = 0; count < 10; count++)
         {
             // Upload the file
             await UploadOneFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
             if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString())
             {
-                for (int count2 = 0; count2 < 10; count2++)
+                for (var count2 = 0; count2 < 10; count2++)
                 {
                     // Get the file metadata
                     await fileMetadata.client.GetFileHeaderAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
@@ -315,7 +315,7 @@ class SFRemoteStorageUtil
     internal static void DownloadOneFile(SFFileMetadata fileMetadata)
     {
         PathValidator.ValidateFileDestinationPath(fileMetadata.localLocation, fileMetadata.destFileName);
-        string fullDstPath = fileMetadata.localLocation;
+        var fullDstPath = fileMetadata.localLocation;
         fullDstPath = Path.Combine(fullDstPath, fileMetadata.destFileName);
 
         // Check local location exists
@@ -324,13 +324,13 @@ class SFRemoteStorageUtil
             DirectoryOperations.Instance.CreateDirectory(fileMetadata.localLocation);
         }
 
-        ISFRemoteStorageClient client = fileMetadata.client;
+        var client = fileMetadata.client;
 
-        int maxConcurrency = fileMetadata.parallel;
+        var maxConcurrency = fileMetadata.parallel;
         Exception lastErr = null;
-        int maxRetry = DEFAULT_MAX_RETRY;
+        var maxRetry = DEFAULT_MAX_RETRY;
 
-        for (int retry = 0; retry < maxRetry; retry++)
+        for (var retry = 0; retry < maxRetry; retry++)
         {
             // Download the file
             client.DownloadFile(fileMetadata, fullDstPath, maxConcurrency);
@@ -355,9 +355,9 @@ class SFRemoteStorageUtil
                         fileHeader = client.GetFileHeader(fileMetadata);
                     }
 
-                    SFEncryptionMetadata encryptionMetadata = fileHeader != null ? fileHeader.encryptionMetadata : fileMetadata.encryptionMetadata;
+                    var encryptionMetadata = fileHeader != null ? fileHeader.encryptionMetadata : fileMetadata.encryptionMetadata;
 
-                    string tmpDstName = EncryptionProvider.DecryptFile(
+                    var tmpDstName = EncryptionProvider.DecryptFile(
                         fullDstPath,
                         fileMetadata.encryptionMaterial,
                         encryptionMetadata,
@@ -367,7 +367,7 @@ class SFRemoteStorageUtil
                     File.Delete(tmpDstName);
                 }
 
-                FileInfo fileInfo = new FileInfo(fullDstPath);
+                var fileInfo = new FileInfo(fullDstPath);
                 fileMetadata.destFileSize = fileInfo.Length;
                 return;
             }
@@ -400,7 +400,7 @@ class SFRemoteStorageUtil
     internal static async Task DownloadOneFileAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
     {
         PathValidator.ValidateFileDestinationPath(fileMetadata.localLocation, fileMetadata.destFileName);
-        string fullDstPath = fileMetadata.localLocation;
+        var fullDstPath = fileMetadata.localLocation;
         fullDstPath = Path.Combine(fullDstPath, fileMetadata.destFileName);
 
         // Check local location exists
@@ -409,13 +409,13 @@ class SFRemoteStorageUtil
             DirectoryOperations.Instance.CreateDirectory(fileMetadata.localLocation);
         }
 
-        ISFRemoteStorageClient client = fileMetadata.client;
+        var client = fileMetadata.client;
 
-        int maxConcurrency = fileMetadata.parallel;
+        var maxConcurrency = fileMetadata.parallel;
         Exception lastErr = null;
-        int maxRetry = DEFAULT_MAX_RETRY;
+        var maxRetry = DEFAULT_MAX_RETRY;
 
-        for (int retry = 0; retry < maxRetry; retry++)
+        for (var retry = 0; retry < maxRetry; retry++)
         {
             // Download the file
             await client.DownloadFileAsync(fileMetadata, fullDstPath, maxConcurrency, cancellationToken).ConfigureAwait(false);
@@ -440,9 +440,9 @@ class SFRemoteStorageUtil
                         fileHeader = await client.GetFileHeaderAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
                     }
 
-                    SFEncryptionMetadata encryptionMetadata = fileHeader != null ? fileHeader.encryptionMetadata : fileMetadata.encryptionMetadata;
+                    var encryptionMetadata = fileHeader != null ? fileHeader.encryptionMetadata : fileMetadata.encryptionMetadata;
 
-                    string tmpDstName = EncryptionProvider.DecryptFile(
+                    var tmpDstName = EncryptionProvider.DecryptFile(
                         fullDstPath,
                         fileMetadata.encryptionMaterial,
                         encryptionMetadata,
@@ -452,7 +452,7 @@ class SFRemoteStorageUtil
                     File.Delete(tmpDstName);
                 }
 
-                FileInfo fileInfo = new FileInfo(fullDstPath);
+                var fileInfo = new FileInfo(fullDstPath);
                 fileMetadata.destFileSize = fileInfo.Length;
                 return;
             }
@@ -495,14 +495,14 @@ class SFRemoteStorageUtil
             maxConcurrency = Math.Max(DEFAULT_CONCURRENCY, maxConcurrency);
             fileMetadata.lastMaxConcurrency = maxConcurrency;
 
-            int sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
+            var sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
             Thread.Sleep(sleepingTime);
         }
         else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY.ToString())
         {
             lastErr = fileMetadata.lastError;
 
-            int sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
+            var sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
             Thread.Sleep(sleepingTime);
         }
     }

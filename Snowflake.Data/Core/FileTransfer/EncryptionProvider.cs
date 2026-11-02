@@ -56,13 +56,13 @@ class EncryptionProvider
         SFEncryptionMetadata encryptionMetadata,
         FileTransferConfiguration transferConfiguration)
     {
-        byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
-        int masterKeySize = decodedMasterKey.Length;
+        var decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
+        var masterKeySize = decodedMasterKey.Length;
         Logger.Debug($"Master key size : {masterKeySize}");
 
         // Generate file key
-        byte[] ivData = new byte[blockSize];
-        byte[] keyData = new byte[blockSize];
+        var ivData = new byte[blockSize];
+        var keyData = new byte[blockSize];
 
         using (var rng = RandomNumberGenerator.Create())
         {
@@ -77,18 +77,18 @@ class EncryptionProvider
             transferConfiguration);
 
         // Encrypt file key
-        byte[] encryptedFileKey = EncryptFileKey(decodedMasterKey, keyData);
+        var encryptedFileKey = EncryptFileKey(decodedMasterKey, keyData);
 
         // Store encryption metadata information
-        MaterialDescriptor matDesc = new MaterialDescriptor
+        var matDesc = new MaterialDescriptor
         {
             smkId = encryptionMaterial.smkId.ToString(),
             queryId = encryptionMaterial.queryId,
             keySize = (masterKeySize * 8).ToString()
         };
 
-        string ivBase64 = Convert.ToBase64String(ivData);
-        string keyBase64 = Convert.ToBase64String(encryptedFileKey);
+        var ivBase64 = Convert.ToBase64String(ivData);
+        var keyBase64 = Convert.ToBase64String(encryptedFileKey);
 
         encryptionMetadata.iv = ivBase64;
         encryptionMetadata.key = keyBase64;
@@ -105,15 +105,15 @@ class EncryptionProvider
     /// <returns>The encrypted key.</returns>
     private static byte[] EncryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
     {
-        using (Aes aes = Aes.Create())
+        using (var aes = Aes.Create())
         {
             aes.Key = masterKey;
             aes.Mode = CipherMode.ECB;
             aes.Padding = PaddingMode.PKCS7;
 
-            MemoryStream cipherStream = new MemoryStream();
+            var cipherStream = new MemoryStream();
             using (var encryptor = aes.CreateEncryptor())
-            using (CryptoStream cryptoStream = new CryptoStream(cipherStream, encryptor, CryptoStreamMode.Write))
+            using (var cryptoStream = new CryptoStream(cipherStream, encryptor, CryptoStreamMode.Write))
             {
                 cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
                 cryptoStream.FlushFinalBlock();
@@ -136,7 +136,7 @@ class EncryptionProvider
         byte[] iv,
         FileTransferConfiguration transferConfiguration)
     {
-        using (Aes aes = Aes.Create())
+        using (var aes = Aes.Create())
         {
             aes.Key = key;
             aes.Mode = CipherMode.CBC;
@@ -149,7 +149,7 @@ class EncryptionProvider
                 : (new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir), new byte[transferConfiguration.MaxBytesInMemory]);
             using (var encryptor = aes.CreateEncryptor())
             {
-                CryptoStream cryptoStream = new CryptoStream(targetStream, encryptor, CryptoStreamMode.Write);
+                var cryptoStream = new CryptoStream(targetStream, encryptor, CryptoStreamMode.Write);
                 int bytesRead;
                 while ((bytesRead = inputStream.Read(buffer, 0, buffer.Length)) > 0)
                 {
@@ -181,21 +181,21 @@ class EncryptionProvider
         FileTransferConfiguration transferConfiguration)
     {
         // Get key and iv from metadata
-        string keyBase64 = encryptionMetadata.key;
-        string ivBase64 = encryptionMetadata.iv;
+        var keyBase64 = encryptionMetadata.key;
+        var ivBase64 = encryptionMetadata.iv;
 
         // Get decoded key from base64 encoded value
-        byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
+        var decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
 
         // Get key bytes and iv bytes from base64 encoded value
-        byte[] keyBytes = Convert.FromBase64String(keyBase64);
-        byte[] ivBytes = Convert.FromBase64String(ivBase64);
+        var keyBytes = Convert.FromBase64String(keyBase64);
+        var ivBytes = Convert.FromBase64String(ivBase64);
 
         // Create temp file
-        string tempFileName = Path.Combine(TempUtil.GetTempPath(), Path.GetFileName(inFile));
+        var tempFileName = Path.Combine(TempUtil.GetTempPath(), Path.GetFileName(inFile));
 
         // Create decipher with file key, iv bytes, and AES CBC
-        byte[] decryptedFileKey = DecryptFileKey(decodedMasterKey, keyBytes);
+        var decryptedFileKey = DecryptFileKey(decodedMasterKey, keyBytes);
 
         // Create key decipher with decoded key and AES ECB
         using (var decryptedBytesStreamPair = CreateDecryptedBytesStream(
@@ -222,15 +222,15 @@ class EncryptionProvider
     /// <returns>The encrypted key.</returns>
     private static byte[] DecryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
     {
-        using (Aes aes = Aes.Create())
+        using (var aes = Aes.Create())
         {
             aes.Key = masterKey;
             aes.Mode = CipherMode.ECB;
             aes.Padding = PaddingMode.PKCS7;
 
-            MemoryStream cipherStream = new MemoryStream();
+            var cipherStream = new MemoryStream();
             using (var decryptor = aes.CreateDecryptor())
-            using (CryptoStream cryptoStream = new CryptoStream(cipherStream, decryptor, CryptoStreamMode.Write))
+            using (var cryptoStream = new CryptoStream(cipherStream, decryptor, CryptoStreamMode.Write))
             {
                 cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
                 cryptoStream.FlushFinalBlock();
@@ -253,7 +253,7 @@ class EncryptionProvider
         byte[] iv,
         FileTransferConfiguration transferConfiguration)
     {
-        using (Aes aes = Aes.Create())
+        using (var aes = Aes.Create())
         {
             aes.Key = key;
             aes.Mode = CipherMode.CBC;
@@ -270,7 +270,7 @@ class EncryptionProvider
             {
                 using (var decryptor = aes.CreateDecryptor())
                 {
-                    CryptoStream cryptoStream = new CryptoStream(targetStream, decryptor, CryptoStreamMode.Write);
+                    var cryptoStream = new CryptoStream(targetStream, decryptor, CryptoStreamMode.Write);
                     using (Stream inStream = File.OpenRead(inFile))
                     {
                         inStream.CopyTo(cryptoStream);

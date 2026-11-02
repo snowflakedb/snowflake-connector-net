@@ -26,14 +26,14 @@ public sealed class SFConnectionIT : SFBaseTestAsync
     {
         using (var conn = new MockSnowflakeDbConnection(session => new KeyPairAuthenticator(session, session.restRequester)))
         {
-            int timeoutSec = 5;
-            string loginTimeOut5sec = string.Format(_fixture.ConnectionString + "connection_timeout={0};maxHttpRetries=0",
+            var timeoutSec = 5;
+            var loginTimeOut5sec = string.Format(_fixture.ConnectionString + "connection_timeout={0};maxHttpRetries=0",
                 timeoutSec);
 
             conn.ConnectionString = loginTimeOut5sec;
 
             Assert.Equal(ConnectionState.Closed, conn.State);
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            var stopwatch = Stopwatch.StartNew();
             try
             {
                 conn.Open();
@@ -49,7 +49,7 @@ public sealed class SFConnectionIT : SFBaseTestAsync
             }
 
             stopwatch.Stop();
-            int delta = 50; // in case server time slower.
+            var delta = 50; // in case server time slower.
 
             // Should timeout before the defined timeout plus 1 (buffer time)
             // Should timeout after the defined timeout since retry count is infinite
@@ -87,15 +87,15 @@ public sealed class SFConnectionIT : SFBaseTestAsync
         {
             using (IDbConnection conn = new MockSnowflakeDbConnection(session => new KeyPairAuthenticator(session, session.restRequester)))
             {
-                int connectionTimeout = 5;
-                int retryTimeout = 1;
-                string loginTimeOut5sec = string.Format(_fixtureHere.ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
+                var connectionTimeout = 5;
+                var retryTimeout = 1;
+                var loginTimeOut5sec = string.Format(_fixtureHere.ConnectionString + "connection_timeout={0};retry_timeout={1};maxHttpRetries=0",
                     connectionTimeout, retryTimeout);
 
                 conn.ConnectionString = loginTimeOut5sec;
 
                 Assert.Equal(ConnectionState.Closed, conn.State);
-                Stopwatch stopwatch = Stopwatch.StartNew();
+                var stopwatch = Stopwatch.StartNew();
                 try
                 {
                     conn.Open();
@@ -110,7 +110,7 @@ public sealed class SFConnectionIT : SFBaseTestAsync
                 }
 
                 stopwatch.Stop();
-                int delta = 50; // in case server time slower.
+                var delta = 50; // in case server time slower.
 
                 // Should timeout after the defined timeout since retry count is infinite
                 Assert.InRange(stopwatch.ElapsedMilliseconds, retryTimeout * 1000 - delta, long.MaxValue);
@@ -136,8 +136,8 @@ public sealed class SFConnectionIT : SFBaseTestAsync
         using (var conn = new SnowflakeDbConnection())
         {
             // Just a way to get a 404 on the login request and make sure there are no retry
-            string invalidConnectionString = "host=google.com/404;"
-                                             + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;certRevocationCheckMode=enabled;";
+            var invalidConnectionString = "host=google.com/404;"
+                                          + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;certRevocationCheckMode=enabled;";
 
             conn.ConnectionString = invalidConnectionString;
 
@@ -166,8 +166,8 @@ public sealed class SFConnectionIT : SFBaseTestAsync
     {
         using (var conn = new SnowflakeDbConnection())
         {
-            string invalidConnectionString = "host=google.com/404;"
-                                             + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;disableretry=true;forceretryon404=true;certRevocationCheckMode=enabled;";
+            var invalidConnectionString = "host=google.com/404;"
+                                          + "connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;disableretry=true;forceretryon404=true;certRevocationCheckMode=enabled;";
             conn.ConnectionString = invalidConnectionString;
 
             Assert.Equal(ConnectionState.Closed, conn.State);

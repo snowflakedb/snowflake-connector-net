@@ -21,7 +21,7 @@ public class OktaConnectionTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateUsingOktaSuccessful()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         authTestHelper.ConnectAndExecuteSimpleQuery(_connectionString);
         authTestHelper.VerifyExceptionIsNotThrown();
@@ -31,7 +31,7 @@ public class OktaConnectionTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateUsingOktaWrongUsernameParam()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         var parameters = AuthConnectionString.GetOktaConnectionString();
         parameters[SFSessionProperty.USER] = "differentUser";
@@ -44,7 +44,7 @@ public class OktaConnectionTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateUsingOktaWrongCredentials()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         var parameters = AuthConnectionString.GetOktaConnectionString();
         parameters[SFSessionProperty.USER] = "differentUser";
@@ -59,7 +59,7 @@ public class OktaConnectionTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateUsingOktaWrongUrl()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         var parameters = AuthConnectionString.GetOktaConnectionString();
         parameters[SFSessionProperty.AUTHENTICATOR] = "https://invalid.okta.com/";
@@ -74,7 +74,7 @@ public class OktaConnectionTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateUsingUrlWithoutOkta()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         var parameters = AuthConnectionString.GetOktaConnectionString();
         parameters[SFSessionProperty.AUTHENTICATOR] = "https://invalid.abc.com/";

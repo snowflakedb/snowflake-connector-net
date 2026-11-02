@@ -135,19 +135,19 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
     public async Task TestSSOConnectionWithUserAsync()
     {
         // Use external browser to log in using proper password for qa@snowflakecomputing.com
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString
                 = _fixture.ConnectionStringWithoutAuth
                   + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com";
 
-            Task connectTask = conn.OpenAsync(CancellationToken.None);
+            var connectTask = conn.OpenAsync(CancellationToken.None);
             connectTask.Wait();
             Assert.Equal(ConnectionState.Open, conn.State);
-            using (DbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_USER()";
-                Task<object> task = command.ExecuteScalarAsync(CancellationToken.None);
+                var task = command.ExecuteScalarAsync(CancellationToken.None);
                 task.Wait(CancellationToken.None);
                 Assert.Equal("QA", task.Result);
             }
@@ -177,19 +177,19 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
     public async Task TestSSOConnectionWithUserAsyncAndDisableConsoleLogin()
     {
         // Use external browser to log in using proper password for qa@snowflakecomputing.com
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString
                 = _fixture.ConnectionStringWithoutAuth
                   + ";authenticator=externalbrowser;user=qa@snowflakecomputing.com;disable_console_login=false;";
 
-            Task connectTask = conn.OpenAsync(CancellationToken.None);
+            var connectTask = conn.OpenAsync(CancellationToken.None);
             connectTask.Wait();
             Assert.Equal(ConnectionState.Open, conn.State);
-            using (DbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT CURRENT_USER()";
-                Task<object> task = command.ExecuteScalarAsync(CancellationToken.None);
+                var task = command.ExecuteScalarAsync(CancellationToken.None);
                 task.Wait(CancellationToken.None);
                 Assert.Equal("QA", task.Result);
             }
@@ -200,8 +200,8 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
     public async Task TestSSOConnectionTimeoutAfter10s()
     {
         // Do not log in by external browser - timeout after 10s should happen
-        int waitSeconds = 10;
-        Stopwatch stopwatch = Stopwatch.StartNew();
+        var waitSeconds = 10;
+        var stopwatch = Stopwatch.StartNew();
         await Assert.ThrowsAsync<SnowflakeDbException>(async () =>
             {
                 using (var conn = new SnowflakeDbConnection())
@@ -310,7 +310,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             = _fixture.ConnectionStringWithoutAuth
               + $";authenticator=externalbrowser;user={_fixture.testConfig.user};CLIENT_STORE_TEMPORARY_CREDENTIAL=true;poolingEnabled=false";
 
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = externalBrowserConnectionString;
 
@@ -319,7 +319,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             Assert.Equal(ConnectionState.Open, conn.State);
         }
 
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = externalBrowserConnectionString;
 
@@ -395,7 +395,7 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
         // ACCOUNT PARAMETER ALLOW_CLIENT_MFA_CACHING should be set to true in the account.
         // On Mac/Linux OS the default credential manager is a file based one. Uncomment the following line to test in memory implementation.
         // SnowflakeCredentialManagerFactory.UseInMemoryCredentialManager();
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString
                 = _fixture.ConnectionString
@@ -697,10 +697,10 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             // Data source is empty string for now
             Assert.Equal("", ((SnowflakeDbConnection)conn).DataSource);
 
-            string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
+            var serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
             if (!string.IsNullOrEmpty(serverVersion))
             {
-                string[] versionElements = serverVersion.Split('.');
+                var versionElements = serverVersion.Split('.');
                 Assert.Equal(3, versionElements.Length);
             }
 
@@ -723,10 +723,10 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             // Data source is empty string for now
             Assert.Equal("", ((SnowflakeDbConnection)conn).DataSource);
 
-            string serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
+            var serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
             if (!string.IsNullOrEmpty(serverVersion))
             {
-                string[] versionElements = serverVersion.Split('.');
+                var versionElements = serverVersion.Split('.');
                 Assert.Equal(3, versionElements.Length);
             }
 
@@ -1030,13 +1030,13 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
     [SFFact(Skip = "Ignore this test until configuration is setup for CI integration. Can be run manually.")]
     public async Task TestMulitpleConnectionInParallel()
     {
-        string baseConnectionString = _fixture.ConnectionString + $";CONNECTION_TIMEOUT=30;";
-        string authenticatedProxy = string.Format("useProxy =true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};",
+        var baseConnectionString = _fixture.ConnectionString + $";CONNECTION_TIMEOUT=30;";
+        var authenticatedProxy = string.Format("useProxy =true;proxyHost={0};proxyPort={1};proxyUser={2};proxyPassword={3};",
             _fixture.testConfig.authProxyHost,
             _fixture.testConfig.authProxyPort,
             _fixture.testConfig.authProxyUser,
             _fixture.testConfig.authProxyPwd);
-        string byPassList = "nonProxyHosts=*.foo.com %7C" + _fixture.testConfig.host + "|localhost;";
+        var byPassList = "nonProxyHosts=*.foo.com %7C" + _fixture.testConfig.host + "|localhost;";
 
         string[] connectionStrings =
         {
@@ -1048,12 +1048,12 @@ public sealed class SFConnectionManualIT : SFBaseTestAsync
             ConnectionStringModifier.DisableCrlRevocationCheck(baseConnectionString + authenticatedProxy + byPassList)
         };
 
-        bool failed = false;
+        var failed = false;
 
-        Task[] tasks = new Task[450];
-        for (int i = 0; i < 450; i++)
+        var tasks = new Task[450];
+        for (var i = 0; i < 450; i++)
         {
-            string connString = connectionStrings[i % (connectionStrings.Length)];
+            var connString = connectionStrings[i % (connectionStrings.Length)];
             tasks[i] = Task.Run(async () =>
             {
                 using (var conn = new SnowflakeDbConnection())

@@ -244,7 +244,7 @@ internal abstract class OAuthFlowAuthenticator : BaseAuthenticator
 
     private string ExtractPropertyOrDefault(SFSessionProperty property, string defaultValue)
     {
-        if (Session.properties.TryGetValue(property, out string value) && !string.IsNullOrEmpty(value))
+        if (Session.properties.TryGetValue(property, out var value) && !string.IsNullOrEmpty(value))
             return value;
         return defaultValue;
     }

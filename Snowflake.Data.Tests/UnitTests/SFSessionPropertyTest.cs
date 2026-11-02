@@ -679,26 +679,26 @@ public class SFSessionPropertyTest
 
     public static IEnumerable<object[]> ConnectionStringTestCases()
     {
-        string defAccount = "testaccount";
-        string defUser = "testuser";
-        string defHost = "testaccount.snowflakecomputing.com";
-        string defAuthenticator = "snowflake";
-        string defScheme = "https";
-        string defConnectionTimeout = "300";
-        string defBrowserResponseTime = "120";
-        string defPassword = "123";
-        string defPort = "443";
+        var defAccount = "testaccount";
+        var defUser = "testuser";
+        var defHost = "testaccount.snowflakecomputing.com";
+        var defAuthenticator = "snowflake";
+        var defScheme = "https";
+        var defConnectionTimeout = "300";
+        var defBrowserResponseTime = "120";
+        var defPassword = "123";
+        var defPort = "443";
 
-        string defProxyHost = "proxy.com";
-        string defProxyPort = "1234";
-        string defNonProxyHosts = "localhost";
+        var defProxyHost = "proxy.com";
+        var defProxyPort = "1234";
+        var defNonProxyHosts = "localhost";
 
-        string defRetryTimeout = "300";
-        string defMaxHttpRetries = "7";
-        string defIncludeRetryReason = "true";
-        string defDisableQueryContextCache = "false";
-        string defDisableConsoleLogin = "true";
-        string defAllowUnderscoresInHost = "false";
+        var defRetryTimeout = "300";
+        var defMaxHttpRetries = "7";
+        var defIncludeRetryReason = "true";
+        var defDisableQueryContextCache = "false";
+        var defDisableConsoleLogin = "true";
+        var defAllowUnderscoresInHost = "false";
 
         var simpleTestCase = new TestCase()
         {

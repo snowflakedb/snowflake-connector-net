@@ -20,17 +20,17 @@ internal class MockServiceName : MockBaseRestRequester
         }
         else
         {
-            IEnumerable<string> headerValues = message.Headers.GetValues("X-Snowflake-Service");
-            foreach (string value in headerValues)
+            var headerValues = message.Headers.GetValues("X-Snowflake-Service");
+            foreach (var value in headerValues)
             {
                 param.value = value + 'a';
             }
         }
 
-        SFRestRequest sfRequest = (SFRestRequest)request;
+        var sfRequest = (SFRestRequest)request;
         if (sfRequest.jsonBody is LoginRequest)
         {
-            LoginResponse authnResponse = new LoginResponse
+            var authnResponse = new LoginResponse
             {
                 data = new LoginResponseData()
                 {
@@ -48,7 +48,7 @@ internal class MockServiceName : MockBaseRestRequester
         else if (sfRequest.jsonBody is QueryRequest)
         {
 
-            QueryExecResponse queryExecResponse = new QueryExecResponse
+            var queryExecResponse = new QueryExecResponse
             {
                 success = true,
                 data = new QueryExecResponseData

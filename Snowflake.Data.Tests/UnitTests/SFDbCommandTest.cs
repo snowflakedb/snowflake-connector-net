@@ -20,8 +20,8 @@ public sealed class SFDbCommandTest
     public void TestCommandWithConnectionAndCommandText()
     {
         // Arrange
-        SnowflakeDbConnection conn = new SnowflakeDbConnection();
-        string commandText = "select 1";
+        var conn = new SnowflakeDbConnection();
+        var commandText = "select 1";
 
         // Act
         command = new SnowflakeDbCommand(conn, commandText);
@@ -45,7 +45,7 @@ public sealed class SFDbCommandTest
     public void TestCommandExecuteAsyncThrowsExceptionWhenCommandTextIsNotSet()
     {
         // Arrange
-        Task<object> commandTask = command.ExecuteScalarAsync(CancellationToken.None);
+        var commandTask = command.ExecuteScalarAsync(CancellationToken.None);
 
         // Act
         var thrown = Assert.Throws<AggregateException>(() => commandTask.Wait());

@@ -16,10 +16,10 @@ internal class MockRestSessionExpiredInQueryExec : MockBaseRestRequester
 
     public override Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
     {
-        SFRestRequest sfRequest = (SFRestRequest)request;
+        var sfRequest = (SFRestRequest)request;
         if (sfRequest.jsonBody is LoginRequest)
         {
-            LoginResponse authnResponse = new LoginResponse
+            var authnResponse = new LoginResponse
             {
                 data = new LoginResponseData()
                 {
@@ -36,7 +36,7 @@ internal class MockRestSessionExpiredInQueryExec : MockBaseRestRequester
         }
         else if (sfRequest.jsonBody is QueryRequest)
         {
-            QueryExecResponse queryExecResponse = new QueryExecResponse
+            var queryExecResponse = new QueryExecResponse
             {
                 success = false,
                 code = QUERY_IN_EXEC_CODE
@@ -73,11 +73,11 @@ internal class MockRestSessionExpiredInQueryExec : MockBaseRestRequester
 
     public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
     {
-        SFRestRequest sfRequest = (SFRestRequest)request;
+        var sfRequest = (SFRestRequest)request;
         if (getResultCallCount == 0)
         {
             getResultCallCount++;
-            QueryExecResponse queryExecResponse = new QueryExecResponse
+            var queryExecResponse = new QueryExecResponse
             {
                 success = false,
                 code = QUERY_IN_EXEC_CODE
@@ -87,7 +87,7 @@ internal class MockRestSessionExpiredInQueryExec : MockBaseRestRequester
         else if (getResultCallCount == 1)
         {
             getResultCallCount++;
-            QueryExecResponse queryExecResponse = new QueryExecResponse
+            var queryExecResponse = new QueryExecResponse
             {
                 success = false,
                 code = SESSION_EXPIRED_CODE
@@ -98,7 +98,7 @@ internal class MockRestSessionExpiredInQueryExec : MockBaseRestRequester
                  sfRequest.authorizationToken.Equals("Snowflake Token=\"new_session_token\""))
         {
             getResultCallCount++;
-            QueryExecResponse queryExecResponse = new QueryExecResponse
+            var queryExecResponse = new QueryExecResponse
             {
                 success = true,
                 data = new QueryExecResponseData
@@ -119,7 +119,7 @@ internal class MockRestSessionExpiredInQueryExec : MockBaseRestRequester
         }
         else
         {
-            QueryExecResponse queryExecResponse = new QueryExecResponse
+            var queryExecResponse = new QueryExecResponse
             {
                 success = false,
                 code = 1

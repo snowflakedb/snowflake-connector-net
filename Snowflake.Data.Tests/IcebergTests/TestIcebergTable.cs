@@ -102,7 +102,7 @@ public abstract class TestIcebergTable : SFBaseTestAsync
 
             // Assert
             var reader = conn.ExecuteReader($"select {SqlColumnsSimpleTypes} from {TableNameIceberg}");
-            int rowsRead = 0;
+            var rowsRead = 0;
             while (reader.Read())
             {
                 rowsRead++;
@@ -126,7 +126,7 @@ public abstract class TestIcebergTable : SFBaseTestAsync
 
             // Assert
             var reader = conn.ExecuteReader($"select {SqlColumnsSimpleTypes} from {TableNameIceberg}");
-            int rowsRead = 0;
+            var rowsRead = 0;
             while (reader.Read())
             {
                 rowsRead++;
@@ -183,7 +183,7 @@ public abstract class TestIcebergTable : SFBaseTestAsync
 
             // Assert
             var reader = conn.ExecuteReader($"select {SqlColumnsSimpleTypes} from {TableNameIceberg}");
-            int rowsRead = 0;
+            var rowsRead = 0;
             while (reader.Read())
             {
                 rowsRead++;
@@ -298,7 +298,7 @@ public abstract class TestIcebergTable : SFBaseTestAsync
             var reader = cmd.ExecuteReader();
 
             // Assert
-            int rowsRead = 0;
+            var rowsRead = 0;
             while (reader.Read())
             {
                 rowsRead++;
@@ -352,7 +352,7 @@ public abstract class TestIcebergTable : SFBaseTestAsync
             conn.ExecuteNonQuery(sql);
 
             var dbDataReader = conn.ExecuteReader($"select {SqlColumnsStructureTypes} from {TableNameIceberg}");
-            int rowsRead = 0;
+            var rowsRead = 0;
             while (dbDataReader.Read())
             {
                 rowsRead++;

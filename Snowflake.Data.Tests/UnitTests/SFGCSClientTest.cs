@@ -79,9 +79,9 @@ public sealed class SFGCSClientTest
     public void TestExtractBucketNameAndPath()
     {
         // Split LOCATION based on the first '/' character
-        string[] bucketAndKey = Location.Split(new[] { '/' }, 2);
+        var bucketAndKey = Location.Split(new[] { '/' }, 2);
 
-        RemoteLocation location = _client.ExtractBucketNameAndPath(_fileMetadata.stageInfo.location);
+        var location = _client.ExtractBucketNameAndPath(_fileMetadata.stageInfo.location);
 
         Assert.Equal(bucketAndKey[0], location.bucket);
         Assert.Equal(bucketAndKey[1], location.key);
@@ -103,7 +103,7 @@ public sealed class SFGCSClientTest
             matDesc = MockGCSClient.GcsMatdesc
         };
 
-        FileHeader fileHeader = _client.GetFileHeader(_fileMetadata);
+        var fileHeader = _client.GetFileHeader(_fileMetadata);
 
         AssertForGetFileHeaderWhenFileHeaderAlreadyExistsTests(expectedResultStatus, fileHeader);
     }
@@ -124,7 +124,7 @@ public sealed class SFGCSClientTest
             matDesc = MockGCSClient.GcsMatdesc
         };
 
-        FileHeader fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
+        var fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
 
         AssertForGetFileHeaderWhenFileHeaderAlreadyExistsTests(expectedResultStatus, fileHeader);
     }
@@ -159,7 +159,7 @@ public sealed class SFGCSClientTest
         _client.SetCustomWebRequest(mockWebRequest.Object);
 
         // Act
-        FileHeader fileHeader = _client.GetFileHeader(_fileMetadata);
+        var fileHeader = _client.GetFileHeader(_fileMetadata);
 
         // Assert
         AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
@@ -185,7 +185,7 @@ public sealed class SFGCSClientTest
         _client.SetCustomWebRequest(mockWebRequest.Object);
 
         // Act
-        FileHeader fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
+        var fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
 
         // Assert
         AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
@@ -465,7 +465,7 @@ public sealed class SFGCSClientTest
         var expectedResultStatus = (ResultStatus)expectedResultStatusInt;
         if (expectedResultStatus == ResultStatus.DOWNLOADED)
         {
-            string text = File.ReadAllText(t_downloadFileName);
+            var text = File.ReadAllText(t_downloadFileName);
             Assert.Equal(MockGCSClient.GcsFileContent, text);
             File.Delete(t_downloadFileName);
         }

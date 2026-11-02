@@ -42,7 +42,7 @@ public class SFBindTestIT : SFBaseTestAsync
 
             using (var cmd = conn.CreateCommand())
             {
-                string insertCommand = $"insert into {fixtureTableName} values (?, ?)";
+                var insertCommand = $"insert into {fixtureTableName} values (?, ?)";
                 cmd.CommandText = insertCommand;
 
                 var p1 = cmd.CreateParameter();
@@ -69,7 +69,7 @@ public class SFBindTestIT : SFBaseTestAsync
     [MemberData(nameof(NullTestCases))]
     public async Task TestBindNullValue(object nullValue)
     {
-        using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
+        using (var dbConnection = new SnowflakeDbConnection())
         {
             dbConnection.ConnectionString = _fixture.ConnectionString;
             dbConnection.Open();
@@ -89,7 +89,7 @@ public class SFBindTestIT : SFBaseTestAsync
             }).ConfigureAwait(false);
             foreach (DbType type in Enum.GetValues(typeof(DbType)))
             {
-                bool isTypeSupported = true;
+                var isTypeSupported = true;
                 string colName;
                 using (var command = dbConnection.CreateCommand())
                 {
@@ -162,7 +162,7 @@ public class SFBindTestIT : SFBaseTestAsync
                         command.CommandText = $"insert into {fixtureTableName}({colName}) values(:p0)";
                         param.Value = nullValue;
                         command.Parameters.Add(param);
-                        int rowsInserted = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+                        var rowsInserted = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                         Assert.Equal(1, rowsInserted);
                     }
                     else
@@ -172,7 +172,7 @@ public class SFBindTestIT : SFBaseTestAsync
                             command.CommandText = $"insert into {fixtureTableName}(stringData) values(:p0)";
                             param.Value = nullValue;
                             command.Parameters.Add(param);
-                            int rowsInserted = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+                            var rowsInserted = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                         }
                         catch (SnowflakeDbException e)
                         {
@@ -186,7 +186,7 @@ public class SFBindTestIT : SFBaseTestAsync
                     using (IDbCommand command = dbConnection.CreateCommand())
                     {
                         command.CommandText = $"select {colName} from {fixtureTableName};";
-                        using (IDataReader reader = command.ExecuteReader())
+                        using (var reader = command.ExecuteReader())
                         {
                             reader.Read();
                             Assert.True(reader.IsDBNull(0));
@@ -211,7 +211,7 @@ public class SFBindTestIT : SFBaseTestAsync
     [SFFact]
     public async Task TestBindValue()
     {
-        using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
+        using (var dbConnection = new SnowflakeDbConnection())
         {
             dbConnection.ConnectionString = _fixture.ConnectionString;
             dbConnection.Open();
@@ -233,7 +233,7 @@ public class SFBindTestIT : SFBaseTestAsync
 
             foreach (DbType type in Enum.GetValues(typeof(DbType)))
             {
-                bool isTypeSupported = true;
+                var isTypeSupported = true;
                 string colName;
                 using (var command = dbConnection.CreateCommand())
                 {
@@ -318,7 +318,7 @@ public class SFBindTestIT : SFBaseTestAsync
                     {
                         command.CommandText = $"insert into {fixtureTableName}({colName}) values(:p0)";
                         command.Parameters.Add(param);
-                        int rowsInserted = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+                        var rowsInserted = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                         Assert.Equal(1, rowsInserted);
                     }
                     else
@@ -364,7 +364,7 @@ public class SFBindTestIT : SFBaseTestAsync
     [SFFact]
     public async Task TestBindValueWithSFDataType()
     {
-        using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
+        using (var dbConnection = new SnowflakeDbConnection())
         {
             dbConnection.ConnectionString = _fixture.ConnectionString;
             dbConnection.Open();
@@ -372,7 +372,7 @@ public class SFBindTestIT : SFBaseTestAsync
             {
                 if (!type.Equals(SFDataType.None) && !type.Equals(SFDataType.MAP) && !type.Equals(SFDataType.VECTOR))
                 {
-                    bool isTypeSupported = true;
+                    var isTypeSupported = true;
                     string[] columns;
                     if (!type.Equals(SFDataType.FIXED))
                     {
@@ -396,7 +396,7 @@ public class SFBindTestIT : SFBaseTestAsync
 
                     using (var command = dbConnection.CreateCommand())
                     {
-                        SnowflakeDbParameter param = (SnowflakeDbParameter)command.CreateParameter();
+                        var param = (SnowflakeDbParameter)command.CreateParameter();
                         param.ParameterName = "p0";
                         param.SFDataType = type;
                         switch (type)
@@ -443,7 +443,7 @@ public class SFBindTestIT : SFBaseTestAsync
                             param.DbType = DbType.Object;
                             command.CommandText = $"insert into {fixtureTableName}(data) values(:p0)";
                             command.Parameters.Add(param);
-                            int rowsInserted = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+                            var rowsInserted = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                             Assert.Equal(1, rowsInserted);
                         }
                         // DB rejects query if param type is VARIANT, OBJECT or ARRAY
@@ -470,7 +470,7 @@ public class SFBindTestIT : SFBaseTestAsync
                         using (IDbCommand command = dbConnection.CreateCommand())
                         {
                             command.CommandText = $"select data from {fixtureTableName};";
-                            using (IDataReader reader = command.ExecuteReader())
+                            using (var reader = command.ExecuteReader())
                             {
                                 reader.Read();
                                 Assert.True(!reader.IsDBNull(0));
@@ -509,7 +509,7 @@ public class SFBindTestIT : SFBaseTestAsync
                 p1.DbType = DbType.Int16;
                 p2.Value = 2;
 
-                Array parameters = Array.CreateInstance(typeof(IDbDataParameter), 3);
+                var parameters = Array.CreateInstance(typeof(IDbDataParameter), 3);
                 parameters.SetValue(p1, 0);
                 parameters.SetValue(p2, 1);
                 parameters.SetValue(p3, 2);
@@ -560,13 +560,13 @@ public class SFBindTestIT : SFBaseTestAsync
 
             using (var cmd = conn.CreateCommand())
             {
-                string insertCommand = $"insert into {fixtureTableName} values (?, ?, ?, ?, ?, ?)";
+                var insertCommand = $"insert into {fixtureTableName} values (?, ?, ?, ?, ?, ?)";
                 cmd.CommandText = insertCommand;
 
-                int total = 250000;
+                var total = 250000;
 
-                List<int> arrint = new List<int>();
-                for (int i = 0; i < total; i++)
+                var arrint = new List<int>();
+                for (var i = 0; i < total; i++)
                 {
                     arrint.Add(i * 10 + 1);
                     arrint.Add(i * 10 + 2);
@@ -578,8 +578,8 @@ public class SFBindTestIT : SFBaseTestAsync
                 p1.Value = arrint.ToArray();
                 cmd.Parameters.Add(p1);
 
-                List<string> arrstring = new List<string>();
-                for (int i = 0; i < total; i++)
+                var arrstring = new List<string>();
+                for (var i = 0; i < total; i++)
                 {
                     arrstring.Add("str1");
                     arrstring.Add("str2");
@@ -591,11 +591,11 @@ public class SFBindTestIT : SFBaseTestAsync
                 p2.Value = arrstring.ToArray();
                 cmd.Parameters.Add(p2);
 
-                DateTime date1 = DateTime.ParseExact("2000-01-01 00:00:00.0000000", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                DateTime date2 = DateTime.ParseExact("2020-05-11 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                DateTime date3 = DateTime.ParseExact("2021-07-22 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                List<DateTime> arrDate = new List<DateTime>();
-                for (int i = 0; i < total; i++)
+                var date1 = DateTime.ParseExact("2000-01-01 00:00:00.0000000", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+                var date2 = DateTime.ParseExact("2020-05-11 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+                var date3 = DateTime.ParseExact("2021-07-22 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+                var arrDate = new List<DateTime>();
+                for (var i = 0; i < total; i++)
                 {
                     arrDate.Add(date1);
                     arrDate.Add(date2);
@@ -607,11 +607,11 @@ public class SFBindTestIT : SFBaseTestAsync
                 p3.Value = arrDate.ToArray();
                 cmd.Parameters.Add(p3);
 
-                DateTime time1 = DateTime.ParseExact("00:00:00.0000000", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                DateTime time2 = DateTime.ParseExact("23:59:59.9999999", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                DateTime time3 = DateTime.ParseExact("12:35:41.3333333", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                List<DateTime> arrTime = new List<DateTime>();
-                for (int i = 0; i < total; i++)
+                var time1 = DateTime.ParseExact("00:00:00.0000000", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+                var time2 = DateTime.ParseExact("23:59:59.9999999", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+                var time3 = DateTime.ParseExact("12:35:41.3333333", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+                var arrTime = new List<DateTime>();
+                for (var i = 0; i < total; i++)
                 {
                     arrTime.Add(time1);
                     arrTime.Add(time2);
@@ -624,11 +624,11 @@ public class SFBindTestIT : SFBaseTestAsync
                 p4.Value = arrTime.ToArray();
                 cmd.Parameters.Add(p4);
 
-                DateTime ntz1 = DateTime.ParseExact("2017-01-01 12:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                DateTime ntz2 = DateTime.ParseExact("2020-12-31 23:59:59", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                DateTime ntz3 = DateTime.ParseExact("2022-04-01 00:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                List<DateTime> arrNtz = new List<DateTime>();
-                for (int i = 0; i < total; i++)
+                var ntz1 = DateTime.ParseExact("2017-01-01 12:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+                var ntz2 = DateTime.ParseExact("2020-12-31 23:59:59", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+                var ntz3 = DateTime.ParseExact("2022-04-01 00:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+                var arrNtz = new List<DateTime>();
+                for (var i = 0; i < total; i++)
                 {
                     arrNtz.Add(ntz1);
                     arrNtz.Add(ntz2);
@@ -640,11 +640,11 @@ public class SFBindTestIT : SFBaseTestAsync
                 p5.Value = arrNtz.ToArray();
                 cmd.Parameters.Add(p5);
 
-                DateTimeOffset tz1 = DateTimeOffset.Now;
-                DateTimeOffset tz2 = DateTimeOffset.UtcNow;
-                DateTimeOffset tz3 = new DateTimeOffset(2007, 1, 1, 12, 0, 0, new TimeSpan(4, 0, 0));
-                List<DateTimeOffset> arrTz = new List<DateTimeOffset>();
-                for (int i = 0; i < total; i++)
+                var tz1 = DateTimeOffset.Now;
+                var tz2 = DateTimeOffset.UtcNow;
+                var tz3 = new DateTimeOffset(2007, 1, 1, 12, 0, 0, new TimeSpan(4, 0, 0));
+                var arrTz = new List<DateTimeOffset>();
+                for (var i = 0; i < total; i++)
                 {
                     arrTz.Add(tz1);
                     arrTz.Add(tz2);
@@ -697,10 +697,10 @@ public class SFBindTestIT : SFBaseTestAsync
 
                 var total = 250;
 
-                List<double> arrdouble = new List<double>();
-                List<string> arrstring = new List<string>();
-                List<int> arrint = new List<int>();
-                for (int i = 0; i < total; i++)
+                var arrdouble = new List<double>();
+                var arrstring = new List<string>();
+                var arrint = new List<int>();
+                for (var i = 0; i < total; i++)
                 {
                     arrdouble.Add(i * 10 + 1);
                     arrdouble.Add(i * 10 + 2);
@@ -760,13 +760,13 @@ public class SFBindTestIT : SFBaseTestAsync
 
             using (var cmd = conn.CreateCommand())
             {
-                string insertCommand = $"insert into {fixtureTableName} values (?)";
+                var insertCommand = $"insert into {fixtureTableName} values (?)";
                 cmd.CommandText = insertCommand;
 
-                int total = 70000;
+                var total = 70000;
 
-                List<int> arrint = new List<int>();
-                for (int i = 0; i < total; i++)
+                var arrint = new List<int>();
+                for (var i = 0; i < total; i++)
                 {
                     arrint.Add(i);
                 }
@@ -804,7 +804,7 @@ public class SFBindTestIT : SFBaseTestAsync
 
             using (var cmd = conn.CreateCommand())
             {
-                string insertCommand = $"insert into {fixtureTableName} values (?)";
+                var insertCommand = $"insert into {fixtureTableName} values (?)";
                 cmd.CommandText = insertCommand;
 
                 var p1 = cmd.CreateParameter();
@@ -837,7 +837,7 @@ public class SFBindTestIT : SFBaseTestAsync
 
             using (var cmd = conn.CreateCommand())
             {
-                string insertCommand = $"insert into {fixtureTableName} values (?)";
+                var insertCommand = $"insert into {fixtureTableName} values (?)";
                 cmd.CommandText = insertCommand;
 
                 var p1 = cmd.CreateParameter();
@@ -938,7 +938,7 @@ public class SFBindTestIT : SFBaseTestAsync
             var sql_values = "?";
 
             // prepare additional columns
-            for (int i = 1; i <= timestamps.Length; ++i)
+            for (var i = 1; i <= timestamps.Length; ++i)
             {
                 columns.Add($"ts_{i} {columnWithPrecision}");
                 sql_columns += $",ts_{i}";
@@ -967,10 +967,10 @@ public class SFBindTestIT : SFBaseTestAsync
                 while (reader.Read())
                 {
                     ++row;
-                    string faultMessage = $"Mismatch for row: {row}, {testCase}";
+                    var faultMessage = $"Mismatch for row: {row}, {testCase}";
                     Assert.Equal(row, reader.GetInt32(0));
 
-                    for (int i = 0; i < timestamps.Length; ++i)
+                    for (var i = 0; i < timestamps.Length; ++i)
                     {
                         expected.AssertEqual(reader.GetValue(i + 1), comparisonFormat, faultMessage, i);
                     }
@@ -989,7 +989,7 @@ public class SFBindTestIT : SFBaseTestAsync
             if (ExpectedTimestampWrapper.IsOffsetType(ts.ExpectedColumnType()))
             {
                 var dateTimeOffsets = ts.GetDateTimeOffsets();
-                for (int i = 0; i < dateTimeOffsets.Length; ++i)
+                for (var i = 0; i < dateTimeOffsets.Length; ++i)
                 {
                     var parameterName = (i + 2).ToString();
                     var parameterValue = dateTimeOffsets[i];
@@ -1000,7 +1000,7 @@ public class SFBindTestIT : SFBaseTestAsync
             else
             {
                 var dateTimes = ts.GetDateTimes();
-                for (int i = 0; i < dateTimes.Length; ++i)
+                for (var i = 0; i < dateTimes.Length; ++i)
                 {
                     var parameterName = (i + 2).ToString();
                     var parameterValue = dateTimes[i];
@@ -1027,7 +1027,7 @@ public class SFBindTestIT : SFBaseTestAsync
             if (ExpectedTimestampWrapper.IsOffsetType(ts.ExpectedColumnType()))
             {
                 var dateTimeOffsets = ts.GetDateTimeOffsets();
-                for (int i = 0; i < dateTimeOffsets.Length; ++i)
+                for (var i = 0; i < dateTimeOffsets.Length; ++i)
                 {
                     var parameterName = (i + 2).ToString();
                     var parameterValue = Enumerable.Repeat(dateTimeOffsets[i], rowsCount).ToArray();
@@ -1039,7 +1039,7 @@ public class SFBindTestIT : SFBaseTestAsync
             else
             {
                 var dateTimes = ts.GetDateTimes();
-                for (int i = 0; i < dateTimes.Length; ++i)
+                for (var i = 0; i < dateTimes.Length; ++i)
                 {
                     var parameterName = (i + 2).ToString();
                     var parameterValue = Enumerable.Repeat(dateTimes[i], rowsCount).ToArray();

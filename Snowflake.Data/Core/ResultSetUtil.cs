@@ -10,8 +10,8 @@ internal static class ResultSetUtil
 {
     internal static int CalculateUpdateCount(this SFBaseResultSet resultSet)
     {
-        SFResultSetMetaData metaData = resultSet.sfResultSetMetaData;
-        SFStatementType statementType = metaData.statementType;
+        var metaData = resultSet.sfResultSetMetaData;
+        var statementType = metaData.statementType;
 
         long updateCount = 0;
         switch (statementType)
@@ -22,7 +22,7 @@ internal static class ResultSetUtil
             case SFStatementType.MERGE:
             case SFStatementType.MULTI_INSERT:
                 resultSet.Next();
-                for (int i = 0; i < resultSet.columnCount; i++)
+                for (var i = 0; i < resultSet.columnCount; i++)
                 {
                     updateCount += resultSet.GetInt64(i);
                 }
@@ -67,8 +67,8 @@ internal static class ResultSetUtil
     {
         if (resultSet.isClosed) return false;
 
-        SFResultSetMetaData metaData = resultSet.sfResultSetMetaData;
-        SFStatementType statementType = metaData.statementType;
+        var metaData = resultSet.sfResultSetMetaData;
+        var statementType = metaData.statementType;
 
         switch (statementType)
         {

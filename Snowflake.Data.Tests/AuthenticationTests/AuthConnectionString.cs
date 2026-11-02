@@ -167,7 +167,7 @@ static class AuthConnectionString
 
     public static string ConvertToConnectionString(SFSessionProperties properties)
     {
-        StringBuilder connectionStringBuilder = new StringBuilder();
+        var connectionStringBuilder = new StringBuilder();
 
         foreach (var property in properties)
         {
@@ -178,9 +178,9 @@ static class AuthConnectionString
 
     public static string GetPrivateKeyContentForKeypairAuth(string fileLocation)
     {
-        string filePath = Environment.GetEnvironmentVariable(fileLocation);
+        var filePath = Environment.GetEnvironmentVariable(fileLocation);
         Assert.NotNull(filePath);
-        string pemKey = File.ReadAllText(Path.Combine("..", "..", "..", "..", filePath));
+        var pemKey = File.ReadAllText(Path.Combine("..", "..", "..", "..", filePath));
         Assert.NotNull(pemKey);
         return pemKey;
 
@@ -188,7 +188,7 @@ static class AuthConnectionString
 
     public static string GetPrivateKeyPathForKeypairAuth(string relativeFileLocationEnvVariable)
     {
-        string filePath = Environment.GetEnvironmentVariable(relativeFileLocationEnvVariable);
+        var filePath = Environment.GetEnvironmentVariable(relativeFileLocationEnvVariable);
         Assert.NotNull(filePath);
         return Path.Combine("..", "..", "..", "..", filePath);
     }

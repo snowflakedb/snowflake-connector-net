@@ -34,7 +34,7 @@ public class SFDbParameterTest
     [MemberData(nameof(AllSFDataTypes))]
     public void TestDbParameterWithNameAndDataType(SFDataType expectedSFDataType)
     {
-        string expectedParameterName = "1";
+        var expectedParameterName = "1";
         _parameter = new SnowflakeDbParameter(expectedParameterName, expectedSFDataType);
         Assert.Equal(expectedParameterName, _parameter.ParameterName);
         Assert.Equal(expectedSFDataType, _parameter.SFDataType);
@@ -44,7 +44,7 @@ public class SFDbParameterTest
     [MemberData(nameof(AllSFDataTypes))]
     public void TestDbParameterWithIndexAndDataType(SFDataType expectedSFDataType)
     {
-        int expectedParameterIndex = 1;
+        var expectedParameterIndex = 1;
 
         _parameter = new SnowflakeDbParameter(expectedParameterIndex, expectedSFDataType);
         Assert.Equal(expectedParameterIndex.ToString(), _parameter.ParameterName);
@@ -72,7 +72,7 @@ public class SFDbParameterTest
         }
         else
         {
-            SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _parameter.Direction = ParameterDirection);
+            var ex = Assert.Throws<SnowflakeDbException>(() => _parameter.Direction = ParameterDirection);
             Assert.Equal(SFError.UNSUPPORTED_FEATURE.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
         }
     }
@@ -106,7 +106,7 @@ public class SFDbParameterTest
         _parameter = new SnowflakeDbParameter(1, SFDataType);
         Assert.Null(_parameter.SourceColumn);
 
-        string col = "col";
+        var col = "col";
         _parameter.SourceColumn = col;
         Assert.Equal(col, _parameter.SourceColumn);
     }
@@ -129,7 +129,7 @@ public class SFDbParameterTest
         _parameter = new SnowflakeDbParameter(1, SFDataType);
         Assert.Null(_parameter.Value);
 
-        object obj = new object();
+        var obj = new object();
         _parameter.Value = obj;
         Assert.Equal(obj, _parameter.Value);
     }

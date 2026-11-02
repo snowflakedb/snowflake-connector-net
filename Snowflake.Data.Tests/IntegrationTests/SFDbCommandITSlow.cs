@@ -64,7 +64,7 @@ public sealed class SFDbCommandITSlowB : SFBaseTestAsync
             using (IDbCommand command = conn.CreateCommand())
             {
                 command.CommandText = $"INSERT INTO {tableName} SELECT SEQ4() FROM TABLE(GENERATOR(ROWCOUNT=>2147484000))";
-                int affected = command.ExecuteNonQuery();
+                var affected = command.ExecuteNonQuery();
 
                 Assert.Equal(-1, affected);
             }
@@ -91,15 +91,15 @@ public sealed class SFDbCommandITSlowC : SFBaseTestAsync
 
         using (DbConnection conn = new MockSnowflakeDbConnection(mockRestRequester))
         {
-            string maxRetryConnStr = _fixture.ConnectionString + "maxHttpRetries=8;poolingEnabled=false";
+            var maxRetryConnStr = _fixture.ConnectionString + "maxHttpRetries=8;poolingEnabled=false";
 
             conn.ConnectionString = maxRetryConnStr;
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            var stopwatch = Stopwatch.StartNew();
             try
             {
-                using (DbCommand command = conn.CreateCommand())
+                using (var command = conn.CreateCommand())
                 {
                     command.CommandText = "select 1;";
                     command.ExecuteScalar();
@@ -142,12 +142,12 @@ public sealed class SFDbCommandITSlowD : SFBaseTestAsync
 
         using (var conn = new MockSnowflakeDbConnection(mockRestRequester))
         {
-            string maxRetryConnStr = _fixture.ConnectionString + "maxHttpRetries=8;poolingEnabled=false";
+            var maxRetryConnStr = _fixture.ConnectionString + "maxHttpRetries=8;poolingEnabled=false";
 
             conn.ConnectionString = maxRetryConnStr;
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            var stopwatch = Stopwatch.StartNew();
             try
             {
                 using (IDbCommand command = conn.CreateCommand())

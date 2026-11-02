@@ -59,8 +59,8 @@ class OktaAuthenticator : BaseAuthenticator, IAuthenticator
         var authenticatorRestRequest = BuildAuthenticatorRestRequest();
         var authenticatorResponse = await Session.restRequester.PostAsync<AuthenticatorResponse>(authenticatorRestRequest, cancellationToken).ConfigureAwait(false);
         authenticatorResponse.FilterFailedResponse();
-        Uri ssoUrl = new Uri(authenticatorResponse.data.ssoUrl);
-        Uri tokenUrl = new Uri(authenticatorResponse.data.tokenUrl);
+        var ssoUrl = new Uri(authenticatorResponse.data.ssoUrl);
+        var tokenUrl = new Uri(authenticatorResponse.data.tokenUrl);
 
         s_logger.Debug("step 2: Verify URLs fetched from step 1");
         s_logger.Debug("Checking SSO Okta URL");
@@ -68,8 +68,8 @@ class OktaAuthenticator : BaseAuthenticator, IAuthenticator
         s_logger.Debug("Checking token URL");
         VerifyUrls(tokenUrl, _oktaUrl);
 
-        int retryCount = 0;
-        int timeoutElapsed = 0;
+        var retryCount = 0;
+        var timeoutElapsed = 0;
         Exception lastRetryException = null;
         HttpResponseMessage samlRawResponse = null;
 
@@ -79,9 +79,9 @@ class OktaAuthenticator : BaseAuthenticator, IAuthenticator
             try
             {
                 s_logger.Debug("step 3: Get IdP one-time token");
-                IdpTokenRestRequest idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
+                var idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
                 var idpResponse = await Session.restRequester.PostAsync<IdpTokenResponse>(idpTokenRestRequest, cancellationToken).ConfigureAwait(false);
-                string onetimeToken = idpResponse.SessionToken ?? idpResponse.CookieToken;
+                var onetimeToken = idpResponse.SessionToken ?? idpResponse.CookieToken;
 
                 s_logger.Debug("step 4: Get SAML response from SSO");
                 var samlRestRequest = BuildSamlRestRequest(ssoUrl, onetimeToken);
@@ -125,8 +125,8 @@ class OktaAuthenticator : BaseAuthenticator, IAuthenticator
         var authenticatorRestRequest = BuildAuthenticatorRestRequest();
         var authenticatorResponse = Session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
         authenticatorResponse.FilterFailedResponse();
-        Uri ssoUrl = new Uri(authenticatorResponse.data.ssoUrl);
-        Uri tokenUrl = new Uri(authenticatorResponse.data.tokenUrl);
+        var ssoUrl = new Uri(authenticatorResponse.data.ssoUrl);
+        var tokenUrl = new Uri(authenticatorResponse.data.tokenUrl);
 
         s_logger.Debug("step 2: Verify URLs fetched from step 1");
         s_logger.Debug("Checking SSO Okta URL");
@@ -134,8 +134,8 @@ class OktaAuthenticator : BaseAuthenticator, IAuthenticator
         s_logger.Debug("Checking token URL");
         VerifyUrls(tokenUrl, _oktaUrl);
 
-        int retryCount = 0;
-        int timeoutElapsed = 0;
+        var retryCount = 0;
+        var timeoutElapsed = 0;
         Exception lastRetryException = null;
         HttpResponseMessage samlRawResponse = null;
 
@@ -145,9 +145,9 @@ class OktaAuthenticator : BaseAuthenticator, IAuthenticator
             try
             {
                 s_logger.Debug("step 3: Get IdP one-time token");
-                IdpTokenRestRequest idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
+                var idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
                 var idpResponse = Session.restRequester.Post<IdpTokenResponse>(idpTokenRestRequest);
-                string onetimeToken = idpResponse.SessionToken ?? idpResponse.CookieToken;
+                var onetimeToken = idpResponse.SessionToken ?? idpResponse.CookieToken;
 
                 s_logger.Debug("step 4: Get SAML response from SSO");
                 var samlRestRequest = BuildSamlRestRequest(ssoUrl, onetimeToken);
@@ -272,11 +272,11 @@ class OktaAuthenticator : BaseAuthenticator, IAuthenticator
 
     private void VerifyPostbackUrl()
     {
-        int formIndex = _rawSamlTokenHtmlString.IndexOf("<form");
+        var formIndex = _rawSamlTokenHtmlString.IndexOf("<form");
 
         // skip 'action="' (length = 8)
-        int startIndex = _rawSamlTokenHtmlString.IndexOf("action=", formIndex) + 8;
-        int length = _rawSamlTokenHtmlString.IndexOf('"', startIndex) - startIndex;
+        var startIndex = _rawSamlTokenHtmlString.IndexOf("action=", formIndex) + 8;
+        var length = _rawSamlTokenHtmlString.IndexOf('"', startIndex) - startIndex;
 
         Uri postBackUrl;
         try
@@ -289,8 +289,8 @@ class OktaAuthenticator : BaseAuthenticator, IAuthenticator
             throw new SnowflakeDbException(e, SFError.IDP_SAML_POSTBACK_NOTFOUND);
         }
 
-        string sessionHost = Session.properties[SFSessionProperty.HOST];
-        string sessionScheme = Session.properties[SFSessionProperty.SCHEME];
+        var sessionHost = Session.properties[SFSessionProperty.HOST];
+        var sessionScheme = Session.properties[SFSessionProperty.SCHEME];
         Session.properties.TryGetValue(SFSessionProperty.PORT, out var portStr);
         int.TryParse(portStr, out var sessionPort);
         if (!string.Equals(postBackUrl.Host, sessionHost, StringComparison.OrdinalIgnoreCase) ||
@@ -324,7 +324,7 @@ class OktaAuthenticator : BaseAuthenticator, IAuthenticator
 
     private void ThrowRetryLimitException(int retryCount, int timeoutElapsed, Exception lastRetryException)
     {
-        string errorMessage = "";
+        var errorMessage = "";
         if (retryCount >= _maxRetryCount)
         {
             errorMessage = $"The retry count has reached its limit of {_maxRetryCount}";
@@ -350,7 +350,7 @@ internal class IdpTokenRestRequest : BaseRestRequest, IRestRequest
 
     HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
     {
-        HttpRequestMessage message = NewMessage(method, Url);
+        var message = NewMessage(method, Url);
         message.Headers.Accept.Add(s_jsonHeader);
 
         var json = JsonConvert.SerializeObject(JsonBody, JsonUtils.JsonSettings);
@@ -383,9 +383,9 @@ class SamlRestRequest : BaseRestRequest, IRestRequest
 
     HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
     {
-        UriBuilder builder = new UriBuilder(Url);
+        var builder = new UriBuilder(Url);
         builder.Query = "RelayState=%2Fsome%2Fdeep%2Flink&onetimetoken=" + OnetimeToken;
-        HttpRequestMessage message = NewMessage(method, builder.Uri);
+        var message = NewMessage(method, builder.Uri);
 
         message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
 

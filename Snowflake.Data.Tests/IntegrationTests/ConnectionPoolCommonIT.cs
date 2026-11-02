@@ -41,8 +41,8 @@ public abstract class ConnectionPoolCommonIT : SFBaseTestAsync, IDisposable
     [SFFact]
     public void TestConnectionPoolMultiThreading()
     {
-        Thread t1 = new Thread(() => _ = ThreadProcess1(_fixture.ConnectionString));
-        Thread t2 = new Thread(() => _ = ThreadProcess2(_fixture.ConnectionString));
+        var t1 = new Thread(() => _ = ThreadProcess1(_fixture.ConnectionString));
+        var t2 = new Thread(() => _ = ThreadProcess2(_fixture.ConnectionString));
 
         t1.Start();
         t2.Start();
@@ -68,8 +68,8 @@ public abstract class ConnectionPoolCommonIT : SFBaseTestAsync, IDisposable
         await conn1.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
         await Task.Delay(100).ConfigureAwait(false);
-        SFStatement statement = new SFStatement(conn1.SfSession);
-        SFBaseResultSet resultSet = statement.Execute(StatementContext.Default with { CommandText = "select 1" }, null);
+        var statement = new SFStatement(conn1.SfSession);
+        var resultSet = statement.Execute(StatementContext.Default with { CommandText = "select 1" }, null);
         Assert.True(await resultSet.NextAsync().ConfigureAwait(false));
         Assert.Equal("1", resultSet.GetString(0));
         await conn1.CloseAsync(CancellationToken.None).ConfigureAwait(false);

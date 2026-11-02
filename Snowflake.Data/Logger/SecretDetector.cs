@@ -22,7 +22,7 @@ internal class SecretDetector : ISecretDetector
         if (customRegex.Length == customMask.Length)
         {
             CUSTOM_PATTERNS_LENGTH = customRegex.Length;
-            for (int index = 0; index < CUSTOM_PATTERNS_LENGTH; index++)
+            for (var index = 0; index < CUSTOM_PATTERNS_LENGTH; index++)
             {
                 CUSTOM_PATTERNS_REGEX.Add(customRegex[index]);
                 CUSTOM_PATTERNS_MASK.Add(customMask[index]);
@@ -44,7 +44,7 @@ internal class SecretDetector : ISecretDetector
     private static string MaskCustomPatterns(string text)
     {
         string result;
-        for (int index = 0; index < CUSTOM_PATTERNS_LENGTH; index++)
+        for (var index = 0; index < CUSTOM_PATTERNS_LENGTH; index++)
         {
             result = Regex.Replace(text, CUSTOM_PATTERNS_REGEX[index], CUSTOM_PATTERNS_MASK[index],
                 RegexOptions.IgnoreCase);
@@ -115,7 +115,7 @@ internal class SecretDetector : ISecretDetector
         var match = s_privateKeyPropertyPrefixPattern.Match(text);
         if (match.Success)
         {
-            int length = match.Index + match.Value.Length;
+            var length = match.Index + match.Value.Length;
             return text.Substring(0, length) + "****";
         }
         return text;
@@ -162,7 +162,7 @@ internal class SecretDetector : ISecretDetector
 
     private static string MaskAllPatterns(string text)
     {
-        string result = text;
+        var result = text;
         foreach (var maskFunction in s_maskFunctions)
         {
             result = maskFunction.Invoke(result);

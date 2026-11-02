@@ -116,7 +116,7 @@ class SFResultSet : SFBaseResultSet
             s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
                            $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
                            $" size uncompressed: {_currentChunk.UncompressedSize}");
-            BaseResultChunk nextChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
+            var nextChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
             if (nextChunk != null)
             {
                 ResetChunkInfo(nextChunk);
@@ -139,7 +139,7 @@ class SFResultSet : SFBaseResultSet
             s_logger.Debug($"Get next chunk from chunk downloader, chunk: {_currentChunk.ChunkIndex + 1}/{_totalChunkCount}" +
                            $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
                            $" size uncompressed: {_currentChunk.UncompressedSize}");
-            BaseResultChunk nextChunk = Task.Run(async () => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
+            var nextChunk = Task.Run(async () => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
             if (nextChunk != null)
             {
                 ResetChunkInfo(nextChunk);
@@ -187,7 +187,7 @@ class SFResultSet : SFBaseResultSet
 
     private void UpdateSessionStatus(QueryExecResponseData responseData)
     {
-        SFSession session = sfStatement.SfSession;
+        var session = sfStatement.SfSession;
         session.UpdateSessionProperties(responseData);
         session.UpdateSessionParameterMap(responseData.parameters);
         session.UpdateQueryContextCache(responseData.QueryContext);
@@ -215,7 +215,7 @@ class SFResultSet : SFBaseResultSet
 
     internal override char GetChar(int ordinal)
     {
-        string val = GetString(ordinal);
+        var val = GetString(ordinal);
         return val[0];
     }
 
@@ -289,7 +289,7 @@ class SFResultSet : SFBaseResultSet
 
     internal override object GetValue(int ordinal)
     {
-        UTF8Buffer val = GetObjectInternal(ordinal);
+        var val = GetObjectInternal(ordinal);
         var types = sfResultSetMetaData.GetTypesByIndex(ordinal);
         var sessionTimezone = sfStatement.SfSession.GetSessionTimezone();
         var allowOverflow = sfStatement.SfSession.IsAllowNumberOverflowAsStringEnabled();
@@ -299,7 +299,7 @@ class SFResultSet : SFBaseResultSet
 
     private T GetValue<T>(int ordinal)
     {
-        UTF8Buffer val = GetObjectInternal(ordinal);
+        var val = GetObjectInternal(ordinal);
         var types = sfResultSetMetaData.GetTypesByIndex(ordinal);
         var sessionTimezone = sfStatement.SfSession.GetSessionTimezone();
         var allowOverflow = sfStatement.SfSession.IsAllowNumberOverflowAsStringEnabled();
@@ -348,7 +348,7 @@ class SFResultSet : SFBaseResultSet
                                                "Check the buffer offset, length, and the buffer's lower bounds.", "buffer");
         }
 
-        T[] data = GetValue<T[]>(ordinal);
+        var data = GetValue<T[]>(ordinal);
 
         // https://docs.microsoft.com/en-us/dotnet/api/system.data.idatarecord.getbytes?view=net-5.0#remarks
         // If you pass a buffer that is null, GetBytes returns the length of the row in bytes.
@@ -367,9 +367,9 @@ class SFResultSet : SFBaseResultSet
         else
         {
             // How much data is available after the offset
-            long dataLength = data.Length - dataOffset;
+            var dataLength = data.Length - dataOffset;
             // How much data to read
-            long elementsRead = Math.Min(length, dataLength);
+            var elementsRead = Math.Min(length, dataLength);
             Array.Copy(data, dataOffset, buffer, bufferOffset, elementsRead);
 
             return elementsRead;

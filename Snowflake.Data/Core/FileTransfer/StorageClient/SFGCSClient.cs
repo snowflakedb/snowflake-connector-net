@@ -93,11 +93,11 @@ class SFGCSClient : ISFRemoteStorageClient
                         + "The transfer proceeds on the cipher suites chosen by the operating system (SNOW-3662960)");
         }
 
-        if (stageInfo.stageCredentials.TryGetValue(GCS_ACCESS_TOKEN, out string accessToken))
+        if (stageInfo.stageCredentials.TryGetValue(GCS_ACCESS_TOKEN, out var accessToken))
         {
             Logger.Debug("Constructing client using access token");
             AccessToken = accessToken;
-            GoogleCredential creds = GoogleCredential.FromAccessToken(accessToken, null);
+            var creds = GoogleCredential.FromAccessToken(accessToken, null);
             var storageClientBuilder = new StorageClientBuilder
             {
                 Credential = creds?.CreateScoped(s_scopes),
@@ -136,8 +136,8 @@ class SFGCSClient : ISFRemoteStorageClient
     /// <returns>The remote location of the GCS file.</returns>
     public RemoteLocation ExtractBucketNameAndPath(string stageLocation)
     {
-        string containerName = stageLocation;
-        string gcsPath = "";
+        var containerName = stageLocation;
+        var gcsPath = "";
 
         // Split stage location as bucket name and path
         if (stageLocation.Contains("/"))
@@ -161,12 +161,12 @@ class SFGCSClient : ISFRemoteStorageClient
 
     internal WebRequest FormBaseRequest(SFFileMetadata fileMetadata, string method)
     {
-        string url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
+        var url = string.IsNullOrEmpty(fileMetadata.presignedUrl) ?
             GenerateFileUrl(fileMetadata.stageInfo, fileMetadata.RemoteFileName()) :
             fileMetadata.presignedUrl;
 
 #pragma warning disable SYSLIB0014 // TODO SNOW-3662960
-        WebRequest request = WebRequest.Create(url);
+        var request = WebRequest.Create(url);
 #pragma warning restore SYSLIB0014
         request.Headers.Add("Authorization", $"Bearer {AccessToken}");
         request.Method = method;
@@ -196,9 +196,9 @@ class SFGCSClient : ISFRemoteStorageClient
         try
         {
             // Issue a HEAD request
-            WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "HEAD") : _customWebRequest;
+            var request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "HEAD") : _customWebRequest;
 
-            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+            using (var response = (HttpWebResponse)request.GetResponse())
             {
                 return HandleGetFileHeaderResponse(response, fileMetadata);
             }
@@ -236,9 +236,9 @@ class SFGCSClient : ISFRemoteStorageClient
         try
         {
             // Issue a HEAD request
-            WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "HEAD") : _customWebRequest;
+            var request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "HEAD") : _customWebRequest;
 
-            using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
+            using (var response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
             {
                 return HandleGetFileHeaderResponse(response, fileMetadata);
             }
@@ -299,14 +299,14 @@ class SFGCSClient : ISFRemoteStorageClient
     {
         try
         {
-            WebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata);
+            var request = GetUploadFileRequest(fileMetadata, encryptionMetadata);
 
-            Stream dataStream = request.GetRequestStream();
+            var dataStream = request.GetRequestStream();
             fileBytesStream.Position = 0;
             fileBytesStream.CopyTo(dataStream);
             dataStream.Close();
 
-            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+            using (var response = (HttpWebResponse)request.GetResponse())
             {
                 fileMetadata.destFileSize = fileMetadata.uploadSize;
                 fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
@@ -328,14 +328,14 @@ class SFGCSClient : ISFRemoteStorageClient
     {
         try
         {
-            WebRequest request = GetUploadFileRequest(fileMetadata, encryptionMetadata);
+            var request = GetUploadFileRequest(fileMetadata, encryptionMetadata);
 
-            Stream dataStream = await request.GetRequestStreamAsync().ConfigureAwait(false);
+            var dataStream = await request.GetRequestStreamAsync().ConfigureAwait(false);
             fileByteStream.Position = 0;
             fileByteStream.CopyTo(dataStream);
             dataStream.Close();
 
-            using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
+            using (var response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
             {
                 fileMetadata.destFileSize = fileMetadata.uploadSize;
                 fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
@@ -350,12 +350,12 @@ class SFGCSClient : ISFRemoteStorageClient
     private WebRequest GetUploadFileRequest(SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
     {
         // Issue the POST/PUT request
-        WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "PUT") : _customWebRequest;
+        var request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "PUT") : _customWebRequest;
 
         request.Headers.Add(GCS_METADATA_SFC_DIGEST, fileMetadata.sha256Digest);
         if (fileMetadata.stageInfo.isClientSideEncrypted)
         {
-            string encryptionData = GetUploadEncryptionData(ref fileMetadata, encryptionMetadata);
+            var encryptionData = GetUploadEncryptionData(ref fileMetadata, encryptionMetadata);
 
             request.Headers.Add(GCS_METADATA_MATDESC_KEY, encryptionMetadata.matDesc);
             request.Headers.Add(GCS_METADATA_ENCRYPTIONDATAPROP, encryptionData);
@@ -372,7 +372,7 @@ class SFGCSClient : ISFRemoteStorageClient
     private static string GetUploadEncryptionData(ref SFFileMetadata fileMetadata, SFEncryptionMetadata encryptionMetadata)
     {
         // Create the encryption header value
-        string encryptionData = JsonConvert.SerializeObject(new EncryptionData
+        var encryptionData = JsonConvert.SerializeObject(new EncryptionData
         {
             EncryptionMode = "FullBlob",
             WrappedContentKey = new WrappedContentInfo
@@ -407,8 +407,8 @@ class SFGCSClient : ISFRemoteStorageClient
         try
         {
             // Issue the GET request
-            WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;
-            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+            var request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;
+            using (var response = (HttpWebResponse)request.GetResponse())
             {
                 // Write to file
                 using (var fileStream = FileOperations.Instance.Create(fullDstPath))
@@ -440,9 +440,9 @@ class SFGCSClient : ISFRemoteStorageClient
         try
         {
             // Issue the GET request
-            WebRequest request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;
+            var request = _customWebRequest == null ? FormBaseRequest(fileMetadata, "GET") : _customWebRequest;
 
-            using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
+            using (var response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
             {
                 // Write to file
                 using (var fileStream = FileOperations.Instance.Create(fullDstPath))
@@ -470,19 +470,19 @@ class SFGCSClient : ISFRemoteStorageClient
     /// <param name="fileMetadata">The GCS file metadata.</param>
     private static void HandleDownloadResponse(HttpWebResponse response, SFFileMetadata fileMetadata)
     {
-        WebHeaderCollection headers = response.Headers;
+        var headers = response.Headers;
 
         // Get header values
         var encryptionDataStr = headers.Get(GCS_METADATA_ENCRYPTIONDATAPROP);
         if (encryptionDataStr != null)
         {
             dynamic encryptionData = JsonConvert.DeserializeObject(encryptionDataStr);
-            string matDesc = headers.Get(GCS_METADATA_MATDESC_KEY);
+            var matDesc = headers.Get(GCS_METADATA_MATDESC_KEY);
 
             // Get encryption metadata from encryption data header value
             if (encryptionData != null)
             {
-                SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata
+                var encryptionMetadata = new SFEncryptionMetadata
                 {
                     iv = encryptionData["ContentEncryptionIV"],
                     key = encryptionData["WrappedContentKey"]["EncryptedKey"],
@@ -506,7 +506,7 @@ class SFGCSClient : ISFRemoteStorageClient
     {
         Logger.Error("Failed to get file header for presigned url: " + ex.Message);
 
-        HttpWebResponse response = (HttpWebResponse)ex.Response;
+        var response = (HttpWebResponse)ex.Response;
         if (response.StatusCode == HttpStatusCode.Unauthorized ||
             response.StatusCode == HttpStatusCode.Forbidden ||
             response.StatusCode == HttpStatusCode.NotFound)
@@ -532,7 +532,7 @@ class SFGCSClient : ISFRemoteStorageClient
     {
         Logger.Error("Failed to get file header for non-presigned url: " + ex.Message);
 
-        HttpWebResponse response = (HttpWebResponse)ex.Response;
+        var response = (HttpWebResponse)ex.Response;
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
             fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
@@ -569,7 +569,7 @@ class SFGCSClient : ISFRemoteStorageClient
 
         fileMetadata.lastError = ex;
 
-        HttpWebResponse response = (HttpWebResponse)ex.Response;
+        var response = (HttpWebResponse)ex.Response;
         if (response is null)
         {
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
@@ -603,7 +603,7 @@ class SFGCSClient : ISFRemoteStorageClient
 
         fileMetadata.lastError = ex;
 
-        HttpWebResponse response = (HttpWebResponse)ex.Response;
+        var response = (HttpWebResponse)ex.Response;
         if (response is null)
         {
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();

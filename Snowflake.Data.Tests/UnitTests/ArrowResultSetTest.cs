@@ -315,7 +315,7 @@ public sealed class ArrowResultSetTest
         {
             _arrowResultSet.Next();
             Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
-            char[] buffer = new char[1000];
+            var buffer = new char[1000];
             var len = _arrowResultSet.GetChars(ColumnIndex, 0, buffer, 0, buffer.Length);
             var str = new string(buffer, 0, (int)len);
             Assert.Equal(testValue, str);
@@ -337,7 +337,7 @@ public sealed class ArrowResultSetTest
         {
             _arrowResultSet.Next();
             Assert.Equal(testValue, _arrowResultSet.GetValue(ColumnIndex));
-            byte[] buffer = new byte[100];
+            var buffer = new byte[100];
             var len = _arrowResultSet.GetBytes(ColumnIndex, 0, buffer, 0, buffer.Length);
             Assert.Equal(testValue.Length, len);
             for (var j = 0; j < len; ++j)
@@ -466,7 +466,7 @@ public sealed class ArrowResultSetTest
     public void TestThrowsExceptionForResultSetWithUnknownSFDataType()
     {
         const string UnknownDataType = "FAKE_TYPE";
-        QueryExecResponseData responseData = new QueryExecResponseData()
+        var responseData = new QueryExecResponseData()
         {
             rowType = new List<ExecResponseRowType>()
             {
@@ -485,7 +485,7 @@ public sealed class ArrowResultSetTest
     [SFFact]
     public void TestThrowsExceptionForResultSetWithUnknownNativeType()
     {
-        QueryExecResponseData responseData = new QueryExecResponseData()
+        var responseData = new QueryExecResponseData()
         {
             rowType = new List<ExecResponseRowType>()
             {
@@ -590,7 +590,7 @@ public sealed class ArrowResultSetTest
 
     private static SFStatement PrepareStatement()
     {
-        SFSession session = new SFSession("user=user;password=password;account=account;", new SessionPropertiesContext());
+        var session = new SFSession("user=user;password=password;account=account;", new SessionPropertiesContext());
         return new SFStatement(session);
     }
 

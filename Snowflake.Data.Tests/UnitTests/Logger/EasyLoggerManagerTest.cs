@@ -153,7 +153,7 @@ public sealed class EasyLoggerManagerTest : IDisposable
         appenders.Add(appender);
 
         // act
-        for (int i = 0; i < 5; i++)
+        for (var i = 0; i < 5; i++)
         {
             logger.Debug(DebugMessage);
             await Task.Delay(1000).ConfigureAwait(false);
@@ -168,8 +168,8 @@ public sealed class EasyLoggerManagerTest : IDisposable
     public void TestThatOnlyUnknownFieldsAreLogged()
     {
         // arrange
-        string expectedFakeLogField = "fake_log_field";
-        string ConfigWithUnknownFields = $@"{{
+        var expectedFakeLogField = "fake_log_field";
+        var ConfigWithUnknownFields = $@"{{
                     ""common"": {{
                         ""LOG_LEVEL"": ""warn"",
                         ""lOg_PaTh"": ""path"",

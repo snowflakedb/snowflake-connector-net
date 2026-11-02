@@ -37,7 +37,7 @@ public sealed class SFDbFactoryIT : SFBaseTestAsync, IDisposable
         _command.Connection = _connection;
         _command.CommandText = "select 1";
 
-        object res = await _command.ExecuteScalarAsync().ConfigureAwait(false);
+        var res = await _command.ExecuteScalarAsync().ConfigureAwait(false);
 
         Assert.Equal(1L, res);
     }
@@ -45,9 +45,9 @@ public sealed class SFDbFactoryIT : SFBaseTestAsync, IDisposable
     [SFFact]
     public async Task TestDbFactoryWithParameter()
     {
-        int expectedIntValue = 1;
+        var expectedIntValue = 1;
 
-        DbParameter parameter = _factory.CreateParameter();
+        var parameter = _factory.CreateParameter();
         parameter.ParameterName = "1";
         parameter.Value = expectedIntValue;
         parameter.DbType = DbType.Int16;
@@ -65,7 +65,7 @@ public sealed class SFDbFactoryIT : SFBaseTestAsync, IDisposable
     [SFFact]
     public async Task TestDbFactoryWithConnectionStringBuilder()
     {
-        DbConnectionStringBuilder builder = _factory.CreateConnectionStringBuilder();
+        var builder = _factory.CreateConnectionStringBuilder();
         builder.ConnectionString = _fixture.ConnectionString;
 
         _connection.ConnectionString = builder.ConnectionString;
@@ -87,11 +87,11 @@ public sealed class SFDbFactoryIT : SFBaseTestAsync, IDisposable
         _command.Connection = _connection;
         _command.CommandText = "select 1";
 
-        DbDataAdapter adapter = _factory.CreateDataAdapter();
+        var adapter = _factory.CreateDataAdapter();
         adapter.SelectCommand = _command;
-        DbCommandBuilder builder = _factory.CreateCommandBuilder();
+        var builder = _factory.CreateCommandBuilder();
         builder.DataAdapter = adapter;
-        DataSet ds = new DataSet("ds");
+        var ds = new DataSet("ds");
 
         adapter.Fill(ds);
 

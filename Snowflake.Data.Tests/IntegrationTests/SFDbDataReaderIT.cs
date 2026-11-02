@@ -50,9 +50,9 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
 
             IDbCommand cmd = conn.CreateCommand();
 
-            string insertCommand = $"insert into {tableName} values (1),(1),(1)";
+            var insertCommand = $"insert into {tableName} values (1),(1),(1)";
             cmd.CommandText = insertCommand;
-            IDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
             Assert.Equal(3, reader.RecordsAffected);
 
             // Reader's RecordsAffected should be available even if the reader is closed
@@ -79,11 +79,11 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
 
             IDbCommand cmd = conn.CreateCommand();
 
-            int numInt = 10000;
-            long numLong = 1000000L;
+            var numInt = 10000;
+            var numLong = 1000000L;
             short numShort = 10;
 
-            string insertCommand = $"insert into {tableName} values (?),(?),(?)";
+            var insertCommand = $"insert into {tableName} values (?),(?),(?)";
             cmd.CommandText = insertCommand;
 
             var p1 = cmd.CreateParameter();
@@ -108,7 +108,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             Assert.Equal(3, count);
 
             cmd.CommandText = $"select * from {tableName}";
-            IDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
 
             ValidateResultFormat(reader);
 
@@ -197,10 +197,10 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
 
             IDbCommand cmd = conn.CreateCommand();
 
-            float numFloat = (float)1.23;
-            double numDouble = (double)1.2345678;
+            var numFloat = (float)1.23;
+            var numDouble = (double)1.2345678;
 
-            string insertCommand = $"insert into {tableName} values (?),(?)";
+            var insertCommand = $"insert into {tableName} values (?),(?)";
             cmd.CommandText = insertCommand;
 
             var p1 = cmd.CreateParameter();
@@ -219,7 +219,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             Assert.Equal(2, count);
 
             cmd.CommandText = $"select * from {tableName}";
-            IDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
 
             ValidateResultFormat(reader);
 
@@ -265,7 +265,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
                 cmd.ExecuteNonQuery();
 
                 cmd.CommandText = $"select TO_DATE('2013-05-17')";
-                IDataReader reader = cmd.ExecuteReader();
+                var reader = cmd.ExecuteReader();
 
                 Assert.True(reader.Read());
                 Assert.Equal("05/17/2013", reader.GetString(0));
@@ -320,7 +320,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
         using (var conn = await CreateAndOpenConnectionAsync().ConfigureAwait(false))
         {
             // Insert data
-            int fractionalPartIndex = inputTimeStr.IndexOf('.');
+            var fractionalPartIndex = inputTimeStr.IndexOf('.');
             var precision = fractionalPartIndex > 0 ? inputTimeStr.Length - (inputTimeStr.IndexOf('.') + 1) : 0;
             await _fixture.CreateOrReplaceTable(conn, tableName, new[]
             {
@@ -328,25 +328,25 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             }).ConfigureAwait(false);
             IDbCommand cmd = conn.CreateCommand();
 
-            string insertCommand = $"insert into {tableName} values ('{inputTimeStr}')";
+            var insertCommand = $"insert into {tableName} values ('{inputTimeStr}')";
             cmd.CommandText = insertCommand;
             var count = cmd.ExecuteNonQuery();
             Assert.Equal(1, count);
 
             cmd.CommandText = $"SELECT cola FROM {tableName}";
-            IDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
 
             ValidateResultFormat(reader);
 
             Assert.True(reader.Read());
 
             // For time, we getDateTime on the column and ignore date part
-            DateTime dateTimeTime = reader.GetDateTime(0);
-            TimeSpan timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(0);
+            var dateTimeTime = reader.GetDateTime(0);
+            var timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(0);
             reader.Close();
 
             // The expected result. Timespan precision only goes up to 7 digits
-            TimeSpan expected = TimeSpan.ParseExact(inputTimeStr.Length < 16 ? inputTimeStr : inputTimeStr.Substring(0, 16), "c", CultureInfo.InvariantCulture);
+            var expected = TimeSpan.ParseExact(inputTimeStr.Length < 16 ? inputTimeStr : inputTimeStr.Substring(0, 16), "c", CultureInfo.InvariantCulture);
             // Verify the result
             Assert.Equal(expected, timeSpanTime);
             Assert.Equal(dateTimeTime.Hour, timeSpanTime.Hours);
@@ -386,10 +386,10 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             // Insert data
             IDbCommand cmd = conn.CreateCommand();
 
-            string insertCommand = $"insert into {tableName}(C1, C10, C11, C12) select 1, " +
-                                   "PARSE_JSON('{ \"key1\": \"value1\", \"key2\": \"value2\" }')" +
-                                   ", PARSE_JSON(' { \"outer_key1\": { \"inner_key1A\": \"1a\", \"inner_key1B\": NULL }, '||' \"outer_key2\": { \"inner_key2\": 2 } '||' } ')," +
-                                   " ARRAY_CONSTRUCT(1, 2, 3, NULL)";
+            var insertCommand = $"insert into {tableName}(C1, C10, C11, C12) select 1, " +
+                                "PARSE_JSON('{ \"key1\": \"value1\", \"key2\": \"value2\" }')" +
+                                ", PARSE_JSON(' { \"outer_key1\": { \"inner_key1A\": \"1a\", \"inner_key1B\": NULL }, '||' \"outer_key2\": { \"inner_key2\": 2 } '||' } ')," +
+                                " ARRAY_CONSTRUCT(1, 2, 3, NULL)";
             cmd.CommandText = insertCommand;
             //Console.WriteLine(insertCommand);
             var count = cmd.ExecuteNonQuery();
@@ -403,14 +403,14 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             Assert.Equal(1, count);
 
             cmd.CommandText = $"SELECT * FROM {tableName}";
-            IDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
 
             ValidateResultFormat(reader);
 
             Assert.True(reader.Read());
 
             // All types except TIME fail conversion when calling GetTimeSpan
-            for (int i = 0; i < 12; i++)
+            for (var i = 0; i < 12; i++)
             {
                 try
                 {
@@ -438,7 +438,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             }
 
             // Valid time column
-            TimeSpan timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(13);
+            var timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(13);
 
             reader.Close();
 
@@ -468,7 +468,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             }).ConfigureAwait(false);
 
             IDbCommand cmd = conn.CreateCommand();
-            string insertCommand = $"insert into {tableName} values (?)";
+            var insertCommand = $"insert into {tableName} values (?)";
             cmd.CommandText = insertCommand;
 
             var p1 = cmd.CreateParameter();
@@ -495,14 +495,14 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             Assert.Equal(1, count);
 
             cmd.CommandText = $"select * from {tableName}";
-            IDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
 
             ValidateResultFormat(reader);
 
             Assert.True(reader.Read());
 
             // For time, we getDateTime on the column and ignore date part
-            DateTime actualTime = reader.GetDateTime(0);
+            var actualTime = reader.GetDateTime(0);
 
             if (dataType == SFDataType.DATE)
             {
@@ -571,11 +571,11 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
         {
             await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola TIMESTAMP_TZ" }).ConfigureAwait(false);
 
-            DateTimeOffset now = DateTimeOffset.Now.ToOffset(TimeSpan.FromHours(timezoneOffsetInHours));
+            var now = DateTimeOffset.Now.ToOffset(TimeSpan.FromHours(timezoneOffsetInHours));
 
             IDbCommand cmd = conn.CreateCommand();
 
-            string insertCommand = $"insert into {tableName} values (?)";
+            var insertCommand = $"insert into {tableName} values (?)";
             cmd.CommandText = insertCommand;
 
             var p1 = cmd.CreateParameter();
@@ -588,12 +588,12 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             Assert.Equal(1, count);
 
             cmd.CommandText = $"select * from {tableName}";
-            IDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
 
             ValidateResultFormat(reader);
 
             Assert.True(reader.Read());
-            DateTimeOffset dtOffset = (DateTimeOffset)reader.GetValue(0);
+            var dtOffset = (DateTimeOffset)reader.GetValue(0);
             reader.Close();
 
             Assert.Equal(now, dtOffset);
@@ -616,11 +616,11 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
 
             await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola TIMESTAMP_LTZ" }).ConfigureAwait(false);
 
-            DateTimeOffset insertValue = new DateTimeOffset(2024, 1, 15, 18, 30, 45, 123, TimeSpan.Zero);
+            var insertValue = new DateTimeOffset(2024, 1, 15, 18, 30, 45, 123, TimeSpan.Zero);
 
             IDbCommand cmd = conn.CreateCommand();
 
-            string insertCommand = $"insert into {tableName} values (?)";
+            var insertCommand = $"insert into {tableName} values (?)";
             cmd.CommandText = insertCommand;
 
             var p1 = (SnowflakeDbParameter)cmd.CreateParameter();
@@ -634,12 +634,12 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             Assert.Equal(1, count);
 
             cmd.CommandText = $"select * from {tableName}";
-            IDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
 
             ValidateResultFormat(reader);
 
             Assert.True(reader.Read());
-            DateTimeOffset dtOffset = (DateTimeOffset)reader.GetValue(0);
+            var dtOffset = (DateTimeOffset)reader.GetValue(0);
             reader.Close();
 
             Assert.Equal(insertValue.UtcDateTime, dtOffset.UtcDateTime);
@@ -660,7 +660,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
 
             IDbCommand cmd = conn.CreateCommand();
 
-            string insertCommand = $"insert into {tableName} values (?)";
+            var insertCommand = $"insert into {tableName} values (?)";
             cmd.CommandText = insertCommand;
 
             var p1 = cmd.CreateParameter();
@@ -673,7 +673,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             Assert.Equal(1, count);
 
             cmd.CommandText = $"select * from {tableName}";
-            IDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
 
             ValidateResultFormat(reader);
 
@@ -715,9 +715,9 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             cmd.CommandText = $"select * from {tableName} order by 1";
 
             // Act
-            using (IDataReader reader = cmd.ExecuteReader())
+            using (var reader = cmd.ExecuteReader())
             {
-                int index = 0;
+                var index = 0;
                 while (reader.Read())
                 {
                     // Assert
@@ -740,10 +740,10 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
                 "col3 DOUBLE"
             }).ConfigureAwait(false);
 
-            byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARAY");
-            string testChars = "TEST_GET_CHARS";
-            double testDouble = 1.2345678;
-            string insertCommand = $"insert into {tableName} values (?, '{testChars}',{testDouble.ToString()})";
+            var testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARAY");
+            var testChars = "TEST_GET_CHARS";
+            var testDouble = 1.2345678;
+            var insertCommand = $"insert into {tableName} values (?, '{testChars}',{testDouble.ToString()})";
             IDbCommand cmd = conn.CreateCommand();
             cmd.CommandText = insertCommand;
 
@@ -757,7 +757,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             Assert.Equal(1, count);
 
             cmd.CommandText = $"select * from {tableName}";
-            IDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
 
             ValidateResultFormat(reader);
 
@@ -768,15 +768,15 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             Assert.True(testDouble.Equals(reader.GetValue(2)));
 
             // Read all 'TEST_GET_BINARAY' data
-            int toReadLength = testBytes.Length;
-            byte[] sub = new byte[toReadLength];
-            long read = reader.GetBytes(0, 0, sub, 0, toReadLength);
+            var toReadLength = testBytes.Length;
+            var sub = new byte[toReadLength];
+            var read = reader.GetBytes(0, 0, sub, 0, toReadLength);
             Assert.Equal(read, toReadLength);
             Assert.True(testBytes.SequenceEqual(sub));
 
             // Read subset 'GET_BINARAY' from actual 'TEST_GET_BINARAY' data
             toReadLength = 11;
-            byte[] testSubBytes = Encoding.UTF8.GetBytes("GET_BINARAY");
+            var testSubBytes = Encoding.UTF8.GetBytes("GET_BINARAY");
             sub = new byte[toReadLength];
             read = reader.GetBytes(0, 5, sub, 0, toReadLength);
             Assert.Equal(read, toReadLength);
@@ -801,14 +801,14 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             // Read subset 'GET_BINARAY'  from actual 'TEST_GET_BINARAY' data
             // and copy inside existing buffer replacing Xs
             toReadLength = 11;
-            byte[] testSubBytesWithTargetOffset = Encoding.UTF8.GetBytes("OFFSET GET_BINARAY EXTRA");
+            var testSubBytesWithTargetOffset = Encoding.UTF8.GetBytes("OFFSET GET_BINARAY EXTRA");
             sub = Encoding.UTF8.GetBytes("OFFSET XXXXXXXXXXX EXTRA");
             read = reader.GetBytes(0, 5, sub, 7, toReadLength);
             Assert.Equal(read, toReadLength);
             Assert.True(testSubBytesWithTargetOffset.SequenceEqual(sub));
 
             // Less data than 'ask' for
-            int dataOffset = 10;
+            var dataOffset = 10;
             read = reader.GetBytes(0, dataOffset, sub, 0, toReadLength);
             Assert.Equal(read, testBytes.Length - dataOffset);
 
@@ -885,7 +885,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
                 "col1 VARCHAR(50)",
             }).ConfigureAwait(false);
 
-            char testChar = 'T';
+            var testChar = 'T';
 
             IDbCommand cmd = conn.CreateCommand();
             cmd.CommandText = $"insert into {tableName} values ('{testChar}')";
@@ -893,7 +893,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             cmd.CommandText = $"select * from {tableName}";
 
             // Act
-            using (IDataReader reader = cmd.ExecuteReader())
+            using (var reader = cmd.ExecuteReader())
             {
                 // Assert
                 Assert.True(reader.Read());
@@ -915,9 +915,9 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
                 "col3 DOUBLE"
             }).ConfigureAwait(false);
 
-            string testChars = "TEST_GET_CHARS";
-            byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
-            double testDouble = 1.2345678;
+            var testChars = "TEST_GET_CHARS";
+            var testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
+            var testDouble = 1.2345678;
             IDbCommand cmd = conn.CreateCommand();
             cmd.CommandText = $"insert into {tableName} values ('{testChars}', ?, {testDouble.ToString()})";
 
@@ -932,7 +932,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             Assert.Equal(1, count);
 
             cmd.CommandText = $"select * from {tableName}";
-            IDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
 
             ValidateResultFormat(reader);
 
@@ -943,10 +943,10 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             Assert.True(testDouble.Equals(reader.GetValue(2)));
 
             // Read all 'TEST_GET_CHARS' data
-            int toReadLength = 14;
-            char[] testSubChars = testChars.ToArray<char>();
-            char[] sub = new char[toReadLength];
-            long read = reader.GetChars(0, 0, sub, 0, toReadLength);
+            var toReadLength = 14;
+            var testSubChars = testChars.ToArray<char>();
+            var sub = new char[toReadLength];
+            var read = reader.GetChars(0, 0, sub, 0, toReadLength);
             Assert.Equal(read, toReadLength);
             Assert.True(testSubChars.SequenceEqual(sub));
 
@@ -977,7 +977,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
 
             // Read subset 'GET_CHARS'  from actual 'TEST_GET_CHARS' data
             // and copy inside existing buffer replacing Xs
-            char[] testSubCharsWithTargetOffset = "OFFSET GET_CHARS EXTRA".ToArray<char>();
+            var testSubCharsWithTargetOffset = "OFFSET GET_CHARS EXTRA".ToArray<char>();
             toReadLength = 9;
             sub = "OFFSET XXXXXXXXX EXTRA".ToArray<char>();
             read = reader.GetChars(0, 5, sub, 7, toReadLength);
@@ -985,7 +985,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             Assert.True(testSubCharsWithTargetOffset.SequenceEqual(sub));
 
             // Less data than 'ask' for
-            int dataOffset = 10;
+            var dataOffset = 10;
             read = reader.GetChars(0, dataOffset, sub, 0, toReadLength);
             Assert.Equal(read, testChars.Length - dataOffset);
 
@@ -1064,9 +1064,9 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
                 "col3 DOUBLE"
             }).ConfigureAwait(false);
 
-            string testChars = "TEST_GET_CHARS";
-            byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
-            double testDouble = 1.2345678;
+            var testChars = "TEST_GET_CHARS";
+            var testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
+            var testDouble = 1.2345678;
 
             IDbCommand cmd = conn.CreateCommand();
 
@@ -1081,7 +1081,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             cmd.CommandText = $"select * from {tableName}";
 
             // Act
-            using (DbDataReader reader = (DbDataReader)cmd.ExecuteReader())
+            using (var reader = (DbDataReader)cmd.ExecuteReader())
             {
                 // Assert
                 Assert.True(reader.Read());
@@ -1105,9 +1105,9 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
                 "col3 DOUBLE"
             }).ConfigureAwait(false);
 
-            string testChars = "TEST_GET_CHARS";
-            byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
-            double testDouble = 1.2345678;
+            var testChars = "TEST_GET_CHARS";
+            var testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
+            var testDouble = 1.2345678;
             IDbCommand cmd = conn.CreateCommand();
             cmd.CommandText = $"insert into {tableName} values ('{testChars}', ?, {testDouble.ToString()})";
 
@@ -1122,7 +1122,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             Assert.Equal(1, count);
 
             cmd.CommandText = $"select * from {tableName}";
-            DbDataReader reader = (DbDataReader)cmd.ExecuteReader();
+            var reader = (DbDataReader)cmd.ExecuteReader();
 
             ValidateResultFormat(reader);
 
@@ -1135,8 +1135,8 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
 
             using (var stream = reader.GetStream(0))
             {
-                byte[] col1ToBytes = Encoding.UTF8.GetBytes(testChars);
-                byte[] buf = new byte[col1ToBytes.Length];
+                var col1ToBytes = Encoding.UTF8.GetBytes(testChars);
+                var buf = new byte[col1ToBytes.Length];
                 var readBytes = stream.Read(buf, 0, col1ToBytes.Length);
                 Assert.Equal(col1ToBytes.Length, readBytes);
                 Assert.True(-1 == stream.ReadByte()); // No more data
@@ -1145,7 +1145,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
 
             using (var stream = reader.GetStream(1))
             {
-                byte[] buf = new byte[testBytes.Length];
+                var buf = new byte[testBytes.Length];
                 var readBytes = stream.Read(buf, 0, testBytes.Length);
                 Assert.Equal(testBytes.Length, readBytes);
                 Assert.True(-1 == stream.ReadByte()); // No more data
@@ -1154,8 +1154,8 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
 
             using (var stream = reader.GetStream(2))
             {
-                byte[] col3ToBytes = Encoding.UTF8.GetBytes(testDouble.ToString());
-                byte[] buf = new byte[col3ToBytes.Length];
+                var col3ToBytes = Encoding.UTF8.GetBytes(testDouble.ToString());
+                var buf = new byte[col3ToBytes.Length];
                 var readBytes = stream.Read(buf, 0, col3ToBytes.Length);
                 Assert.Equal(col3ToBytes.Length, readBytes);
                 Assert.True(-1 == stream.ReadByte()); // No more data
@@ -1177,7 +1177,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
         {
             IDbCommand cmd = conn.CreateCommand();
             cmd.CommandText = "select 1";
-            IDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
 
             ValidateResultFormat(reader);
 
@@ -1216,7 +1216,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             using (IDbCommand cmd = conn.CreateCommand())
             {
                 cmd.CommandText = "select 1 as colone, 2 as coltwo";
-                using (IDataReader reader = cmd.ExecuteReader())
+                using (var reader = cmd.ExecuteReader())
                 {
                     ValidateResultFormat(reader);
 
@@ -1288,12 +1288,12 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
                 cmd.ExecuteNonQuery();
 
                 cmd.CommandText = $"select * from {tableName}";
-                using (IDataReader reader = cmd.ExecuteReader())
+                using (var reader = cmd.ExecuteReader())
                 {
                     ValidateResultFormat(reader);
 
                     reader.Read();
-                    object nullVal = reader.GetValue(0);
+                    var nullVal = reader.GetValue(0);
                     Assert.Equal(DBNull.Value, nullVal);
                     Assert.True(reader.IsDBNull(0));
                     Assert.True(reader.IsDBNull(1));
@@ -1315,10 +1315,10 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola STRING" }).ConfigureAwait(false);
 
             IDbCommand cmd = conn.CreateCommand();
-            string insertCommand = $"insert into {tableName} values (?)";
+            var insertCommand = $"insert into {tableName} values (?)";
             cmd.CommandText = insertCommand;
 
-            Guid val = Guid.NewGuid();
+            var val = Guid.NewGuid();
 
             var p1 = cmd.CreateParameter();
             p1.ParameterName = "1";
@@ -1330,7 +1330,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             Assert.Equal(1, count);
 
             cmd.CommandText = $"select * from {tableName}";
-            IDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
 
             ValidateResultFormat(reader);
 
@@ -1341,7 +1341,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             Assert.Equal(val.ToString(), reader[0]);
             Assert.Equal(val.ToString(), reader["COLA"]);
 
-            object[] values = new object[1];
+            var values = new object[1];
             Assert.Equal(1, reader.GetValues(values));
             Assert.Equal(val.ToString(), values[0]);
 
@@ -1365,7 +1365,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             cmd.ExecuteNonQuery();
 
             cmd.CommandText = $"copy into {tableName} from @{stageName}";
-            int updateCount = cmd.ExecuteNonQuery();
+            var updateCount = cmd.ExecuteNonQuery();
             Assert.Equal(0, updateCount);
 
             // test rows_loaded exists
@@ -1444,7 +1444,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             IDbCommand cmd = conn.CreateCommand();
 
             cmd.CommandText = $"select * from {tableName}";
-            using (IDataReader reader = cmd.ExecuteReader())
+            using (var reader = cmd.ExecuteReader())
             {
                 ValidateResultFormat(reader);
 
@@ -1515,7 +1515,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
             IDbCommand cmd = conn.CreateCommand();
 
             cmd.CommandText = $"select * from {tableName}";
-            using (IDataReader reader = cmd.ExecuteReader())
+            using (var reader = cmd.ExecuteReader())
             {
                 ValidateResultFormat(reader);
 
@@ -1523,7 +1523,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
                 dataTable.DefaultView.Sort = SchemaTableColumn.ColumnName;
                 dataTable = dataTable.DefaultView.ToTable();
 
-                DataRow row = dataTable.Rows[0];
+                var row = dataTable.Rows[0];
                 Assert.Equal("C1", row[SchemaTableColumn.ColumnName]);
                 Assert.Equal(0, row[SchemaTableColumn.ColumnOrdinal]);
                 Assert.Equal(20, row[SchemaTableColumn.NumericPrecision]);
@@ -1574,10 +1574,10 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
     {
         using (var conn = await CreateAndOpenConnectionAsync().ConfigureAwait(false))
         {
-            DbCommand cmd = conn.CreateCommand();
+            var cmd = conn.CreateCommand();
             cmd.CommandText = "select 1 where 1=2";
 
-            DbDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
 
             ValidateResultFormat(reader);
 
@@ -1602,13 +1602,13 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
                               "select 1;" +
                               "select 1 where 1=2;";
 
-            DbParameter param = cmd.CreateParameter();
+            var param = cmd.CreateParameter();
             param.ParameterName = "MULTI_STATEMENT_COUNT";
             param.DbType = DbType.Int16;
             param.Value = 4;
             cmd.Parameters.Add(param);
 
-            DbDataReader reader = cmd.ExecuteReader();
+            var reader = cmd.ExecuteReader();
 
             ValidateResultFormat(reader);
 
@@ -1653,9 +1653,9 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
     {
         using (var conn = await CreateAndOpenConnectionAsync().ConfigureAwait(false))
         {
-            DbCommand cmd = conn.CreateCommand();
+            var cmd = conn.CreateCommand();
             cmd.CommandText = "select " + testValue;
-            using (SnowflakeDbDataReader reader = (SnowflakeDbDataReader)cmd.ExecuteReader())
+            using (var reader = (SnowflakeDbDataReader)cmd.ExecuteReader())
             {
                 ValidateResultFormat(reader);
 
@@ -1666,7 +1666,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
                     Assert.Equal(Convert.ToSingle(testValue), reader.GetFloat(0));
                     if (!testValue.Contains('.'))
                     {
-                        decimal value = decimal.Parse(testValue);
+                        var value = decimal.Parse(testValue);
                         if (value >= long.MinValue && value <= long.MaxValue)
                             Assert.Equal(Convert.ToInt64(testValue), reader.GetInt64(0));
                         else
@@ -1701,10 +1701,10 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
     {
         using (var conn = await CreateAndOpenConnectionAsync().ConfigureAwait(false))
         {
-            DbCommand cmd = conn.CreateCommand();
+            var cmd = conn.CreateCommand();
 
             cmd.CommandText = $"select '{testValue}'::TIMESTAMP_TZ({scale})";
-            using (SnowflakeDbDataReader reader = (SnowflakeDbDataReader)cmd.ExecuteReader())
+            using (var reader = (SnowflakeDbDataReader)cmd.ExecuteReader())
             {
                 ValidateResultFormat(reader);
 
@@ -1730,13 +1730,13 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
     {
         using (var conn = await CreateAndOpenConnectionWithHonorSessionTimezoneAsync().ConfigureAwait(false))
         {
-            DbCommand cmd = conn.CreateCommand();
+            var cmd = conn.CreateCommand();
 
             cmd.CommandText = "ALTER SESSION SET TIMEZONE = 'America/Los_Angeles'";
             cmd.ExecuteNonQuery();
 
             cmd.CommandText = $"select '{testValue}'::TIMESTAMP_LTZ({scale})";
-            using (SnowflakeDbDataReader reader = (SnowflakeDbDataReader)cmd.ExecuteReader())
+            using (var reader = (SnowflakeDbDataReader)cmd.ExecuteReader())
             {
                 ValidateResultFormat(reader);
 
@@ -1759,10 +1759,10 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
     {
         using (var conn = await CreateAndOpenConnectionAsync().ConfigureAwait(false))
         {
-            DbCommand cmd = conn.CreateCommand();
+            var cmd = conn.CreateCommand();
 
             cmd.CommandText = $"select '{testValue}'::TIMESTAMP_NTZ({scale})";
-            using (SnowflakeDbDataReader reader = (SnowflakeDbDataReader)cmd.ExecuteReader())
+            using (var reader = (SnowflakeDbDataReader)cmd.ExecuteReader())
             {
                 ValidateResultFormat(reader);
 
@@ -1792,7 +1792,7 @@ public abstract class SFDbDataReaderIT : SFBaseTestAsync
 
             using (var cmd = conn.CreateCommand())
             {
-                string insertCommand = $"insert into {tableName} select parse_json('{{{expectedVal}}}')";
+                var insertCommand = $"insert into {tableName} select parse_json('{{{expectedVal}}}')";
                 cmd.CommandText = insertCommand;
 
                 var count = cmd.ExecuteNonQuery();

@@ -20,9 +20,9 @@ internal class CodeVerifier
     public string ComputeCodeChallenge()
     {
         var codeVerifierBytes = Encoding.UTF8.GetBytes(Value);
-        using (SHA256 sha256Encoder = SHA256.Create())
+        using (var sha256Encoder = SHA256.Create())
         {
-            byte[] sha256Hash = sha256Encoder.ComputeHash(codeVerifierBytes);
+            var sha256Hash = sha256Encoder.ComputeHash(codeVerifierBytes);
             return Base64UrlEncoder.Encode(sha256Hash);
         }
     }

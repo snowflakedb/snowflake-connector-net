@@ -16,7 +16,7 @@ public class SFReusableChunkTest
     [SFFact]
     public void TestExtractCellWithRowParameterReadsAllRows()
     {
-        string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
+        var data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
         var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -33,7 +33,7 @@ public class SFReusableChunkTest
     [SFFact]
     public void TestSimpleChunk()
     {
-        string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
+        var data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
         var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
         chunk.Next();
@@ -50,7 +50,7 @@ public class SFReusableChunkTest
     [SFFact]
     public void TestChunkWithNull()
     {
-        string data = "[ [null, \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
+        var data = "[ [null, \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
         var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
         chunk.Next();
@@ -67,7 +67,7 @@ public class SFReusableChunkTest
     [SFFact]
     public void TestChunkWithDate()
     {
-        string data = "[ [null, \"2019-08-21T11:58:00\", null],  [\"2\", null, \"fghi\"] ]";
+        var data = "[ [null, \"2019-08-21T11:58:00\", null],  [\"2\", null, \"fghi\"] ]";
         var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
         chunk.Next();
@@ -84,7 +84,7 @@ public class SFReusableChunkTest
     [SFFact]
     public void TestChunkWithEscape()
     {
-        string data = "[ [\"\\\\åäö\\nÅÄÖ\\r\", \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
+        var data = "[ [\"\\\\åäö\\nÅÄÖ\\r\", \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
         var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
         chunk.Next();
@@ -101,8 +101,8 @@ public class SFReusableChunkTest
     [SFFact]
     public void TestChunkWithLongString()
     {
-        string longstring = new string('å', 10 * 1000 * 1000);
-        string data = "[ [\"åäö\\nÅÄÖ\\r\", \"1.234\", null],  [\"2\", null, \"" + longstring + "\"] ]";
+        var longstring = new string('å', 10 * 1000 * 1000);
+        var data = "[ [\"åäö\\nÅÄÖ\\r\", \"1.234\", null],  [\"2\", null, \"" + longstring + "\"] ]";
         var chunk = PrepareChunkAsync(data, 3, 2).Result;
 
         chunk.Next();
@@ -120,7 +120,7 @@ public class SFReusableChunkTest
     public async Task TestParserError1()
     {
         // Unterminated escape sequence
-        string data = "[ [\"åäö\\";
+        var data = "[ [\"åäö\\";
 
         try
         {
@@ -137,7 +137,7 @@ public class SFReusableChunkTest
     public async Task TestParserError2()
     {
         // Unterminated string
-        string data = "[ [\"åäö";
+        var data = "[ [\"åäö";
 
         try
         {
@@ -154,11 +154,11 @@ public class SFReusableChunkTest
     public void TestParserWithTab()
     {
         // Unterminated string
-        string data = "[[\"abc\t\"]]";
+        var data = "[[\"abc\t\"]]";
         var chunk = PrepareChunkAsync(data, 1, 1).Result;
 
         chunk.Next();
-        string val = chunk.ExtractCell(0).SafeToString();
+        var val = chunk.ExtractCell(0).SafeToString();
         Assert.Equal("abc\t", chunk.ExtractCell(0).SafeToString());
     }
 
@@ -166,7 +166,7 @@ public class SFReusableChunkTest
     public void TestNextIteratesThroughAllRecords()
     {
         const int RowCount = 3;
-        string data = "[ [\"1\"],  [\"2\"],  [\"3\"] ]";
+        var data = "[ [\"1\"],  [\"2\"],  [\"3\"] ]";
         var chunk = PrepareChunkAsync(data, 1, RowCount).Result;
 
         for (var i = 0; i < RowCount; ++i)
@@ -180,7 +180,7 @@ public class SFReusableChunkTest
     public void TestRewindIteratesThroughAllRecords()
     {
         const int RowCount = 3;
-        string data = "[ [\"1\"],  [\"2\"],  [\"3\"] ]";
+        var data = "[ [\"1\"],  [\"2\"],  [\"3\"] ]";
         var chunk = PrepareChunkAsync(data, 1, RowCount).Result;
 
         for (var i = 0; i < RowCount; ++i)
@@ -200,10 +200,10 @@ public class SFReusableChunkTest
     public void TestResetClearsChunkData()
     {
         const int RowCount = 3;
-        string data = "[ [\"1\"],  [\"2\"],  [\"3\"] ]";
+        var data = "[ [\"1\"],  [\"2\"],  [\"3\"] ]";
         var chunk = PrepareChunkAsync(data, 1, RowCount).Result;
 
-        ExecResponseChunk chunkInfo = new ExecResponseChunk()
+        var chunkInfo = new ExecResponseChunk()
         {
             url = "new_url",
             uncompressedSize = 100,
@@ -224,10 +224,10 @@ public class SFReusableChunkTest
     public void TestClearRemovesAllChunkData()
     {
         const int RowCount = 3;
-        string data = "[ [\"1\"],  [\"2\"],  [\"3\"] ]";
+        var data = "[ [\"1\"],  [\"2\"],  [\"3\"] ]";
         var chunk = PrepareChunkAsync(data, 1, RowCount).Result;
 
-        ExecResponseChunk chunkInfo = new ExecResponseChunk()
+        var chunkInfo = new ExecResponseChunk()
         {
             url = "new_url",
             uncompressedSize = 100,
@@ -246,18 +246,18 @@ public class SFReusableChunkTest
 
     private static async Task<SFReusableChunk> PrepareChunkAsync(string stringData, int colCount, int rowCount)
     {
-        byte[] bytes = Encoding.UTF8.GetBytes(stringData);
+        var bytes = Encoding.UTF8.GetBytes(stringData);
         Stream stream = new MemoryStream(bytes);
         IChunkParser parser = new ReusableChunkParser(stream);
 
-        ExecResponseChunk chunkInfo = new ExecResponseChunk()
+        var chunkInfo = new ExecResponseChunk()
         {
             url = "fake",
             uncompressedSize = bytes.Length,
             rowCount = rowCount
         };
 
-        SFReusableChunk chunk = new SFReusableChunk(colCount);
+        var chunk = new SFReusableChunk(colCount);
         chunk.Reset(chunkInfo, 0);
 
         await parser.ParseChunkAsync(chunk, CancellationToken.None).ConfigureAwait(false);

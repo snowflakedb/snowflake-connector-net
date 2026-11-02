@@ -98,7 +98,7 @@ internal class EasyLoggingConfigParser
     private static void CheckForUnknownFields(string fileContent)
     {
         // Parse the specified config file and get the key-value pairs from the "common" section
-        List<string> knownProperties = typeof(ClientConfigCommonProps).GetProperties()
+        var knownProperties = typeof(ClientConfigCommonProps).GetProperties()
             .Select(property => property.GetCustomAttribute<JsonPropertyAttribute>().PropertyName)
             .ToList();
 

@@ -22,7 +22,7 @@ public class SFStatementTypeTest : SFBaseTestAsync
             conn.ConnectionString = _fixture.ConnectionString;
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            using (DbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 try
                 {
@@ -58,9 +58,9 @@ public class SFStatementTypeTest : SFBaseTestAsync
                 p2.Value = "[2,3]";
                 command.Parameters.Add(p2);
 
-                DbDataReader reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+                var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
 
-                string result = "1 \"[2,3]\" [2,3]";
+                var result = "1 \"[2,3]\" [2,3]";
                 while (reader.Read())
                 {
                     Assert.Equal(result, reader.GetString(0));

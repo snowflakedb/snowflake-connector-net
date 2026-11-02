@@ -20,7 +20,7 @@ public class PatTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateUsingPatSuccessful()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
         var parameters = AuthConnectionString.GetPatConnectionParameters();
         try
         {
@@ -39,7 +39,7 @@ public class PatTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateUsingPatInvalid()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
         var parameters = AuthConnectionString.GetPatConnectionParameters();
         parameters[SFSessionProperty.TOKEN] = "invalidToken";
         _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
@@ -50,7 +50,7 @@ public class PatTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateUsingPatMismatchedUser()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
         authTestHelper.VerifyExceptionIsNotThrown();
         var parameters = AuthConnectionString.GetPatConnectionParameters();
         try
@@ -69,10 +69,10 @@ public class PatTest
 
     private string GetPat()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
         _patName = "PAT_DOTNET_" + GenerateRandomSuffix();
         var parameters = AuthConnectionString.GetPatConnectionParameters();
-        string command = string.Format(
+        var command = string.Format(
             "alter user {0} add programmatic access token {1} ROLE_RESTRICTION = '{2}' DAYS_TO_EXPIRY=1;",
             AuthConnectionString.SnowflakeUser, _patName, AuthConnectionString.SnowflakeRole);
         var patToken = authTestHelper.ConnectUsingOktaConnectionAndExecuteCustomCommand(command, true);
@@ -86,8 +86,8 @@ public class PatTest
 
     private void RemovePat()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
-        string command = string.Format(
+        var authTestHelper = new AuthTestHelper();
+        var command = string.Format(
             "alter user {0} remove programmatic access token {1};",
             AuthConnectionString.SnowflakeUser, _patName);
         authTestHelper.ConnectUsingOktaConnectionAndExecuteCustomCommand(command);

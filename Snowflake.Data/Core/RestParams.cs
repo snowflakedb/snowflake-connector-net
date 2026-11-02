@@ -114,7 +114,7 @@ internal sealed class SFEnvironment
     internal static string ExtractVersion()
     {
         var version = RuntimeInformation.FrameworkDescription.Substring(RuntimeInformation.FrameworkDescription.LastIndexOf(' ')).Replace(" ", "");
-        int secondPeriodIndex = version.IndexOf('.', version.IndexOf('.') + 1);
+        var secondPeriodIndex = version.IndexOf('.', version.IndexOf('.') + 1);
         return version.Substring(0, secondPeriodIndex);
     }
 

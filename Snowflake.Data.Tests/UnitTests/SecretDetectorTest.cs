@@ -329,47 +329,47 @@ public sealed class SecretDetectorTest
     [SFFact]
     public void TestMaskToken()
     {
-        string longToken = "_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" + // pragma: allowlist secret
-                           "KyJH9DS=nFzzWnfZKGV+C7GopWCGD4Lj" + // pragma: allowlist secret
-                           "OLLFZKOE26LXHDt3pTi4iI1qwKuSpf/F" + // pragma: allowlist secret
-                           "mClCMBSissVsU3Ei590FP0lPQQhcSGcD" + // pragma: allowlist secret
-                           "u69ZL_1X6e9h5z62t/iY7ZkII28n2qU=" + // pragma: allowlist secret
-                           "nrBJUgPRCIbtJQkVJXIuOHjX4G5yUEKj" + // pragma: allowlist secret
-                           "ZBAx4w6=_lqtt67bIA=o7D=oUSjfywsR" + // pragma: allowlist secret
-                           "FoloNIkBPXCwFTv+1RVUHgVA2g8A9Lw5" + // pragma: allowlist secret
-                           "XdJYuI8vhg=f0bKSq7AhQ2Bh"; // pragma: allowlist secret
+        var longToken = "_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" + // pragma: allowlist secret
+                        "KyJH9DS=nFzzWnfZKGV+C7GopWCGD4Lj" + // pragma: allowlist secret
+                        "OLLFZKOE26LXHDt3pTi4iI1qwKuSpf/F" + // pragma: allowlist secret
+                        "mClCMBSissVsU3Ei590FP0lPQQhcSGcD" + // pragma: allowlist secret
+                        "u69ZL_1X6e9h5z62t/iY7ZkII28n2qU=" + // pragma: allowlist secret
+                        "nrBJUgPRCIbtJQkVJXIuOHjX4G5yUEKj" + // pragma: allowlist secret
+                        "ZBAx4w6=_lqtt67bIA=o7D=oUSjfywsR" + // pragma: allowlist secret
+                        "FoloNIkBPXCwFTv+1RVUHgVA2g8A9Lw5" + // pragma: allowlist secret
+                        "XdJYuI8vhg=f0bKSq7AhQ2Bh"; // pragma: allowlist secret
 
-        string tokenStrWithPrefix = "Token =" + longToken;
+        var tokenStrWithPrefix = "Token =" + longToken;
         var mask = SecretDetector.Instance.MaskSecrets(tokenStrWithPrefix);
         Assert.True(mask.IsMasked);
         Assert.Equal(@"Token =****", mask.MaskedText);
         Assert.Null(mask.ErrStr);
 
-        string idTokenStrWithPrefix = "idToken : " + longToken;
+        var idTokenStrWithPrefix = "idToken : " + longToken;
         mask = SecretDetector.Instance.MaskSecrets(idTokenStrWithPrefix);
         Assert.True(mask.IsMasked);
         Assert.Equal(@"idToken : ****", mask.MaskedText);
         Assert.Null(mask.ErrStr);
 
-        string sessionTokenStrWithPrefix = "sessionToken : " + longToken;
+        var sessionTokenStrWithPrefix = "sessionToken : " + longToken;
         mask = SecretDetector.Instance.MaskSecrets(sessionTokenStrWithPrefix);
         Assert.True(mask.IsMasked);
         Assert.Equal(@"sessionToken : ****", mask.MaskedText);
         Assert.Null(mask.ErrStr);
 
-        string masterTokenStrWithPrefix = "masterToken : " + longToken;
+        var masterTokenStrWithPrefix = "masterToken : " + longToken;
         mask = SecretDetector.Instance.MaskSecrets(masterTokenStrWithPrefix);
         Assert.True(mask.IsMasked);
         Assert.Equal(@"masterToken : ****", mask.MaskedText);
         Assert.Null(mask.ErrStr);
 
-        string assertionStrWithPrefix = "assertion content: " + longToken;
+        var assertionStrWithPrefix = "assertion content: " + longToken;
         mask = SecretDetector.Instance.MaskSecrets(assertionStrWithPrefix);
         Assert.True(mask.IsMasked);
         Assert.Equal(@"assertion content: ****", mask.MaskedText);
         Assert.Null(mask.ErrStr);
 
-        string snowFlakeAuthToken = "Authorization: Snowflake Token=\"ver:1-hint:92019676298218-ETMsDgAAAXswwgJhABRBRVMvQ0JDL1BLQ1M1UGFkZGluZwEAABAAEF1tbNM3myWX6A9sNSK6rpIAAACA6StojDJS4q1Vi3ID+dtFEucCEvGMOte0eapK+reb39O6hTHYxLfOgSGsbvbM5grJ4dYdNJjrzDf1r07tID4I2RJJRYjS4/DWBJn98Untd3xeNnXE1/45HgvwKVHlmZQLVwfWAxI7ifl2MVDwJlcXBufLZoVMYhUd4np121d7zFwAFGQzKyzUYQwI3M9Nqja9syHgaotG\"";
+        var snowFlakeAuthToken = "Authorization: Snowflake Token=\"ver:1-hint:92019676298218-ETMsDgAAAXswwgJhABRBRVMvQ0JDL1BLQ1M1UGFkZGluZwEAABAAEF1tbNM3myWX6A9sNSK6rpIAAACA6StojDJS4q1Vi3ID+dtFEucCEvGMOte0eapK+reb39O6hTHYxLfOgSGsbvbM5grJ4dYdNJjrzDf1r07tID4I2RJJRYjS4/DWBJn98Untd3xeNnXE1/45HgvwKVHlmZQLVwfWAxI7ifl2MVDwJlcXBufLZoVMYhUd4np121d7zFwAFGQzKyzUYQwI3M9Nqja9syHgaotG\"";
         mask = SecretDetector.Instance.MaskSecrets(snowFlakeAuthToken);
         Assert.True(mask.IsMasked);
         Assert.Equal(@"Authorization: Snowflake Token=****", mask.MaskedText);
@@ -379,9 +379,9 @@ public sealed class SecretDetectorTest
     [SFFact]
     public void TestTokenFalsePositive()
     {
-        string falsePositiveToken = "2020-04-30 23:06:04,069 - MainThread auth.py:397" +
-                                    " - write_temporary_credential() - DEBUG - no ID " +
-                                    "token is given when try to store temporary credential";
+        var falsePositiveToken = "2020-04-30 23:06:04,069 - MainThread auth.py:397" +
+                                 " - write_temporary_credential() - DEBUG - no ID " +
+                                 "token is given when try to store temporary credential";
 
         var mask = SecretDetector.Instance.MaskSecrets(falsePositiveToken);
         Assert.False(mask.IsMasked);
@@ -392,45 +392,45 @@ public sealed class SecretDetectorTest
     [SFFact]
     public void TestPasswords()
     {
-        string randomPassword = "Fh[+2J~AcqeqW%?";
+        var randomPassword = "Fh[+2J~AcqeqW%?";
 
-        string randomPasswordWithPrefix = "password:" + randomPassword;
+        var randomPasswordWithPrefix = "password:" + randomPassword;
         var mask = SecretDetector.Instance.MaskSecrets(randomPasswordWithPrefix);
         Assert.True(mask.IsMasked);
         Assert.Equal(@"password:****", mask.MaskedText);
         Assert.Null(mask.ErrStr);
 
-        string randomPasswordCaps = "PASSWORD:" + randomPassword;
+        var randomPasswordCaps = "PASSWORD:" + randomPassword;
         mask = SecretDetector.Instance.MaskSecrets(randomPasswordCaps);
         Assert.True(mask.IsMasked);
         Assert.Equal(@"PASSWORD:****", mask.MaskedText);
         Assert.Null(mask.ErrStr);
 
-        string randomPasswordMixCase = "PassWorD:" + randomPassword;
+        var randomPasswordMixCase = "PassWorD:" + randomPassword;
         mask = SecretDetector.Instance.MaskSecrets(randomPasswordMixCase);
         Assert.True(mask.IsMasked);
         Assert.Equal(@"PassWorD:****", mask.MaskedText);
         Assert.Null(mask.ErrStr);
 
-        string randomPasswordEqualSign = "password = " + randomPassword;
+        var randomPasswordEqualSign = "password = " + randomPassword;
         mask = SecretDetector.Instance.MaskSecrets(randomPasswordEqualSign);
         Assert.True(mask.IsMasked);
         Assert.Equal(@"password =****", mask.MaskedText);
         Assert.Null(mask.ErrStr);
 
-        string randomPwdWithPrefix = "pwd:" + randomPassword;
+        var randomPwdWithPrefix = "pwd:" + randomPassword;
         mask = SecretDetector.Instance.MaskSecrets(randomPwdWithPrefix);
         Assert.True(mask.IsMasked);
         Assert.Equal(@"pwd:****", mask.MaskedText);
         Assert.Null(mask.ErrStr);
 
-        string randomClientSecretUppercaseWithPrefix = "CLIENT_SECRET:" + randomPassword;
+        var randomClientSecretUppercaseWithPrefix = "CLIENT_SECRET:" + randomPassword;
         mask = SecretDetector.Instance.MaskSecrets(randomClientSecretUppercaseWithPrefix);
         Assert.True(mask.IsMasked);
         Assert.Equal(@"CLIENT_SECRET:****", mask.MaskedText);
         Assert.Null(mask.ErrStr);
 
-        string randomOAuthClientSecretUppercaseWithPrefix = "OAUTHCLIENTSECRET:" + randomPassword;
+        var randomOAuthClientSecretUppercaseWithPrefix = "OAUTHCLIENTSECRET:" + randomPassword;
         mask = SecretDetector.Instance.MaskSecrets(randomOAuthClientSecretUppercaseWithPrefix);
         Assert.True(mask.IsMasked);
         Assert.Equal(@"OAUTHCLIENTSECRET:****", mask.MaskedText);
@@ -441,28 +441,28 @@ public sealed class SecretDetectorTest
     [SFFact]
     public void TestTokenPassword()
     {
-        string longToken = "_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" + // pragma: allowlist secret
-                           "KyJH9DS=nFzzWnfZKGV+C7GopWCGD4Lj" + // pragma: allowlist secret
-                           "OLLFZKOE26LXHDt3pTi4iI1qwKuSpf/F" + // pragma: allowlist secret
-                           "mClCMBSissVsU3Ei590FP0lPQQhcSGcD" + // pragma: allowlist secret
-                           "u69ZL_1X6e9h5z62t/iY7ZkII28n2qU=" + // pragma: allowlist secret
-                           "nrBJUgPRCIbtJQkVJXIuOHjX4G5yUEKj" + // pragma: allowlist secret
-                           "ZBAx4w6=_lqtt67bIA=o7D=oUSjfywsR" + // pragma: allowlist secret
-                           "FoloNIkBPXCwFTv+1RVUHgVA2g8A9Lw5" + // pragma: allowlist secret
-                           "XdJYuI8vhg=f0bKSq7AhQ2Bh"; // pragma: allowlist secret
+        var longToken = "_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" + // pragma: allowlist secret
+                        "KyJH9DS=nFzzWnfZKGV+C7GopWCGD4Lj" + // pragma: allowlist secret
+                        "OLLFZKOE26LXHDt3pTi4iI1qwKuSpf/F" + // pragma: allowlist secret
+                        "mClCMBSissVsU3Ei590FP0lPQQhcSGcD" + // pragma: allowlist secret
+                        "u69ZL_1X6e9h5z62t/iY7ZkII28n2qU=" + // pragma: allowlist secret
+                        "nrBJUgPRCIbtJQkVJXIuOHjX4G5yUEKj" + // pragma: allowlist secret
+                        "ZBAx4w6=_lqtt67bIA=o7D=oUSjfywsR" + // pragma: allowlist secret
+                        "FoloNIkBPXCwFTv+1RVUHgVA2g8A9Lw5" + // pragma: allowlist secret
+                        "XdJYuI8vhg=f0bKSq7AhQ2Bh"; // pragma: allowlist secret
 
-        string longToken2 = "ktL57KJemuq4-M+Q0pdRjCIMcf1mzcr" + // pragma: allowlist secret
-                            "MwKteDS5DRE/Pb+5MzvWjDH7LFPV5b_" + // pragma: allowlist secret
-                            "/tX/yoLG3b4TuC6Q5qNzsARPPn_zs/j" + // pragma: allowlist secret
-                            "BbDOEg1-IfPpdsbwX6ETeEnhxkHIL4H" + // pragma: allowlist secret
-                            "sP-V";
+        var longToken2 = "ktL57KJemuq4-M+Q0pdRjCIMcf1mzcr" + // pragma: allowlist secret
+                         "MwKteDS5DRE/Pb+5MzvWjDH7LFPV5b_" + // pragma: allowlist secret
+                         "/tX/yoLG3b4TuC6Q5qNzsARPPn_zs/j" + // pragma: allowlist secret
+                         "BbDOEg1-IfPpdsbwX6ETeEnhxkHIL4H" + // pragma: allowlist secret
+                         "sP-V";
 
-        string randomPwd = "Fh[+2J~AcqeqW%?";
-        string randomPwd2 = randomPwd + "vdkav13";
+        var randomPwd = "Fh[+2J~AcqeqW%?";
+        var randomPwd2 = randomPwd + "vdkav13";
 
-        string testStringWithPrefix = "token=" + longToken +
-                                      " random giberish " +
-                                      "password:" + randomPwd;
+        var testStringWithPrefix = "token=" + longToken +
+                                   " random giberish " +
+                                   "password:" + randomPwd;
         var mask = SecretDetector.Instance.MaskSecrets(testStringWithPrefix);
         Assert.True(mask.IsMasked);
         Assert.Equal(
@@ -535,12 +535,12 @@ public sealed class SecretDetectorTest
     [SFFact]
     public void TestCustomPattern()
     {
-        string[] regex = new string[2]
+        var regex = new string[2]
         {
             @"(testCustomPattern\s*:\s*""([a-z]{8,})"")",
             @"(testCustomPattern\s*:\s*""([0-9]{8,})"")"
         };
-        string[] masks = new string[2]
+        var masks = new string[2]
         {
             "maskCustomPattern1",
             "maskCustomPattern2"
@@ -549,7 +549,7 @@ public sealed class SecretDetectorTest
         SecretDetector.Instance.SetCustomPatterns(regex, masks);
 
         // Mask custom pattern
-        string testString = "testCustomPattern: \"abcdefghijklmnop\"";
+        var testString = "testCustomPattern: \"abcdefghijklmnop\"";
         var mask = SecretDetector.Instance.MaskSecrets(testString);
         Assert.True(mask.IsMasked);
         Assert.Equal(masks[0], mask.MaskedText);
@@ -578,13 +578,13 @@ public sealed class SecretDetectorTest
     [SFFact]
     public void TestCustomPatternClear()
     {
-        string[] regex = new string[1] { @"(testCustomPattern\s*:\s*""([a-z]{8,})"")" };
-        string[] masks = new string[1] { "maskCustomPattern1" };
+        var regex = new string[1] { @"(testCustomPattern\s*:\s*""([a-z]{8,})"")" };
+        var masks = new string[1] { "maskCustomPattern1" };
 
         SecretDetector.Instance.SetCustomPatterns(regex, masks);
 
         // Mask custom pattern
-        string testString = "testCustomPattern: \"abcdefghijklmnop\"";
+        var testString = "testCustomPattern: \"abcdefghijklmnop\"";
         var mask = SecretDetector.Instance.MaskSecrets(testString);
         Assert.True(mask.IsMasked);
         Assert.Equal(masks[0], mask.MaskedText);
@@ -602,8 +602,8 @@ public sealed class SecretDetectorTest
     [SFFact]
     public void TestCustomPatternUnequalCount()
     {
-        string[] regex = new string[0];
-        string[] masks = new string[1] { "maskCustomPattern1" };
+        var regex = new string[0];
+        var masks = new string[1] { "maskCustomPattern1" };
 
         // Masks count is greater than regex
         try
@@ -634,7 +634,7 @@ public sealed class SecretDetectorTest
     [SFFact]
     public void TestHttpResponse()
     {
-        string randomHttpResponse =
+        var randomHttpResponse =
             "\"data\" : {" +
             "\"masterToken\" : \"ver:1-hint:92019676298218-ETMsDgAAAXrK7h+Y=" + // pragma: allowlist secret
             "\"token\" : \"_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" + // pragma: allowlist secret
@@ -643,7 +643,7 @@ public sealed class SecretDetectorTest
             "\"newClientForUpgrade\" : null," +
             "\"sessionId\" : 1234";
 
-        string randomHttpResponseWithPrefix = "Post response: " + randomHttpResponse;
+        var randomHttpResponseWithPrefix = "Post response: " + randomHttpResponse;
         var mask = SecretDetector.Instance.MaskSecrets(randomHttpResponseWithPrefix);
         Assert.True(mask.IsMasked);
         Assert.Equal(

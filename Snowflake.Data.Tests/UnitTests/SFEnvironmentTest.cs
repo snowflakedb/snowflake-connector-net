@@ -17,7 +17,7 @@ public sealed class SFEnvironmentTest
     public void TestRuntimeExtraction()
     {
         // Arrange
-        string expectedRuntime = ".NET";
+        var expectedRuntime = ".NET";
         string expectedVersion;
 
 #if NETFRAMEWORK

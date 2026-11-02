@@ -27,7 +27,7 @@ internal class MockRestRequesterForQueryCancellation : MockBaseRestRequester
 
     public override Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
     {
-        SFRestRequest sfRequest = (SFRestRequest)request;
+        var sfRequest = (SFRestRequest)request;
         if (sfRequest.jsonBody is LoginRequest)
         {
             return Task.FromResult<T>((T)(object)new LoginResponse
@@ -100,7 +100,7 @@ internal class MockRestRequesterForQueryCancellation : MockBaseRestRequester
 
     public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
     {
-        SFRestRequest sfRequest = (SFRestRequest)request;
+        var sfRequest = (SFRestRequest)request;
 
         if (sfRequest._isStatusRequest)
         {

@@ -125,7 +125,7 @@ internal class ArrowResultChunk : BaseResultChunk
         if (batch.Length == 0)
             return;
 
-        for (int i = 0; i < batch.ColumnCount; i++)
+        for (var i = 0; i < batch.ColumnCount; i++)
         {
             var column = batch.Column(i);
             if (column != null && column.Length != batch.Length)
@@ -335,20 +335,20 @@ internal class ArrowResultChunk : BaseResultChunk
                 var col = (FixedSizeListArray)column;
                 var values = col.Values;
                 var vectorLength = values.Length / col.Length;
-                StringBuilder sb = new StringBuilder("[");
+                var sb = new StringBuilder("[");
                 switch (values)
                 {
                     case Int32Array array:
-                        for (int i = 0; i < vectorLength; i++)
+                        for (var i = 0; i < vectorLength; i++)
                         {
                             sb.Append(array.GetValue(i + (_currentRecordIndex * vectorLength)));
                             sb.Append(',');
                         }
                         break;
                     case FloatArray array:
-                        for (int i = 0; i < vectorLength; i++)
+                        for (var i = 0; i < vectorLength; i++)
                         {
-                            float.TryParse(array.GetValue(i + (_currentRecordIndex * vectorLength)).ToString(), out float val);
+                            float.TryParse(array.GetValue(i + (_currentRecordIndex * vectorLength)).ToString(), out var val);
                             if (val.ToString().Contains("E"))
                             {
                                 sb.Append(val);
@@ -543,7 +543,7 @@ internal class ArrowResultChunk : BaseResultChunk
         var result = new Dictionary<string, object>();
         var structTypeFields = ((StructType)structArray.Data.DataType).Fields;
 
-        for (int i = 0; i < structArray.Fields.Count; i++)
+        for (var i = 0; i < structArray.Fields.Count; i++)
         {
             var field = structArray.Fields[i];
             var fieldName = structTypeFields[i].Name;
@@ -560,8 +560,8 @@ internal class ArrowResultChunk : BaseResultChunk
 
     private List<object> ExtractListArray(ListArray listArray, int index)
     {
-        int start = listArray.ValueOffsets[index];
-        int end = listArray.ValueOffsets[index + 1];
+        var start = listArray.ValueOffsets[index];
+        var end = listArray.ValueOffsets[index + 1];
 
         if (start == end)
             return null;
@@ -569,7 +569,7 @@ internal class ArrowResultChunk : BaseResultChunk
         var values = listArray.Values;
         var result = new List<object>(end - start);
 
-        for (int i = start; i < end; i++)
+        for (var i = start; i < end; i++)
         {
             result.Add(ConvertArrowValue(values, i));
         }
@@ -579,8 +579,8 @@ internal class ArrowResultChunk : BaseResultChunk
 
     private Dictionary<object, object> ExtractMapArray(MapArray mapArray, int index)
     {
-        int start = mapArray.ValueOffsets[index];
-        int end = mapArray.ValueOffsets[index + 1];
+        var start = mapArray.ValueOffsets[index];
+        var end = mapArray.ValueOffsets[index + 1];
 
         if (start == end)
             return null;
@@ -591,7 +591,7 @@ internal class ArrowResultChunk : BaseResultChunk
 
         var result = new Dictionary<object, object>();
 
-        for (int i = 0; i < end - start; i++)
+        for (var i = 0; i < end - start; i++)
         {
             var key = ConvertArrowValue(keyArray, i);
             var value = ConvertArrowValue(valueArray, i);
@@ -692,9 +692,9 @@ internal class ArrowResultChunk : BaseResultChunk
             return "0";
         }
 
-        bool isNegative = significand < 0;
-        string digits = BigInteger.Abs(significand).ToString();
-        string sign = isNegative ? "-" : "";
+        var isNegative = significand < 0;
+        var digits = BigInteger.Abs(significand).ToString();
+        var sign = isNegative ? "-" : "";
 
         // Calculate total digits in plain decimal format
         int plainFormatDigits;
@@ -705,7 +705,7 @@ internal class ArrowResultChunk : BaseResultChunk
         }
         else
         {
-            int scale = -exponent;
+            var scale = -exponent;
             if (scale < digits.Length)
             {
                 // Decimal point within digits: 12345 * 10^-2 = 123.45 (5 digits)
@@ -721,7 +721,7 @@ internal class ArrowResultChunk : BaseResultChunk
         // Use scientific notation if plain format exceeds threshold
         if (plainFormatDigits > MaxPlainFormatDigits)
         {
-            int adjustedExponent = exponent + digits.Length - 1;
+            var adjustedExponent = exponent + digits.Length - 1;
             if (digits.Length == 1)
             {
                 return sign + digits + "E" + adjustedExponent;
@@ -739,14 +739,14 @@ internal class ArrowResultChunk : BaseResultChunk
         }
         else
         {
-            int scale = -exponent;
+            var scale = -exponent;
             if (scale >= digits.Length)
             {
                 return sign + "0." + new string('0', scale - digits.Length) + digits;
             }
             else
             {
-                int insertPos = digits.Length - scale;
+                var insertPos = digits.Length - scale;
                 return sign + digits.Substring(0, insertPos) + "." + digits.Substring(insertPos);
             }
         }

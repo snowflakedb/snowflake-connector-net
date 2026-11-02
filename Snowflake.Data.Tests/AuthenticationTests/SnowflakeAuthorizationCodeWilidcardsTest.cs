@@ -27,10 +27,10 @@ public class SnowflakeAuthorizationCodeWildcardsTest
     [SFFact(SkipCondition.RunOnlyOnLocal)] // "TODO SNOW-4081612"
     public void TestAuthenticateSnowflakeAuthorizationCodeWilidcardsSuccessful()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
-        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
+        var connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+        var provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
 
         authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
         authTestHelper.VerifyExceptionIsNotThrown();
@@ -39,15 +39,15 @@ public class SnowflakeAuthorizationCodeWildcardsTest
     [SFFact(SkipCondition.RunOnlyOnLocal)] // "TODO SNOW-4081612"
     public void TestAuthenticateSnowflakeAuthorizationCodeWilidcardsMismatchedUser()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         var parameters = AuthConnectionString.GetOAuthSnowflakeAuthorizationCodeWilidcardsConnectionParameters();
         parameters[SFSessionProperty.USER] = "differentUser";
 
         _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
-        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
+        var connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+        var provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
 
         authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
         authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token.");
@@ -56,7 +56,7 @@ public class SnowflakeAuthorizationCodeWildcardsTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateSnowflakeAuthorizationCodeWilidcardsWrongCredentials()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         var parameters = AuthConnectionString.GetOAuthSnowflakeAuthorizationCodeWilidcardsConnectionParameters();
         parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "30");
@@ -65,8 +65,8 @@ public class SnowflakeAuthorizationCodeWildcardsTest
         _login = "itsnotanaccount.com";
         _password = "fakepassword";
 
-        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("fail", _login, _password);
+        var connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+        var provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("fail", _login, _password);
 
         authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
         authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 30 seconds");
@@ -75,7 +75,7 @@ public class SnowflakeAuthorizationCodeWildcardsTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateSnowflakeAuthorizationCodeWilidcardsTimeout()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         var parameters = AuthConnectionString.GetOAuthSnowflakeAuthorizationCodeWilidcardsConnectionParameters();
         parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "1");
@@ -88,7 +88,7 @@ public class SnowflakeAuthorizationCodeWildcardsTest
     [SFFact(SkipCondition.RunOnlyOnLocal)] // "TODO SNOW-4081612"
     public void TestAuthenticateSnowflakeAuthorizationCodeWildcardsWithTokenCache()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         var parameters = AuthConnectionString.GetOAuthSnowflakeAuthorizationCodeWilidcardsConnectionParameters();
         parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "10");
@@ -101,8 +101,8 @@ public class SnowflakeAuthorizationCodeWildcardsTest
         var tokenEndpoint = $"{scheme}://{host}:{port}/oauth/token-request";
         _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
-        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
+        var connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+        var provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
         try
         {
             authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);

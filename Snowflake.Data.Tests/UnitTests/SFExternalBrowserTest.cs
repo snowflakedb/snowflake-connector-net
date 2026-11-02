@@ -859,7 +859,7 @@ public sealed class WebBrowserListenerControlFlowTest
         httpListener.Start();
         var listenerUri = new Uri(endpoints[0] + "?token=tok");
 
-        int requestCount = 0;
+        var requestCount = 0;
         Func<HttpListenerContext, Result<string, IBrowserError>?> handler = ctx =>
         {
             if (Interlocked.Increment(ref requestCount) == 1)
@@ -889,7 +889,7 @@ public sealed class WebBrowserListenerControlFlowTest
     {
         var listener = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
         listener.Start();
-        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
         listener.Stop();
         return port;
     }

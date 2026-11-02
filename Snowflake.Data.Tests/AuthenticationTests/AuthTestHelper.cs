@@ -18,7 +18,7 @@ public class AuthTestHelper
 
     public AuthTestHelper()
     {
-        string envVar = Environment.GetEnvironmentVariable("RUN_AUTH_TESTS_MANUALLY");
+        var envVar = Environment.GetEnvironmentVariable("RUN_AUTH_TESTS_MANUALLY");
         _runAuthTestsManually = bool.Parse(envVar ?? "true");
     }
 
@@ -47,7 +47,7 @@ public class AuthTestHelper
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
 
-                using (IDbCommand command = conn.CreateCommand())
+                using (var command = conn.CreateCommand())
                 {
                     command.CommandText = "SELECT 1";
                     var result = command.ExecuteScalar();
@@ -65,7 +65,7 @@ public class AuthTestHelper
     public bool ConnectAndExecuteSimpleQueryWithMfaToken(string baseConnectionString, string[] totpCodes)
     {
         // Try each TOTP code until one works
-        for (int i = 0; i < totpCodes.Length; i++)
+        for (var i = 0; i < totpCodes.Length; i++)
         {
             var totpCode = totpCodes[i];
             s_logger.Info($"Trying TOTP code {i + 1}/{totpCodes.Length}");
@@ -119,7 +119,7 @@ public class AuthTestHelper
                 conn.ConnectionString = AuthConnectionString.ConvertToConnectionString(parameters);
                 conn.Open();
                 Assert.Equal(ConnectionState.Open, conn.State);
-                using (IDbCommand dbCommand = conn.CreateCommand())
+                using (var dbCommand = conn.CreateCommand())
                 {
                     dbCommand.CommandText = command;
                     using (var reader = dbCommand.ExecuteReader())
@@ -196,8 +196,8 @@ public class AuthTestHelper
                 process.Kill();
                 throw new TimeoutException("The process did not complete in the allotted time.");
             }
-            string output = process.StandardOutput.ReadToEnd();
-            string error = process.StandardError.ReadToEnd();
+            var output = process.StandardOutput.ReadToEnd();
+            var error = process.StandardError.ReadToEnd();
 
             s_logger.Info("Output: " + output);
             s_logger.Info("Error: " + error);
@@ -227,7 +227,7 @@ public class AuthTestHelper
         {
             try
             {
-                string provideTotpGeneratorPath = "/externalbrowser/totpGenerator.js";
+                var provideTotpGeneratorPath = "/externalbrowser/totpGenerator.js";
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = "node",
@@ -247,8 +247,8 @@ public class AuthTestHelper
                         throw new TimeoutException("TOTP generation process did not complete in the allotted time.");
                     }
 
-                    string output = process.StandardOutput.ReadToEnd().Trim();
-                    string error = process.StandardError.ReadToEnd();
+                    var output = process.StandardOutput.ReadToEnd().Trim();
+                    var error = process.StandardError.ReadToEnd();
 
                     s_logger.Debug($"OUTPUT: {output}, ERRORS: {error}");
 

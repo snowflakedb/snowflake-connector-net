@@ -30,7 +30,7 @@ public sealed class SFDbCommandBuilderTest
     [SFFact]
     public void TestCommandBuilderWithAdapter()
     {
-        SnowflakeDbDataAdapter adapter = new SnowflakeDbDataAdapter();
+        var adapter = new SnowflakeDbDataAdapter();
         builder = new SnowflakeDbCommandBuilder(adapter);
         Assert.Equal(adapter, builder.DataAdapter);
         Assert.Equal(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_PREFIX, builder.QuotePrefix);
@@ -40,7 +40,7 @@ public sealed class SFDbCommandBuilderTest
     [SFFact]
     public void TestCommandBuilderSetPrefix()
     {
-        string newQuotePrefix = "\'";
+        var newQuotePrefix = "\'";
 
         Assert.NotEqual(newQuotePrefix, builder.QuotePrefix);
 
@@ -51,7 +51,7 @@ public sealed class SFDbCommandBuilderTest
     [SFFact]
     public void TestCommandBuilderSetSuffix()
     {
-        string newQuoteSuffix = "\'";
+        var newQuoteSuffix = "\'";
 
         Assert.NotEqual(newQuoteSuffix, builder.QuoteSuffix);
 

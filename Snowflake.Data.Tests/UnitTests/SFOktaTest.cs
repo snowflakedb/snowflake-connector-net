@@ -163,7 +163,7 @@ public class SFOktaTest
                 MaxRetryTimeout = 400,
             };
             var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://test.okta.com;host=test.okta.com", new SessionPropertiesContext(), restRequester);
-            Task connectTask = sfSession.OpenAsync(CancellationToken.None);
+            var connectTask = sfSession.OpenAsync(CancellationToken.None);
             connectTask.Wait();
         }
         catch (SnowflakeDbException)
@@ -208,7 +208,7 @@ public class SFOktaTest
                 MaxRetryTimeout = 400,
             };
             var sfSession = new SFSession("disable_saml_url_check=true;account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;host=test", new SessionPropertiesContext(), restRequester);
-            Task connectTask = sfSession.OpenAsync(CancellationToken.None);
+            var connectTask = sfSession.OpenAsync(CancellationToken.None);
             connectTask.Wait();
         }
         catch (SnowflakeDbException)
@@ -221,14 +221,14 @@ public class SFOktaTest
     public void TestLoginRequestToString()
     {
         // Arrange
-        string expectedOktaAccount = "mockOktaAccount";
-        string expectedOktaUser = "mockOktaUser";
-        string expectedOktaUrl = "mockOktaUrl";
+        var expectedOktaAccount = "mockOktaAccount";
+        var expectedOktaUser = "mockOktaUser";
+        var expectedOktaUrl = "mockOktaUrl";
 
-        LoginRequestClientEnv loginRequestClientEnv = new LoginRequestClientEnv();
+        var loginRequestClientEnv = new LoginRequestClientEnv();
 
         // Act
-        LoginRequest loginRequest = new LoginRequest()
+        var loginRequest = new LoginRequest()
         {
             data = new LoginRequestData()
             {
@@ -259,10 +259,10 @@ public class SFOktaTest
     public void TestAuthenticatorRequestToString()
     {
         // Arrange
-        string expectedOktaAccount = "mockOktaAccount";
+        var expectedOktaAccount = "mockOktaAccount";
 
         // Act
-        AuthenticatorRequest authenticatorRequest = new AuthenticatorRequest()
+        var authenticatorRequest = new AuthenticatorRequest()
         {
             Data = new AuthenticatorRequestData()
             {

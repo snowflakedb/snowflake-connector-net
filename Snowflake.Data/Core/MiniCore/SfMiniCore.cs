@@ -63,19 +63,19 @@ internal static class SfMiniCore
 
     public static string GetFullVersion()
     {
-        IntPtr versionPtr = sf_core_full_version();
+        var versionPtr = sf_core_full_version();
         if (versionPtr == IntPtr.Zero)
         {
             throw new InvalidOperationException("sf_core_full_version returned null");
         }
 
-        int length = 0;
+        var length = 0;
         while (Marshal.ReadByte(versionPtr, length) != 0)
         {
             length++;
         }
 
-        byte[] bytes = new byte[length];
+        var bytes = new byte[length];
         Marshal.Copy(versionPtr, bytes, 0, length);
         return Encoding.UTF8.GetString(bytes);
     }

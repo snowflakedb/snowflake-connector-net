@@ -28,7 +28,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestCancelExecuteAsync()
     {
-        CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+        var externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(8));
 
         using (DbConnection conn = new SnowflakeDbConnection())
         {
@@ -36,7 +36,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
 
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            DbCommand cmd = conn.CreateCommand();
+            var cmd = conn.CreateCommand();
             cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 20)) v";
             // external cancellation should be triggered before timeout
             cmd.CommandTimeout = 10;
@@ -79,12 +79,12 @@ public class SFDbCommandITAsync : SFBaseTestAsync
         string queryId;
         var expectedWaitTime = 5;
 
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+            using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
             {
                 // Arrange
                 cmd.CommandText = $"CALL SYSTEM$WAIT({expectedWaitTime}, \'SECONDS\');";
@@ -98,7 +98,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
                 Assert.False(conn.IsAnError(queryStatus), $"Expected query to not be an error but status was: {queryStatus}");
 
                 // Act
-                DbDataReader reader = cmd.GetResultsFromQueryId(queryId);
+                var reader = cmd.GetResultsFromQueryId(queryId);
                 queryStatus = cmd.GetQueryStatus(queryId);
 
                 // Assert
@@ -117,15 +117,15 @@ public class SFDbCommandITAsync : SFBaseTestAsync
         string queryId;
         var expectedWaitTime = 5;
 
-        SnowflakeDbConnection[] connections = new SnowflakeDbConnection[3];
-        for (int i = 0; i < connections.Length; i++)
+        var connections = new SnowflakeDbConnection[3];
+        for (var i = 0; i < connections.Length; i++)
         {
             connections[i] = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false");
             await connections[i].OpenAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         // Start the async exec query
-        using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[0].CreateCommand())
+        using (var cmd = (SnowflakeDbCommand)connections[0].CreateCommand())
         {
             // Arrange
             cmd.CommandText = $"CALL SYSTEM$WAIT({expectedWaitTime}, \'SECONDS\');";
@@ -139,7 +139,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
         }
 
         // Execute a normal query
-        using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[1].CreateCommand())
+        using (var cmd = (SnowflakeDbCommand)connections[1].CreateCommand())
         {
             // Arrange
             cmd.CommandText = $"select 1;";
@@ -152,7 +152,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
         }
 
         // Get results of the async exec query
-        using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[2].CreateCommand())
+        using (var cmd = (SnowflakeDbCommand)connections[2].CreateCommand())
         {
             // Act
             var reader = await cmd.GetResultsFromQueryIdAsync(queryId, CancellationToken.None).ConfigureAwait(false);
@@ -164,7 +164,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
             Assert.Equal(QueryStatus.Success, queryStatus);
         }
 
-        for (int i = 0; i < connections.Length; i++)
+        for (var i = 0; i < connections.Length; i++)
         {
             await connections[i].CloseAsync(CancellationToken.None).ConfigureAwait(false);
         }
@@ -173,15 +173,15 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestAsyncExecCancelWhileGettingResultsAsync()
     {
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+            using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
             {
                 // Arrange
-                CancellationTokenSource cancelToken = new CancellationTokenSource();
+                var cancelToken = new CancellationTokenSource();
                 cmd.CommandText = $"CALL SYSTEM$WAIT(60, \'SECONDS\');";
 
                 // Act
@@ -209,15 +209,15 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     {
         string queryId;
 
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+            using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
             {
                 // Arrange: submit a 60-second query via async mode
-                CancellationTokenSource cancelToken = new CancellationTokenSource();
+                var cancelToken = new CancellationTokenSource();
                 cmd.CommandText = $"CALL SYSTEM$WAIT(60, \'SECONDS\');";
 
                 queryId = await cmd.ExecuteAsyncInAsyncMode(CancellationToken.None).ConfigureAwait(false);
@@ -238,7 +238,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
             }
 
             // Assert: poll query status via REST API until the cancel completes
-            using (SnowflakeDbCommand checkCmd = (SnowflakeDbCommand)conn.CreateCommand())
+            using (var checkCmd = (SnowflakeDbCommand)conn.CreateCommand())
             {
                 QueryStatus queryStatus;
                 var maxRetries = 30;
@@ -260,12 +260,12 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestFailedAsyncExecQueryThrowsErrorAsync()
     {
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+            using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
             {
                 // Arrange
                 var statusMaxRetryCount = 5;
@@ -300,14 +300,14 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestGetStatusOfInvalidQueryIdAsync()
     {
-        string fakeQueryId = "fakeQueryId";
+        var fakeQueryId = "fakeQueryId";
 
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+            using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
             {
                 // Act
                 var thrown = await Assert.ThrowsAsync<Exception>(async () =>
@@ -324,14 +324,14 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestGetResultsOfInvalidQueryIdAsync()
     {
-        string fakeQueryId = "fakeQueryId";
+        var fakeQueryId = "fakeQueryId";
 
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+            using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
             {
                 // Act
                 var thrown = await Assert.ThrowsAsync<Exception>(async () =>
@@ -348,14 +348,14 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestGetStatusOfUnknownQueryIdAsync()
     {
-        string unknownQueryId = "ba321edc-1abc-123e-987f-1234a56b789c";
+        var unknownQueryId = "ba321edc-1abc-123e-987f-1234a56b789c";
 
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+            using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
             {
                 // Act
                 var queryStatus = await cmd.GetQueryStatusAsync(unknownQueryId, CancellationToken.None).ConfigureAwait(false);
@@ -371,14 +371,14 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     [SFFact(Skip = "The test takes too long to finish when using the default retry")]
     public async Task TestGetResultsOfUnknownQueryIdAsyncWithDefaultRetry()
     {
-        string unknownQueryId = "ab123fed-1abc-987f-987f-1234a56b789c";
+        var unknownQueryId = "ab123fed-1abc-987f-987f-1234a56b789c";
 
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+            using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
             {
                 // Act
                 var thrown = await Assert.ThrowsAsync<Exception>(async () =>
@@ -399,15 +399,15 @@ public class SFDbCommandITAsync : SFBaseTestAsync
         var queryResultsRetryPattern = new int[] { 1, 2 };
         var unknownQueryId = "ab123fed-1abc-987f-987f-1234a56b789c";
 
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+            using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
             {
                 // Arrange
-                QueryResultsAwaiter queryResultsAwaiter = new QueryResultsAwaiter(new QueryResultsRetryConfig(queryResultsRetryCount, queryResultsRetryPattern));
+                var queryResultsAwaiter = new QueryResultsAwaiter(new QueryResultsRetryConfig(queryResultsRetryCount, queryResultsRetryPattern));
 
                 // Act
                 var thrown = await Assert.ThrowsAsync<Exception>(async () =>
@@ -477,7 +477,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
                 Assert.Equal(270009, e.ErrorCode);
             }
 
-            object val = cmd.ExecuteScalar();
+            var val = cmd.ExecuteScalar();
             Assert.Equal(1L, (long)val);
 
             await conn.CloseAsync(CancellationToken.None).ConfigureAwait(false);
@@ -497,7 +497,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
             cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 200000)) v order by 1";
             using (var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
             {
-                int counter = 0;
+                var counter = 0;
                 while (await reader.ReadAsync().ConfigureAwait(false))
                 {
                     Assert.Equal(counter.ToString(), reader.GetString(0));
@@ -523,7 +523,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
             var cmd = conn.CreateCommand();
             cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 10000)) v order by 1";
             var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            int counter = 0;
+            var counter = 0;
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 Assert.Equal(counter.ToString(), reader.GetString(0));
@@ -547,7 +547,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
             var cmd = conn.CreateCommand();
             cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 10000)) v order by 1";
             var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            int counter = 0;
+            var counter = 0;
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 Assert.Equal(counter.ToString(), reader.GetString(0));
@@ -564,7 +564,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     [InlineData(4)]
     public async Task TestDefaultChunkDownloaderWithPrefetchThreads(int prefetchThreads)
     {
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false"))
+        using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false"))
         {
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
@@ -576,7 +576,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
             cmd.CommandText = "select seq4(), uniform(1, 10, 42) from table(generator(rowcount => 10000)) v order by 1";
 
             var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-            int counter = 0;
+            var counter = 0;
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 Assert.Equal(counter.ToString(), reader.GetString(0));
@@ -625,7 +625,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
 
             var cmd = conn.CreateCommand();
             cmd.CommandText = "select count(seq4()) from table(generator(timelimit => 20)) v";
-            Task executionThread = Task.Run(() =>
+            var executionThread = Task.Run(() =>
             {
                 try
                 {
@@ -685,7 +685,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
 
             try
             {
-                Stopwatch stopwatch = Stopwatch.StartNew();
+                var stopwatch = Stopwatch.StartNew();
                 cmd.ExecuteScalar();
                 stopwatch.Stop();
                 //Should timeout before the query time limit of 17min
@@ -787,8 +787,8 @@ public class SFDbCommandITAsync : SFBaseTestAsync
 
             using (var command = conn.CreateCommand())
             {
-                int rowsAffected = -1;
-                for (int i = 0; i < testCommands.Length; i++)
+                var rowsAffected = -1;
+                for (var i = 0; i < testCommands.Length; i++)
                 {
                     command.CommandText = testCommands[i];
                     rowsAffected = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
@@ -810,7 +810,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
             using (var command = conn.CreateCommand())
             {
                 command.CommandText = "select 1 where 2 > 3";
-                object val = await command.ExecuteScalarAsync().ConfigureAwait(false);
+                var val = await command.ExecuteScalarAsync().ConfigureAwait(false);
 
                 Assert.Equal(DBNull.Value, val);
             }
@@ -857,7 +857,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                 command.CommandText = $"copy into @my_unload_stage/unload/ from {tableName};";
-                int affected = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+                var affected = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                 Assert.Equal(6, affected);
 
@@ -878,7 +878,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     private async Task ArrayBindTest(string connstr, string tableName, int size)
     {
         const int timeoutSeconds = 150;
-        CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+        var externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
         using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = connstr;
@@ -894,15 +894,15 @@ public class SFDbCommandITAsync : SFBaseTestAsync
                 "colf TIMESTAMP_TZ"
             }).ConfigureAwait(false);
 
-            using (DbCommand cmd = conn.CreateCommand())
+            using (var cmd = conn.CreateCommand())
             {
-                string insertCommand = "insert into " + tableName + " values (?, ?, ?, ?, ?, ?)";
+                var insertCommand = "insert into " + tableName + " values (?, ?, ?, ?, ?, ?)";
                 cmd.CommandText = insertCommand;
 
-                int total = size;
+                var total = size;
 
-                List<int> arrint = new List<int>();
-                for (int i = 0; i < total; i++)
+                var arrint = new List<int>();
+                for (var i = 0; i < total; i++)
                 {
                     arrint.Add(i * 10 + 1);
                     arrint.Add(i * 10 + 2);
@@ -914,8 +914,8 @@ public class SFDbCommandITAsync : SFBaseTestAsync
                 p1.Value = arrint.ToArray();
                 cmd.Parameters.Add(p1);
 
-                List<string> arrstring = new List<string>();
-                for (int i = 0; i < total; i++)
+                var arrstring = new List<string>();
+                for (var i = 0; i < total; i++)
                 {
                     arrstring.Add("str1");
                     arrstring.Add("str2");
@@ -927,11 +927,11 @@ public class SFDbCommandITAsync : SFBaseTestAsync
                 p2.Value = arrstring.ToArray();
                 cmd.Parameters.Add(p2);
 
-                DateTime date1 = DateTime.ParseExact("2000-01-01 00:00:00.0000000", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                DateTime date2 = DateTime.ParseExact("2020-05-11 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                DateTime date3 = DateTime.ParseExact("2021-07-22 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                List<DateTime> arrDate = new List<DateTime>();
-                for (int i = 0; i < total; i++)
+                var date1 = DateTime.ParseExact("2000-01-01 00:00:00.0000000", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+                var date2 = DateTime.ParseExact("2020-05-11 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+                var date3 = DateTime.ParseExact("2021-07-22 23:59:59.9999999", "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+                var arrDate = new List<DateTime>();
+                for (var i = 0; i < total; i++)
                 {
                     arrDate.Add(date1);
                     arrDate.Add(date2);
@@ -943,11 +943,11 @@ public class SFDbCommandITAsync : SFBaseTestAsync
                 p3.Value = arrDate.ToArray();
                 cmd.Parameters.Add(p3);
 
-                DateTime time1 = DateTime.ParseExact("00:00:00.0000000", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                DateTime time2 = DateTime.ParseExact("23:59:59.9999999", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                DateTime time3 = DateTime.ParseExact("12:35:41.3333333", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
-                List<DateTime> arrTime = new List<DateTime>();
-                for (int i = 0; i < total; i++)
+                var time1 = DateTime.ParseExact("00:00:00.0000000", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+                var time2 = DateTime.ParseExact("23:59:59.9999999", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+                var time3 = DateTime.ParseExact("12:35:41.3333333", "HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
+                var arrTime = new List<DateTime>();
+                for (var i = 0; i < total; i++)
                 {
                     arrTime.Add(time1);
                     arrTime.Add(time2);
@@ -960,11 +960,11 @@ public class SFDbCommandITAsync : SFBaseTestAsync
                 p4.Value = arrTime.ToArray();
                 cmd.Parameters.Add(p4);
 
-                DateTime ntz1 = DateTime.ParseExact("2017-01-01 12:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                DateTime ntz2 = DateTime.ParseExact("2020-12-31 23:59:59", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                DateTime ntz3 = DateTime.ParseExact("2022-04-01 00:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                List<DateTime> arrNtz = new List<DateTime>();
-                for (int i = 0; i < total; i++)
+                var ntz1 = DateTime.ParseExact("2017-01-01 12:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+                var ntz2 = DateTime.ParseExact("2020-12-31 23:59:59", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+                var ntz3 = DateTime.ParseExact("2022-04-01 00:00:00", "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+                var arrNtz = new List<DateTime>();
+                for (var i = 0; i < total; i++)
                 {
                     arrNtz.Add(ntz1);
                     arrNtz.Add(ntz2);
@@ -976,11 +976,11 @@ public class SFDbCommandITAsync : SFBaseTestAsync
                 p5.Value = arrNtz.ToArray();
                 cmd.Parameters.Add(p5);
 
-                DateTimeOffset tz1 = DateTimeOffset.Now;
-                DateTimeOffset tz2 = DateTimeOffset.UtcNow;
-                DateTimeOffset tz3 = new DateTimeOffset(2007, 1, 1, 12, 0, 0, new TimeSpan(4, 0, 0));
-                List<DateTimeOffset> arrTz = new List<DateTimeOffset>();
-                for (int i = 0; i < total; i++)
+                var tz1 = DateTimeOffset.Now;
+                var tz2 = DateTimeOffset.UtcNow;
+                var tz3 = new DateTimeOffset(2007, 1, 1, 12, 0, 0, new TimeSpan(4, 0, 0));
+                var arrTz = new List<DateTimeOffset>();
+                for (var i = 0; i < total; i++)
                 {
                     arrTz.Add(tz1);
                     arrTz.Add(tz2);
@@ -993,7 +993,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
                 p6.Value = arrTz.ToArray();
                 cmd.Parameters.Add(p6);
 
-                Task<int> task = cmd.ExecuteNonQueryAsync(externalCancel.Token);
+                var task = cmd.ExecuteNonQueryAsync(externalCancel.Token);
 
                 if (!task.Wait(TimeSpan.FromSeconds(timeoutSeconds)))
                 {
@@ -1015,8 +1015,8 @@ public class SFDbCommandITAsync : SFBaseTestAsync
         var t1TableName = _fixture.TableNameBaseName + "1" + Guid.NewGuid().ToString("N");
         var t2TableName = _fixture.TableNameBaseName + "2" + Guid.NewGuid().ToString("N");
 
-        Thread t1 = new Thread(() => ThreadProcess1(_fixture.ConnectionString + "poolingEnabled=false", t1TableName));
-        Thread t2 = new Thread(() => ThreadProcess2(_fixture.ConnectionString + "poolingEnabled=false", t2TableName));
+        var t1 = new Thread(() => ThreadProcess1(_fixture.ConnectionString + "poolingEnabled=false", t1TableName));
+        var t2 = new Thread(() => ThreadProcess2(_fixture.ConnectionString + "poolingEnabled=false", t2TableName));
         //Thread t3 = new Thread(() => ThreadProcess3(_fixture.ConnectionString));
         //Thread t4 = new Thread(() => ThreadProcess4(_fixture.ConnectionString));
 
@@ -1042,7 +1042,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     public async Task TestExecuteScalarAsyncSelect()
     {
         var tableName = _fixture.TableNameBaseName + Guid.NewGuid().ToString("N");
-        CancellationTokenSource externalCancel = new CancellationTokenSource();
+        var externalCancel = new CancellationTokenSource();
         using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
@@ -1050,14 +1050,14 @@ public class SFDbCommandITAsync : SFBaseTestAsync
 
             await _fixture.CreateOrReplaceTable(conn, tableName, new[] { "cola INTEGER" }).ConfigureAwait(false);
 
-            using (DbCommand cmd = conn.CreateCommand())
+            using (var cmd = conn.CreateCommand())
             {
-                string insertCommand = $"insert into {tableName} values (?)";
+                var insertCommand = $"insert into {tableName} values (?)";
                 cmd.CommandText = insertCommand;
-                int total = 1000;
+                var total = 1000;
 
-                List<int> arrint = new List<int>();
-                for (int i = 0; i < total; i++)
+                var arrint = new List<int>();
+                for (var i = 0; i < total; i++)
                 {
                     arrint.Add(i);
                 }
@@ -1099,14 +1099,14 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestGetQueryId()
     {
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
             // query id is null when no query executed
-            SnowflakeDbCommand command = (SnowflakeDbCommand)conn.CreateCommand();
-            string queryId = command.GetQueryId();
+            var command = (SnowflakeDbCommand)conn.CreateCommand();
+            var queryId = command.GetQueryId();
             Assert.Null(queryId);
 
             // query id from ExecuteNonQuery
@@ -1117,7 +1117,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
 
             // query id from ExecuteReader
             command.CommandText = "show tables like 'testgetqueryid'";
-            SnowflakeDbDataReader reader = (SnowflakeDbDataReader)command.ExecuteReader();
+            var reader = (SnowflakeDbDataReader)command.ExecuteReader();
             queryId = command.GetQueryId();
             Assert.NotEmpty(queryId);
             Assert.Equal(queryId, reader.GetQueryId());
@@ -1139,11 +1139,11 @@ public class SFDbCommandITAsync : SFBaseTestAsync
             Assert.Equal("test", reader.GetString(0));
 
             // query id from different DbCommand instance
-            SnowflakeDbCommand command2 = (SnowflakeDbCommand)conn.CreateCommand();
-            string queryId2 = command2.GetQueryId();
+            var command2 = (SnowflakeDbCommand)conn.CreateCommand();
+            var queryId2 = command2.GetQueryId();
             Assert.Null(queryId2);
             command2.CommandText = "select 'test2'";
-            SnowflakeDbDataReader reader2 = (SnowflakeDbDataReader)await command2.ExecuteReaderAsync().ConfigureAwait(false);
+            var reader2 = (SnowflakeDbDataReader)await command2.ExecuteReaderAsync().ConfigureAwait(false);
             queryId2 = command2.GetQueryId();
             Assert.NotEmpty(queryId2);
             Assert.Equal(queryId2, reader2.GetQueryId());
@@ -1188,12 +1188,12 @@ public class SFDbCommandITAsync : SFBaseTestAsync
         string queryId;
         var expectedWaitTime = 5;
 
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+            using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
             {
                 // Arrange
                 cmd.CommandText = $"CALL SYSTEM$WAIT({expectedWaitTime}, \'SECONDS\');";
@@ -1207,7 +1207,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
                 Assert.False(conn.IsAnError(queryStatus), $"Expected query to not be an error but status was: {queryStatus}");
 
                 // Act
-                DbDataReader reader = cmd.GetResultsFromQueryId(queryId);
+                var reader = cmd.GetResultsFromQueryId(queryId);
 
                 // Assert
                 Assert.True(reader.Read());
@@ -1225,15 +1225,15 @@ public class SFDbCommandITAsync : SFBaseTestAsync
         string queryId;
         var expectedWaitTime = 5;
 
-        SnowflakeDbConnection[] connections = new SnowflakeDbConnection[3];
-        for (int i = 0; i < connections.Length; i++)
+        var connections = new SnowflakeDbConnection[3];
+        for (var i = 0; i < connections.Length; i++)
         {
             connections[i] = new SnowflakeDbConnection(_fixture.ConnectionString + "poolingEnabled=false");
             connections[i].Open();
         }
 
         // Start the async exec query
-        using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[0].CreateCommand())
+        using (var cmd = (SnowflakeDbCommand)connections[0].CreateCommand())
         {
             // Arrange
             cmd.CommandText = $"CALL SYSTEM$WAIT({expectedWaitTime}, \'SECONDS\');";
@@ -1246,7 +1246,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
         }
 
         // Execute a normal query
-        using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[1].CreateCommand())
+        using (var cmd = (SnowflakeDbCommand)connections[1].CreateCommand())
         {
             // Arrange
             cmd.CommandText = $"select 1;";
@@ -1259,10 +1259,10 @@ public class SFDbCommandITAsync : SFBaseTestAsync
         }
 
         // Get results of the async exec query
-        using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)connections[2].CreateCommand())
+        using (var cmd = (SnowflakeDbCommand)connections[2].CreateCommand())
         {
             // Act
-            DbDataReader reader = cmd.GetResultsFromQueryId(queryId);
+            var reader = cmd.GetResultsFromQueryId(queryId);
 
             // Assert
             Assert.True(await reader.ReadAsync().ConfigureAwait(false));
@@ -1270,7 +1270,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
             Assert.Equal(QueryStatus.Success, cmd.GetQueryStatus(queryId));
         }
 
-        for (int i = 0; i < connections.Length; i++)
+        for (var i = 0; i < connections.Length; i++)
         {
             connections[i].Close();
         }
@@ -1281,12 +1281,12 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     {
         string queryId;
 
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+            using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
             {
                 // Arrange
                 var statusMaxRetryCount = 5;
@@ -1318,12 +1318,12 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     [SFFact]
     public async Task TestAsyncExecQueryPutGetThrowsNotImplemented()
     {
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+            using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
             {
                 // Arrange
                 cmd.CommandText = $"PUT file://non_existent_file.csv @~;";
@@ -1553,8 +1553,8 @@ public class SFDbCommandITAsync : SFBaseTestAsync
     {
         using (var conn = new SnowflakeDbConnection())
         {
-            string expectedQueryTag = "Test QUERY_TAG 12345";
-            string connectQueryTag = "Test 123";
+            var expectedQueryTag = "Test QUERY_TAG 12345";
+            var connectQueryTag = "Test 123";
             conn.ConnectionString = _fixture.ConnectionString + $";query_tag={connectQueryTag}";
 
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
@@ -1608,12 +1608,12 @@ public class SFDbCommandITAsync : SFBaseTestAsync
         const int NumberOfRows = 3;
         const int ExpectedRowCount = NumberOfFiles * NumberOfRows;
 
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+            using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
             {
                 var tempFolder = $"{Path.GetTempPath()}Temp_{Guid.NewGuid()}";
 
@@ -1622,7 +1622,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
                     // Arrange
                     Directory.CreateDirectory(tempFolder);
                     var data = string.Concat(Enumerable.Repeat(string.Join(",", "TestData") + "\n", NumberOfRows));
-                    for (int i = 0; i < NumberOfFiles; i++)
+                    for (var i = 0; i < NumberOfFiles; i++)
                     {
                         File.WriteAllText(Path.Combine(tempFolder, $"{GetType().Name}_{i}.csv"), data);
                     }
@@ -1632,7 +1632,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
 
                     // Act
                     cmd.CommandText = $"COPY INTO {tableName} FROM @%{tableName} PATTERN='.*.csv' FILE_FORMAT=(TYPE=CSV)";
-                    int actualRowCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                    var actualRowCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                     // Assert
                     Assert.Equal(ExpectedRowCount, actualRowCount);
@@ -1653,12 +1653,12 @@ public class SFDbCommandITAsync : SFBaseTestAsync
         const int NumberOfRows = 3;
         const int ExpectedRowCount = NumberOfFiles * NumberOfRows;
 
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString + "poolingEnabled=false";
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
 
-            using (SnowflakeDbCommand cmd = (SnowflakeDbCommand)conn.CreateCommand())
+            using (var cmd = (SnowflakeDbCommand)conn.CreateCommand())
             {
                 var tempFolder = $"{Path.GetTempPath()}Temp_{Guid.NewGuid()}";
 
@@ -1667,7 +1667,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
                     // Arrange
                     Directory.CreateDirectory(tempFolder);
                     var data = string.Concat(Enumerable.Repeat(string.Join(",", "TestData") + "\n", NumberOfRows));
-                    for (int i = 0; i < NumberOfFiles; i++)
+                    for (var i = 0; i < NumberOfFiles; i++)
                     {
                         File.WriteAllText(Path.Combine(tempFolder, $"{GetType().Name}_{i}.csv"), data);
                     }
@@ -1677,7 +1677,7 @@ public class SFDbCommandITAsync : SFBaseTestAsync
 
                     // Act
                     cmd.CommandText = $"COPY INTO {tableName} FROM @%{tableName} PATTERN='.*.csv' FILE_FORMAT=(TYPE=CSV)";
-                    int actualRowCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                    var actualRowCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
                     // Assert
                     Assert.Equal(ExpectedRowCount, actualRowCount);

@@ -20,7 +20,7 @@ public class SFBindUploaderTest
         var check = SFDataConverter.CSharpValToSfVal(SFDataType.DATE, dateExpected);
         Assert.Equal(check, input);
         // Act
-        DateTime dateActual = DateTime.Parse(_bindUploader.GetCSVData(dbType.ToString(), input));
+        var dateActual = DateTime.Parse(_bindUploader.GetCSVData(dbType.ToString(), input));
         // Assert
         Assert.Equal(dateExpected, dateActual);
     }
@@ -34,11 +34,11 @@ public class SFBindUploaderTest
     public void TestCsvDataConversionForTime(SFDataType dbType, string input, string expected)
     {
         // Arrange
-        DateTime timeExpected = DateTime.Parse(expected);
+        var timeExpected = DateTime.Parse(expected);
         var check = SFDataConverter.CSharpValToSfVal(SFDataType.TIME, timeExpected);
         Assert.Equal(check, input);
         // Act
-        DateTime timeActual = DateTime.Parse(_bindUploader.GetCSVData(dbType.ToString(), input));
+        var timeActual = DateTime.Parse(_bindUploader.GetCSVData(dbType.ToString(), input));
         // Assert
         Assert.Equal(timeExpected, timeActual);
     }
@@ -72,11 +72,11 @@ public class SFBindUploaderTest
     public void TestCsvDataConversionForTimestampTz(SFDataType dbType, string input, string expected)
     {
         // Arrange
-        DateTimeOffset timestampExpected = DateTimeOffset.Parse(expected);
+        var timestampExpected = DateTimeOffset.Parse(expected);
         var check = SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_TZ, timestampExpected);
         Assert.Equal(check, input);
         // Act
-        DateTimeOffset timestampActual = DateTimeOffset.Parse(_bindUploader.GetCSVData(dbType.ToString(), input));
+        var timestampActual = DateTimeOffset.Parse(_bindUploader.GetCSVData(dbType.ToString(), input));
         // Assert
         Assert.Equal(timestampExpected, timestampActual);
     }
@@ -90,11 +90,11 @@ public class SFBindUploaderTest
     public void TestCsvDataConversionForTimestampNtz(SFDataType dbType, string input, string expected)
     {
         // Arrange
-        DateTime timestampExpected = DateTime.Parse(expected);
+        var timestampExpected = DateTime.Parse(expected);
         var check = SFDataConverter.CSharpValToSfVal(SFDataType.TIMESTAMP_NTZ, timestampExpected);
         Assert.Equal(check, input);
         // Act
-        DateTime timestampActual = DateTime.Parse(_bindUploader.GetCSVData(dbType.ToString(), input));
+        var timestampActual = DateTime.Parse(_bindUploader.GetCSVData(dbType.ToString(), input));
         // Assert
         Assert.Equal(timestampExpected, timestampActual);
     }

@@ -60,8 +60,8 @@ class SFResultSetMetaData
 
     private List<Tuple<SFDataType, Type>> InitColumnTypes()
     {
-        List<Tuple<SFDataType, Type>> types = new List<Tuple<SFDataType, Type>>();
-        for (int i = 0; i < columnCount; i++)
+        var types = new List<Tuple<SFDataType, Type>>();
+        for (var i = 0; i < columnCount; i++)
         {
             var column = rowTypes[i];
             var dataType = GetSFDataType(column.type);
@@ -83,8 +83,8 @@ class SFResultSetMetaData
         }
         else
         {
-            int indexCounter = 0;
-            foreach (ExecResponseRowType rowType in rowTypes)
+            var indexCounter = 0;
+            foreach (var rowType in rowTypes)
             {
                 if (string.Compare(rowType.name, targetColumnName, false) == 0)
                 {

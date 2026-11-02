@@ -27,14 +27,14 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 
     public SnowflakeDbParameter Add(string parameterName, SFDataType dataType)
     {
-        SnowflakeDbParameter parameter = new SnowflakeDbParameter(parameterName, dataType);
+        var parameter = new SnowflakeDbParameter(parameterName, dataType);
         parameterList.Add(parameter);
         return parameter;
     }
 
     public override void AddRange(Array values)
     {
-        IEnumerator e = values.GetEnumerator();
+        var e = values.GetEnumerator();
         while (e.MoveNext())
         {
             parameterList.Add(TryCastThrow(e.Current));
@@ -53,7 +53,7 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 
     public override bool Contains(object value)
     {
-        SnowflakeDbParameter parameter = TryCast(value);
+        var parameter = TryCast(value);
         return parameter != null && parameterList.Contains(parameter);
     }
 
@@ -69,8 +69,8 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 
     public override int IndexOf(string parameterName)
     {
-        int index = 0;
-        foreach (SnowflakeDbParameter parameter in parameterList)
+        var index = 0;
+        foreach (var parameter in parameterList)
         {
             if (string.Compare(parameterName, parameter.ParameterName) == 0)
             {
@@ -83,7 +83,7 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 
     public override int IndexOf(object value)
     {
-        SnowflakeDbParameter parameter = TryCast(value);
+        var parameter = TryCast(value);
         return parameter == null ? -1 : parameterList.IndexOf(parameter);
     }
 
@@ -99,7 +99,7 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 
     public override void RemoveAt(string parameterName)
     {
-        int index = IndexOf(parameterName);
+        var index = IndexOf(parameterName);
         parameterList.RemoveAt(index);
     }
 
@@ -110,7 +110,7 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 
     protected override DbParameter GetParameter(string parameterName)
     {
-        int index = IndexOf(parameterName);
+        var index = IndexOf(parameterName);
         return parameterList[index];
     }
 
@@ -121,7 +121,7 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 
     protected override void SetParameter(string parameterName, DbParameter value)
     {
-        int index = IndexOf(parameterName);
+        var index = IndexOf(parameterName);
         parameterList[index] = TryCastThrow(value);
     }
 

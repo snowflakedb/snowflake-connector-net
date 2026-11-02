@@ -193,7 +193,7 @@ internal sealed class HttpUtil
 
     private HttpClient RegisterNewHttpClientIfNecessary(HttpClientConfig config, DelegatingHandler customHandler = null)
     {
-        string name = config.ConfKey;
+        var name = config.ConfKey;
         if (!_HttpClients.ContainsKey(name))
         {
             logger.Debug("Http client not registered. Adding.");
@@ -431,13 +431,13 @@ internal sealed class HttpUtil
 
     internal HttpMessageHandler SetupCustomHttpHandler(HttpClientConfig config)
     {
-        HttpMessageHandler httpHandler = CreateHttpClientHandler(config);
+        var httpHandler = CreateHttpClientHandler(config);
 
         // Add a proxy if necessary
         if (null != config.ProxyHost)
         {
             // Proxy needed
-            WebProxy proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort));
+            var proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort));
 
             // Add credential if provided
             if (!string.IsNullOrEmpty(config.ProxyUser))
@@ -449,12 +449,12 @@ internal sealed class HttpUtil
             // Add bypasslist if provided
             if (!string.IsNullOrEmpty(config.NoProxyList))
             {
-                string[] bypassList = config.NoProxyList.Split(
+                var bypassList = config.NoProxyList.Split(
                     new char[] { '|' },
                     StringSplitOptions.RemoveEmptyEntries);
                 // Convert simplified syntax to standard regular expression syntax
                 string entry = null;
-                for (int i = 0; i < bypassList.Length; i++)
+                for (var i = 0; i < bypassList.Length; i++)
                 {
                     // Get the original entry
                     entry = bypassList[i].Trim();
@@ -509,7 +509,7 @@ internal sealed class HttpUtil
             return CreateSocketsHttpHandler(config);
         }
 
-        bool customizedCrlCheck = false;
+        var customizedCrlCheck = false;
         try
         {
             if (config.IsCustomCrlCheckConfigured())
@@ -812,7 +812,7 @@ internal sealed class HttpUtil
 
             var queryParams = HttpUtility.ParseQueryString(uriBuilder.Query);
 
-            foreach (IRule rule in rules)
+            foreach (var rule in rules)
             {
                 if (rule is RetryReasonRule)
                 {
@@ -1184,8 +1184,8 @@ internal sealed class HttpUtil
     /// <returns>The new jitter amount.</returns>
     internal static double GetJitter(double curWaitTime)
     {
-        double multiplicationFactor = ChooseRandom(-1, 1);
-        double jitterAmount = 0.5 * curWaitTime * multiplicationFactor;
+        var multiplicationFactor = ChooseRandom(-1, 1);
+        var jitterAmount = 0.5 * curWaitTime * multiplicationFactor;
         return jitterAmount;
     }
 

@@ -188,7 +188,7 @@ class SFFileTransferAgent
             // Update the file metadata with GCS presigned URL
             UpdatePresignedUrl();
 
-            foreach (SFFileMetadata fileMetadata in FilesMetas)
+            foreach (var fileMetadata in FilesMetas)
             {
                 // If the file is larger than the threshold, add it to the large files list
                 // Otherwise add it to the small files list
@@ -248,7 +248,7 @@ class SFFileTransferAgent
         // Update the file metadata with GCS presigned URL
         await UpdatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
 
-        foreach (SFFileMetadata fileMetadata in FilesMetas)
+        foreach (var fileMetadata in FilesMetas)
         {
             // If the file is larger than the threshold, add it to the large files list
             // Otherwise add it to the small files list
@@ -283,7 +283,7 @@ class SFFileTransferAgent
         TransferMetadata.rowSet = new string[ResultsMetas.Count, 8];
 
         // For each file metadata, set the result set variables
-        for (int index = 0; index < ResultsMetas.Count; index++)
+        for (var index = 0; index < ResultsMetas.Count; index++)
         {
             TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceFileName] = ResultsMetas[index].srcFileName;
             TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName] = ResultsMetas[index].destFileName;
@@ -338,7 +338,7 @@ class SFFileTransferAgent
         if (0 < LargeFilesMetas.Count)
         {
             Logger.Debug("Start uploading large files");
-            foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
+            foreach (var fileMetadata in LargeFilesMetas)
             {
                 UploadFilesInSequential(fileMetadata);
             }
@@ -365,7 +365,7 @@ class SFFileTransferAgent
         if (0 < LargeFilesMetas.Count)
         {
             Logger.Debug("Start uploading large files");
-            foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
+            foreach (var fileMetadata in LargeFilesMetas)
             {
                 await UploadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
             }
@@ -393,7 +393,7 @@ class SFFileTransferAgent
         if (0 < LargeFilesMetas.Count)
         {
             Logger.Debug("Start uploading large files");
-            foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
+            foreach (var fileMetadata in LargeFilesMetas)
             {
                 DownloadFilesInSequential(fileMetadata);
             }
@@ -420,7 +420,7 @@ class SFFileTransferAgent
         if (0 < LargeFilesMetas.Count)
         {
             Logger.Debug("Start uploading large files");
-            foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
+            foreach (var fileMetadata in LargeFilesMetas)
             {
                 await DownloadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
             }
@@ -539,9 +539,9 @@ class SFFileTransferAgent
     {
         // Extract file path from PUT command:
         // E.g. "PUT file://C:<path-to-file> @DB.SCHEMA.%TABLE;"
-        int startIndex = query.IndexOf("file://") + "file://".Length;
-        int endIndex = query.Substring(startIndex).IndexOf('@') - 1;
-        string filePath = query.Substring(startIndex, endIndex).TrimEnd();
+        var startIndex = query.IndexOf("file://") + "file://".Length;
+        var endIndex = query.Substring(startIndex).IndexOf('@') - 1;
+        var filePath = query.Substring(startIndex, endIndex).TrimEnd();
 
         // Check if file path contains an enclosing (') char
         if (filePath[filePath.Length - 1] == '\'')
@@ -695,10 +695,10 @@ class SFFileTransferAgent
         }
         else if (CommandTypes.DOWNLOAD == CommandType)
         {
-            for (int index = 0; index < files.Count; index++)
+            for (var index = 0; index < files.Count; index++)
             {
-                string file = files[index];
-                SFFileMetadata fileMetadata = new SFFileMetadata()
+                var file = files[index];
+                var fileMetadata = new SFFileMetadata()
                 {
                     srcFileName = file,
                     destFileName = file.Split('/').Last(),
@@ -720,7 +720,7 @@ class SFFileTransferAgent
                 {
                     fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata, tlsProtocols: Session.TlsProtocols, tlsProtocolsExplicitlyRequested: Session.TlsProtocolsExplicitlyRequested);
 
-                    FileHeader fileHeader = fileMetadata.client.GetFileHeader(fileMetadata);
+                    var fileHeader = fileMetadata.client.GetFileHeader(fileMetadata);
 
                     if (fileHeader != null)
                     {
@@ -850,7 +850,7 @@ class SFFileTransferAgent
         var pathParts = directoryPath.Split(Path.DirectorySeparatorChar);
         var resolvedPaths = new List<string>();
 
-        bool firstPass = true;
+        var firstPass = true;
 
         foreach (var part in pathParts)
         {
@@ -1042,10 +1042,10 @@ class SFFileTransferAgent
     private void UploadFilesInSequential(
         SFFileMetadata fileMetadata)
     {
-        SFFileMetadata resultMetadata = UploadSingleFile(fileMetadata);
-        bool breakFlag = false;
+        var resultMetadata = UploadSingleFile(fileMetadata);
+        var breakFlag = false;
 
-        for (int count = 0; count < 10; count++)
+        for (var count = 0; count < 10; count++)
         {
             if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
             {
@@ -1087,10 +1087,10 @@ class SFFileTransferAgent
     /// <returns>The result outcome for each file.</returns>
     private async Task UploadFilesInSequentialAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
     {
-        SFFileMetadata resultMetadata = await UploadSingleFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
-        bool breakFlag = false;
+        var resultMetadata = await UploadSingleFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+        var breakFlag = false;
 
-        for (int count = 0; count < 10; count++)
+        for (var count = 0; count < 10; count++)
         {
             if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
             {
@@ -1132,7 +1132,7 @@ class SFFileTransferAgent
     private void DownloadFilesInSequential(
         SFFileMetadata fileMetadata)
     {
-        SFFileMetadata resultMetadata = DownloadSingleFile(fileMetadata);
+        var resultMetadata = DownloadSingleFile(fileMetadata);
 
         if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
         {
@@ -1159,7 +1159,7 @@ class SFFileTransferAgent
     private async Task DownloadFilesInSequentialAsync(
         SFFileMetadata fileMetadata, CancellationToken cancellationToken)
     {
-        SFFileMetadata resultMetadata = await DownloadSingleFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
+        var resultMetadata = await DownloadSingleFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
 
         if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
         {
@@ -1189,7 +1189,7 @@ class SFFileTransferAgent
         int parallel)
     {
         var listOfActions = new List<Action>();
-        foreach (SFFileMetadata fileMetadata in filesMetadata)
+        foreach (var fileMetadata in filesMetadata)
         {
             listOfActions.Add(() => UploadFilesInSequential(fileMetadata));
         }
@@ -1206,7 +1206,7 @@ class SFFileTransferAgent
     /// <returns>The result outcome for each file.</returns>
     private async Task UploadFilesInParallelAsync(List<SFFileMetadata> filesMetadata, CancellationToken cancellationToken)
     {
-        foreach (SFFileMetadata fileMetadata in filesMetadata)
+        foreach (var fileMetadata in filesMetadata)
         {
             await UploadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
         }
@@ -1223,7 +1223,7 @@ class SFFileTransferAgent
         int parallel)
     {
         var listOfActions = new List<Action>();
-        foreach (SFFileMetadata fileMetadata in filesMetadata)
+        foreach (var fileMetadata in filesMetadata)
         {
             listOfActions.Add(() => DownloadFilesInSequential(fileMetadata));
         }
@@ -1244,7 +1244,7 @@ class SFFileTransferAgent
         CancellationToken cancellationToken)
     {
         var listOfActions = new List<Action>();
-        foreach (SFFileMetadata fileMetadata in filesMetadata)
+        foreach (var fileMetadata in filesMetadata)
         {
             await DownloadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
         }
@@ -1445,7 +1445,7 @@ class SFFileTransferAgent
     /// Referenced from: https://stackoverflow.com/a/278457
     public static string GetTemporaryDirectory()
     {
-        string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        var tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         Directory.CreateDirectory(tempDirectory);
         return tempDirectory;
     }
@@ -1458,7 +1458,7 @@ class SFFileTransferAgent
     /// <returns>The storage client type.</returns>
     public static StorageClientType GetStorageClientType(PutGetStageInfo stageInfo)
     {
-        string stageLocationType = stageInfo.locationType;
+        var stageLocationType = stageInfo.locationType;
 
         if (stageLocationType == LOCAL_FS)
         {

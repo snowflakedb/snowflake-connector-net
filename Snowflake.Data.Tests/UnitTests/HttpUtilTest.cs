@@ -84,7 +84,7 @@ public class HttpUtilTest
         var client = mockHttp.ToHttpClient();
         var response = await client.GetAsync("https://test.snowflakecomputing.com").ConfigureAwait(false);
 
-        bool actualIsRetryable = HttpUtil.IsRetryableHTTPCode(response.StatusCode, forceRetryOn404);
+        var actualIsRetryable = HttpUtil.IsRetryableHTTPCode(response.StatusCode, forceRetryOn404);
 
         Assert.Equal(expectedIsRetryable, actualIsRetryable);
     }
@@ -101,7 +101,7 @@ public class HttpUtilTest
         var uri = new Uri(requestUrl);
 
         // when
-        bool isLoginEndpoint = HttpUtil.IsLoginEndpoint(uri.AbsolutePath);
+        var isLoginEndpoint = HttpUtil.IsLoginEndpoint(uri.AbsolutePath);
 
         // then
         Assert.Equal(expectedIsLoginEndpoint, isLoginEndpoint);
@@ -119,7 +119,7 @@ public class HttpUtilTest
         var uri = new Uri(requestUrl);
 
         // when
-        bool isOktaSSORequest = HttpUtil.IsOktaSSORequest(uri.Host, uri.AbsolutePath);
+        var isOktaSSORequest = HttpUtil.IsOktaSSORequest(uri.Host, uri.AbsolutePath);
 
         // then
         Assert.Equal(expectedIsOktaSSORequest, isOktaSSORequest);
@@ -245,7 +245,7 @@ public class HttpUtilTest
         var locationUri = new Uri(locationUrl, UriKind.RelativeOrAbsolute);
 
         // act
-        bool actualIsSafe = HttpUtil.IsSafeRedirect(requestUri, locationUri);
+        var actualIsSafe = HttpUtil.IsSafeRedirect(requestUri, locationUri);
 
         // assert
         Assert.Equal(expectedIsSafe, actualIsSafe);

@@ -36,9 +36,9 @@ public sealed class ChunkDownloaderFactoryTest : IDisposable
 
     private static SFResultSet MockSFResultSet(QueryExecResponseData responseData, CancellationToken token)
     {
-        string connectionString = "user=user;password=password;account=account;";
-        SFSession session = new SFSession(connectionString, new SessionPropertiesContext());
-        List<NameValueParameter> list = new List<NameValueParameter>
+        var connectionString = "user=user;password=password;account=account;";
+        var session = new SFSession(connectionString, new SessionPropertiesContext());
+        var list = new List<NameValueParameter>
         {
             new() { name = "CLIENT_PREFETCH_THREADS", value = "3" }
         };
@@ -57,19 +57,19 @@ public sealed class ChunkDownloaderFactoryTest : IDisposable
         // Set configuration settings
         SFConfiguration.Instance().ChunkDownloaderVersion = chunkDownloaderVersion;
 
-        CancellationToken token = new CancellationToken();
+        var token = new CancellationToken();
 
         if (chunkDownloaderVersion == 4)
         {
-            Exception ex = Assert.Throws<Exception>(() => ChunkDownloaderFactory.GetDownloader(null, null, token));
+            var ex = Assert.Throws<Exception>(() => ChunkDownloaderFactory.GetDownloader(null, null, token));
             Assert.Equal("Unsupported Chunk Downloader version specified in the SFConfiguration", ex.Message);
         }
         else
         {
-            QueryExecResponseData responseData = MockQueryRequestData();
-            SFResultSet resultSet = MockSFResultSet(responseData, token);
+            var responseData = MockQueryRequestData();
+            var resultSet = MockSFResultSet(responseData, token);
 
-            IChunkDownloader downloader = ChunkDownloaderFactory.GetDownloader(responseData, resultSet, token);
+            var downloader = ChunkDownloaderFactory.GetDownloader(responseData, resultSet, token);
 
             Assert.True(downloader is SFBlockingChunkDownloaderV3);
         }

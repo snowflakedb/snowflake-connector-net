@@ -46,9 +46,9 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
         Logger.Debug("Setting up a new Azure client ");
 
         // Get the Azure SAS token and create the client
-        if (stageInfo.stageCredentials.TryGetValue(AZURE_SAS_TOKEN, out string sasToken))
+        if (stageInfo.stageCredentials.TryGetValue(AZURE_SAS_TOKEN, out var sasToken))
         {
-            string blobEndpoint = string.Format("https://{0}.{1}", stageInfo.storageAccount, stageInfo.endPoint);
+            var blobEndpoint = string.Format("https://{0}.{1}", stageInfo.storageAccount, stageInfo.endPoint);
             blobServiceClient = new BlobServiceClient(new Uri(blobEndpoint),
                 new AzureSasCredential(sasToken),
                 BuildClientOptions(tlsProtocols, tlsProtocolsExplicitlyRequested, proxyCredentials));
@@ -97,7 +97,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
     /// <returns>The remote location of the Azure file.</returns>
     public RemoteLocation ExtractBucketNameAndPath(string stageLocation)
     {
-        string blobName = stageLocation;
+        var blobName = stageLocation;
         string azurePath = null;
 
         // Split stage location as bucket name and path
@@ -127,12 +127,12 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
     /// <returns>The file header of the Azure file.</returns>
     public FileHeader GetFileHeader(SFFileMetadata fileMetadata)
     {
-        PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-        RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+        var stageInfo = fileMetadata.stageInfo;
+        var location = ExtractBucketNameAndPath(stageInfo.location);
 
         // Get the Azure client
-        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-        BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.RemoteFileName());
+        var containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
+        var blobClient = containerClient.GetBlobClient(location.key + fileMetadata.RemoteFileName());
 
         BlobProperties response;
         try
@@ -162,12 +162,12 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
     /// <returns>The file header of the Azure file.</returns>
     public async Task<FileHeader> GetFileHeaderAsync(SFFileMetadata fileMetadata, CancellationToken cancellationToken)
     {
-        PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-        RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+        var stageInfo = fileMetadata.stageInfo;
+        var location = ExtractBucketNameAndPath(stageInfo.location);
 
         // Get the Azure client
-        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-        BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.RemoteFileName());
+        var containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
+        var blobClient = containerClient.GetBlobClient(location.key + fileMetadata.RemoteFileName());
 
         BlobProperties response;
         try
@@ -257,7 +257,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
         IDictionary<string, string> metadata =
             new Dictionary<string, string>();
 
-        BlobClient blobClient = GetUploadFileBlobClient(ref metadata, fileMetadata, encryptionMetadata);
+        var blobClient = GetUploadFileBlobClient(ref metadata, fileMetadata, encryptionMetadata);
         try
         {
             // Issue the POST/PUT request
@@ -297,7 +297,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
         IDictionary<string, string> metadata =
             new Dictionary<string, string>();
 
-        BlobClient blobClient = GetUploadFileBlobClient(ref metadata, fileMetadata, encryptionMetadata);
+        var blobClient = GetUploadFileBlobClient(ref metadata, fileMetadata, encryptionMetadata);
         try
         {
             // Issue the POST/PUT request
@@ -336,7 +336,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
         if (fileMetadata.stageInfo.isClientSideEncrypted)
         {
             // Create the JSON for the encryption data header
-            string encryptionData = JsonConvert.SerializeObject(new EncryptionData
+            var encryptionData = JsonConvert.SerializeObject(new EncryptionData
             {
                 EncryptionMode = "FullBlob",
                 WrappedContentKey = new WrappedContentInfo
@@ -364,11 +364,11 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 
         metadata.Add("sfcdigest", fileMetadata.sha256Digest);
 
-        PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-        RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+        var stageInfo = fileMetadata.stageInfo;
+        var location = ExtractBucketNameAndPath(stageInfo.location);
 
         // Get the Azure client
-        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
+        var containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
         return containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
     }
 
@@ -380,12 +380,12 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
     /// <param name="maxConcurrency">Number of max concurrency.</param>
     public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
     {
-        PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-        RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+        var stageInfo = fileMetadata.stageInfo;
+        var location = ExtractBucketNameAndPath(stageInfo.location);
 
         // Get the Azure client
-        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-        BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
+        var containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
+        var blobClient = containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
 
         try
         {
@@ -420,12 +420,12 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
     /// <param name="maxConcurrency">Number of max concurrency.</param>
     public async Task DownloadFileAsync(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency, CancellationToken cancellationToken)
     {
-        PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-        RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+        var stageInfo = fileMetadata.stageInfo;
+        var location = ExtractBucketNameAndPath(stageInfo.location);
 
         // Get the Azure client
-        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-        BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
+        var containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
+        var blobClient = containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
 
         try
         {
@@ -495,13 +495,13 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
                  ex.Status == (int)HttpStatusCode.PreconditionFailed ||
                  ex.Status == (int)HttpStatusCode.RequestedRangeNotSatisfiable)
         {
-            string error = $"Unrecoverable HTTP status for file upload operation: {ex.Status} {ex.ErrorCode}";
+            var error = $"Unrecoverable HTTP status for file upload operation: {ex.Status} {ex.ErrorCode}";
             Logger.Error(error);
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
         }
         else
         {
-            string error = $"Unexpected HTTP status for file upload operation: {ex.Status} {ex.ErrorCode}";
+            var error = $"Unexpected HTTP status for file upload operation: {ex.Status} {ex.ErrorCode}";
             Logger.Error(error);
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
         }
@@ -522,7 +522,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
         }
         else
         {
-            string error = $"Unexpected HTTP status for file download operation: {ex.Status} {ex.ErrorCode}";
+            var error = $"Unexpected HTTP status for file download operation: {ex.Status} {ex.ErrorCode}";
             Logger.Error(error);
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
         }

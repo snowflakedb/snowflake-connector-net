@@ -60,7 +60,7 @@ internal class SFCredentialManagerFileImpl : ISnowflakeCredentialManager
                 if (_fileOperations.Exists(_fileStorage.JsonCacheFilePath))
                 {
                     var keyTokenPairs = ReadJsonFile();
-                    if (keyTokenPairs.TryGetValue(key, out string token))
+                    if (keyTokenPairs.TryGetValue(key, out var token))
                     {
                         return token;
                     }
@@ -129,7 +129,7 @@ internal class SFCredentialManagerFileImpl : ISnowflakeCredentialManager
             }
             try
             {
-                KeyTokenDict keyTokenPairs = _fileOperations.Exists(_fileStorage.JsonCacheFilePath) ? ReadJsonFile() : new KeyTokenDict();
+                var keyTokenPairs = _fileOperations.Exists(_fileStorage.JsonCacheFilePath) ? ReadJsonFile() : new KeyTokenDict();
                 keyTokenPairs[key] = token;
                 WriteToJsonFile(keyTokenPairs);
             }

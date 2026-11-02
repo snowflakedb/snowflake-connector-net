@@ -456,7 +456,7 @@ class ArrowResultSet : SFBaseResultSet
 
     private void UpdateSessionStatus(QueryExecResponseData responseData)
     {
-        SFSession session = sfStatement.SfSession;
+        var session = sfStatement.SfSession;
         session.UpdateSessionProperties(responseData);
         session.UpdateSessionParameterMap(responseData.parameters);
         session.UpdateQueryContextCache(responseData.QueryContext);
@@ -507,8 +507,8 @@ class ArrowResultSet : SFBaseResultSet
                 nameof(dataOffset));
         }
 
-        long dataLength = data.Length - dataOffset;
-        long elementsRead = Math.Min(length, dataLength);
+        var dataLength = data.Length - dataOffset;
+        var elementsRead = Math.Min(length, dataLength);
         Array.Copy(data, dataOffset, buffer, bufferOffset, elementsRead);
 
         return elementsRead;

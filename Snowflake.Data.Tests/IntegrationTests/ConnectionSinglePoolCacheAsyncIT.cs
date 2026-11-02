@@ -36,7 +36,7 @@ public sealed class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync, IDisposa
         using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
             Assert.Equal(ConnectionState.Closed, conn.State);
-            CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
+            var connectionCancelToken = new CancellationTokenSource();
             await conn.OpenAsync(connectionCancelToken.Token).ConfigureAwait(false);
 
             // act
@@ -56,7 +56,7 @@ public sealed class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync, IDisposa
         using (var conn = new SnowflakeDbConnection(invalidConnectionString))
         {
             Assert.Equal(ConnectionState.Closed, conn.State);
-            CancellationTokenSource connectionCancelToken = new CancellationTokenSource();
+            var connectionCancelToken = new CancellationTokenSource();
             try
             {
                 await conn.OpenAsync(connectionCancelToken.Token).ConfigureAwait(false);
@@ -79,7 +79,7 @@ public sealed class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync, IDisposa
         SnowflakeDbConnectionPool.SetMaxPoolSize(10);
         // make the connection string unique so it won't pick up connection
         // pooled by other test cases.
-        string connStr = _fixture.ConnectionString + "application=conn_pool_test_invalid_openasync";
+        var connStr = _fixture.ConnectionString + "application=conn_pool_test_invalid_openasync";
         using (var connection = new SnowflakeDbConnection())
         {
             connection.ConnectionString = connStr;
@@ -105,7 +105,7 @@ public sealed class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync, IDisposa
                 {
                     while (await reader.ReadAsync().ConfigureAwait(false))
                     {
-                        for (int i = 0; i < reader.FieldCount; i++)
+                        for (var i = 0; i < reader.FieldCount; i++)
                         {
                             // Process each column as appropriate
                             reader.GetFieldValue<object>(i);
@@ -125,7 +125,7 @@ public sealed class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync, IDisposa
     public async Task TestConcurrentConnectionPoolingAsync()
     {
         // add test case name in connection string to make in unique for each test case
-        string connStr = _fixture.ConnectionString + ";application=TestConcurrentConnectionPoolingAsync";
+        var connStr = _fixture.ConnectionString + ";application=TestConcurrentConnectionPoolingAsync";
         SnowflakeDbConnectionPool.SetMaxPoolSize(3);
         SnowflakeDbConnectionPool.SetTimeout(1); // set short pooling timeout to cover the case that connection expired
         await ConcurrentPoolingAsyncHelper(connStr, true, 5, 5, 3).ConfigureAwait(false);
@@ -136,7 +136,7 @@ public sealed class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync, IDisposa
     public async Task TestConcurrentConnectionPoolingDisposeAsync()
     {
         // add test case name in connection string to make in unique for each test case
-        string connStr = _fixture.ConnectionString + ";application=TestConcurrentConnectionPoolingDisposeAsync";
+        var connStr = _fixture.ConnectionString + ";application=TestConcurrentConnectionPoolingDisposeAsync";
         SnowflakeDbConnectionPool.SetMaxPoolSize(3);
         SnowflakeDbConnectionPool.SetTimeout(1); // set short pooling timeout to cover the case that connection expired
         await ConcurrentPoolingAsyncHelper(connStr, false, 5, 5, 3).ConfigureAwait(false);
@@ -396,7 +396,7 @@ public sealed class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync, IDisposa
     internal static Task ConcurrentPoolingAsyncHelper(string connectionString, bool closeConnection, int tasksCount, int connectionsInTask, int abandonedConnectionsCount)
     {
         var tasks = new Task[tasksCount + 1];
-        for (int i = 0; i < tasksCount; i++)
+        for (var i = 0; i < tasksCount; i++)
         {
             tasks[i] = QueryExecutionTaskAsync(connectionString, closeConnection, connectionsInTask);
         }
@@ -409,21 +409,21 @@ public sealed class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync, IDisposa
     // task to execute query with new connection in a loop
     static async Task QueryExecutionTaskAsync(string connectionString, bool closeConnection, int times)
     {
-        for (int i = 0; i < times; i++)
+        for (var i = 0; i < times; i++)
         {
             using (var conn = new SnowflakeDbConnection(connectionString))
             {
                 await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
-                using (DbCommand cmd = conn.CreateCommand())
+                using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "select 1, 2, 3";
                     try
                     {
-                        using (DbDataReader reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
+                        using (var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
                         {
                             while (await reader.ReadAsync().ConfigureAwait(false))
                             {
-                                for (int j = 0; j < reader.FieldCount; j++)
+                                for (var j = 0; j < reader.FieldCount; j++)
                                 {
                                     // Process each column as appropriate
                                     await reader.GetFieldValueAsync<object>(j).ConfigureAwait(false);
@@ -447,7 +447,7 @@ public sealed class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync, IDisposa
     // task to generate invalid(not finish open) connections in a loop
     static async Task InvalidConnectionTaskAsync(string connectionString, int times)
     {
-        for (int i = 0; i < times; i++)
+        for (var i = 0; i < times; i++)
         {
             using (var conn = new SnowflakeDbConnection(connectionString))
             {

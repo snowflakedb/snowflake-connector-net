@@ -55,8 +55,8 @@ internal class GcmEncryptionProvider
         byte[] contentAad,
         byte[] keyAad)
     {
-        byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
-        int masterKeySize = decodedMasterKey.Length;
+        var decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
+        var masterKeySize = decodedMasterKey.Length;
         s_logger.Debug($"Master key size : {masterKeySize}");
 
         var contentIV = new byte[InitVectorSizeInBytes];
@@ -69,7 +69,7 @@ internal class GcmEncryptionProvider
         var encryptedKey = EncryptKey(fileKeyBytes, decodedMasterKey, keyIV, keyAad);
         var result = EncryptContent(inputStream, fileKeyBytes, contentIV, contentAad, fileTransferConfiguration);
 
-        MaterialDescriptor matDesc = new MaterialDescriptor
+        var matDesc = new MaterialDescriptor
         {
             smkId = encryptionMaterial.smkId.ToString(),
             queryId = encryptionMaterial.queryId,
@@ -181,7 +181,7 @@ internal class GcmEncryptionProvider
     private static IBufferedCipher BuildAesGcmNoPaddingCipher(bool forEncryption, byte[] keyBytes, byte[] initialisationVector, byte[] aadData)
     {
         var cipher = CipherUtilities.GetCipher(AesGcmNoPaddingCipher);
-        KeyParameter keyParameter = new KeyParameter(keyBytes);
+        var keyParameter = new KeyParameter(keyBytes);
         var keyParameterAead = aadData == null
             ? new AeadParameters(keyParameter, TagSizeInBits, initialisationVector)
             : new AeadParameters(keyParameter, TagSizeInBits, initialisationVector, aadData);

@@ -7,16 +7,16 @@ internal class UnixFilePermissionsConverter
 {
     internal static int ConvertFileAccessPermissionsToInt(FileAccessPermissions permissions)
     {
-        int userPermission = 0;
-        int groupPermission = 0;
-        int otherPermission = 0;
+        var userPermission = 0;
+        var groupPermission = 0;
+        var otherPermission = 0;
 
         foreach (FileAccessPermissions perm in Enum.GetValues(typeof(FileAccessPermissions)))
         {
             // Check if enum exists in the directory permission
             if ((permissions & perm) != 0)
             {
-                string permName = perm.ToString();
+                var permName = perm.ToString();
                 if (!permName.Contains("ReadWriteExecute"))
                 {
                     if (permName.Contains("User"))

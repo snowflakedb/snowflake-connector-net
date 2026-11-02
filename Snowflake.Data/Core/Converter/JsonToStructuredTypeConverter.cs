@@ -258,7 +258,7 @@ internal static class JsonToStructuredTypeConverter
         {
             var listType = type.IsAbstract ? typeof(List<>).MakeGenericType(elementType) : type;
             var list = (IList)Activator.CreateInstance(listType);
-            for (int i = 0; i < result.Count; i++)
+            for (var i = 0; i < result.Count; i++)
             {
                 list.Add(result[i]);
             }

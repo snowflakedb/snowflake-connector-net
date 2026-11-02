@@ -27,10 +27,10 @@ internal class MockCloseSessionException : MockBaseRestRequester
 
     public override Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
     {
-        SFRestRequest sfRequest = (SFRestRequest)postRequest;
+        var sfRequest = (SFRestRequest)postRequest;
         if (sfRequest.jsonBody is LoginRequest)
         {
-            LoginResponse authnResponse = new LoginResponse
+            var authnResponse = new LoginResponse
             {
                 data = new LoginResponseData()
                 {

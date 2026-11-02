@@ -84,10 +84,10 @@ public sealed class SFAzureClientTest
         var mockBlobServiceClient = new Mock<BlobServiceClient>();
         _client = new SFSnowflakeAzureClient(_fileMetadata.stageInfo, mockBlobServiceClient.Object);
         // Split LOCATION based on the first '/' character
-        string[] bucketAndKey = Location.Split(new[] { '/' }, 2);
+        var bucketAndKey = Location.Split(new[] { '/' }, 2);
 
         // Act
-        RemoteLocation location = _client.ExtractBucketNameAndPath(_fileMetadata.stageInfo.location);
+        var location = _client.ExtractBucketNameAndPath(_fileMetadata.stageInfo.location);
 
         // Assert
         Assert.Equal(bucketAndKey[0], location.bucket);
@@ -127,7 +127,7 @@ public sealed class SFAzureClientTest
         _fileMetadata.stageInfo.location = httpStatusCode.ToString();
 
         // Act
-        FileHeader fileHeader = _client.GetFileHeader(_fileMetadata);
+        var fileHeader = _client.GetFileHeader(_fileMetadata);
 
         // Assert
         AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);
@@ -162,7 +162,7 @@ public sealed class SFAzureClientTest
         _fileMetadata.stageInfo.location = httpStatusCode.ToString();
 
         // Act
-        FileHeader fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
+        var fileHeader = await _client.GetFileHeaderAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
 
         // Assert
         AssertForGetFileHeaderTests(expectedResultStatus, fileHeader);

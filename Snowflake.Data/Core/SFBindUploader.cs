@@ -59,12 +59,12 @@ class SFBindUploader
             return;
         }
 
-        List<string> dataRows = new List<string>();
+        var dataRows = new List<string>();
         CreateDataRows(ref dataRows, bindings);
 
-        int startIndex = 0;
-        int rowNum = 0;
-        int curBytes = 0;
+        var startIndex = 0;
+        var rowNum = 0;
+        var curBytes = 0;
 
         while (rowNum < dataRows.Count)
         {
@@ -74,12 +74,12 @@ class SFBindUploader
                 rowNum++;
             }
 
-            StringBuilder sBuffer = new StringBuilder();
-            MemoryStream ms = new MemoryStream();
-            using (StreamWriter tw = new StreamWriter(ms))
+            var sBuffer = new StringBuilder();
+            var ms = new MemoryStream();
+            using (var tw = new StreamWriter(ms))
             {
 
-                for (int i = startIndex; i < rowNum; i++)
+                for (var i = startIndex; i < rowNum; i++)
                 {
                     sBuffer.Append(dataRows[i]);
                 }
@@ -89,7 +89,7 @@ class SFBindUploader
 
                 try
                 {
-                    string fileName = (++fileCount).ToString();
+                    var fileName = (++fileCount).ToString();
                     UploadStream(ref ms, fileName);
                     startIndex = rowNum;
                     curBytes = 0;
@@ -110,12 +110,12 @@ class SFBindUploader
             return;
         }
 
-        List<string> dataRows = new List<string>();
+        var dataRows = new List<string>();
         CreateDataRows(ref dataRows, bindings);
 
-        int startIndex = 0;
-        int rowNum = 0;
-        int curBytes = 0;
+        var startIndex = 0;
+        var rowNum = 0;
+        var curBytes = 0;
 
         while (rowNum < dataRows.Count)
         {
@@ -125,11 +125,11 @@ class SFBindUploader
                 rowNum++;
             }
 
-            StringBuilder sBuffer = new StringBuilder();
-            MemoryStream ms = new MemoryStream();
-            using (StreamWriter tw = new StreamWriter(ms))
+            var sBuffer = new StringBuilder();
+            var ms = new MemoryStream();
+            using (var tw = new StreamWriter(ms))
             {
-                for (int i = startIndex; i < rowNum; i++)
+                for (var i = startIndex; i < rowNum; i++)
                 {
                     sBuffer.Append(dataRows[i]);
                 }
@@ -139,7 +139,7 @@ class SFBindUploader
 
                 try
                 {
-                    string fileName = (++fileCount).ToString();
+                    var fileName = (++fileCount).ToString();
                     await UploadStreamAsync(ms, fileName, cancellationToken).ConfigureAwait(false);
                     startIndex = rowNum;
                     curBytes = 0;
@@ -155,16 +155,16 @@ class SFBindUploader
 
     private void CreateDataRows(ref List<string> dataRows, Dictionary<string, BindingDTO> bindings)
     {
-        List<BindingDTO> arrbinds = bindings.Values.ToList();
-        List<List<object>> bindList = new List<List<object>>();
-        List<string> types = new List<string>(); // for the binding types
+        var arrbinds = bindings.Values.ToList();
+        var bindList = new List<List<object>>();
+        var types = new List<string>(); // for the binding types
         dataRows = new List<string>(); // for the converted data string
-        int rowSize = ((List<object>)arrbinds[0].value).Count;
-        int paramSize = arrbinds.Count;
+        var rowSize = ((List<object>)arrbinds[0].value).Count;
+        var paramSize = arrbinds.Count;
 
-        foreach (BindingDTO bind in arrbinds)
+        foreach (var bind in arrbinds)
         {
-            List<object> values = (List<object>)bind.value;
+            var values = (List<object>)bind.value;
             types.Add(bind.type);
             if (values.Count != rowSize)
             {
@@ -173,10 +173,10 @@ class SFBindUploader
             bindList.Add(values);
         }
 
-        for (int i = 0; i < rowSize; i++)
+        for (var i = 0; i < rowSize; i++)
         {
-            StringBuilder sb = new StringBuilder();
-            for (int j = 0; j < paramSize; j++)
+            var sb = new StringBuilder();
+            for (var j = 0; j < paramSize; j++)
             {
                 if (j > 0)
                 {
@@ -193,7 +193,7 @@ class SFBindUploader
     private void UploadStream(ref MemoryStream stream, string destFileName)
     {
         CreateStage();
-        string stageName = stagePath;
+        var stageName = stagePath;
         if (stageName == null)
         {
             throw new Exception("Stage name is null.");
@@ -203,9 +203,9 @@ class SFBindUploader
             throw new Exception("file name is null.");
         }
 
-        string putStmt = string.Format(PUT_STATEMENT, destFileName, stageName);
+        var putStmt = string.Format(PUT_STATEMENT, destFileName, stageName);
 
-        SFStatement statement = new SFStatement(session);
+        var statement = new SFStatement(session);
         statement.SetUploadStream(stream);
         statement.ExecuteTransfer(putStmt);
 
@@ -214,7 +214,7 @@ class SFBindUploader
     internal async Task UploadStreamAsync(MemoryStream stream, string destFileName, CancellationToken cancellationToken)
     {
         await CreateStageAsync(cancellationToken).ConfigureAwait(false);
-        string stageName = stagePath;
+        var stageName = stagePath;
         if (stageName == null)
         {
             throw new Exception("Stage name is null.");
@@ -224,9 +224,9 @@ class SFBindUploader
             throw new Exception("file name is null.");
         }
 
-        string putStmt = string.Format(PUT_STATEMENT, destFileName, stageName);
+        var putStmt = string.Format(PUT_STATEMENT, destFileName, stageName);
 
-        SFStatement statement = new SFStatement(session);
+        var statement = new SFStatement(session);
         statement.SetUploadStream(stream);
         await statement.ExecuteTransferAsync(putStmt, cancellationToken).ConfigureAwait(false);
     }
@@ -236,7 +236,7 @@ class SFBindUploader
         if (sValue == null)
             return sValue;
 
-        DateTime epoch = SFDataConverter.UnixEpoch;
+        var epoch = SFDataConverter.UnixEpoch;
         switch (sType)
         {
             case "TEXT":
@@ -252,15 +252,15 @@ class SFBindUploader
                     return '"' + sValue.Replace("\"", "\"\"") + '"';
                 return sValue;
             case "DATE":
-                long msFromEpoch = long.Parse(sValue); // SFDateConverter.CSharpValToSfVal provides in [ms] from Epoch
-                DateTime date = epoch.AddMilliseconds(msFromEpoch);
+                var msFromEpoch = long.Parse(sValue); // SFDateConverter.CSharpValToSfVal provides in [ms] from Epoch
+                var date = epoch.AddMilliseconds(msFromEpoch);
                 return date.ToShortDateString();
             case "TIME":
-                long nsSinceMidnight = long.Parse(sValue); // SFDateConverter.CSharpValToSfVal provides in [ns] from Midnight
-                DateTime time = epoch.AddTicks(nsSinceMidnight / 100);
+                var nsSinceMidnight = long.Parse(sValue); // SFDateConverter.CSharpValToSfVal provides in [ns] from Midnight
+                var time = epoch.AddTicks(nsSinceMidnight / 100);
                 return time.ToString("HH:mm:ss.fffffff");
             case "TIMESTAMP_LTZ":
-                long ticksFromEpochLtz =
+                var ticksFromEpochLtz =
                     long.TryParse(sValue, out var nsLtz)
                         ? nsLtz / 100
                         : (long)(decimal.Parse(sValue) / 100);
@@ -277,27 +277,27 @@ class SFBindUploader
                 {
                     return utcDateTimeOffset.ToLocalTime().ToString("O"); // ISO 8601 format
                 }
-                DateTime ltz = TimeZoneInfo.ConvertTimeFromUtc(utcDateTimeOffset.UtcDateTime, sessionTimezone);
+                var ltz = TimeZoneInfo.ConvertTimeFromUtc(utcDateTimeOffset.UtcDateTime, sessionTimezone);
                 return new DateTimeOffset(ltz, sessionTimezone.GetUtcOffset(ltz)).ToString("O"); // ISO 8601 format
             case "TIMESTAMP_NTZ":
-                long ticksFromEpochNtz =
+                var ticksFromEpochNtz =
                     long.TryParse(sValue, out var nsNtz)
                         ? nsNtz / 100
                         : (long)(decimal.Parse(sValue) / 100);
 
-                DateTime ntz = epoch.AddTicks(ticksFromEpochNtz);
+                var ntz = epoch.AddTicks(ticksFromEpochNtz);
                 return ntz.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
             case "TIMESTAMP_TZ":
-                string[] tstzString = sValue.Split(' ');
-                long ticksFromEpochTz =
+                var tstzString = sValue.Split(' ');
+                var ticksFromEpochTz =
                     long.TryParse(tstzString[0], out var nsTz)
                         ? nsTz / 100
                         : (long)(decimal.Parse(tstzString[0]) / 100);
 
-                int timeZoneOffset = int.Parse(tstzString[1]) - 1440; // SFDateConverter provides in minutes increased by 1440m
-                DateTime timestamp = epoch.AddTicks(ticksFromEpochTz).AddMinutes(timeZoneOffset);
-                TimeSpan offset = TimeSpan.FromMinutes(timeZoneOffset);
-                DateTimeOffset tzDateTimeOffset = new DateTimeOffset(timestamp.Ticks, offset);
+                var timeZoneOffset = int.Parse(tstzString[1]) - 1440; // SFDateConverter provides in minutes increased by 1440m
+                var timestamp = epoch.AddTicks(ticksFromEpochTz).AddMinutes(timeZoneOffset);
+                var offset = TimeSpan.FromMinutes(timeZoneOffset);
+                var tzDateTimeOffset = new DateTimeOffset(timestamp.Ticks, offset);
                 return tzDateTimeOffset.ToString("yyyy-MM-dd HH:mm:ss.fffffff zzz");
         }
         return sValue;

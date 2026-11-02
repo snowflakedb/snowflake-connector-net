@@ -26,11 +26,11 @@ public sealed class FastMemoryStreamTest
     public void TestWriteByte()
     {
         byte val = 32;
-        int bufferLength = _fastMemoryStream.GetBuffer().Length;
+        var bufferLength = _fastMemoryStream.GetBuffer().Length;
 
-        byte[] byteArr = Enumerable.Repeat(val, bufferLength).ToArray();
+        var byteArr = Enumerable.Repeat(val, bufferLength).ToArray();
 
-        for (int i = 0; i < bufferLength; i++)
+        for (var i = 0; i < bufferLength; i++)
         {
             _fastMemoryStream.WriteByte(val);
         }
@@ -41,8 +41,8 @@ public sealed class FastMemoryStreamTest
     [SFFact]
     public void TestClear()
     {
-        int bufferLength = _fastMemoryStream.GetBuffer().Length;
-        for (int i = 0; i < bufferLength; i++)
+        var bufferLength = _fastMemoryStream.GetBuffer().Length;
+        for (var i = 0; i < bufferLength; i++)
         {
             _fastMemoryStream.WriteByte(1);
         }
@@ -60,11 +60,11 @@ public sealed class FastMemoryStreamTest
     {
         byte val = 32;
         // Multiply default buffer length by 2 to make fastMemoryStream increase the buffer
-        int bufferLength = _fastMemoryStream.GetBuffer().Length * 2;
+        var bufferLength = _fastMemoryStream.GetBuffer().Length * 2;
 
-        byte[] byteArr = Enumerable.Repeat(val, bufferLength).ToArray();
+        var byteArr = Enumerable.Repeat(val, bufferLength).ToArray();
 
-        for (int i = 0; i < bufferLength; i++)
+        for (var i = 0; i < bufferLength; i++)
         {
             _fastMemoryStream.WriteByte(val);
         }

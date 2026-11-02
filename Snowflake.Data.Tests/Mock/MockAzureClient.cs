@@ -23,8 +23,8 @@ class MockAzureClient
     // Creates the Azure exception for mock requests
     internal static Exception CreateMockAzureError(string key)
     {
-        HttpStatusCode statusCode = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), key);
-        RequestFailedException azureError = new RequestFailedException((int)statusCode, AzureErrorMessage);
+        var statusCode = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), key);
+        var azureError = new RequestFailedException((int)statusCode, AzureErrorMessage);
 
         return azureError;
     }
@@ -34,7 +34,7 @@ class MockAzureClient
     {
         if (key == HttpStatusCode.OK.ToString())
         {
-            Dictionary<string, string> metadata = new Dictionary<string, string>
+            var metadata = new Dictionary<string, string>
             {
                 { "encryptiondata",
                     "{" +
@@ -50,9 +50,9 @@ class MockAzureClient
                 }
             };
 
-            BlobProperties blobProperties = BlobsModelFactory.BlobProperties(metadata: metadata, contentLength: ContentLength);
+            var blobProperties = BlobsModelFactory.BlobProperties(metadata: metadata, contentLength: ContentLength);
 
-            Response<BlobProperties> mockResponse = Response.FromValue(
+            var mockResponse = Response.FromValue(
                 blobProperties,
                 null);
 

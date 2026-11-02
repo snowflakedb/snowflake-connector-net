@@ -101,9 +101,9 @@ internal sealed class HeartBeatBackground
     {
         while (true)
         {
-            List<SFSession> copyOfHeartBeatQueue = new List<SFSession>();
+            var copyOfHeartBeatQueue = new List<SFSession>();
 
-            long heartBeatInterval = GetHeartBeatInterval(masterTokenValidationTimeInSec);
+            var heartBeatInterval = GetHeartBeatInterval(masterTokenValidationTimeInSec);
             Thread.Sleep(TimeSpan.FromSeconds(heartBeatInterval));
 
             if (isHeartBeatEnd)
@@ -118,7 +118,7 @@ internal sealed class HeartBeatBackground
                 }
             }
 
-            for (int i = 0; i < copyOfHeartBeatQueue.Count(); i++)
+            for (var i = 0; i < copyOfHeartBeatQueue.Count(); i++)
             {
                 copyOfHeartBeatQueue[i].Heartbeat();
             }

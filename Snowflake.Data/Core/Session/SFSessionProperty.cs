@@ -223,7 +223,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
         if (obj == null) return false;
         try
         {
-            SFSessionProperties prop = (SFSessionProperties)obj;
+            var prop = (SFSessionProperties)obj;
             foreach (SFSessionProperty sessionProperty in Enum.GetValues(typeof(SFSessionProperty)))
             {
                 if (ContainsKey(sessionProperty) ^ prop.ContainsKey(sessionProperty))
@@ -282,7 +282,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
             try
             {
                 // Use ignoreCase=true for culture-invariant parsing (avoids Turkish culture issues where 'i'.ToUpper() becomes 'İ')
-                SFSessionProperty p = (SFSessionProperty)Enum.Parse(
+                var p = (SFSessionProperty)Enum.Parse(
                     typeof(SFSessionProperty), keys[i], true);
                 properties.Add(p, values[i]);
             }
@@ -557,7 +557,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
         var enableSingleUserRefreshTokens = properties[SFSessionProperty.OAUTHENABLESINGLEUSEREFRESHTOKENS];
         if (!bool.TryParse(enableSingleUserRefreshTokens, out _))
         {
-            SnowflakeDbException exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.OAUTHENABLESINGLEUSEREFRESHTOKENS.ToString()} value should be parsable as boolean.");
+            var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.OAUTHENABLESINGLEUSEREFRESHTOKENS.ToString()} value should be parsable as boolean.");
             logger.Error(exception.Message);
             throw exception;
         }
@@ -706,7 +706,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 
     internal string ExtractPropertyOrDefault(SFSessionProperty property, string defaultValue)
     {
-        if (TryGetValue(property, out string value) && !string.IsNullOrEmpty(value))
+        if (TryGetValue(property, out var value) && !string.IsNullOrEmpty(value))
             return value;
         return defaultValue;
     }
@@ -871,8 +871,8 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
             }
 
             // add default value to the map
-            string defaultVal = sessionProperty.GetDefaultValue();
-            string defaultNonWindowsVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultNonWindowsValue;
+            var defaultVal = sessionProperty.GetDefaultValue();
+            var defaultNonWindowsVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultNonWindowsValue;
             if (!properties.ContainsKey(sessionProperty))
             {
                 if (defaultNonWindowsVal != null && !isWindows)
@@ -898,13 +898,13 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
     {
         if (!properties.ContainsKey(sessionProperty))
         {
-            SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
+            var e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
             logger.Error("Missing connection property", e);
             throw e;
         }
         if (string.IsNullOrEmpty(properties[sessionProperty]))
         {
-            SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
+            var e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
             logger.Error("Empty connection property", e);
             throw e;
         }

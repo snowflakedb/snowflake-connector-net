@@ -305,7 +305,7 @@ public abstract class DecfloatIT : SFBaseTestAsync
                     ValidateResultFormat(reader);
 
                     Assert.Equal(3, reader.FieldCount);
-                    for (int i = 0; i < 3; i++)
+                    for (var i = 0; i < 3; i++)
                     {
                         Assert.Equal("DECFLOAT", reader.GetDataTypeName(i));
                         Assert.Equal(typeof(string), reader.GetFieldType(i));

@@ -153,7 +153,7 @@ internal class SFSession
         }
         else
         {
-            SnowflakeDbException e = new SnowflakeDbException
+            var e = new SnowflakeDbException
             (SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
                 authnResponse.code,
                 authnResponse.message,
@@ -297,7 +297,7 @@ internal class SFSession
     private static void ValidateApplicationName(SFSessionProperties properties)
     {
         // If there is an "application" setting, verify that it matches the expect pattern
-        properties.TryGetValue(SFSessionProperty.APPLICATION, out string applicationNameSetting);
+        properties.TryGetValue(SFSessionProperty.APPLICATION, out var applicationNameSetting);
         if (!string.IsNullOrEmpty(applicationNameSetting) && !APPLICATION_REGEX.IsMatch(applicationNameSetting))
         {
             throw new SnowflakeDbException(
@@ -311,7 +311,7 @@ internal class SFSession
 
     internal Uri BuildUri(string path, Dictionary<string, string> queryParams = null)
     {
-        UriBuilder uriBuilder = new UriBuilder();
+        var uriBuilder = new UriBuilder();
         uriBuilder.Scheme = properties[SFSessionProperty.SCHEME];
         uriBuilder.Host = properties[SFSessionProperty.HOST];
         uriBuilder.Port = int.Parse(properties[SFSessionProperty.PORT]);
@@ -431,7 +431,7 @@ internal class SFSession
         var response = restRequester.Post<RenewSessionResponse>(GetRenewSessionRequest());
         if (!response.success)
         {
-            SnowflakeDbException e = new SnowflakeDbException("",
+            var e = new SnowflakeDbException("",
                 response.code, response.message, sessionId);
             logger.Error($"Renew session (ID: {sessionId}) failed", e);
             throw e;
@@ -455,7 +455,7 @@ internal class SFSession
             ).ConfigureAwait(false);
         if (!response.success)
         {
-            SnowflakeDbException e = new SnowflakeDbException("",
+            var e = new SnowflakeDbException("",
                 response.code, response.message, sessionId);
             logger.Error($"Renew session (ID: {sessionId}) failed", e);
             throw e;
@@ -470,7 +470,7 @@ internal class SFSession
 
     internal SFRestRequest GetRenewSessionRequest()
     {
-        RenewSessionRequest postBody = new RenewSessionRequest()
+        var postBody = new RenewSessionRequest()
         {
             oldSessionToken = sessionToken,
             requestType = "RENEW"
@@ -503,7 +503,7 @@ internal class SFSession
             return;
         }
 
-        foreach (NameValueParameter parameter in parameterList)
+        foreach (var parameter in parameterList)
         {
             if (Enum.TryParse(parameter.name, out SFSessionParameter parameterName))
             {
@@ -516,12 +516,12 @@ internal class SFSession
         }
         if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
         {
-            string val = ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD].ToString();
+            var val = ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD].ToString();
             arrayBindStageThreshold = int.Parse(val);
         }
         if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE))
         {
-            bool keepAlive = bool.Parse(ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE].ToString());
+            var keepAlive = bool.Parse(ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE].ToString());
             if (keepAlive)
             {
                 StartHeartBeatForThisSession();
@@ -534,7 +534,7 @@ internal class SFSession
         if ((!_disableQueryContextCache) &&
             (ParameterMap.ContainsKey(SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE)))
         {
-            string val = ParameterMap[SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE].ToString();
+            var val = ParameterMap[SFSessionParameter.QUERY_CONTEXT_CACHE_SIZE].ToString();
             _queryContextCacheSize = int.Parse(val);
             _queryContextCache.SetCapacity(_queryContextCacheSize);
         }
@@ -622,8 +622,8 @@ internal class SFSession
         // with HTAP session metadata removal database/schema might be not returned in query result
         if (!string.IsNullOrEmpty(finalSessionValue))
         {
-            bool quoted = false;
-            string unquotedFinalValue = UnquoteJson(finalSessionValue, ref quoted);
+            var quoted = false;
+            var unquotedFinalValue = UnquoteJson(finalSessionValue, ref quoted);
             if (!string.IsNullOrEmpty(initialSessionValue))
             {
                 quoted |= initialSessionValue.StartsWith("\"");
@@ -654,7 +654,7 @@ internal class SFSession
     {
         if (!isHeartBeatEnabled)
         {
-            HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
+            var heartBeatBg = HeartBeatBackground.Instance;
             if (masterValidityInSeconds == 0)
             {
                 //In case server doesnot provide the default timeout
@@ -669,7 +669,7 @@ internal class SFSession
     {
         if (isHeartBeatEnabled)
         {
-            HeartBeatBackground heartBeatBg = HeartBeatBackground.Instance;
+            var heartBeatBg = HeartBeatBackground.Instance;
             HeartBeatBackground.RemoveConnection(this);
             isHeartBeatEnabled = false;
         }
@@ -700,7 +700,7 @@ internal class SFSession
     {
         logger.Debug("heartbeat");
 
-        bool retry = false;
+        var retry = false;
         if (IsEstablished())
         {
             do

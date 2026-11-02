@@ -35,10 +35,10 @@ internal class SFResultChunk : BaseResultChunk
     public override UTF8Buffer ExtractCell(int columnIndex)
     {
         // Convert string to UTF8Buffer. This makes this method a little slower, but this class is not used for large result sets
-        string s = RowSet[_currentRowIndex, columnIndex];
+        var s = RowSet[_currentRowIndex, columnIndex];
         if (s == null)
             return null;
-        byte[] b = Encoding.UTF8.GetBytes(s);
+        var b = Encoding.UTF8.GetBytes(s);
         return new UTF8Buffer(b);
     }
 

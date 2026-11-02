@@ -17,8 +17,8 @@ public sealed class SFDataConverterTest
     private static UTF8Buffer ConvertToUTF8Buffer(string srcVal)
     {
         // Create an UTF8Buffer with an offset to get better testing
-        byte[] b1 = Encoding.UTF8.GetBytes(srcVal);
-        byte[] b2 = new byte[b1.Length + 100];
+        var b1 = Encoding.UTF8.GetBytes(srcVal);
+        var b2 = new byte[b1.Length + 100];
         Array.Copy(b1, 0, b2, 100, b1.Length);
         return new UTF8Buffer(b2, 100, b1.Length);
     }
@@ -29,13 +29,13 @@ public sealed class SFDataConverterTest
     [SFFact]
     public void TestConvertBindToSFValFinlandLocale()
     {
-        Thread testThread = new Thread(() =>
+        var testThread = new Thread(() =>
         {
-            CultureInfo ci = new CultureInfo("en-FI");
+            var ci = new CultureInfo("en-FI");
 
             Thread.CurrentThread.CurrentCulture = ci;
 
-            Tuple<string, string> t =
+            var t =
                 SFDataConverter.CSharpTypeValToSfTypeVal(DbType.Double, 1.2345);
 
             Assert.Equal("REAL", t.Item1);
@@ -103,10 +103,10 @@ public sealed class SFDataConverterTest
     public void TestConvertTimeSpan(string inputTimeStr)
     {
         // The expected result. Timespan precision only goes up to 7 digits
-        TimeSpan expected = TimeSpan.ParseExact(inputTimeStr.Length < 16 ? inputTimeStr : inputTimeStr.Substring(0, 16), "c", CultureInfo.InvariantCulture);
+        var expected = TimeSpan.ParseExact(inputTimeStr.Length < 16 ? inputTimeStr : inputTimeStr.Substring(0, 16), "c", CultureInfo.InvariantCulture);
 
         // Generate the value as returned by the DB
-        TimeSpan val = TimeSpan.ParseExact(inputTimeStr.Substring(0, 8), "c", CultureInfo.InvariantCulture);
+        var val = TimeSpan.ParseExact(inputTimeStr.Substring(0, 8), "c", CultureInfo.InvariantCulture);
         Console.WriteLine("val " + val.ToString());
         var tickDiff = val.Ticks;
         var inputStringAsItComesBackFromDatabase = (tickDiff / 10000000.0m).ToString(CultureInfo.InvariantCulture);
@@ -153,7 +153,7 @@ public sealed class SFDataConverterTest
         var result = SFDataConverter.CSharpTypeValToSfTypeVal(DbType.Date, testValue);
         // Convert result to DateTime for easier interpretation
         var unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        DateTime dtResult = unixEpoch.AddMilliseconds(long.Parse(result.Item2));
+        var dtResult = unixEpoch.AddMilliseconds(long.Parse(result.Item2));
         Assert.Equal(dtExpected, dtResult);
     }
 
@@ -164,8 +164,8 @@ public sealed class SFDataConverterTest
     [InlineData("999999999999999999")]
     public void TestConvertToInt64(string s)
     {
-        long actual = (long)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(long)));
-        long expected = Convert.ToInt64(s);
+        var actual = (long)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(long)));
+        var expected = Convert.ToInt64(s);
         Assert.Equal(expected, actual);
     }
 
@@ -176,8 +176,8 @@ public sealed class SFDataConverterTest
     [InlineData("0")]
     public void TestConvertToInt32(string s)
     {
-        int actual = (int)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(int)));
-        int expected = Convert.ToInt32(s);
+        var actual = (int)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(int)));
+        var expected = Convert.ToInt32(s);
         Assert.Equal(expected, actual);
     }
 
@@ -188,8 +188,8 @@ public sealed class SFDataConverterTest
     [InlineData("0")]
     public void TestConvertToInt16(string s)
     {
-        short actual = (short)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(short)));
-        short expected = Convert.ToInt16(s);
+        var actual = (short)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(short)));
+        var expected = Convert.ToInt16(s);
         Assert.Equal(expected, actual);
     }
 
@@ -198,8 +198,8 @@ public sealed class SFDataConverterTest
     [InlineData("0")]
     public void TestConvertToByte(string s)
     {
-        byte actual = (byte)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(byte)));
-        byte expected = Convert.ToByte(s);
+        var actual = (byte)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(byte)));
+        var expected = Convert.ToByte(s);
         Assert.Equal(expected, actual);
     }
 
@@ -250,8 +250,8 @@ public sealed class SFDataConverterTest
     [InlineData("79228162514264337593543950334.9999999999999999999999999999")] //A Decimal object has 29 digits of precision. If s represents a number that has more than 29 digits, but has a fractional part and is within the range of MaxValue and MinValue, the number is rounded
     public void TestConvertToDecimal(string s)
     {
-        decimal actual = (decimal)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(decimal)));
-        decimal expected = Convert.ToDecimal(s, CultureInfo.InvariantCulture);
+        var actual = (decimal)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(decimal)));
+        var expected = Convert.ToDecimal(s, CultureInfo.InvariantCulture);
 
         Assert.Equal(expected, actual);
     }
@@ -279,13 +279,13 @@ public sealed class SFDataConverterTest
     [InlineData("NaN")]
     public void TestConvertToFloat(string s)
     {
-        double actualDouble = (double)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(double)));
-        double expectedDoulbe = Convert.ToDouble(s, CultureInfo.InvariantCulture);
+        var actualDouble = (double)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(double)));
+        var expectedDoulbe = Convert.ToDouble(s, CultureInfo.InvariantCulture);
 
         Assert.Equal(actualDouble, expectedDoulbe);
 
-        float actualFloat = (float)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(float)));
-        float expectedFloat = Convert.ToSingle(s, CultureInfo.InvariantCulture);
+        var actualFloat = (float)SFDataConverter.ConvertToCSharpVal(ConvertToUTF8Buffer(s), GetCtx(SFDataType.FIXED, typeof(float)));
+        var expectedFloat = Convert.ToSingle(s, CultureInfo.InvariantCulture);
 
         Assert.Equal(expectedFloat, actualFloat);
     }
@@ -488,7 +488,7 @@ public sealed class SFDataConverterTest
             unsupportedObject = null;
 
         Assert.NotNull(unsupportedObject);
-        SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => SFDataConverter.CSharpValToSfVal(dataType, unsupportedObject));
+        var ex = Assert.Throws<SnowflakeDbException>(() => SFDataConverter.CSharpValToSfVal(dataType, unsupportedObject));
         SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.INVALID_DATA_CONVERSION);
     }
 

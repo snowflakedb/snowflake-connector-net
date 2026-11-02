@@ -26,7 +26,7 @@ public class MiniCoreTest : SFBaseTestAsync, IDisposable
     private static async Task WaitForMiniCoreToLoad()
     {
         SfMiniCore.StartLoading();
-        for (int i = 0; i < 100 && !SfMiniCore.IsLoaded; i++)
+        for (var i = 0; i < 100 && !SfMiniCore.IsLoaded; i++)
             await Task.Delay(10).ConfigureAwait(false);
     }
 

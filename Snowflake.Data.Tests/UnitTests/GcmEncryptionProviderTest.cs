@@ -45,7 +45,7 @@ public class GcmEncryptionProviderTest
     public void TestEncryptAndDecryptWithoutAad()
     {
         // arrange
-        SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
+        var encryptionMetadata = new SFEncryptionMetadata();
 
         // act
         using (var encryptedStream = GcmEncryptionProvider.Encrypt(
@@ -79,7 +79,7 @@ public class GcmEncryptionProviderTest
     public void TestEncryptAndDecryptWithEmptyAad()
     {
         // arrange
-        SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
+        var encryptionMetadata = new SFEncryptionMetadata();
 
         // act
         using (var encryptedStream = GcmEncryptionProvider.Encrypt(
@@ -113,7 +113,7 @@ public class GcmEncryptionProviderTest
     public void TestEncryptAndDecryptWithAad()
     {
         // arrange
-        SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
+        var encryptionMetadata = new SFEncryptionMetadata();
 
         // act
         using (var encryptedStream = GcmEncryptionProvider.Encrypt(
@@ -147,7 +147,7 @@ public class GcmEncryptionProviderTest
     public void TestFailDecryptWithInvalidKeyAad()
     {
         // arrange
-        SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
+        var encryptionMetadata = new SFEncryptionMetadata();
         using (var encryptedStream = GcmEncryptionProvider.Encrypt(
                    s_encryptionMaterial,
                    encryptionMetadata, // this is output parameter
@@ -177,7 +177,7 @@ public class GcmEncryptionProviderTest
     public void TestFailDecryptWithInvalidContentAad()
     {
         // arrange
-        SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
+        var encryptionMetadata = new SFEncryptionMetadata();
         using (var encryptedStream = GcmEncryptionProvider.Encrypt(
                    s_encryptionMaterial,
                    encryptionMetadata, // this is output parameter
@@ -207,7 +207,7 @@ public class GcmEncryptionProviderTest
     public void TestFailDecryptWhenMissingAad()
     {
         // arrange
-        SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
+        var encryptionMetadata = new SFEncryptionMetadata();
         using (var encryptedStream = GcmEncryptionProvider.Encrypt(
                    s_encryptionMaterial,
                    encryptionMetadata, // this is output parameter
@@ -238,7 +238,7 @@ public class GcmEncryptionProviderTest
     public void TestEncryptAndDecryptFile()
     {
         // arrange
-        SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
+        var encryptionMetadata = new SFEncryptionMetadata();
         var plainTextFilePath = Path.Combine(Path.GetTempPath(), "plaintext.txt");
         var encryptedFilePath = Path.Combine(Path.GetTempPath(), "encrypted.txt");
         try

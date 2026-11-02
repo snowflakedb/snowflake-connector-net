@@ -111,13 +111,13 @@ static class SFDataConverter
             else if (destType == typeof(short))
             {
                 // Use checked keyword to make sure we generate an OverflowException if conversion fails
-                int result = FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset, srcVal.length);
+                var result = FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset, srcVal.length);
                 return checked((short)result);
             }
             else if (destType == typeof(byte))
             {
                 // Use checked keyword to make sure we generate an OverflowException if conversion fails
-                int result = FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset, srcVal.length);
+                var result = FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset, srcVal.length);
                 return checked((byte)result);
             }
             else if (destType == typeof(double))
@@ -134,7 +134,7 @@ static class SFDataConverter
             }
             else if (destType == typeof(char[]))
             {
-                byte[] data = srcType == SFDataType.BINARY ?
+                var data = srcType == SFDataType.BINARY ?
                     HexToBytes(srcVal.ToString()) : srcVal.GetBytes();
                 return Encoding.UTF8.GetString(data).ToCharArray();
             }
@@ -171,7 +171,7 @@ static class SFDataConverter
         switch (srcType)
         {
             case SFDataType.DATE:
-                long srcValLong = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length);
+                var srcValLong = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length);
                 return DateTime.SpecifyKind(UnixEpoch.AddDays(srcValLong), DateTimeKind.Unspecified);
 
             case SFDataType.TIME:
@@ -206,7 +206,7 @@ static class SFDataConverter
         switch (srcType)
         {
             case SFDataType.TIMESTAMP_TZ:
-                int spaceIndex = Array.IndexOf<byte>(srcVal.Buffer, (byte)' ', srcVal.offset, srcVal.length);
+                var spaceIndex = Array.IndexOf<byte>(srcVal.Buffer, (byte)' ', srcVal.offset, srcVal.length);
                 if (spaceIndex == -1)
                 {
                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
@@ -215,10 +215,10 @@ static class SFDataConverter
                 else
                 {
                     spaceIndex -= srcVal.offset;
-                    UTF8Buffer timeVal = new UTF8Buffer(srcVal.Buffer, srcVal.offset, spaceIndex);
-                    int offset = FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset + spaceIndex + 1, srcVal.length - spaceIndex - 1);
+                    var timeVal = new UTF8Buffer(srcVal.Buffer, srcVal.offset, spaceIndex);
+                    var offset = FastParser.FastParseInt32(srcVal.Buffer, srcVal.offset + spaceIndex + 1, srcVal.length - spaceIndex - 1);
                     // offset is minutes biased by +1440; FromMinutes keeps sub-hour offsets (e.g. +05:30). SNOW-3977560
-                    TimeSpan offSetTimespan = TimeSpan.FromMinutes(offset - 1440);
+                    var offSetTimespan = TimeSpan.FromMinutes(offset - 1440);
                     return new DateTimeOffset(UnixEpoch.Ticks + GetTicksFromSecondAndNanosecond(timeVal), TimeSpan.Zero).ToOffset(offSetTimespan);
                 }
             case SFDataType.TIMESTAMP_LTZ:
@@ -267,7 +267,7 @@ static class SFDataConverter
     {
         var intPart = 0L;
         var decimalPart = 0L;
-        int dotIndex = Array.IndexOf<byte>(srcVal.Buffer, (byte)'.', srcVal.offset, srcVal.length);
+        var dotIndex = Array.IndexOf<byte>(srcVal.Buffer, (byte)'.', srcVal.offset, srcVal.length);
         if (dotIndex == -1)
         {
             intPart = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length);
@@ -357,8 +357,8 @@ static class SFDataConverter
 
     private static string BytesToHex(byte[] bytes)
     {
-        StringBuilder hexBuilder = new StringBuilder(bytes.Length * 2);
-        foreach (byte b in bytes)
+        var hexBuilder = new StringBuilder(bytes.Length * 2);
+        foreach (var b in bytes)
         {
             hexBuilder.AppendFormat("{0:x2}", b);
         }

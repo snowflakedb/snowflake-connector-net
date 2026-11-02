@@ -52,7 +52,7 @@ internal class CertificateRevocationVerifier
 
     public bool CertificateValidationCallback(HttpRequestMessage _, X509Certificate2 certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
     {
-        bool defaultValidationPassed = sslPolicyErrors == SslPolicyErrors.None;
+        var defaultValidationPassed = sslPolicyErrors == SslPolicyErrors.None;
         if (!defaultValidationPassed)
             return false;
         return CheckCertificateRevocationStatus(certificate, chain);

@@ -75,7 +75,7 @@ internal class MockOktaRestRequester : MockBaseRestRequester
         else
         {
             //idp onetime token
-            IdpTokenResponse tokenResponse = new IdpTokenResponse
+            var tokenResponse = new IdpTokenResponse
             {
                 CookieToken = "cookie",
             };

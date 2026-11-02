@@ -42,7 +42,7 @@ public abstract class VectorTypesIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
 
-            using (DbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = $"CREATE OR REPLACE TABLE {tableName} (a VECTOR(INT, 3));";
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
@@ -98,7 +98,7 @@ public abstract class VectorTypesIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
 
-            using (DbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = $"CREATE OR REPLACE TABLE {tableName} (a VECTOR(FLOAT, 3));";
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
@@ -153,7 +153,7 @@ public abstract class VectorTypesIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
 
-            using (DbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT [1, 2, 3]::VECTOR(INT, 3) as vec;";
                 var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
@@ -178,7 +178,7 @@ public abstract class VectorTypesIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
 
-            using (DbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = $"SELECT [{int.MinValue}, {int.MaxValue}]::VECTOR(INT, 2) as vec;";
                 var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
@@ -202,7 +202,7 @@ public abstract class VectorTypesIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
 
-            using (DbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT [1.1]::VECTOR(INT, 3) as vec;";
 
@@ -224,7 +224,7 @@ public abstract class VectorTypesIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
 
-            using (DbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT [A, B, C]::VECTOR(INT, 3) as vec;";
 
@@ -244,7 +244,7 @@ public abstract class VectorTypesIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
 
-            using (DbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT [1.1,2.22,3.333]::VECTOR(FLOAT, 3) as vec;";
                 var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
@@ -269,7 +269,7 @@ public abstract class VectorTypesIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
 
-            using (DbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = $"SELECT [{LargeNegativeFloat}, {LargePositiveFloat}]::VECTOR(FLOAT, 2) as vec;";
                 var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
@@ -296,7 +296,7 @@ public abstract class VectorTypesIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
 
-            using (DbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT [1,2,3]::VECTOR(FLOAT, 3) as vec;";
                 var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
@@ -321,7 +321,7 @@ public abstract class VectorTypesIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
 
-            using (DbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT [1.123456789,2.123456789,3.123456789]::VECTOR(FLOAT, 3) as vec;";
                 var reader = (SnowflakeDbDataReader)await command.ExecuteReaderAsync().ConfigureAwait(false);
@@ -346,7 +346,7 @@ public abstract class VectorTypesIT : SFBaseTestAsync
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             await AlterSessionSettingsAsync(conn).ConfigureAwait(false);
 
-            using (DbCommand command = conn.CreateCommand())
+            using (var command = conn.CreateCommand())
             {
                 command.CommandText = "SELECT [A, B, C]::VECTOR(FLOAT, 3) as vec;";
 

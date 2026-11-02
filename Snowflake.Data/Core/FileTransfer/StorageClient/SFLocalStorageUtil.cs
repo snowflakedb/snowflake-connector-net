@@ -50,9 +50,9 @@ class SFLocalStorageUtil
     internal static void DownloadOneFile(SFFileMetadata fileMetadata)
     {
         PathValidator.ValidateFileDestinationPath(fileMetadata.localLocation, fileMetadata.destFileName);
-        string srcFilePath = fileMetadata.stageInfo.location;
-        string realSrcFilePath = Path.Combine(srcFilePath, fileMetadata.srcFileName);
-        string output = Path.Combine(fileMetadata.localLocation, fileMetadata.destFileName);
+        var srcFilePath = fileMetadata.stageInfo.location;
+        var realSrcFilePath = Path.Combine(srcFilePath, fileMetadata.srcFileName);
+        var output = Path.Combine(fileMetadata.localLocation, fileMetadata.destFileName);
 
         // Create directory if doesn't exist
         if (!Directory.Exists(fileMetadata.localLocation))

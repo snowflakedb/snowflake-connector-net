@@ -25,7 +25,7 @@ public class OktaClientsCredentialsTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateOktaClientCredentialsMismatchedUsername()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
         var parameters = AuthConnectionString.GetOAuthExternalClientCredentialParameters();
         parameters[SFSessionProperty.USER] = "differentUser";
         _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
@@ -38,7 +38,7 @@ public class OktaClientsCredentialsTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateOktaClientCredentialsUnauthorized()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
         var parameters = AuthConnectionString.GetOAuthExternalClientCredentialParameters();
         parameters[SFSessionProperty.OAUTHCLIENTID] = "invalidClientId";
         _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);

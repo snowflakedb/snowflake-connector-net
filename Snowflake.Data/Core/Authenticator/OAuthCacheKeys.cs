@@ -15,8 +15,8 @@ internal class OAuthCacheKeys
 
     public static OAuthCacheKeys CreateForAuthorizationCodeFlow(string idpUrl, string snowflakeHost, string user, string role, bool clientStoreTemporaryCredentials, Func<ISnowflakeCredentialManager> credentialManagerProvider)
     {
-        string accessTokenKey = string.Empty;
-        string refreshTokenKey = string.Empty;
+        var accessTokenKey = string.Empty;
+        var refreshTokenKey = string.Empty;
         if (IsCacheAvailableForAuthorizationCodeFlow(user, clientStoreTemporaryCredentials, true))
         {
             accessTokenKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(

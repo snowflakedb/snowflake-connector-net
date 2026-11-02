@@ -13,8 +13,8 @@ public class SFAuthenticatorFactoryTest
 
     private static IAuthenticator GetAuthenticator(string authenticatorName, string extraParams = "")
     {
-        string connectionString = $"account=test;user=test;password=test;authenticator={authenticatorName};{extraParams}";
-        SFSession session = new SFSession(connectionString, new SessionPropertiesContext());
+        var connectionString = $"account=test;user=test;password=test;authenticator={authenticatorName};{extraParams}";
+        var session = new SFSession(connectionString, new SessionPropertiesContext());
         return AuthenticatorFactory.GetAuthenticator(session);
     }
 
@@ -49,7 +49,7 @@ public class SFAuthenticatorFactoryTest
     [SFFact]
     public void TestGetAuthenticatorKeyPairWithMissingKey()
     {
-        SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => GetAuthenticator("snowflake_jwt"));
+        var ex = Assert.Throws<SnowflakeDbException>(() => GetAuthenticator("snowflake_jwt"));
         Assert.Equal(SFError.INVALID_CONNECTION_STRING.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
     }
 
@@ -63,7 +63,7 @@ public class SFAuthenticatorFactoryTest
     [SFFact]
     public void TestGetAuthenticatorOAuthWithMissingToken()
     {
-        SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => GetAuthenticator("oauth"));
+        var ex = Assert.Throws<SnowflakeDbException>(() => GetAuthenticator("oauth"));
         Assert.Equal(SFError.MISSING_CONNECTION_PROPERTY.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
     }
 
@@ -77,7 +77,7 @@ public class SFAuthenticatorFactoryTest
     [SFFact]
     public void TestGetAuthenticatorUnknown()
     {
-        SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => GetAuthenticator("Unknown"));
+        var ex = Assert.Throws<SnowflakeDbException>(() => GetAuthenticator("Unknown"));
         Assert.Equal(SFError.UNKNOWN_AUTHENTICATOR.GetAttribute<SFErrorAttr>().errorCode, ex.ErrorCode);
     }
 }

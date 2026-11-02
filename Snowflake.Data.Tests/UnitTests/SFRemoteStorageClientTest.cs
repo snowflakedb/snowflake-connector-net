@@ -153,7 +153,7 @@ public sealed class SFRemoteStorageClientTest : IDisposable
         }
         else
         {
-            ISFRemoteStorageClient client = SFRemoteStorageUtil.GetRemoteStorage(_responseData);
+            var client = SFRemoteStorageUtil.GetRemoteStorage(_responseData);
 
             if (stageType == SFRemoteStorageUtil.S3_FS)
             {
@@ -221,7 +221,7 @@ public sealed class SFRemoteStorageClientTest : IDisposable
     {
         // Setup the mock GCS client for remote storage tests
         var mockWebRequest = CreateBaseMockClient();
-        bool firstRequest = true;
+        var firstRequest = true;
 
         if (isAsync)
         {
@@ -362,7 +362,7 @@ public sealed class SFRemoteStorageClientTest : IDisposable
         SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, NotAsync);
 
         // Act
-        Exception ex = Assert.Throws<Exception>(() => SFRemoteStorageUtil.UploadOneFile(_fileMetadata));
+        var ex = Assert.Throws<Exception>(() => SFRemoteStorageUtil.UploadOneFile(_fileMetadata));
 
         // Assert
         Assert.Matches($"Unknown Error in uploading a file: .*", ex.Message);
@@ -377,7 +377,7 @@ public sealed class SFRemoteStorageClientTest : IDisposable
         SetUpMockClientForUpload(httpStatusCode, httpStatusCodeAfterRetry, IsAsync);
 
         // Act
-        Exception ex = await Assert.ThrowsAsync<Exception>(async () => await SFRemoteStorageUtil.UploadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
+        var ex = await Assert.ThrowsAsync<Exception>(async () => await SFRemoteStorageUtil.UploadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
 
         // Assert
         Assert.Matches($"Unknown Error in uploading a file: .*", ex.Message);
@@ -424,7 +424,7 @@ public sealed class SFRemoteStorageClientTest : IDisposable
         // Assert
         if (expectedResultStatus == ResultStatus.DOWNLOADED)
         {
-            string text = await ReadDownloadFileAsync().ConfigureAwait(false);
+            var text = await ReadDownloadFileAsync().ConfigureAwait(false);
             Assert.Equal(MockRemoteStorageClient.FileContent, text);
         }
         Assert.Equal(expectedResultStatus.ToString(), _fileMetadata.resultStatus);
@@ -494,7 +494,7 @@ public sealed class SFRemoteStorageClientTest : IDisposable
         SetUpMockClientForDownload(httpStatusCode, NotAsync);
 
         // Act
-        Exception ex = Assert.Throws<Exception>(() => SFRemoteStorageUtil.DownloadOneFile(_fileMetadata));
+        var ex = Assert.Throws<Exception>(() => SFRemoteStorageUtil.DownloadOneFile(_fileMetadata));
 
         // Assert
         Assert.Matches($"Unknown Error in downloading a file: .*", ex.Message);
@@ -509,7 +509,7 @@ public sealed class SFRemoteStorageClientTest : IDisposable
         SetUpMockClientForDownload(httpStatusCode, IsAsync);
 
         // Act
-        Exception ex = await Assert.ThrowsAsync<Exception>(async () => await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
+        var ex = await Assert.ThrowsAsync<Exception>(async () => await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
 
         // Assert
         Assert.Matches($"Unknown Error in downloading a file: .*", ex.Message);
@@ -524,8 +524,8 @@ public sealed class SFRemoteStorageClientTest : IDisposable
         File.WriteAllText(t_downloadFileName, MockRemoteStorageClient.FileContent);
 
         // Get encrypted stream from file
-        SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata();
-        StreamPair streamPair = EncryptionProvider.EncryptFile(
+        var encryptionMetadata = new SFEncryptionMetadata();
+        var streamPair = EncryptionProvider.EncryptFile(
             t_downloadFileName,
             _fileMetadata.encryptionMaterial,
             encryptionMetadata,
@@ -547,7 +547,7 @@ public sealed class SFRemoteStorageClientTest : IDisposable
         SFRemoteStorageUtil.DownloadOneFile(_fileMetadata);
 
         // Assert
-        string text = await ReadDownloadFileAsync().ConfigureAwait(false);
+        var text = await ReadDownloadFileAsync().ConfigureAwait(false);
         Assert.Equal(MockRemoteStorageClient.FileContent, text);
         Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
     }
@@ -564,7 +564,7 @@ public sealed class SFRemoteStorageClientTest : IDisposable
         await SFRemoteStorageUtil.DownloadOneFileAsync(_fileMetadata, _cancellationToken).ConfigureAwait(false);
 
         // Assert
-        string text = await ReadDownloadFileAsync().ConfigureAwait(false);
+        var text = await ReadDownloadFileAsync().ConfigureAwait(false);
         Assert.Equal(MockRemoteStorageClient.FileContent, text);
         Assert.Equal(((ResultStatus)expectedResultStatus).ToString(), _fileMetadata.resultStatus);
     }

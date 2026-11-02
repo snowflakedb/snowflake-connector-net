@@ -36,7 +36,7 @@ public sealed class ChunkParserFactoryTest : IDisposable
             SFConfiguration.Instance().ChunkParserVersion = chunkParserVersion;
 
             // Get parser using sample stream with proper disposal
-            byte[] bytes = Encoding.UTF8.GetBytes("test");
+            var bytes = Encoding.UTF8.GetBytes("test");
             using (Stream stream = new MemoryStream(bytes))
             {
                 IChunkParser parser = null;
@@ -44,7 +44,7 @@ public sealed class ChunkParserFactoryTest : IDisposable
                 // GetParser() throws an error when ChunkParserVersion is not 1-3
                 if (chunkParserVersion == 4)
                 {
-                    Exception ex = Assert.Throws<Exception>(() => parser = ChunkParserFactory.Instance.GetParser(ResultFormat.JSON, stream));
+                    var ex = Assert.Throws<Exception>(() => parser = ChunkParserFactory.Instance.GetParser(ResultFormat.JSON, stream));
                     Assert.Contains("Unsupported Chunk Parser version", ex.Message);
                 }
                 else

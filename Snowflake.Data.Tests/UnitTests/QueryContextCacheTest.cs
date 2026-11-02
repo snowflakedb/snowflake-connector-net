@@ -36,7 +36,7 @@ public class QueryContextCacheTest
         _expectedIDs = new long[MaxCapacity];
         _expectedReadTimestamp = new long[MaxCapacity];
         _expectedPriority = new long[MaxCapacity];
-        for (int i = 0; i < MaxCapacity; i++)
+        for (var i = 0; i < MaxCapacity; i++)
         {
             _expectedIDs[i] = BaseId + i;
             _expectedReadTimestamp[i] = BaseReadTimestamp + i;
@@ -52,7 +52,7 @@ public class QueryContextCacheTest
         _expectedIDs = new long[MaxCapacity];
         _expectedReadTimestamp = new long[MaxCapacity];
         _expectedPriority = new long[MaxCapacity];
-        for (int i = 0; i < MaxCapacity; i++)
+        for (var i = 0; i < MaxCapacity; i++)
         {
             _expectedIDs[i] = BaseId + i;
             _expectedReadTimestamp[i] = BaseReadTimestamp + i;
@@ -74,13 +74,13 @@ public class QueryContextCacheTest
 
     private void AssertCacheDataWithContext(string context)
     {
-        int size = _qcc.GetSize();
+        var size = _qcc.GetSize();
         Assert.True(size == MaxCapacity);
 
         // Compare elements
-        SortedSet<QueryContextElement> elements = _qcc.GetElements();
-        int i = 0;
-        foreach (QueryContextElement elem in elements)
+        var elements = _qcc.GetElements();
+        var i = 0;
+        foreach (var elem in elements)
         {
             Assert.Equal(_expectedIDs[i], elem.Id);
             Assert.Equal(_expectedReadTimestamp[i], elem.ReadTimestamp);
@@ -120,7 +120,7 @@ public class QueryContextCacheTest
         InitCacheWithData();
 
         // Add one more element at the end
-        int i = MaxCapacity;
+        var i = MaxCapacity;
         _qcc.Merge(BaseId + i, BaseReadTimestamp + i, BasePriority + i, Context);
         _qcc.SyncPriorityMap();
         _qcc.CheckCacheCapacity();
@@ -135,7 +135,7 @@ public class QueryContextCacheTest
         InitCacheWithData();
 
         // Add one more element at the end
-        int i = MaxCapacity;
+        var i = MaxCapacity;
         _qcc.SetCapacity(MaxCapacity + 1);
         _qcc.Merge(BaseId + i, BaseReadTimestamp + i, BasePriority + i, Context);
         _qcc.SyncPriorityMap();
@@ -154,7 +154,7 @@ public class QueryContextCacheTest
         InitCacheWithData();
 
         // Add one more element with new TS with existing id
-        int updatedID = 1;
+        var updatedID = 1;
         _expectedReadTimestamp[updatedID] = BaseReadTimestamp + updatedID + 10;
         _qcc.Merge(
             BaseId + updatedID, _expectedReadTimestamp[updatedID], BasePriority + updatedID, Context);
@@ -171,8 +171,8 @@ public class QueryContextCacheTest
         InitCacheWithData();
 
         // Add one more element with new priority with existing id
-        int updatedID = 3;
-        long updatedPriority = BasePriority + updatedID + 7;
+        var updatedID = 3;
+        var updatedPriority = BasePriority + updatedID + 7;
 
         _expectedPriority[updatedID] = updatedPriority;
         _qcc.Merge(
@@ -180,7 +180,7 @@ public class QueryContextCacheTest
         _qcc.SyncPriorityMap();
         _qcc.CheckCacheCapacity();
 
-        for (int i = updatedID; i < MaxCapacity - 1; i++)
+        for (var i = updatedID; i < MaxCapacity - 1; i++)
         {
             _expectedIDs[i] = _expectedIDs[i + 1];
             _expectedReadTimestamp[i] = _expectedReadTimestamp[i + 1];
@@ -200,8 +200,8 @@ public class QueryContextCacheTest
         InitCacheWithData();
 
         // Add one more element with same priority
-        int i = MaxCapacity;
-        long updatedPriority = BasePriority + 1;
+        var i = MaxCapacity;
+        var updatedPriority = BasePriority + 1;
         _qcc.Merge(BaseId + i, BaseReadTimestamp + i, updatedPriority, Context);
         _qcc.SyncPriorityMap();
         _qcc.CheckCacheCapacity();
@@ -218,7 +218,7 @@ public class QueryContextCacheTest
         InitCacheWithData();
 
         // Add one more element with same priority
-        int i = 2;
+        var i = 2;
         _qcc.Merge(BaseId + i, BaseReadTimestamp + i - 10, BasePriority + i, Context);
         _qcc.SyncPriorityMap();
         _qcc.CheckCacheCapacity();
@@ -241,7 +241,7 @@ public class QueryContextCacheTest
     {
         InitCacheWithData();
 
-        ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>("", JsonUtils.JsonSettings);
+        var rsp = JsonConvert.DeserializeObject<ResponseQueryContext>("", JsonUtils.JsonSettings);
         _qcc.Update(rsp);
         Assert.Equal(0, _qcc.GetSize());
     }
@@ -259,7 +259,7 @@ public class QueryContextCacheTest
         _qcc.ClearCache();
         Assert.Equal(0, _qcc.GetSize());
 
-        ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>(json, JsonUtils.JsonSettings);
+        var rsp = JsonConvert.DeserializeObject<ResponseQueryContext>(json, JsonUtils.JsonSettings);
         _qcc.Update(rsp);
         AssertCacheData();
     }
@@ -277,7 +277,7 @@ public class QueryContextCacheTest
         _qcc.ClearCache();
         Assert.Equal(0, _qcc.GetSize());
 
-        ResponseQueryContext rsp = JsonConvert.DeserializeObject<ResponseQueryContext>(json, JsonUtils.JsonSettings);
+        var rsp = JsonConvert.DeserializeObject<ResponseQueryContext>(json, JsonUtils.JsonSettings);
         _qcc.Update(rsp);
         AssertCacheDataWithContext(null);
     }

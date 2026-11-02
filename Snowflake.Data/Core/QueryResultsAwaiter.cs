@@ -73,8 +73,8 @@ internal sealed class QueryResultsAwaiter
     /// <param name="isAsync"></param>
     internal async Task RetryUntilQueryResultIsAvailable(SnowflakeDbConnection connection, string queryId, CancellationToken cancellationToken, bool isAsync)
     {
-        int retryPatternPos = 0;
-        int noDataCounter = 0;
+        var retryPatternPos = 0;
+        var noDataCounter = 0;
 
         QueryStatus status;
         try

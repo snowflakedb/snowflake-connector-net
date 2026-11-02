@@ -128,15 +128,15 @@ class SFReusableChunk : BaseResultChunk
 
         public UTF8Buffer Get(int index)
         {
-            int block = GetMetaBlock(index);
-            int blockIndex = GetMetaBlockIndex(index);
+            var block = GetMetaBlock(index);
+            var blockIndex = GetMetaBlockIndex(index);
 
             if (block < 0 || block >= lengths.Count)
                 return null;
             if (blockIndex < 0 || block >= lengths[block].Length)
                 return null;
 
-            int length = lengths[block][blockIndex];
+            var length = lengths[block][blockIndex];
 
             if (length == NULL_VALUE)
             {
@@ -144,17 +144,17 @@ class SFReusableChunk : BaseResultChunk
             }
             else
             {
-                int offset = offsets[GetMetaBlock(index)]
+                var offset = offsets[GetMetaBlock(index)]
                     [GetMetaBlockIndex(index)];
 
                 // Create string from the char arrays
                 if (SpaceLeftOnBlock(offset) < length)
                 {
-                    int copied = 0;
-                    byte[] cell = new byte[length];
+                    var copied = 0;
+                    var cell = new byte[length];
                     while (copied < length)
                     {
-                        int copySize
+                        var copySize
                             = Math.Min(length - copied, SpaceLeftOnBlock(offset + copied));
                         Array.Copy(data[GetBlock(offset + copied)],
                             GetBlockOffset(offset + copied),
@@ -196,21 +196,21 @@ class SFReusableChunk : BaseResultChunk
             }
             else
             {
-                int offset = currentDatOffset;
+                var offset = currentDatOffset;
 
                 // store offset and length
-                int block = GetMetaBlock(nextIndex);
-                int index = GetMetaBlockIndex(nextIndex);
+                var block = GetMetaBlock(nextIndex);
+                var index = GetMetaBlockIndex(nextIndex);
                 offsets[block][index] = offset;
                 lengths[block][index] = length;
 
                 // copy bytes to data array
-                int copied = 0;
+                var copied = 0;
                 if (SpaceLeftOnBlock(offset) < length)
                 {
                     while (copied < length)
                     {
-                        int copySize
+                        var copySize
                             = Math.Min(length - copied, SpaceLeftOnBlock(offset + copied));
                         Array.Copy(bytes, copied,
                             data[GetBlock(offset + copied)],

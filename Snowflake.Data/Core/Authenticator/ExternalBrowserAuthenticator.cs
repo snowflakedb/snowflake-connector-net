@@ -91,7 +91,7 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
         _idToken = string.IsNullOrEmpty(idToken) ? null : SecureStringHelper.Encode(idToken);
         if (_idToken == null)
         {
-            int localPort = _listenerStarter.GetRandomUnusedPort();
+            var localPort = _listenerStarter.GetRandomUnusedPort();
             var localhostEndpoints = GetLocalhostEndpoints(localPort);
             using (var httpListener = _listenerStarter.StartHttpListener(localhostEndpoints))
             {
@@ -129,7 +129,7 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
         _idToken = string.IsNullOrEmpty(idToken) ? null : SecureStringHelper.Encode(idToken);
         if (_idToken == null)
         {
-            int localPort = _listenerStarter.GetRandomUnusedPort();
+            var localPort = _listenerStarter.GetRandomUnusedPort();
             var localhostEndpoints = GetLocalhostEndpoints(localPort);
             using (var httpListener = _listenerStarter.StartHttpListener(localhostEndpoints))
             {
@@ -479,19 +479,19 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 
     private string GetLoginUrl(string proofKey, int localPort)
     {
-        Dictionary<string, string> parameters = new Dictionary<string, string>()
+        var parameters = new Dictionary<string, string>()
         {
             { "login_name", Session.properties[SFSessionProperty.USER]},
             { "proof_key", proofKey },
             { "browser_mode_redirect_port", localPort.ToString() }
         };
-        Uri loginUrl = Session.BuildUri(RestPath.SF_CONSOLE_LOGIN, parameters);
+        var loginUrl = Session.BuildUri(RestPath.SF_CONSOLE_LOGIN, parameters);
         return loginUrl.ToString();
     }
 
     private static string GenerateProofKey()
     {
-        byte[] randomness = new byte[32];
+        var randomness = new byte[32];
         using (var rng = RandomNumberGenerator.Create())
         {
             rng.GetBytes(randomness);

@@ -29,7 +29,7 @@ internal class WebBrowserStarter
 
     private static void ValidateUrl(Url url)
     {
-        Match urlMatch = Regex.Match(url.Value, UrlRegexString, RegexOptions.IgnoreCase);
+        var urlMatch = Regex.Match(url.Value, UrlRegexString, RegexOptions.IgnoreCase);
         if (!urlMatch.Success || !Uri.IsWellFormedUriString(url.Value, UriKind.Absolute))
         {
             s_logger.Error("Failed to start browser. Invalid url.");

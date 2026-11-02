@@ -138,7 +138,7 @@ public class SFFileTransferAgentTest : IDisposable
 
         // Upload teardown
         // Delete mock files
-        foreach (string location in _srcLocations)
+        foreach (var location in _srcLocations)
         {
             File.Delete(location);
         }
@@ -179,7 +179,7 @@ public class SFFileTransferAgentTest : IDisposable
 
         // Act
         _fileTransferAgent.Execute();
-        SFResultSet result = _fileTransferAgent.Result();
+        var result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -206,7 +206,7 @@ public class SFFileTransferAgentTest : IDisposable
 
         // Act
         await _fileTransferAgent.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
-        SFResultSet result = _fileTransferAgent.Result();
+        var result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -227,7 +227,7 @@ public class SFFileTransferAgentTest : IDisposable
 
         // Set command to upload
         _responseData.command = CommandTypes.UPLOAD.ToString();
-        MemoryStream memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(FileContent));
+        var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(FileContent));
 
         _fileTransferAgent = new SFFileTransferAgent(_putQuery,
             _session,
@@ -236,7 +236,7 @@ public class SFFileTransferAgentTest : IDisposable
 
         // Act
         _fileTransferAgent.Execute();
-        SFResultSet result = _fileTransferAgent.Result();
+        var result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -253,7 +253,7 @@ public class SFFileTransferAgentTest : IDisposable
 
         // Set command to upload
         _responseData.command = CommandTypes.UPLOAD.ToString();
-        MemoryStream memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(FileContent));
+        var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(FileContent));
 
         _fileTransferAgent = new SFFileTransferAgent(_putQuery,
             _session,
@@ -263,7 +263,7 @@ public class SFFileTransferAgentTest : IDisposable
 
         // Act
         await _fileTransferAgent.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
-        SFResultSet result = _fileTransferAgent.Result();
+        var result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -289,7 +289,7 @@ public class SFFileTransferAgentTest : IDisposable
 
         // Act
         _fileTransferAgent.Execute();
-        SFResultSet result = _fileTransferAgent.Result();
+        var result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -320,7 +320,7 @@ public class SFFileTransferAgentTest : IDisposable
 
         // Act
         _fileTransferAgent.Execute();
-        SFResultSet result = _fileTransferAgent.Result();
+        var result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -352,7 +352,7 @@ public class SFFileTransferAgentTest : IDisposable
 
         // Act
         _fileTransferAgent.Execute();
-        SFResultSet result = _fileTransferAgent.Result();
+        var result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert - compression still happens but via temp files, not in-memory
@@ -507,8 +507,8 @@ public class SFFileTransferAgentTest : IDisposable
         UploadSetUpFile();
 
         // The file name used for creating multiple files
-        string mockFileName = "testUploadWithMultipleFiles";
-        string extension = "txt";
+        var mockFileName = "testUploadWithMultipleFiles";
+        var extension = "txt";
 
         // Create source location with wildcard in its filename
         _responseData.src_locations = new List<string>()
@@ -518,8 +518,8 @@ public class SFFileTransferAgentTest : IDisposable
         };
 
         // Write the mock files
-        int numberOfFiles = 3;
-        for (int index = 0; index < numberOfFiles; index++)
+        var numberOfFiles = 3;
+        for (var index = 0; index < numberOfFiles; index++)
         {
             File.WriteAllText($"{mockFileName}{index}.{extension}", FileContent);
         }
@@ -533,10 +533,10 @@ public class SFFileTransferAgentTest : IDisposable
 
         // Act
         _fileTransferAgent.Execute();
-        SFResultSet result = _fileTransferAgent.Result();
+        var result = _fileTransferAgent.Result();
 
         // Assert
-        for (int index = 0; index < numberOfFiles; index++)
+        for (var index = 0; index < numberOfFiles; index++)
         {
             result.Next();
 
@@ -557,11 +557,11 @@ public class SFFileTransferAgentTest : IDisposable
         UploadSetUpFile();
 
         // Create the mock directory and files
-        string mockFileName = "testUploadWithMultipleDirectory.txt";
-        string tempUploadRootDirectory = "mockDirectoryWithWildcardInRootDirectory";
-        int numberOfDirectories = 3;
+        var mockFileName = "testUploadWithMultipleDirectory.txt";
+        var tempUploadRootDirectory = "mockDirectoryWithWildcardInRootDirectory";
+        var numberOfDirectories = 3;
 
-        for (int i = 0; i < numberOfDirectories; i++)
+        for (var i = 0; i < numberOfDirectories; i++)
         {
             Directory.CreateDirectory($"{tempUploadRootDirectory}{i}");
             File.WriteAllText($"{tempUploadRootDirectory}{i}/{mockFileName}", FileContent);
@@ -583,10 +583,10 @@ public class SFFileTransferAgentTest : IDisposable
 
         // Act
         _fileTransferAgent.Execute();
-        SFResultSet result = _fileTransferAgent.Result();
+        var result = _fileTransferAgent.Result();
 
         // Assert
-        for (int i = 0; i < numberOfDirectories; i++)
+        for (var i = 0; i < numberOfDirectories; i++)
         {
             result.Next();
 
@@ -607,12 +607,12 @@ public class SFFileTransferAgentTest : IDisposable
         UploadSetUpFile();
 
         // Create the mock directory and files
-        string mockFileName = "testUploadWithMultipleDirectory.txt";
-        string tempUploadRootDirectory = "mockDirectoryWithWildcardInDirectoryPath";
-        string mockPath = $"{tempUploadRootDirectory}/mockDirectory";
-        int numberOfDirectories = 3;
+        var mockFileName = "testUploadWithMultipleDirectory.txt";
+        var tempUploadRootDirectory = "mockDirectoryWithWildcardInDirectoryPath";
+        var mockPath = $"{tempUploadRootDirectory}/mockDirectory";
+        var numberOfDirectories = 3;
 
-        for (int i = 0; i < numberOfDirectories; i++)
+        for (var i = 0; i < numberOfDirectories; i++)
         {
             Directory.CreateDirectory($"{mockPath}{i}");
             File.WriteAllText($"{mockPath}{i}/{mockFileName}", FileContent);
@@ -634,10 +634,10 @@ public class SFFileTransferAgentTest : IDisposable
 
         // Act
         _fileTransferAgent.Execute();
-        SFResultSet result = _fileTransferAgent.Result();
+        var result = _fileTransferAgent.Result();
 
         // Assert
-        for (int i = 0; i < numberOfDirectories; i++)
+        for (var i = 0; i < numberOfDirectories; i++)
         {
             result.Next();
             // Assert the file is uploaded
@@ -657,15 +657,15 @@ public class SFFileTransferAgentTest : IDisposable
         UploadSetUpFile();
 
         // Create the mock directory and files
-        string mockFileName = "testUploadWithMultipleDirectory.txt";
-        string tempUploadRootDirectory = "mockRootDirectoryWithWildcard";
-        string tempUploadSecondDirectory = "secondDirectoryWithWilcard";
-        int numberOfDirectories = 3;
+        var mockFileName = "testUploadWithMultipleDirectory.txt";
+        var tempUploadRootDirectory = "mockRootDirectoryWithWildcard";
+        var tempUploadSecondDirectory = "secondDirectoryWithWilcard";
+        var numberOfDirectories = 3;
 
         // Do not create the root directory
 
         // Create the second directory and write to file but the test should still fail
-        for (int i = 0; i < numberOfDirectories; i++)
+        for (var i = 0; i < numberOfDirectories; i++)
         {
             Directory.CreateDirectory($"{tempUploadSecondDirectory}{i}");
             File.WriteAllText($"{tempUploadSecondDirectory}{i}/{mockFileName}", FileContent);
@@ -687,14 +687,14 @@ public class SFFileTransferAgentTest : IDisposable
         );
 
         // Act
-        SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.Execute());
+        var ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.Execute());
 
         // Assert
         Assert.Equal(_responseData.queryId, ex.QueryId);
         SnowflakeDbExceptionAssert.HasErrorCode(ex, SFError.IO_ERROR_ON_GETPUT_COMMAND);
         Assert.Matches($"No file found for: {tempUploadRootDirectory}\\*/{tempUploadSecondDirectory}\\*/{mockFileName}", ex.Message);
 
-        for (int i = 0; i < numberOfDirectories; i++)
+        for (var i = 0; i < numberOfDirectories; i++)
         {
             Directory.Delete($"{tempUploadSecondDirectory}{i}", true);
         }
@@ -726,7 +726,7 @@ public class SFFileTransferAgentTest : IDisposable
 
         // Act
         _fileTransferAgent.Execute();
-        SFResultSet result = _fileTransferAgent.Result();
+        var result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -751,7 +751,7 @@ public class SFFileTransferAgentTest : IDisposable
 
         // Act
         await _fileTransferAgent.ExecuteAsync(CancellationToken.None).ConfigureAwait(false);
-        SFResultSet result = _fileTransferAgent.Result();
+        var result = _fileTransferAgent.Result();
         result.Next();
 
         // Assert
@@ -782,7 +782,7 @@ public class SFFileTransferAgentTest : IDisposable
         );
 
         // Act
-        SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.Execute());
+        var ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.Execute());
 
         // Assert
         Assert.Equal(_responseData.queryId, ex.QueryId);
@@ -814,7 +814,7 @@ public class SFFileTransferAgentTest : IDisposable
         );
 
         // Act
-        SnowflakeDbException ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.Execute());
+        var ex = Assert.Throws<SnowflakeDbException>(() => _fileTransferAgent.Execute());
 
         // Assert
         Assert.Equal(_responseData.queryId, ex.QueryId);

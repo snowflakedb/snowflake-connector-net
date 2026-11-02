@@ -84,7 +84,7 @@ internal class SFRollingFileAppender : SFAppender
 
     private void RollLogFile()
     {
-        string rollFilePath = $"{LogFilePath}.{DateTime.Now:yyyyMMddHHmmss}.bak";
+        var rollFilePath = $"{LogFilePath}.{DateTime.Now:yyyyMMddHHmmss}.bak";
         File.Move(LogFilePath, rollFilePath);
 
         var logDirectory = Path.GetDirectoryName(LogFilePath);

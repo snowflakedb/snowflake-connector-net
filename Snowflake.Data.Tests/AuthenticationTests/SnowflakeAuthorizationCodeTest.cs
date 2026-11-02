@@ -27,9 +27,9 @@ public class SnowflakeAuthorizationCodeTest
     [SFFact(SkipCondition.RunOnlyOnLocal)] // "TODO SNOW-4081612"
     public void TestAuthenticateSnowflakeAuthorizationCodeSuccessful()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
-        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
+        var authTestHelper = new AuthTestHelper();
+        var connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+        var provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
 
         authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
         authTestHelper.VerifyExceptionIsNotThrown();
@@ -38,15 +38,15 @@ public class SnowflakeAuthorizationCodeTest
     [SFFact(SkipCondition.RunOnlyOnLocal)] // "TODO SNOW-4081612"
     public void TestAuthenticateSnowflakeAuthorizationCodeMismatchedUser()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         var parameters = AuthConnectionString.GetOAuthSnowflakeAuthorizationCodeConnectionParameters();
         parameters[SFSessionProperty.USER] = "differentUser";
 
         _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
-        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
+        var connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+        var provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
 
         authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
         authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token.");
@@ -55,7 +55,7 @@ public class SnowflakeAuthorizationCodeTest
     [SFFact(SkipCondition.RunOnlyOnLocal)] // "TODO SNOW-4081612"
     public void TestAuthenticateSnowflakeAuthorizationCodeWrongCredentials()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         var parameters = AuthConnectionString.GetOAuthSnowflakeAuthorizationCodeConnectionParameters();
         parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "15");
@@ -64,8 +64,8 @@ public class SnowflakeAuthorizationCodeTest
         _login = "itsnotanaccount.com";
         _password = "fakepassword";
 
-        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("fail", _login, _password);
+        var connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+        var provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("fail", _login, _password);
 
         authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
         authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 15 seconds");
@@ -74,7 +74,7 @@ public class SnowflakeAuthorizationCodeTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateSnowflakeAuthorizationCodeTimeout()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         var parameters = AuthConnectionString.GetOAuthSnowflakeAuthorizationCodeConnectionParameters();
         parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "1");
@@ -87,7 +87,7 @@ public class SnowflakeAuthorizationCodeTest
     [SFFact(SkipCondition.RunOnlyOnLocal)] // "TODO SNOW-4081612"
     public void TestAuthenticateSnowflakeAuthorizationCodeWithTokenCache()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         var parameters = AuthConnectionString.GetOAuthSnowflakeAuthorizationCodeConnectionParameters();
         parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "25");
@@ -99,8 +99,8 @@ public class SnowflakeAuthorizationCodeTest
         var scheme = parameters.TryGetValue(SFSessionProperty.SCHEME, out var schemeVal) ? schemeVal : "https";
         var role = parameters.TryGetValue(SFSessionProperty.ROLE, out var roleVal) ? roleVal : string.Empty;
         var tokenEndpoint = $"{scheme}://{host}:{port}/oauth/token-request";
-        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
+        var connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+        var provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
 
         try
         {
@@ -122,7 +122,7 @@ public class SnowflakeAuthorizationCodeTest
     [SFFact(SkipCondition.RunOnlyOnLocal)] // "TODO SNOW-4081612"
     public void TestAuthenticateSnowflakeAuthorizationCodeWithoutTokenCache()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         var parameters = AuthConnectionString.GetOAuthSnowflakeAuthorizationCodeConnectionParameters();
         parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "10");
@@ -130,8 +130,8 @@ public class SnowflakeAuthorizationCodeTest
         parameters[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL] = "false";
         _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
-        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
+        var connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+        var provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("internalOauthSnowflakeSuccess", _login, _password);
 
         authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
         authTestHelper.VerifyExceptionIsNotThrown();

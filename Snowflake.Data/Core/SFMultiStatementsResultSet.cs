@@ -107,7 +107,7 @@ class SFMultiStatementsResultSet : SFBaseResultSet
 
     private void UpdateSessionStatus(QueryExecResponseData responseData)
     {
-        SFSession session = sfStatement.SfSession;
+        var session = sfStatement.SfSession;
         session.UpdateSessionProperties(responseData);
         session.UpdateSessionParameterMap(responseData.parameters);
         session.UpdateQueryContextCache(responseData.QueryContext);

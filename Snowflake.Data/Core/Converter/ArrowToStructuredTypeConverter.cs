@@ -13,8 +13,8 @@ internal static class ArrowConverter
 
     internal static T ConvertObject<T>(Dictionary<string, object> dict) where T : new()
     {
-        T obj = new T();
-        Type type = typeof(T);
+        var obj = new T();
+        var type = typeof(T);
         if (type.GetCustomAttributes(false).Any(attribute => attribute.GetType() == typeof(SnowflakeObject)))
         {
             var constructionMethod = JsonToStructuredTypeConverter.GetConstructionMethod(type);
@@ -111,9 +111,9 @@ internal static class ArrowConverter
 
     internal static object CallMethod(Type type, object obj, string methodName, Type type2 = null)
     {
-        MethodInfo genericMethod = typeof(ArrowConverter)
+        var genericMethod = typeof(ArrowConverter)
             .GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Static);
-        MethodInfo constructedMethod = type2 == null
+        var constructedMethod = type2 == null
             ? genericMethod.MakeGenericMethod(type)
             : genericMethod.MakeGenericMethod(type, type2);
         return constructedMethod.Invoke(null, new object[] { obj });
@@ -125,7 +125,7 @@ internal static class ArrowConverter
         var result = new T[list.Count];
         if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Nullable<>))
             targetType = Nullable.GetUnderlyingType(targetType);
-        for (int i = 0; i < list.Count; i++)
+        for (var i = 0; i < list.Count; i++)
         {
             result[i] = (T)ConvertValue(list[i], targetType);
         }

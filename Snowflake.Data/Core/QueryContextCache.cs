@@ -36,7 +36,7 @@ internal class QueryContextElement
             return false;
         }
 
-        QueryContextElement other = (QueryContextElement)obj;
+        var other = (QueryContextElement)obj;
         return (Id == other.Id) &&
                (Priority == other.Priority) &&
                (ReadTimestamp == other.ReadTimestamp) &&
@@ -45,7 +45,7 @@ internal class QueryContextElement
 
     public override int GetHashCode()
     {
-        int hash = 31;
+        var hash = 31;
 
         hash = hash * 31 + (int)Id;
         hash += (hash * 31) + (int)ReadTimestamp;
@@ -94,7 +94,7 @@ internal class QueryContextCache
             _logger.Debug(
                 $"Merge with existing id in cache = {id}, priority = {priority}");
             // ID found in the cache
-            QueryContextElement qce = _idMap[id];
+            var qce = _idMap[id];
             if (readTimestamp > qce.ReadTimestamp)
             {
                 if (qce.Priority == priority)
@@ -106,7 +106,7 @@ internal class QueryContextCache
                 else
                 {
                     // Change in priority
-                    QueryContextElement newQCE =
+                    var newQCE =
                         new QueryContextElement(id, readTimestamp, priority, context);
 
                     ReplaceQCE(qce, newQCE);
@@ -115,7 +115,7 @@ internal class QueryContextCache
             else if (readTimestamp == qce.ReadTimestamp && qce.Priority != priority)
             {
                 // Same read timestamp but change in priority
-                QueryContextElement newQCE = new QueryContextElement(id, readTimestamp, priority, context);
+                var newQCE = new QueryContextElement(id, readTimestamp, priority, context);
                 ReplaceQCE(qce, newQCE);
             }
         } // id found
@@ -127,9 +127,9 @@ internal class QueryContextCache
                 _logger.Debug(
                     $"Merge with existing priority in cache = {id}, priority = {priority}");
                 // Same priority with different id
-                QueryContextElement qce = _priorityMap[priority];
+                var qce = _priorityMap[priority];
                 // Replace with new data
-                QueryContextElement newQCE = new QueryContextElement(id, readTimestamp, priority, context);
+                var newQCE = new QueryContextElement(id, readTimestamp, priority, context);
                 ReplaceQCE(qce, newQCE);
             }
             else
@@ -138,7 +138,7 @@ internal class QueryContextCache
                 // Add new element in the cache
                 _logger.Debug(
                     $"Adding new QCC item with either id nor priority found in cache id = {id}, priority = {priority}");
-                QueryContextElement newQCE = new QueryContextElement(id, readTimestamp, priority, context);
+                var newQCE = new QueryContextElement(id, readTimestamp, priority, context);
                 AddQCE(newQCE);
             }
         }
@@ -149,7 +149,7 @@ internal class QueryContextCache
     {
         _logger.Debug(
             $"syncPriorityMap called priorityMap size = {_priorityMap.Count}, newPrioirtyMap size = {_newPriorityMap.Count}");
-        foreach (KeyValuePair<long, QueryContextElement> entry in _newPriorityMap)
+        foreach (var entry in _newPriorityMap)
         {
             _priorityMap.Add(entry.Key, entry.Value);
         }
@@ -170,7 +170,7 @@ internal class QueryContextCache
             // remove elements based on priority
             while (_cacheSet.Count > _capacity)
             {
-                QueryContextElement qce = _cacheSet.Last();
+                var qce = _cacheSet.Last();
                 RemoveQCE(qce);
             }
         }
@@ -247,7 +247,7 @@ internal class QueryContextCache
                 ClearCache();
                 return;
             }
-            foreach (ResponseQueryContextElement entry in queryContext.Entries)
+            foreach (var entry in queryContext.Entries)
             {
                 Merge(entry.Id, entry.ReadTimestamp, entry.Priority, entry.Context);
             }
@@ -267,13 +267,13 @@ internal class QueryContextCache
      */
     public RequestQueryContext GetQueryContextRequest()
     {
-        RequestQueryContext reqQCC = new RequestQueryContext();
+        var reqQCC = new RequestQueryContext();
         reqQCC.Entries = new List<RequestQueryContextElement>();
         lock (_qccLock)
         {
-            foreach (QueryContextElement elem in _cacheSet)
+            foreach (var elem in _cacheSet)
             {
-                RequestQueryContextElement reqElem = new RequestQueryContextElement(elem);
+                var reqElem = new RequestQueryContextElement(elem);
                 reqQCC.Entries.Add(reqElem);
             }
         }
@@ -287,13 +287,13 @@ internal class QueryContextCache
      */
     public ResponseQueryContext GetQueryContextResponse()
     {
-        ResponseQueryContext rspQCC = new ResponseQueryContext();
+        var rspQCC = new ResponseQueryContext();
         rspQCC.Entries = new List<ResponseQueryContextElement>();
         lock (_qccLock)
         {
-            foreach (QueryContextElement elem in _cacheSet)
+            foreach (var elem in _cacheSet)
             {
-                ResponseQueryContextElement rspElem = new ResponseQueryContextElement(elem);
+                var rspElem = new ResponseQueryContextElement(elem);
                 rspQCC.Entries.Add(rspElem);
             }
         }
@@ -347,7 +347,7 @@ internal class QueryContextCache
     {
         if (_logger.IsDebugEnabled())
         {
-            foreach (QueryContextElement elem in _cacheSet)
+            foreach (var elem in _cacheSet)
             {
                 _logger.Debug($"Cache Entry: id: {elem.Id} readTimestamp: {elem.ReadTimestamp} priority: {elem.Priority}");
             }

@@ -25,7 +25,7 @@ internal class MockLoginMFATokenCacheRestRequester : MockBaseRestRequester
 
     public override Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
     {
-        SFRestRequest sfRequest = (SFRestRequest)postRequest;
+        var sfRequest = (SFRestRequest)postRequest;
         if (sfRequest.jsonBody is LoginRequest)
         {
             LoginRequests.Enqueue((LoginRequest)sfRequest.jsonBody);

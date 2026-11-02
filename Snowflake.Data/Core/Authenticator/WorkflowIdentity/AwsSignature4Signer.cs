@@ -62,7 +62,7 @@ internal class AwsSignature4Signer
 
     static byte[] HmacSha256(byte[] key, string data)
     {
-        using (HMACSHA256 hmac = new HMACSHA256(key))
+        using (var hmac = new HMACSHA256(key))
         {
             return hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
         }
@@ -92,7 +92,7 @@ internal class AwsSignature4Signer
     static string NormalizePercentEncoding(string value)
     {
         var sb = new StringBuilder(value.Length);
-        for (int i = 0; i < value.Length; i++)
+        for (var i = 0; i < value.Length; i++)
         {
             if (value[i] == '%' && i + 2 < value.Length)
             {

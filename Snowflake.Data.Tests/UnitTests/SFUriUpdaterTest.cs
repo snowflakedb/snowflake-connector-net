@@ -16,7 +16,7 @@ public sealed class SFUriUpdaterTest
         var uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_QUERY_PATH);
         var updater = new HttpUtil.UriUpdater(uri);
 
-        for (int retryCount = 1; retryCount < 5; retryCount++)
+        for (var retryCount = 1; retryCount < 5; retryCount++)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, uri);
             updater.Update(ref request, default, null);
@@ -75,7 +75,7 @@ public sealed class SFUriUpdaterTest
         Assert.Equal(uri.ToString(), request.RequestUri.ToString());
 
         // A uri with request_guid should update that param
-        string initialGuid = Guid.NewGuid().ToString();
+        var initialGuid = Guid.NewGuid().ToString();
         uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_LOGIN_PATH
                                                           + "?" + RestParams.SF_QUERY_REQUEST_GUID + "=" + initialGuid);
 

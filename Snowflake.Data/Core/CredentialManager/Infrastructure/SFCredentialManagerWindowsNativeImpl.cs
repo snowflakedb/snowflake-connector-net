@@ -86,7 +86,7 @@ internal class SFCredentialManagerWindowsNativeImpl : ISnowflakeCredentialManage
     public void SaveCredentials(string key, string token)
     {
         s_logger.Debug($"Saving the credentials for key: {key}");
-        byte[] byteArray = Encoding.Unicode.GetBytes(token);
+        var byteArray = Encoding.Unicode.GetBytes(token);
 
         if (byteArray.Length > CredMaxCredentialBlobSizeBytes)
         {
@@ -94,7 +94,7 @@ internal class SFCredentialManagerWindowsNativeImpl : ISnowflakeCredentialManage
             return;
         }
 
-        Credential credential = new Credential();
+        var credential = new Credential();
         credential.AttributeCount = 0;
         credential.Attributes = IntPtr.Zero;
         credential.Comment = IntPtr.Zero;

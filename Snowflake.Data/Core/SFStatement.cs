@@ -260,7 +260,7 @@ class SFStatement
 
     private SFRestRequest BuildResultRequestWithId(string resultId)
     {
-        string resultPath = string.Format(SF_QUERY_RESULT_PATH, resultId);
+        var resultPath = string.Format(SF_QUERY_RESULT_PATH, resultId);
         return BuildResultRequest(resultPath);
     }
 
@@ -367,7 +367,7 @@ class SFStatement
             try
             {
                 AssignQueryRequestId();
-                SFBindUploader uploader = new SFBindUploader(SfSession, _requestId);
+                var uploader = new SFBindUploader(SfSession, _requestId);
                 await uploader.UploadAsync(bindings, linkedToken).ConfigureAwait(false);
                 _bindStage = uploader.GetStagePath();
             }
@@ -611,14 +611,14 @@ class SFStatement
         {
             if (_requestId == null)
                 return null;
-            Dictionary<string, string> parameters = new Dictionary<string, string>()
+            var parameters = new Dictionary<string, string>()
             {
                 { RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
                 { RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
             };
             var uri = SfSession.BuildUri(SF_QUERY_CANCEL_PATH, parameters);
 
-            QueryCancelRequest postBody = new QueryCancelRequest()
+            var postBody = new QueryCancelRequest()
             {
                 requestId = _requestId
             };
@@ -638,7 +638,7 @@ class SFStatement
 
     internal void Cancel()
     {
-        SFRestRequest request = BuildCancelQueryRequest();
+        var request = BuildCancelQueryRequest();
         if (request == null)
         {
             CleanUpCancellationTokenSources();
@@ -709,7 +709,7 @@ class SFStatement
 
             if (typeof(TResponse) == typeof(QueryExecResponse))
             {
-                QueryExecResponse queryResponse = (QueryExecResponse)(object)response;
+                var queryResponse = (QueryExecResponse)(object)response;
                 if (!statementContext.AsyncExec)
                 {
                     var lastResultUrl = queryResponse.data?.getResultUrl;
@@ -885,7 +885,7 @@ class SFStatement
         try
         {
             QueryStatusResponse response = null;
-            bool receivedFirstQueryResponse = false;
+            var receivedFirstQueryResponse = false;
             while (!receivedFirstQueryResponse)
             {
                 response = _restRequester.Get<QueryStatusResponse>(queryRequest);
@@ -905,7 +905,7 @@ class SFStatement
                     queryId);
             }
 
-            QueryStatus queryStatus = QueryStatus.NoData;
+            var queryStatus = QueryStatus.NoData;
             if (response.data.queries.Count != 0)
             {
                 queryStatus = QueryStatusExtensions.GetQueryStatusByStringValue(response.data.queries[0].status);
@@ -936,7 +936,7 @@ class SFStatement
         try
         {
             QueryStatusResponse response = null;
-            bool receivedFirstQueryResponse = false;
+            var receivedFirstQueryResponse = false;
             while (!receivedFirstQueryResponse)
             {
                 response = await _restRequester.GetAsync<QueryStatusResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
@@ -955,7 +955,7 @@ class SFStatement
                     queryId);
             }
 
-            QueryStatus queryStatus = QueryStatus.NoData;
+            var queryStatus = QueryStatus.NoData;
             if (response.data.queries.Count != 0)
             {
                 queryStatus = QueryStatusExtensions.GetQueryStatusByStringValue(response.data.queries[0].status);
@@ -981,7 +981,7 @@ class SFStatement
     /// <returns>The query without the blanks and comments at the beginning.</returns>
     internal static string TrimSql(string originalSql)
     {
-        char[] sqlQueryBuf = originalSql.ToCharArray();
+        var sqlQueryBuf = originalSql.ToCharArray();
         var builder = new StringBuilder();
 
         // skip old c-style comment
@@ -1050,7 +1050,7 @@ class SFStatement
         }
         else
         {
-            List<object> values = (List<object>)binding.Values.First().value;
+            var values = (List<object>)binding.Values.First().value;
             return values.Count * binding.Count;
         }
     }
@@ -1062,7 +1062,7 @@ class SFStatement
             return false;
         }
 
-        foreach (BindingDTO bindingDTO in binding.Values)
+        foreach (var bindingDTO in binding.Values)
         {
             if (bindingDTO.value == null)
             {

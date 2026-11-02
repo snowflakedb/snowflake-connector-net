@@ -25,7 +25,7 @@ abstract class BaseRestResponse
     {
         if (!success)
         {
-            SnowflakeDbException e = new SnowflakeDbException("", code, message, "");
+            var e = new SnowflakeDbException("", code, message, "");
             throw e;
         }
 
@@ -526,7 +526,7 @@ internal class SingleOrArrayConverter<T> : JsonConverter
     public override object ReadJson(JsonReader reader, Type objecType, object existingValue,
         JsonSerializer serializer)
     {
-        JToken token = JToken.Load(reader);
+        var token = JToken.Load(reader);
         if (token.Type == JTokenType.Array)
         {
             return token.ToObject<List<T>>();

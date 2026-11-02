@@ -12,7 +12,7 @@ internal class ChallengeProvider
 
     public virtual CodeVerifier GenerateCodeVerifier()
     {
-        byte[] randomness = new byte[48];
+        var randomness = new byte[48];
         using (var rng = RandomNumberGenerator.Create())
         {
             rng.GetBytes(randomness);

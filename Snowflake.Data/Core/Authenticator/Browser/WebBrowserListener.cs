@@ -90,7 +90,7 @@ internal class WebBrowserListener<T> : IDisposable
 
     private void GetContextCallback(IAsyncResult result)
     {
-        HttpListener httpListener = (HttpListener)result.AsyncState;
+        var httpListener = (HttpListener)result.AsyncState;
         HttpListenerContext context;
         try
         {
@@ -137,7 +137,7 @@ internal class WebBrowserListener<T> : IDisposable
             return;
         }
 
-        bool success = extracted.IsSuccess();
+        var success = extracted.IsSuccess();
         if (success)
         {
             _result = extracted.Success;
@@ -209,15 +209,15 @@ internal class WebBrowserListener<T> : IDisposable
 
     private void RespondToBrowser(HttpListenerContext context)
     {
-        byte[] okResponseBytes = Encoding.UTF8.GetBytes(_successResponse);
-        HttpListenerResponse response = context.Response;
+        var okResponseBytes = Encoding.UTF8.GetBytes(_successResponse);
+        var response = context.Response;
         WriteMessageToBrowser(response, okResponseBytes);
     }
 
     private void RespondToBrowserWithError(HttpListenerContext context)
     {
-        byte[] errorResponseBytes = Encoding.UTF8.GetBytes(_browserError);
-        HttpListenerResponse response = context.Response;
+        var errorResponseBytes = Encoding.UTF8.GetBytes(_browserError);
+        var response = context.Response;
         response.StatusCode = (int)HttpStatusCode.BadRequest;
         WriteMessageToBrowser(response, errorResponseBytes);
     }

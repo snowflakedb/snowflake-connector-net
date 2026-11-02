@@ -27,10 +27,10 @@ public class OktaAuthorizationCodeTest
     public void TestAuthenticateOktaAuthorizationCodeSuccessful()
 
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
-        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
+        var connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+        var provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
 
         authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
         authTestHelper.VerifyExceptionIsNotThrown();
@@ -39,15 +39,15 @@ public class OktaAuthorizationCodeTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateOktaAuthorizationCodeMismatchedUser()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         var parameters = AuthConnectionString.GetOAuthExternalAuthorizationCodeConnectionString();
         parameters[SFSessionProperty.USER] = "differentUser";
 
         _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
 
-        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
+        var connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+        var provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
 
         authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
         authTestHelper.VerifyExceptionIsThrown("The user you were trying to authenticate as differs from the user tied to the access token");
@@ -56,7 +56,7 @@ public class OktaAuthorizationCodeTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateOktaAuthorizationCodeWrongCredentials()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         var parameters = AuthConnectionString.GetOAuthExternalAuthorizationCodeConnectionString();
         parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "15");
@@ -65,8 +65,8 @@ public class OktaAuthorizationCodeTest
         _login = "itsnotanaccount.com";
         _password = "fakepassword";
 
-        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("fail", _login, _password);
+        var connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+        var provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("fail", _login, _password);
 
         authTestHelper.ConnectAndProvideCredentials(provideCredentialsThread, connectThread);
         authTestHelper.VerifyExceptionIsThrown("Browser response timed out after 15 seconds");
@@ -75,7 +75,7 @@ public class OktaAuthorizationCodeTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateOktaAuthorizationCodeTimeout()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
 
         var parameters = AuthConnectionString.GetOAuthExternalAuthorizationCodeConnectionString();
         parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "1");
@@ -88,7 +88,7 @@ public class OktaAuthorizationCodeTest
     [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateOktaAuthorizationCodeWithTokenCache()
     {
-        AuthTestHelper authTestHelper = new AuthTestHelper();
+        var authTestHelper = new AuthTestHelper();
         var parameters = AuthConnectionString.GetOAuthExternalAuthorizationCodeConnectionString();
         parameters.Add(SFSessionProperty.BROWSER_RESPONSE_TIMEOUT, "30");
         parameters.Add(SFSessionProperty.POOLINGENABLED, "false");
@@ -98,8 +98,8 @@ public class OktaAuthorizationCodeTest
         var role = parameters.TryGetValue(SFSessionProperty.ROLE, out var roleVal) ? roleVal : string.Empty;
 
         _connectionString = AuthConnectionString.ConvertToConnectionString(parameters);
-        Thread connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
-        Thread provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
+        var connectThread = authTestHelper.GetConnectAndExecuteSimpleQueryThread(_connectionString);
+        var provideCredentialsThread = authTestHelper.GetProvideCredentialsThread("success", _login, _password);
 
         try
         {

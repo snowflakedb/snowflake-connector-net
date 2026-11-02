@@ -41,10 +41,10 @@ public abstract class SFDbDataReaderGetEnumeratorIT : SFBaseTestAsync
         {
             await CreateAndPopulateTestTableAsync(conn, tableName).ConfigureAwait(false);
 
-            string selectCommandText = $"select * from {tableName}";
+            var selectCommandText = $"select * from {tableName}";
             var selectCmd = conn.CreateCommand();
             selectCmd.CommandText = selectCommandText;
-            DbDataReader reader = await selectCmd.ExecuteReaderAsync().ConfigureAwait(false) as DbDataReader;
+            var reader = await selectCmd.ExecuteReaderAsync().ConfigureAwait(false) as DbDataReader;
 
             var enumerator = reader.GetEnumerator();
             Assert.True(enumerator.MoveNext());
@@ -69,10 +69,10 @@ public abstract class SFDbDataReaderGetEnumeratorIT : SFBaseTestAsync
         {
             await CreateAndPopulateTestTableAsync(conn, tableName).ConfigureAwait(false);
 
-            string selectCommandText = $"select * from {tableName} WHERE cola > 10";
+            var selectCommandText = $"select * from {tableName} WHERE cola > 10";
             var selectCmd = conn.CreateCommand();
             selectCmd.CommandText = selectCommandText;
-            DbDataReader reader = await selectCmd.ExecuteReaderAsync().ConfigureAwait(false) as DbDataReader;
+            var reader = await selectCmd.ExecuteReaderAsync().ConfigureAwait(false) as DbDataReader;
 
             var enumerator = reader.GetEnumerator();
             Assert.False(enumerator.MoveNext());
@@ -91,10 +91,10 @@ public abstract class SFDbDataReaderGetEnumeratorIT : SFBaseTestAsync
         {
             await CreateAndPopulateTestTableAsync(conn, tableName).ConfigureAwait(false);
 
-            string selectCommandText = $"select * from {tableName}";
+            var selectCommandText = $"select * from {tableName}";
             var selectCmd = conn.CreateCommand();
             selectCmd.CommandText = selectCommandText;
-            DbDataReader reader = await selectCmd.ExecuteReaderAsync().ConfigureAwait(false) as DbDataReader;
+            var reader = await selectCmd.ExecuteReaderAsync().ConfigureAwait(false) as DbDataReader;
 
             var dataRecords = reader.Cast<DbDataRecord>().ToList();
             Assert.Equal(3, dataRecords.Count);
@@ -113,10 +113,10 @@ public abstract class SFDbDataReaderGetEnumeratorIT : SFBaseTestAsync
         {
             await CreateAndPopulateTestTableAsync(conn, tableName).ConfigureAwait(false);
 
-            string selectCommandText = $"select * from {tableName} WHERE cola > 10";
+            var selectCommandText = $"select * from {tableName} WHERE cola > 10";
             var selectCmd = conn.CreateCommand();
             selectCmd.CommandText = selectCommandText;
-            DbDataReader reader = await selectCmd.ExecuteReaderAsync().ConfigureAwait(false);
+            var reader = await selectCmd.ExecuteReaderAsync().ConfigureAwait(false);
 
             foreach (var record in reader)
             {
@@ -136,10 +136,10 @@ public abstract class SFDbDataReaderGetEnumeratorIT : SFBaseTestAsync
         {
             await CreateAndPopulateTestTableAsync(conn, tableName).ConfigureAwait(false);
 
-            string selectCommandText = $"select * from {tableName}";
+            var selectCommandText = $"select * from {tableName}";
             var selectCmd = conn.CreateCommand();
             selectCmd.CommandText = selectCommandText;
-            DbDataReader reader = await selectCmd.ExecuteReaderAsync().ConfigureAwait(false) as DbDataReader;
+            var reader = await selectCmd.ExecuteReaderAsync().ConfigureAwait(false) as DbDataReader;
 
             var enumerator = reader.GetEnumerator();
             Assert.True(enumerator.MoveNext());
@@ -168,7 +168,7 @@ public abstract class SFDbDataReaderGetEnumeratorIT : SFBaseTestAsync
 
         var cmd = conn.CreateCommand();
 
-        string insertCommand = $"insert into {tableName} values (3),(5),(8)";
+        var insertCommand = $"insert into {tableName} values (3),(5),(8)";
         cmd.CommandText = insertCommand;
         await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
     }

@@ -34,7 +34,7 @@ public sealed class SFDbAdaptorIT : SFBaseTestAsync
     public async Task TestCreatingDataAdapterWithSelectCommandTextAndConnection()
     {
         _command.CommandText = "select 1 as col1, 2 AS col2";
-        SnowflakeDbConnection conn = new SnowflakeDbConnection(_fixture.ConnectionString);
+        var conn = new SnowflakeDbConnection(_fixture.ConnectionString);
         _adapter = new SnowflakeDbDataAdapter(_command.CommandText, conn);
 
         Assert.Equal(_command.CommandText, _adapter.SelectCommand.CommandText);
@@ -44,8 +44,8 @@ public sealed class SFDbAdaptorIT : SFBaseTestAsync
     [SFFact]
     public async Task TestSelectStatement()
     {
-        DataSet ds = new DataSet("ds");
-        using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+        var ds = new DataSet("ds");
+        using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = _fixture.ConnectionString;
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);

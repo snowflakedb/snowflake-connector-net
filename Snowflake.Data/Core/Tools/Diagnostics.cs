@@ -16,7 +16,7 @@ internal class Diagnostics
 
     private static string GetDiagnosticInfo()
     {
-        StringBuilder info = new StringBuilder("System Diagnostics:\n");
+        var info = new StringBuilder("System Diagnostics:\n");
         try
         {
             info.AppendLine($"{"OS",PadRight}: {OsName()}");

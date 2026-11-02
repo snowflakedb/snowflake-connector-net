@@ -92,7 +92,7 @@ internal class SFFileCompressionTypes
         public bool MatchMagicNumber(byte[] header)
         {
             if (MagicNumbers is { Length: > 0 })
-                foreach (byte[] m in MagicNumbers)
+                foreach (var m in MagicNumbers)
                     if (m != null && header != null && m.Length > 0 && header.Length > 0)
                         if (new ReadOnlySpan<byte>(m).SequenceEqual(new ReadOnlySpan<byte>(header, 0, m.Length)))
                             return true;
@@ -210,7 +210,7 @@ internal class SFFileCompressionTypes
         {
             fileExtension = "." + fileExtension;
         }
-        foreach (SFFileCompressionType compType in compressionTypes)
+        foreach (var compType in compressionTypes)
         {
             if (compType.FileExtension.Equals(fileExtension, StringComparison.InvariantCultureIgnoreCase))
             {
@@ -231,7 +231,7 @@ internal class SFFileCompressionTypes
         {
             name = name.Substring(1);
         }
-        foreach (SFFileCompressionType compType in compressionTypes)
+        foreach (var compType in compressionTypes)
         {
             if (compType.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
             {
