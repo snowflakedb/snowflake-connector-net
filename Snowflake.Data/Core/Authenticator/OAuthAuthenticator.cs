@@ -9,7 +9,7 @@ namespace Snowflake.Data.Core.Authenticator;
 /// OAuthenticator is used when using  an OAuth token for authentication.
 /// See <see cref="https://docs.snowflake.com/en/user-guide/oauth.html"/> for more information.
 /// </summary>
-class OAuthAuthenticator : BaseAuthenticator, IAuthenticator
+internal class OAuthAuthenticator : BaseAuthenticator, IAuthenticator
 {
     // The authenticator setting value to use to authenticate using key pair authentication.
     private const string AUTH_NAME = "oauth";

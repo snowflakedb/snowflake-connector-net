@@ -11,7 +11,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core.Session;
 
-sealed class SessionPool : IDisposable
+internal sealed class SessionPool : IDisposable
 {
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SessionPool>();
     private readonly object _sessionPoolLock = new();

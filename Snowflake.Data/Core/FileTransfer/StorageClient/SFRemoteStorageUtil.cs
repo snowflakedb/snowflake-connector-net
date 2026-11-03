@@ -21,7 +21,7 @@ internal class FileHeader
 /// <summary>
 /// The interface for the storage clients.
 /// </summary>
-class SFRemoteStorageUtil
+internal class SFRemoteStorageUtil
 {
     /// <summary>
     /// Strings to indicate specific storage type.
@@ -34,12 +34,12 @@ class SFRemoteStorageUtil
     /// <summary>
     /// Amount of concurrency to use by default.
     /// </summary>
-    const int DEFAULT_CONCURRENCY = 1;
+    private const int DEFAULT_CONCURRENCY = 1;
 
     /// <summary>
     /// Maximum amount of times to retry.
     /// </summary>
-    const int DEFAULT_MAX_RETRY = 5;
+    private const int DEFAULT_MAX_RETRY = 5;
 
     /// <summary>
     /// Instantiate a new storage client.

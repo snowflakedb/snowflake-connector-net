@@ -49,7 +49,7 @@ public enum QueryStatus
     Blocked,
 }
 
-class StringAttr : Attribute
+internal class StringAttr : Attribute
 {
     public string value { get; set; }
 }
@@ -99,7 +99,7 @@ internal static class QueryStatusExtensions
     }
 }
 
-class SFStatement
+internal class SFStatement
 {
     internal SFSession SfSession { get; set; }
 
@@ -132,12 +132,12 @@ class SFStatement
     // Flag indicating if the SQL query is a regular query or a PUT/GET query
     internal bool isPutGetQuery = false;
 
-    MemoryStream _uploadStream = null;
+    private MemoryStream _uploadStream = null;
 
-    string _bindStage = null;
+    private string _bindStage = null;
 
     // the query id of the last query
-    string _lastQueryId = null;
+    private string _lastQueryId = null;
 
     private readonly string _queryTag = null;
     private readonly IQuerySFLogger _logger;

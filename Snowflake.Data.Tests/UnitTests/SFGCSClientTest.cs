@@ -20,35 +20,35 @@ public sealed class SFGCSClientTest
 {
     private string TestNameWithWorker => GetType().Name + "_" + Thread.CurrentThread.ManagedThreadId;
     // Mock data for file metadata
-    const string LocationStage = "mock-customer-stage";
-    const string LocationId = "mock-id";
-    const string LocationTables = "tables";
-    const string LocationKey = "mock-key";
-    const string LocationPath = LocationTables + "/" + LocationKey + "/";
-    const string Location = LocationStage + "/" + LocationId + "/" + LocationPath;
+    private const string LocationStage = "mock-customer-stage";
+    private const string LocationId = "mock-id";
+    private const string LocationTables = "tables";
+    private const string LocationKey = "mock-key";
+    private const string LocationPath = LocationTables + "/" + LocationKey + "/";
+    private const string Location = LocationStage + "/" + LocationId + "/" + LocationPath;
 
-    const string Region = "US-CENTRAL1";
+    private const string Region = "US-CENTRAL1";
 
-    readonly Dictionary<string, string> _stageCredentials = new()
+    private readonly Dictionary<string, string> _stageCredentials = new()
     {
         {"GCS_ACCESS_TOKEN", "MOCK_GCS_ACCESS_TOKEN"}
     };
 
     // Settings for mock client
-    const int Parallel = 0;
+    private const int Parallel = 0;
 
     // File name for download tests
     [ThreadStatic] private static string t_downloadFileName;
 
     // Token for async tests
-    readonly CancellationToken _cancellationToken;
+    private readonly CancellationToken _cancellationToken;
 
     // Mock upload file size
-    const int UploadFileSize = 9999;
+    private const int UploadFileSize = 9999;
 
     // The mock client and metadata
-    readonly SFGCSClient _client;
-    readonly SFFileMetadata _fileMetadata;
+    private readonly SFGCSClient _client;
+    private readonly SFFileMetadata _fileMetadata;
 
     public SFGCSClientTest()
     {

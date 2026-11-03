@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Snowflake.Data.Tests.Mock;
 
-class MockGCSClient
+internal class MockGCSClient
 {
     // Mock GCS data for FileHeader
     internal const string GcsIV = "MOCK_GCS";

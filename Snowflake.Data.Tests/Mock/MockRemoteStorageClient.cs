@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Snowflake.Data.Tests.Mock;
 
-class MockRemoteStorageClient
+internal class MockRemoteStorageClient
 {
     // Mock data for downloaded file
     internal const string FileContent = "RemoteStorageClientTest";
@@ -19,9 +19,9 @@ class MockRemoteStorageClient
     internal const string ErrorMessage = "Mock GCS Remote Storage Error";
 
     // Variables for the encryption data
-    [ThreadStatic] static Stream t_encryptedStream = null;
-    [ThreadStatic] static string t_encryptedStreamIV = null;
-    [ThreadStatic] static string t_encryptedStreamKey = null;
+    [ThreadStatic] private static Stream t_encryptedStream = null;
+    [ThreadStatic] private static string t_encryptedStreamIV = null;
+    [ThreadStatic] private static string t_encryptedStreamKey = null;
 
     internal static void SetEncryptionData(Stream stream, string iv, string key)
     {

@@ -17,7 +17,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient;
 /// <summary>
 /// The GCS client used to transfer files to the remote Google Cloud Storage.
 /// </summary>
-class SFGCSClient : ISFRemoteStorageClient
+internal class SFGCSClient : ISFRemoteStorageClient
 {
     /// <summary>
     /// GCS header values.

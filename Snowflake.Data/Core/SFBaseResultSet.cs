@@ -6,7 +6,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core;
 
-abstract class SFBaseResultSet
+internal abstract class SFBaseResultSet
 {
     internal abstract ResultFormat ResultFormat { get; }
 

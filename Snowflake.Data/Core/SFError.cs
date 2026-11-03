@@ -142,7 +142,7 @@ public enum SFError
     ID_TOKEN_INVALID,
 }
 
-class OAuthTokenErrors
+internal class OAuthTokenErrors
 {
     public static bool IsAccessTokenExpired(int error) =>
         SFError.EXT_OAUTH_ACCESS_TOKEN_EXPIRED.GetAttribute<SFErrorAttr>().errorCode == error;
@@ -168,7 +168,7 @@ internal static class TlsConfigurationErrorExtensions
         SFError.TLS_CONFIGURATION_NOT_SUPPORTED.GetAttribute<SFErrorAttr>().errorCode == sfException.ErrorCode;
 }
 
-class SFMFATokenErrors
+internal class SFMFATokenErrors
 {
     private static readonly List<SFError> InvalidMFATokenErrors = new()
     {
@@ -185,7 +185,7 @@ class SFMFATokenErrors
     }
 }
 
-class SFErrorAttr : Attribute
+internal class SFErrorAttr : Attribute
 {
     public int errorCode { get; set; }
 }

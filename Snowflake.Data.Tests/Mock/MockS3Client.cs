@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Snowflake.Data.Tests.Mock;
 
-class MockS3Client
+internal class MockS3Client
 {
     // Mock status codes for S3 requests
     internal const string AwsStatusOk = "OK";

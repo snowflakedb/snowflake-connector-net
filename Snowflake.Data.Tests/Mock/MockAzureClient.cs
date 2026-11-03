@@ -6,7 +6,7 @@ using System;
 
 namespace Snowflake.Data.Tests.Mock;
 
-class MockAzureClient
+internal class MockAzureClient
 {
     // Mock Azure data for FileHeader
     internal const string AzureIV = "MOCK_AZURE_IV";

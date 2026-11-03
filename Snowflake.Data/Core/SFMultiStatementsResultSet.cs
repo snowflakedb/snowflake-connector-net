@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace Snowflake.Data.Core;
 
-class SFMultiStatementsResultSet : SFBaseResultSet
+internal class SFMultiStatementsResultSet : SFBaseResultSet
 {
     internal override ResultFormat ResultFormat => curResultSet.ResultFormat;
 

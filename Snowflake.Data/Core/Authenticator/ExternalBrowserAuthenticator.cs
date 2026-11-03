@@ -22,7 +22,7 @@ namespace Snowflake.Data.Core.Authenticator;
 /// <summary>
 /// ExternalBrowserAuthenticator would start a new browser to perform authentication
 /// </summary>
-class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
+internal class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 {
     private const string AUTH_NAME = "externalbrowser";
     private static readonly SFLogger logger = SFLoggerFactory.GetLogger<ExternalBrowserAuthenticator>();

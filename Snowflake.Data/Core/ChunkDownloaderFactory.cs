@@ -5,7 +5,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core;
 
-class ChunkDownloaderFactory
+internal class ChunkDownloaderFactory
 {
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ChunkDownloaderFactory>();
     public static IChunkDownloader GetDownloader(QueryExecResponseData responseData,

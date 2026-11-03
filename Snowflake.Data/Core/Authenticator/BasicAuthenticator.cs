@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Snowflake.Data.Core.Authenticator;
 
-class BasicAuthenticator : BaseAuthenticator, IAuthenticator
+internal class BasicAuthenticator : BaseAuthenticator, IAuthenticator
 {
     private const string s_AuthName = "snowflake";
 

@@ -4,7 +4,7 @@ using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.Util;
 
-class PoolConfig
+internal class PoolConfig
 {
     private readonly bool _pooling;
     private readonly long _timeout;

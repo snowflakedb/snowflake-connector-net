@@ -4,7 +4,7 @@ using Snowflake.Data.Core;
 
 namespace Snowflake.Data.Tests.Util;
 
-class SessionParameterAlterer
+internal class SessionParameterAlterer
 {
     public static void SetResultFormat(IDbConnection conn, ResultFormat resultFormat)
     {

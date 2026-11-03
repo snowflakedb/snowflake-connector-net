@@ -9,7 +9,7 @@ using TimeProvider = Snowflake.Data.Core.Tools.TimeProvider;
 
 namespace Snowflake.Data.Core.Authenticator;
 
-class WorkloadIdentityFederationAuthenticator : BaseAuthenticator, IAuthenticator
+internal class WorkloadIdentityFederationAuthenticator : BaseAuthenticator, IAuthenticator
 {
     private const string AUTH_NAME = "workload_identity";
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<WorkloadIdentityFederationAuthenticator>();

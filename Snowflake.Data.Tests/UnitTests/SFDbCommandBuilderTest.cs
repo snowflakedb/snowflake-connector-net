@@ -6,7 +6,7 @@ using Xunit;
 using Snowflake.Data.Client;
 public sealed class SFDbCommandBuilderTest
 {
-    SnowflakeDbCommandBuilder builder;
+    private SnowflakeDbCommandBuilder builder;
 
     public SFDbCommandBuilderTest()
     {

@@ -10,7 +10,7 @@ namespace Snowflake.Data.Core.FileTransfer;
 /// The encryptor/decryptor for PUT/GET files.
 /// Handles encryption and decryption using AES CBC (for files) and ECB (for keys).
 /// </summary>
-class EncryptionProvider
+internal class EncryptionProvider
 {
     // The default block size for AES
     private const int AES_BLOCK_SIZE = 128;

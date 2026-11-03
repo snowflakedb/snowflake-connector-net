@@ -7,9 +7,9 @@ namespace Snowflake.Data.Tests.Util;
 /// <summary>
 ///     Used to concat multiple streams without copying. Since we need to preappend '[' and append ']'
 /// </summary>
-class ConcatenatedStream : Stream
+internal class ConcatenatedStream : Stream
 {
-    readonly Queue<Stream> streams;
+    private readonly Queue<Stream> streams;
 
     public ConcatenatedStream(IEnumerable<Stream> streams)
     {

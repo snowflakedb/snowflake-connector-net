@@ -7,8 +7,8 @@ internal class FastMemoryStream
 {
     public const int DEFAULT_BUFFER_SIZE = 256;
 
-    byte[] _buffer;
-    int _size;
+    private byte[] _buffer;
+    private int _size;
 
     public FastMemoryStream()
     {

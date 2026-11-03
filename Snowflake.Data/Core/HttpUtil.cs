@@ -697,7 +697,7 @@ internal sealed class HttpUtil
         /// <summary>
         /// IRule defines how the queryParams of a uri should be updated in each retry
         /// </summary>
-        interface IRule
+        private interface IRule
         {
             void Apply(NameValueCollection queryParams);
         }
@@ -705,9 +705,9 @@ internal sealed class HttpUtil
         /// <summary>
         /// RetryCountRule would update the retryCount parameter
         /// </summary>
-        class RetryCountRule : IRule
+        private class RetryCountRule : IRule
         {
-            int retryCount;
+            private int retryCount;
 
             internal RetryCountRule()
             {
@@ -732,7 +732,7 @@ internal sealed class HttpUtil
         /// <summary>
         /// RequestUUIDRule would update the request_guid query with a new RequestGUID
         /// </summary>
-        class RequestUUIDRule : IRule
+        private class RequestUUIDRule : IRule
         {
             void IRule.Apply(NameValueCollection queryParams)
             {
@@ -764,8 +764,8 @@ internal sealed class HttpUtil
             }
         }
 
-        readonly UriBuilder uriBuilder;
-        readonly List<IRule> rules;
+        private readonly UriBuilder uriBuilder;
+        private readonly List<IRule> rules;
 
         internal UriUpdater(Uri uri, bool includeRetryReason = true)
         {
@@ -1195,7 +1195,7 @@ internal sealed class HttpUtil
     /// <param name="min">The min range (inclusive).</param>
     /// <param name="max">The max range (inclusive).</param>
     /// <returns>The random number.</returns>
-    static double ChooseRandom(double min, double max)
+    private static double ChooseRandom(double min, double max)
     {
         var next = new Random().NextDouble();
 

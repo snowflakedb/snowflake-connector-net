@@ -9,7 +9,7 @@ using System;
 using System.Text;
 public sealed class FastParserTest : IDisposable
 {
-    byte[] _byte;
+    private byte[] _byte;
 
     public void Dispose()
     {

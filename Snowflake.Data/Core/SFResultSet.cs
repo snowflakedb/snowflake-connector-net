@@ -8,7 +8,7 @@ using System.Diagnostics;
 
 namespace Snowflake.Data.Core;
 
-class SFResultSet : SFBaseResultSet
+internal class SFResultSet : SFBaseResultSet
 {
     internal override ResultFormat ResultFormat => ResultFormat.JSON;
 

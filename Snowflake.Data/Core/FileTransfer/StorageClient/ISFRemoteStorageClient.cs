@@ -41,7 +41,7 @@ internal class RemoteLocation
 /// <summary>
 /// The interface for the storage clients. 
 /// </summary>
-interface ISFRemoteStorageClient
+internal interface ISFRemoteStorageClient
 {
     /// <summary>
     /// Get the bucket name and path.

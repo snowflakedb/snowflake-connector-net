@@ -56,7 +56,7 @@ internal class QueryContextElement
     }
 };
 
-class ElementComparer : IComparer<QueryContextElement>
+internal class ElementComparer : IComparer<QueryContextElement>
 {
     public int Compare(QueryContextElement x, QueryContextElement y)
     {

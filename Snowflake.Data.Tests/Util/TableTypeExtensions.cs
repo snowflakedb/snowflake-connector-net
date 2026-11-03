@@ -10,7 +10,7 @@ public enum SFTableType
     Iceberg
 }
 
-static class TableTypeExtensions
+internal static class TableTypeExtensions
 {
     internal static string TableDDLCreationPrefix(this SFTableType val) => val == SFTableType.Standard ? "" : val.ToString().ToUpper();
 

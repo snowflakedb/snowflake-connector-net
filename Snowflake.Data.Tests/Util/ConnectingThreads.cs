@@ -10,7 +10,7 @@ using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.IntegrationTests;
 
-class ConnectingThreads
+internal class ConnectingThreads
 {
     private readonly string _connectionString;
 
@@ -58,7 +58,7 @@ class ConnectingThreads
     public static SFLogger Logger() => SFLoggerFactory.GetLogger<IConnectionManager>(); // we have to choose a class from Snowflake.Data package otherwise it will be visible in GH build output
 }
 
-class ConnectingThread
+internal class ConnectingThread
 {
     private static readonly SFLogger s_logger = ConnectingThreads.Logger();
 
@@ -143,7 +143,7 @@ class ConnectingThread
     }
 }
 
-class ThreadEvent
+internal class ThreadEvent
 {
     public string ThreadName { get; set; }
 
@@ -180,7 +180,7 @@ class ThreadEvent
     public static ThreadEvent EventWaitingForSessionStarted(string threadName) => new(threadName, WaitingForSession, null, 0);
 }
 
-class SessionPoolThreadEventHandler : SessionPoolEventHandler
+internal class SessionPoolThreadEventHandler : SessionPoolEventHandler
 {
     private static readonly SFLogger s_logger = ConnectingThreads.Logger();
     private readonly ConnectingThreads _connectingThreads;

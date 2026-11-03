@@ -19,7 +19,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient;
 /// <summary>
 /// The azure client used to transfer files to the remote Azure storage.
 /// </summary>
-class SFSnowflakeAzureClient : ISFRemoteStorageClient
+internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
 {
     /// <summary>
     /// The attribute in the credential map containing the shared access signature token.

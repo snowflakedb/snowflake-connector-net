@@ -97,7 +97,7 @@ internal sealed class HeartBeatBackground
         }
     }
 
-    void HeartBeatAll()
+    private void HeartBeatAll()
     {
         while (true)
         {

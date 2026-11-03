@@ -1064,7 +1064,7 @@ public class SFBindTestIT : SFBaseTestAsync
         => columnPrecision != null ? $"{columnType}({columnPrecision})" : $"{columnType}";
 }
 
-class ExpectedTimestampWrapper
+internal class ExpectedTimestampWrapper
 {
     private readonly SFDataType _columnType;
     private readonly DateTime[]? _expectedDateTimes;

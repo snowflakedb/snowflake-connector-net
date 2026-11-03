@@ -5,7 +5,7 @@ using Snowflake.Data.Core.Tools;
 
 namespace Snowflake.Data.Core.Authenticator;
 
-class MFACacheAuthenticator : BaseAuthenticator, IAuthenticator
+internal class MFACacheAuthenticator : BaseAuthenticator, IAuthenticator
 {
     private const string AUTH_NAME = "username_password_mfa";
     private const int MfaLoginHttpTimeout = 60;

@@ -7,8 +7,8 @@ namespace Snowflake.Data.Tests.UnitTests.Revocation;
 
 public class MemoryCrlCacheTests
 {
-    const string CrlUrl1 = "http://snowflakecomputing.com/crl1.crl";
-    const string CrlUrl2 = "http://snowflakecomputing.com/crl2.crl";
+    private const string CrlUrl1 = "http://snowflakecomputing.com/crl1.crl";
+    private const string CrlUrl2 = "http://snowflakecomputing.com/crl2.crl";
     private readonly Crl _crl1 = new();
     private readonly Crl _crl2 = new();
 

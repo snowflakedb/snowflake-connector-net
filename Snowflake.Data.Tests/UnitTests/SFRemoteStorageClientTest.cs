@@ -19,22 +19,22 @@ public sealed class SFRemoteStorageClientTest : IDisposable
 {
     private string TestNameWithWorker => GetType().Name + "_" + Thread.CurrentThread.ManagedThreadId;
     // Mock data for file metadata
-    const string EndPoint = "mockEndPoint.com";
+    private const string EndPoint = "mockEndPoint.com";
 
-    const string LocationStage = "mock-customer-stage";
-    const string LocationId = "mock-id";
-    const string LocationTables = "tables";
-    const string LocationKey = "mock-key";
-    const string LocationPath = LocationTables + "/" + LocationKey + "/";
-    const string Location = LocationStage + "/" + LocationId + "/" + LocationPath;
+    private const string LocationStage = "mock-customer-stage";
+    private const string LocationId = "mock-id";
+    private const string LocationTables = "tables";
+    private const string LocationKey = "mock-key";
+    private const string LocationPath = LocationTables + "/" + LocationKey + "/";
+    private const string Location = LocationStage + "/" + LocationId + "/" + LocationPath;
 
-    const string Region = "us-west-2";
+    private const string Region = "us-west-2";
 
-    const string StorageAccount = "mockStorageAccount";
+    private const string StorageAccount = "mockStorageAccount";
 
     [ThreadStatic] private static string t_realSourceFilePath;
 
-    readonly PutGetEncryptionMaterial EncryptionMaterial = new()
+    private readonly PutGetEncryptionMaterial EncryptionMaterial = new()
     {
         queryId = "MOCK/QUERY/ID/==",
         queryStageMasterKey = "MOCKQUERYSTAGEMASTERKE==",
@@ -42,30 +42,30 @@ public sealed class SFRemoteStorageClientTest : IDisposable
     };
 
     // Mock unsupported stage type
-    const string UnsupportedStageType = "UNSUPPORTED";
+    private const string UnsupportedStageType = "UNSUPPORTED";
 
     // Settings for mock client
-    const int Parallel = 0;
+    private const int Parallel = 0;
 
     // File name for mock test files
     [ThreadStatic] private static string t_downloadFileName;
-    const string LocalLocation = "./";
+    private const string LocalLocation = "./";
 
     // Mock upload file size
-    const int UploadFileSize = 9999;
-    const int DestFileSizeWhenFileAlreadyExists = 0;
+    private const int UploadFileSize = 9999;
+    private const int DestFileSizeWhenFileAlreadyExists = 0;
 
     // Mock client and metadata
-    readonly SFGCSClient _client;
-    readonly PutGetResponseData _responseData;
-    readonly SFFileMetadata _fileMetadata;
+    private readonly SFGCSClient _client;
+    private readonly PutGetResponseData _responseData;
+    private readonly SFFileMetadata _fileMetadata;
 
     // Token for async tests
-    readonly CancellationToken _cancellationToken;
+    private readonly CancellationToken _cancellationToken;
 
     // Flags for non-async and async mock methods
-    const bool NotAsync = false;
-    const bool IsAsync = true;
+    private const bool NotAsync = false;
+    private const bool IsAsync = true;
 
     public SFRemoteStorageClientTest()
     {

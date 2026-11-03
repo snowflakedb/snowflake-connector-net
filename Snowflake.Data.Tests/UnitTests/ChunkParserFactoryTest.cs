@@ -17,7 +17,7 @@ public sealed class ChunkParserFactoryTestCollection : ICollectionFixture<ChunkP
 [Collection(nameof(ChunkParserFactoryTestCollection))]
 public sealed class ChunkParserFactoryTest : IDisposable
 {
-    readonly int ChunkParserVersionDefault = SFConfiguration.Instance().GetChunkParserVersion();
+    private readonly int ChunkParserVersionDefault = SFConfiguration.Instance().GetChunkParserVersion();
 
     public void Dispose()
     {

@@ -19,7 +19,7 @@ namespace Snowflake.Data.Core;
 /// <summary>
 /// The status of the file to be uploaded/downloaded.
 /// </summary>
-enum ResultStatus
+internal enum ResultStatus
 {
     ERROR,
     UPLOADED,
@@ -54,7 +54,7 @@ internal enum StorageClientType
 /// <summary>
 /// Class responsible for uploading and downloading files to the remote client.
 /// </summary>
-class SFFileTransferAgent
+internal class SFFileTransferAgent
 {
     /// <summary>
     /// The logger.

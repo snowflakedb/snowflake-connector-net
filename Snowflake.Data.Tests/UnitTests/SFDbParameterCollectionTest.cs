@@ -11,8 +11,8 @@ using System.Collections.Generic;
 using System.Linq;
 public sealed class SFDbParameterCollectionTest
 {
-    readonly SnowflakeDbParameterCollection _parameterCollection;
-    const int PARAM_COUNT = 10;
+    private readonly SnowflakeDbParameterCollection _parameterCollection;
+    private const int PARAM_COUNT = 10;
 
     public SFDbParameterCollectionTest()
     {

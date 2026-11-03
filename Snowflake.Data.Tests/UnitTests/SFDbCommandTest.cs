@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 public sealed class SFDbCommandTest
 {
-    SnowflakeDbCommand command;
+    private SnowflakeDbCommand command;
 
     public SFDbCommandTest()
     {

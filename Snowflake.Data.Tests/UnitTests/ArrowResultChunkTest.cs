@@ -587,7 +587,7 @@ public sealed partial class ArrowResultChunkTest
         }
     }
 
-    static void TestExtractCell<T>(IEnumerable<T> testValues, SFDataType sfType, long scale, long divider = 0)
+    private static void TestExtractCell<T>(IEnumerable<T> testValues, SFDataType sfType, long scale, long divider = 0)
     {
         var recordBatch = PrepareRecordBatch(sfType, scale, testValues);
         var chunk = new ArrowResultChunk(recordBatch);

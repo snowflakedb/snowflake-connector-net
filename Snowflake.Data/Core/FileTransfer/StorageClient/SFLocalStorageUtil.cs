@@ -7,7 +7,7 @@ namespace Snowflake.Data.Core.FileTransfer;
 /// <summary>
 /// The storage client for local upload/download.
 /// </summary>
-class SFLocalStorageUtil
+internal class SFLocalStorageUtil
 {
     /// <summary>
     /// Write the file locally.

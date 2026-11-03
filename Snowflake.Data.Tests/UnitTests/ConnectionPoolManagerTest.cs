@@ -386,7 +386,7 @@ public class ConnectionPoolManagerTest
     }
 }
 
-class MockSessionFactory : ISessionFactory
+internal class MockSessionFactory : ISessionFactory
 {
     public SFSession NewSession(string connectionString, SessionPropertiesContext sessionContext)
     {

@@ -11,7 +11,7 @@ public class DirectoryUnixInformationTest
 {
     private const long UserId = 5;
     private const long AnotherUserId = 6;
-    static readonly string s_directoryFullName = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+    private static readonly string s_directoryFullName = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
     [SFTheory(SkipCondition.SkipOnWindows)]
     [InlineData(FileAccessPermissions.UserWrite, "User W")]

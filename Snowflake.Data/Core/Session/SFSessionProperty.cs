@@ -176,7 +176,7 @@ internal enum SFSessionProperty
     SECONDARY_ROLES,
 }
 
-class SFSessionPropertyAttr : Attribute
+internal class SFSessionPropertyAttr : Attribute
 {
     public bool required { get; set; }
 
@@ -187,7 +187,7 @@ class SFSessionPropertyAttr : Attribute
     public bool IsSecret { get; set; } = false;
 }
 
-class SFSessionProperties : Dictionary<SFSessionProperty, string>
+internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
 {
     private static SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
 

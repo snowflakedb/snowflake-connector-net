@@ -3,7 +3,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Tests.Mock;
 
-class MockSecretDetector
+internal class MockSecretDetector
 {
     public static Mask MaskSecrets(string text)
     {

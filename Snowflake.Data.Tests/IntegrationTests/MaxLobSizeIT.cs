@@ -297,17 +297,17 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
         }
     }
 
-    static readonly IEnumerable<int> LobSizeTestCases = new[]
+    private static readonly IEnumerable<int> LobSizeTestCases = new[]
     {
         OriginSize,
         MediumSize,
         MaxLobSize
     };
 
-    static IEnumerable<ResultFormat> ResultFormats => new[]
+    private static IEnumerable<ResultFormat> ResultFormats => new[]
         { ResultFormat.ARROW, ResultFormat.JSON };
 
-    static IEnumerable<object[]> CombinedTestCases(string baseTestName)
+    private static IEnumerable<object[]> CombinedTestCases(string baseTestName)
     {
         foreach (var resultFormat in ResultFormats)
         {
@@ -333,7 +333,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
     public static IEnumerable<object[]> PutGetCommandTestCases() =>
         CombinedTestCases(nameof(TestPutGetCommand));
 
-    void PrepareTest()
+    private void PrepareTest()
     {
         t_fileName.Value = $"{Guid.NewGuid()}.csv";
         t_inputFilePath.Value = Path.GetTempPath() + t_fileName.Value;
@@ -350,7 +350,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
         t_filesToDelete.Value.Add(t_outputFilePath.Value);
     }
 
-    static async Task PutFile(SnowflakeDbConnection conn)
+    private static async Task PutFile(SnowflakeDbConnection conn)
     {
         using (var command = conn.CreateCommand())
         {

@@ -631,7 +631,7 @@ public class SFPutGetTest : SFBaseTestAsync, IClassFixture<SFPutGetTestFixture>,
     }
 
     // PUT - upload file from local directory to the stage
-    string PutFile(
+    private string PutFile(
         SnowflakeDbConnection conn,
         string additionalAttribute = "",
         ResultStatus expectedStatus = ResultStatus.UPLOADED,

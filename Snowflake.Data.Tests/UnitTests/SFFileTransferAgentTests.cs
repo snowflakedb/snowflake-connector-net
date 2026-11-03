@@ -22,23 +22,23 @@ public class SFFileTransferAgentTest : IDisposable
 {
     // Mock data for file metadata
     [ThreadStatic] private static string t_locationStage;
-    const string LocationId = "mock-id";
-    const string LocationTables = "tables";
-    const string LocationKey = "mock-key";
-    const string LocationPath = LocationTables + "/" + LocationKey + "/";
-    string _location;
+    private const string LocationId = "mock-id";
+    private const string LocationTables = "tables";
+    private const string LocationKey = "mock-key";
+    private const string LocationPath = LocationTables + "/" + LocationKey + "/";
+    private string _location;
 
     // Connection string for mock session
-    const string ConnectionStringMock = "user=user;password=password;account=account;";
+    private const string ConnectionStringMock = "user=user;password=password;account=account;";
 
     // File name for the mock file
     [ThreadStatic] private static string t_realSourceFilePath;
 
     // File size of the mock file
-    long _sourceFileSize;
+    private long _sourceFileSize;
 
     // Mock encryption material for the files
-    readonly List<PutGetEncryptionMaterial> _encryptionMaterial = new()
+    private readonly List<PutGetEncryptionMaterial> _encryptionMaterial = new()
     {
         new PutGetEncryptionMaterial()
         {
@@ -50,25 +50,25 @@ public class SFFileTransferAgentTest : IDisposable
 
     // Mock response data properties
     [ThreadStatic] private static string t_localLocation;
-    List<string> _srcLocations;
-    const string AutoDetect = "auto_detect";
-    const int Parallel = 1;
+    private List<string> _srcLocations;
+    private const string AutoDetect = "auto_detect";
+    private const int Parallel = 1;
 
     // Mock response data
-    PutGetResponseData _responseData;
-    SFFileTransferAgent _fileTransferAgent;
-    SFSession _session;
+    private PutGetResponseData _responseData;
+    private SFFileTransferAgent _fileTransferAgent;
+    private SFSession _session;
 
     // Mock PUT/GET queries
-    string _putQuery;
-    const string GetQuery = "GET @DB.SCHEMA.%MOCKTABLE file://;";
+    private string _putQuery;
+    private const string GetQuery = "GET @DB.SCHEMA.%MOCKTABLE file://;";
 
     // Mock file content
-    const string FileContent = "FTAFileContent";
+    private const string FileContent = "FTAFileContent";
 
     // Mock file paths
-    static readonly string s_filePathWithoutSpaces = Path.Combine("C:\\Users\\Test\\", "folder_without_space", "*.*");
-    static readonly string s_filePathWithSpaces = Path.Combine("C:\\Users\\Test\\", "folder with space", "*.*");
+    private static readonly string s_filePathWithoutSpaces = Path.Combine("C:\\Users\\Test\\", "folder_without_space", "*.*");
+    private static readonly string s_filePathWithSpaces = Path.Combine("C:\\Users\\Test\\", "folder with space", "*.*");
 
     public SFFileTransferAgentTest()
     {

@@ -11,7 +11,7 @@ using System.Security.Authentication;
 
 namespace Snowflake.Data.AuthenticationTests;
 
-static class AuthConnectionString
+internal static class AuthConnectionString
 {
     public static readonly string SsoUser = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_BROWSER_USER");
     public static readonly string Host = Environment.GetEnvironmentVariable("SNOWFLAKE_AUTH_TEST_HOST");

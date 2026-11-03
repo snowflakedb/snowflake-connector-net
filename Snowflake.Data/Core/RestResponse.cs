@@ -8,7 +8,7 @@ using Snowflake.Data.Core.FileTransfer;
 
 namespace Snowflake.Data.Core;
 
-abstract class BaseRestResponse
+internal abstract class BaseRestResponse
 {
     [JsonProperty(PropertyName = "message")]
     internal string message { get; set; }
@@ -46,7 +46,7 @@ internal class BaseQueryExecResponse<T> : BaseRestResponse
     internal T data { get; set; }
 }
 
-class NullDataResponse : BaseRestResponse
+internal class NullDataResponse : BaseRestResponse
 {
     [JsonProperty(PropertyName = "data")]
     internal object data { get; set; }

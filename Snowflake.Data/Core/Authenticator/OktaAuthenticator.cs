@@ -16,7 +16,7 @@ namespace Snowflake.Data.Core.Authenticator;
 /// <summary>
 /// OktaAuthenticator would perform several steps of authentication with Snowflake and Okta IdP
 /// </summary>
-class OktaAuthenticator : BaseAuthenticator, IAuthenticator
+internal class OktaAuthenticator : BaseAuthenticator, IAuthenticator
 {
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<OktaAuthenticator>();
 
@@ -360,7 +360,7 @@ internal class IdpTokenRestRequest : BaseRestRequest, IRestRequest
     }
 }
 
-class IdpTokenRequest
+internal class IdpTokenRequest
 {
     [JsonProperty(PropertyName = "username")]
     internal string Username { get; set; }
@@ -369,7 +369,7 @@ class IdpTokenRequest
     internal string Password { get; set; }
 }
 
-class IdpTokenResponse
+internal class IdpTokenResponse
 {
     [JsonProperty(PropertyName = "cookieToken")]
     internal string CookieToken { get; set; }
@@ -377,7 +377,7 @@ class IdpTokenResponse
     internal string SessionToken { get; set; }
 }
 
-class SamlRestRequest : BaseRestRequest, IRestRequest
+internal class SamlRestRequest : BaseRestRequest, IRestRequest
 {
     internal string OnetimeToken { set; get; }
 

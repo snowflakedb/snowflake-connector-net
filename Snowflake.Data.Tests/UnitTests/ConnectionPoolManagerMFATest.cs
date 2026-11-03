@@ -123,7 +123,7 @@ public class ConnectionPoolManagerMFATest : IDisposable
     }
 }
 
-class MockSessionFactoryMFA : ISessionFactory
+internal class MockSessionFactoryMFA : ISessionFactory
 {
     private readonly IMockRestRequester restRequester;
 

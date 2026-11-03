@@ -12,7 +12,7 @@ using System.Linq;
 using System.Text;
 public class SFDbParameterTest
 {
-    SnowflakeDbParameter _parameter;
+    private SnowflakeDbParameter _parameter;
 
     public static IEnumerable<object[]> AllSFDataTypes() =>
         Enum.GetValues(typeof(SFDataType)).Cast<SFDataType>().Select(v => new object[] { v });

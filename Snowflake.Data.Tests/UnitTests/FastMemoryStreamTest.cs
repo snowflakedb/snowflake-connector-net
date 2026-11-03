@@ -7,7 +7,7 @@ using Snowflake.Data.Core;
 using System.Linq;
 public sealed class FastMemoryStreamTest
 {
-    readonly FastMemoryStream _fastMemoryStream;
+    private readonly FastMemoryStream _fastMemoryStream;
 
     public FastMemoryStreamTest()
     {

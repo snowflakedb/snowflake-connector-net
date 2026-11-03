@@ -30,7 +30,7 @@ internal readonly record struct ConversionContext
     public TimeZoneInfo SessionTimezone { get; }
 }
 
-static class SFDataConverter
+internal static class SFDataConverter
 {
     internal static readonly DateTime UnixEpoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
@@ -243,7 +243,7 @@ static class SFDataConverter
         }
     }
 
-    static readonly int[] powersOf10 =  {
+    private static readonly int[] powersOf10 =  {
         1,
         10,
         100,

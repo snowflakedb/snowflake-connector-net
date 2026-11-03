@@ -9,7 +9,7 @@ using Snowflake.Data.Core;
 using Snowflake.Data.Core.Authenticator;
 public class SFAuthenticatorFactoryTest
 {
-    IAuthenticator _authenticator;
+    private IAuthenticator _authenticator;
 
     private static IAuthenticator GetAuthenticator(string authenticatorName, string extraParams = "")
     {

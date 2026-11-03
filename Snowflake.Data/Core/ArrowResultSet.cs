@@ -10,7 +10,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core;
 
-class ArrowResultSet : SFBaseResultSet
+internal class ArrowResultSet : SFBaseResultSet
 {
     internal override ResultFormat ResultFormat => ResultFormat.ARROW;
 

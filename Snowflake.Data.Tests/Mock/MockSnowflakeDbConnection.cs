@@ -10,7 +10,7 @@ using Snowflake.Data.Core.Session;
 
 namespace Snowflake.Data.Tests.Mock;
 
-class MockSnowflakeDbConnection : SnowflakeDbConnection
+internal class MockSnowflakeDbConnection : SnowflakeDbConnection
 {
     private readonly Func<SFSession, IAuthenticator> _authenticatorFactory;
     private readonly SFLogger logger = SFLoggerFactory.GetLogger<MockSnowflakeDbConnection>();

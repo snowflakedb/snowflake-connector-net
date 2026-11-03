@@ -11,7 +11,7 @@ using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core;
 
-class SFBindUploader
+internal class SFBindUploader
 {
     private const string STAGE_NAME = "SYSTEM$BIND";
     private const string CREATE_STAGE_STMT = "CREATE OR REPLACE TEMPORARY STAGE "

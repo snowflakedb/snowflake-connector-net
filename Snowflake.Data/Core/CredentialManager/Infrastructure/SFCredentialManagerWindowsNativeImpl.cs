@@ -148,7 +148,7 @@ internal class SFCredentialManagerWindowsNativeImpl : ISnowflakeCredentialManage
         public string UserName;
     }
 
-    sealed class CriticalCredentialHandle : CriticalHandleZeroOrMinusOneIsInvalid
+    private sealed class CriticalCredentialHandle : CriticalHandleZeroOrMinusOneIsInvalid
     {
         public CriticalCredentialHandle(IntPtr handle)
         {
@@ -178,11 +178,11 @@ internal class SFCredentialManagerWindowsNativeImpl : ISnowflakeCredentialManage
     internal static extern bool CredDelete(string target, uint type, int reservedFlag);
 
     [DllImport("Advapi32.dll", EntryPoint = "CredReadW", CharSet = CharSet.Unicode, SetLastError = true)]
-    static extern bool CredRead(string target, uint type, int reservedFlag, out IntPtr credentialPtr);
+    private static extern bool CredRead(string target, uint type, int reservedFlag, out IntPtr credentialPtr);
 
     [DllImport("Advapi32.dll", EntryPoint = "CredWriteW", CharSet = CharSet.Unicode, SetLastError = true)]
-    static extern bool CredWrite([In] ref Credential userCredential, [In] uint flags);
+    private static extern bool CredWrite([In] ref Credential userCredential, [In] uint flags);
 
     [DllImport("Advapi32.dll", EntryPoint = "CredFree", SetLastError = true)]
-    static extern bool CredFree([In] IntPtr cred);
+    private static extern bool CredFree([In] IntPtr cred);
 }

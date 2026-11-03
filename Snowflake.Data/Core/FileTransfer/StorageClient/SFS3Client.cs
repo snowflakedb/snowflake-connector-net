@@ -20,7 +20,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient;
 /// <summary>
 /// The S3 client used to transfer files to the remote S3 storage.
 /// </summary>
-class SFS3Client : ISFRemoteStorageClient
+internal class SFS3Client : ISFRemoteStorageClient
 {
     /// <summary>
     /// The metadata of the S3 file.

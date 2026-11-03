@@ -3,7 +3,7 @@ using System;
 
 namespace Snowflake.Data.Log;
 
-class LoggerEmptyImpl : ILogger
+internal class LoggerEmptyImpl : ILogger
 {
     IDisposable ILogger.BeginScope<TState>(TState state)
     {

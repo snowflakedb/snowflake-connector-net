@@ -22,8 +22,8 @@ public class CrlCacheManagerTest
         SetUp();
     }
 
-    const string CrlUrl1 = "http://snowflakecomputing.com/crl1.crl";
-    const string CrlUrl2 = "http://snowflakecomputing.com/crl2.crl";
+    private const string CrlUrl1 = "http://snowflakecomputing.com/crl1.crl";
+    private const string CrlUrl2 = "http://snowflakecomputing.com/crl2.crl";
 
     private static void SetUp()
     {

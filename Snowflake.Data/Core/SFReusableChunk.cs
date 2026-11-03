@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Snowflake.Data.Core;
 
-class SFReusableChunk : BaseResultChunk
+internal class SFReusableChunk : BaseResultChunk
 {
     internal override ResultFormat ResultFormat => ResultFormat.JSON;
 
@@ -90,8 +90,8 @@ class SFReusableChunk : BaseResultChunk
         private int nextIndex = 0;
         private int currentDatOffset = 0;
 
-        int savedRowCount;
-        int savedColCount;
+        private int savedRowCount;
+        private int savedColCount;
 
         internal BlockResultData()
         { }

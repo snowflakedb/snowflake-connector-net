@@ -6,7 +6,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core;
 
-class SFResultSetMetaData
+internal class SFResultSetMetaData
 {
     private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFResultSetMetaData>();
 
@@ -303,7 +303,7 @@ internal enum SFStatementType
     CALL,
 }
 
-class SFStatementTypeAttr : Attribute
+internal class SFStatementTypeAttr : Attribute
 {
     public long typeId { get; set; }
 }

@@ -20,24 +20,24 @@ public sealed class SFS3ClientTest
 {
     private string TestNameWithWorker => GetType().Name + "_" + Thread.CurrentThread.ManagedThreadId;
     // Mock data for file metadata
-    const string Endpoint = "[www.mockEndPoint.com]";
+    private const string Endpoint = "[www.mockEndPoint.com]";
 
-    const string AwsKeyId = "MOCK_AWS_KEY_ID";
-    const string AwsSecretKey = "MOCK_AWS_SECRET_KEY";
-    const string AwsToken = "MOCK_AWS_TOKEN";
-    const string AwsID = "MOCK_AWS_ID";
-    const string AwsKey = "MOCK_AWS_KEY";
+    private const string AwsKeyId = "MOCK_AWS_KEY_ID";
+    private const string AwsSecretKey = "MOCK_AWS_SECRET_KEY";
+    private const string AwsToken = "MOCK_AWS_TOKEN";
+    private const string AwsID = "MOCK_AWS_ID";
+    private const string AwsKey = "MOCK_AWS_KEY";
 
-    const string LocationStage = "mock-customer-stage";
-    const string LocationId = "mock-id";
-    const string LocationTables = "tables";
-    const string LocationKey = "mock-key";
-    const string LocationPath = LocationTables + "/" + LocationKey + "/";
-    const string Location = LocationStage + "/" + LocationId + "/" + LocationPath;
+    private const string LocationStage = "mock-customer-stage";
+    private const string LocationId = "mock-id";
+    private const string LocationTables = "tables";
+    private const string LocationKey = "mock-key";
+    private const string LocationPath = LocationTables + "/" + LocationKey + "/";
+    private const string Location = LocationStage + "/" + LocationId + "/" + LocationPath;
 
-    const string Region = "us-west-2";
+    private const string Region = "us-west-2";
 
-    readonly Dictionary<string, string> _stageCredentials = new()
+    private readonly Dictionary<string, string> _stageCredentials = new()
     {
         {"AWS_KEY_ID", AwsKeyId},
         {"AWS_SECRET_KEY", AwsSecretKey},
@@ -46,7 +46,7 @@ public sealed class SFS3ClientTest
         {"AWS_KEY", AwsKey}
     };
 
-    readonly ProxyCredentials _proxyCredentials = new()
+    private readonly ProxyCredentials _proxyCredentials = new()
     {
         ProxyHost = "proxyHost",
         ProxyPort = 8080,
@@ -55,22 +55,22 @@ public sealed class SFS3ClientTest
     };
 
     // Settings for mock client
-    const int MaxRetry = 0;
-    const int Parallel = 0;
+    private const int MaxRetry = 0;
+    private const int Parallel = 0;
 
     // File name for download tests
     [ThreadStatic] private static string t_downloadFileName;
 
     // Token for async tests
-    readonly CancellationToken _cancellationToken;
+    private readonly CancellationToken _cancellationToken;
 
     // Mock upload file size
-    const int UploadFileSize = 9999;
+    private const int UploadFileSize = 9999;
 
     // The mock client and metadata
-    SFS3Client _client;
-    SFFileMetadata _fileMetadata;
-    readonly AmazonS3Config _clientConfig;
+    private SFS3Client _client;
+    private SFFileMetadata _fileMetadata;
+    private readonly AmazonS3Config _clientConfig;
 
     public SFS3ClientTest()
     {

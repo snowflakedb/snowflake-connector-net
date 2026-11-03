@@ -44,7 +44,7 @@ internal class AwsSignature4Signer
     private static string CalculateHash(string value) =>
         value.ToSha256Hash().ToLowerInvariant();
 
-    static byte[] GetSignatureKey(string dateString, AwsConfiguration awsConfiguration)
+    private static byte[] GetSignatureKey(string dateString, AwsConfiguration awsConfiguration)
     {
         var key = awsConfiguration.Credentials.SecretKey;
         var kSecret = Encoding.UTF8.GetBytes($"AWS4{key}");
@@ -54,13 +54,13 @@ internal class AwsSignature4Signer
         return HmacSha256(kService, "aws4_request");
     }
 
-    static string CalculateHmacHex(byte[] key, string data)
+    private static string CalculateHmacHex(byte[] key, string data)
     {
         var hash = HmacSha256(key, data);
         return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
     }
 
-    static byte[] HmacSha256(byte[] key, string data)
+    private static byte[] HmacSha256(byte[] key, string data)
     {
         using (var hmac = new HMACSHA256(key))
         {
@@ -72,7 +72,7 @@ internal class AwsSignature4Signer
     /// Canonicalizes the query string per AWS SigV4 spec:
     /// sort parameters alphabetically by name and normalize percent encoding to uppercase.
     /// </summary>
-    static string CanonicalizeQueryString(string query)
+    private static string CanonicalizeQueryString(string query)
     {
         if (string.IsNullOrEmpty(query))
             return string.Empty;
@@ -89,7 +89,7 @@ internal class AwsSignature4Signer
     /// Normalizes percent-encoded characters to uppercase hex as required by AWS SigV4.
     /// For example, %3a becomes %3A.
     /// </summary>
-    static string NormalizePercentEncoding(string value)
+    private static string NormalizePercentEncoding(string value)
     {
         var sb = new StringBuilder(value.Length);
         for (var i = 0; i < value.Length; i++)
@@ -109,7 +109,7 @@ internal class AwsSignature4Signer
         return sb.ToString();
     }
 
-    static string CanonicalizeHeaderNames(IDictionary<string, string> headers)
+    private static string CanonicalizeHeaderNames(IDictionary<string, string> headers)
     {
         var headersToSign = new List<string>(headers.Keys);
         headersToSign.Sort(StringComparer.OrdinalIgnoreCase);
@@ -124,7 +124,7 @@ internal class AwsSignature4Signer
         return sb.ToString();
     }
 
-    static string CanonicalizeHeaders(IDictionary<string, string> headers)
+    private static string CanonicalizeHeaders(IDictionary<string, string> headers)
     {
         var canonicalHeaders = new StringBuilder();
         var sortedHeaders = new SortedDictionary<string, string>(headers, StringComparer.OrdinalIgnoreCase);

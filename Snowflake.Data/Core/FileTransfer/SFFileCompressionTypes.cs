@@ -130,7 +130,7 @@ internal class SFFileCompressionTypes
     public static readonly SFFileCompressionType NONE = new(NONE_EXTENSION, NONE_NAME, true);
 
 
-    static readonly IReadOnlyList<SFFileCompressionType> compressionTypes =
+    private static readonly IReadOnlyList<SFFileCompressionType> compressionTypes =
         new List<SFFileCompressionType> {
             GZIP,
             DEFLATE,

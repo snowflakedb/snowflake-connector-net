@@ -94,7 +94,7 @@ public sealed class SnowflakeDbException : DbException
         return result;
     }
 
-    static string FormatExceptionMessage(SFError error,
+    private static string FormatExceptionMessage(SFError error,
         object[] args,
         string sqlState,
         string queryId)
@@ -105,7 +105,7 @@ public sealed class SnowflakeDbException : DbException
             , queryId);
     }
 
-    static string FormatExceptionMessage(string errorMessage,
+    private static string FormatExceptionMessage(string errorMessage,
         int vendorCode,
         string sqlState,
         string queryId)

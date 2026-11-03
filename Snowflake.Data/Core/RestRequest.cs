@@ -175,7 +175,7 @@ internal class SFRestRequest : BaseRestRequest, IRestRequest
     }
 }
 
-class AuthenticatorRequest
+internal class AuthenticatorRequest
 {
     [JsonProperty(PropertyName = "data")]
     internal AuthenticatorRequestData Data { get; set; }
@@ -186,7 +186,7 @@ class AuthenticatorRequest
     }
 }
 
-class AuthenticatorRequestData
+internal class AuthenticatorRequestData
 {
     [JsonProperty(PropertyName = "ACCOUNT_NAME", NullValueHandling = NullValueHandling.Ignore)]
     internal string AccountName { get; set; }
@@ -210,7 +210,7 @@ class AuthenticatorRequestData
     }
 }
 
-class LoginRequest
+internal class LoginRequest
 {
     [JsonProperty(PropertyName = "data")]
     internal LoginRequestData data { get; set; }
@@ -221,7 +221,7 @@ class LoginRequest
     }
 }
 
-class LoginRequestData
+internal class LoginRequestData
 {
     [JsonProperty(PropertyName = "CLIENT_APP_ID")]
     internal string clientAppId { get; set; }
@@ -363,7 +363,7 @@ internal class LoginRequestClientEnv
     }
 }
 
-class QueryRequest
+internal class QueryRequest
 {
     [JsonProperty(PropertyName = "sqlText")]
     internal string sqlText { get; set; }
@@ -456,13 +456,13 @@ internal class RequestQueryContextElement
     }
 }
 
-class QueryCancelRequest
+internal class QueryCancelRequest
 {
     [JsonProperty(PropertyName = "requestId")]
     internal string requestId { get; set; }
 }
 
-class RenewSessionRequest
+internal class RenewSessionRequest
 {
     [JsonProperty(PropertyName = "oldSessionToken")]
     internal string oldSessionToken { get; set; }

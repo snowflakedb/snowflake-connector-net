@@ -407,7 +407,7 @@ public sealed class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync, IDisposa
     }
 
     // task to execute query with new connection in a loop
-    static async Task QueryExecutionTaskAsync(string connectionString, bool closeConnection, int times)
+    private static async Task QueryExecutionTaskAsync(string connectionString, bool closeConnection, int times)
     {
         for (var i = 0; i < times; i++)
         {
@@ -445,7 +445,7 @@ public sealed class ConnectionSinglePoolCacheAsyncIT : SFBaseTestAsync, IDisposa
     }
 
     // task to generate invalid(not finish open) connections in a loop
-    static async Task InvalidConnectionTaskAsync(string connectionString, int times)
+    private static async Task InvalidConnectionTaskAsync(string connectionString, int times)
     {
         for (var i = 0; i < times; i++)
         {
