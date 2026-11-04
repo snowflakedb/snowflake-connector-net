@@ -2,20 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Snowflake.Data.Log;
 
 namespace Snowflake.Data.Core;
 
 internal sealed class HeartBeatBackground
 {
-    private static HeartBeatBackground instance = null;
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<HeartBeatBackground>();
+
+    private static HeartBeatBackground instance;
     private static readonly object heartBeatLock = new();
 
-    private static readonly object _heartBeatLock = new();
-    private static List<SFSession> heartBeatConns = null;
+    private static List<SFSession> heartBeatConns;
 
-    private static Thread heartBeatThread = null;
-    private static long masterTokenValidationTimeInSec = 0;
-    private static bool isHeartBeatEnd = false;
+    private static Thread heartBeatThread;
+    private static TimeSpan s_masterTokenValidationTime = TimeSpan.Zero;
+    private static TimeSpan? s_userHeartbeatFrequency;
+    private static bool isHeartBeatEnd;
+
+    private static readonly TimeSpan s_maxHeartbeatInterval = TimeSpan.FromHours(1);
+    private static readonly TimeSpan s_defaultMasterValidity = TimeSpan.FromHours(4);
 
     private HeartBeatBackground()
     {
@@ -39,10 +45,7 @@ internal sealed class HeartBeatBackground
         }
     }
 
-    internal static void SetValidity(long validity)
-    {
-        masterTokenValidationTimeInSec = validity;
-    }
+    internal static void SetValidity(long validity) => s_masterTokenValidationTime = TimeSpan.FromSeconds(validity);
 
     public static HeartBeatBackground Instance
     {
@@ -59,12 +62,31 @@ internal sealed class HeartBeatBackground
         }
     }
 
-    private static long GetHeartBeatInterval(long masterTokenValidationTime)
+    internal static TimeSpan ComputeHeartBeatInterval(TimeSpan masterTokenValidationTime, TimeSpan userFrequency)
     {
-        return masterTokenValidationTime / 4;
+        var master = masterTokenValidationTime > TimeSpan.Zero ? masterTokenValidationTime : s_defaultMasterValidity;
+        var minBound = new TimeSpan(master.Ticks / 16);
+        var maxBound = new TimeSpan(master.Ticks / 4);
+        if (maxBound > s_maxHeartbeatInterval)
+            maxBound = s_maxHeartbeatInterval;
+
+        // When no user frequency is provided, default to master/4 (preserving legacy behavior)
+        if (userFrequency <= TimeSpan.Zero)
+            return maxBound;
+
+        var result = userFrequency;
+        if (result < minBound)
+            result = minBound;
+        if (result > maxBound)
+            result = maxBound;
+
+        if (result != userFrequency)
+            s_logger.Warn($"Heartbeat frequency {userFrequency.TotalSeconds}s clamped to {result.TotalSeconds}s (bounds: [{minBound.TotalSeconds}s, {maxBound.TotalSeconds}s])");
+
+        return result;
     }
 
-    public void AddConnection(SFSession conn, long masterTokenValidityInSecs)
+    public void AddConnection(SFSession conn, TimeSpan masterTokenValidity, TimeSpan? heartbeatFrequency = null)
     {
         lock (heartBeatLock)
         {
@@ -75,11 +97,15 @@ internal sealed class HeartBeatBackground
 
             heartBeatConns.Add(conn);
             // for test purpose that Validity can be set to non-zero value
-            if ((masterTokenValidationTimeInSec == 0) ||
-                (masterTokenValidityInSecs < masterTokenValidationTimeInSec))
+            if ((s_masterTokenValidationTime == TimeSpan.Zero) ||
+                (masterTokenValidity < s_masterTokenValidationTime))
             {
                 //update validation time
-                masterTokenValidationTimeInSec = masterTokenValidityInSecs;
+                s_masterTokenValidationTime = masterTokenValidity;
+            }
+            if (heartbeatFrequency.HasValue)
+            {
+                s_userHeartbeatFrequency = heartbeatFrequency;
             }
             if (heartBeatThread == null)
             {
@@ -103,8 +129,8 @@ internal sealed class HeartBeatBackground
         {
             var copyOfHeartBeatQueue = new List<SFSession>();
 
-            var heartBeatInterval = GetHeartBeatInterval(masterTokenValidationTimeInSec);
-            Thread.Sleep(TimeSpan.FromSeconds(heartBeatInterval));
+            var heartBeatInterval = ComputeHeartBeatInterval(s_masterTokenValidationTime, s_userHeartbeatFrequency ?? TimeSpan.Zero);
+            Thread.Sleep(heartBeatInterval);
 
             if (isHeartBeatEnd)
             {

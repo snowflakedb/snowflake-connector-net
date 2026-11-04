@@ -68,7 +68,7 @@ internal class SFSession
 
     private string arrayBindStage = null;
     private int arrayBindStageThreshold = 0;
-    internal int masterValidityInSeconds = 0;
+    internal TimeSpan MasterValidity = TimeSpan.Zero;
 
     private readonly EasyLoggingStarter _easyLoggingStarter = EasyLoggingStarter.Instance;
 
@@ -127,7 +127,7 @@ internal class SFSession
             role = authnResponse.data.authResponseSessionInfo.roleName;
             warehouse = authnResponse.data.authResponseSessionInfo.warehouseName;
             serverVersion = authnResponse.data.serverVersion;
-            masterValidityInSeconds = authnResponse.data.masterValidityInSeconds;
+            MasterValidity = TimeSpan.FromSeconds(authnResponse.data.masterValidityInSeconds);
             UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
             if (_disableQueryContextCache)
             {
@@ -519,12 +519,18 @@ internal class SFSession
             var val = ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD].ToString();
             arrayBindStageThreshold = int.Parse(val);
         }
-        if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE))
+        if (ParameterMap.TryGetValue(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE, out var value))
         {
-            var keepAlive = bool.Parse(ParameterMap[SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE].ToString());
+            var keepAlive = bool.Parse(value.ToString());
             if (keepAlive)
             {
-                StartHeartBeatForThisSession();
+                TimeSpan? heartbeatFrequency = null;
+                if (ParameterMap.TryGetValue(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE_HEARTBEAT_FREQUENCY, out var freqObj)
+                    && long.TryParse(freqObj?.ToString(), out var freqVal))
+                {
+                    heartbeatFrequency = TimeSpan.FromSeconds(freqVal);
+                }
+                StartHeartBeatForThisSession(heartbeatFrequency);
             }
             else
             {
@@ -650,21 +656,22 @@ internal class SFSession
 
     internal bool SessionPropertiesChanged => sessionPropertiesChanged;
 
-    internal void StartHeartBeatForThisSession()
+    internal void StartHeartBeatForThisSession(TimeSpan? heartbeatFrequency = null)
     {
-        if (!isHeartBeatEnabled)
+        if (isHeartBeatEnabled)
+            return;
+
+        var heartBeatBg = HeartBeatBackground.Instance;
+        if (MasterValidity == TimeSpan.Zero)
         {
-            var heartBeatBg = HeartBeatBackground.Instance;
-            if (masterValidityInSeconds == 0)
-            {
-                //In case server doesnot provide the default timeout
-                var DEFAULT_TIMEOUT_IN_SECOND = 14400;
-                masterValidityInSeconds = DEFAULT_TIMEOUT_IN_SECOND;
-            }
-            heartBeatBg.AddConnection(this, masterValidityInSeconds);
-            isHeartBeatEnabled = true;
+            //In case server does not provide the default timeout
+            const int DEFAULT_TIMEOUT_IN_SECOND = 14400;
+            MasterValidity = TimeSpan.FromSeconds(DEFAULT_TIMEOUT_IN_SECOND);
         }
+        heartBeatBg.AddConnection(this, MasterValidity, heartbeatFrequency);
+        isHeartBeatEnabled = true;
     }
+
     internal void StopHeartBeatForThisSession()
     {
         if (isHeartBeatEnabled)

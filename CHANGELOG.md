@@ -2,6 +2,7 @@
 
 # Changelog
 - Upcoming release
+  - Heartbeat interval now honors the `CLIENT_SESSION_KEEP_ALIVE_HEARTBEAT_FREQUENCY` session parameter.
   - Improved key-pair authentication PEM parse error messages.
   - Added public `SnowflakeDbConnection.SessionId` property exposing the Snowflake session id after opening a connection. (#1412)
   - Added `SECONDARY_ROLES` connection string property to activate secondary roles at login. Accepted values: `ALL`, `NONE`, `DEFAULT`. The value is sent uppercased in the login request. (#809)
