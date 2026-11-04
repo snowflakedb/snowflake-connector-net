@@ -20,7 +20,7 @@ internal class SFMultiStatementsResultSet : SFBaseResultSet
     private int curResultIndex = -1;
 
 
-    public SFMultiStatementsResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
+    public SFMultiStatementsResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken)
     {
         this.sfStatement = sfStatement;
         resultIds = responseData.resultIds.Split(',');

@@ -12,7 +12,7 @@ public class SnowflakeDbDataAdapter : DbDataAdapter, IDbDataAdapter
 
     private SnowflakeDbCommand _selectCommand;
 
-    public SnowflakeDbDataAdapter() : base()
+    public SnowflakeDbDataAdapter()
     {
         GC.SuppressFinalize(this);
     }

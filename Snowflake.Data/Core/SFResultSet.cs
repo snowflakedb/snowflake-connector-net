@@ -20,7 +20,7 @@ internal class SFResultSet : SFBaseResultSet
 
     private BaseResultChunk _currentChunk;
 
-    public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
+    public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken)
     {
         try
         {
@@ -76,7 +76,7 @@ internal class SFResultSet : SFBaseResultSet
         }
     }
 
-    public SFResultSet(PutGetResponseData responseData, SFStatement sfStatement) : base()
+    public SFResultSet(PutGetResponseData responseData, SFStatement sfStatement)
     {
         responseData.rowType = new List<ExecResponseRowType>();
         InitializePutGetRowType(responseData.rowType);

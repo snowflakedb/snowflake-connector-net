@@ -4,7 +4,7 @@ namespace Snowflake.Data.Core.Tools;
 
 internal class FileUnixInformation : FileOrDirectoryUnixInformation
 {
-    public FileUnixInformation(UnixFileInfo unixFileInfo) : base()
+    public FileUnixInformation(UnixFileInfo unixFileInfo)
     {
         FullName = unixFileInfo.FullName;
         Exists = unixFileInfo.Exists;
