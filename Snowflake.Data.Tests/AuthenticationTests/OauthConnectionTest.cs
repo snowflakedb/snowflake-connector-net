@@ -39,7 +39,7 @@ public class OauthConnectionTest
         authTestHelper.VerifyExceptionIsThrown("Invalid OAuth access token");
     }
 
-    [SFFact(Skip = "Skipped, waits for SNOW-1893041")]
+    [SFFact(SkipCondition.SkipOnCI)]
     public void TestAuthenticateUsingOauthMismatchedUser()
     {
         var authTestHelper = new AuthTestHelper();

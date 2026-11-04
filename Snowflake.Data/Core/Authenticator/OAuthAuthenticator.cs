@@ -49,8 +49,6 @@ internal class OAuthAuthenticator : BaseAuthenticator, IAuthenticator
     {
         // Add the token to the Data attribute
         data.Token = Session.properties[SFSessionProperty.TOKEN];
-        // Remove the login name for an OAuth session
-        data.loginName = "";
         SetSecondaryAuthenticationData(ref data);
     }
 }
