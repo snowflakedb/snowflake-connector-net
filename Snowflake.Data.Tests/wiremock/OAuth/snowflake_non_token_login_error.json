@@ -1,0 +1,31 @@
+{
+    "mappings": [
+        {
+            "scenarioName": "Non-token Snowflake login error for OAuth",
+            "request": {
+                "urlPathPattern": "/session/v1/login-request",
+                "method": "POST",
+                "headers": {
+                    "Authorization": {
+                        "contains": "Basic"
+                    }
+                },
+                "bodyPatterns": [
+                    { "matchesJsonPath": "$.data[?(@.AUTHENTICATOR == 'oauth')]" }
+                ]
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "jsonBody": {
+                    "data": {},
+                    "code": 390120,
+                    "message": "Authentication denied",
+                    "success": false
+                }
+            }
+        }
+    ]
+}

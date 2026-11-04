@@ -1,0 +1,30 @@
+{
+    "mappings": [
+        {
+            "scenarioName": "Failed refresh token response",
+            "request": {
+                "urlPathPattern": "/oauth/token-request.*",
+                "method": "POST",
+                "headers": {
+                    "Authorization": {
+                        "contains": "Basic"
+                    },
+                    "Content-Type": {
+                        "contains": "application/x-www-form-urlencoded"
+                    },
+                    "Content-Encoding": {
+                        "contains": "utf-8"
+                    }
+                },
+                "bodyPatterns": [
+                    {
+                        "contains": "grant_type=refresh_token"
+                    }
+                ]
+            },
+            "response": {
+                "status": 400
+            }
+        }
+    ]
+}

@@ -47,6 +47,8 @@ public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
     private static readonly string s_clientCredentialSuccessfulMappingPath = Path.Combine(s_oauthClientCredentialsMappingPath, "successful_flow.json");
     private static readonly string s_tokenRequestErrorMappingPath = Path.Combine(s_oauthClientCredentialsMappingPath, "token_request_error.json");
     private static readonly string s_tokenRequestNoRefreshTokenMappingPath = Path.Combine(s_oauthClientCredentialsMappingPath, "successful_without_refresh_token.json");
+    private static readonly string s_oauthSnowflakeNonTokenLoginErrorMappingPath = Path.Combine(s_oauthMappingPath, "snowflake_non_token_login_error.json");
+    private const string NewAccessToken = "new-access-token-123";
 
     public OAuthClientCredentialFlowTest(OAuthClientCredentialFlowTestFixture.Fixture fixture)
     {
@@ -162,6 +164,72 @@ public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
         // assert
         Assert.Equal(SFError.OAUTH_TOKEN_REQUEST_ERROR.GetAttribute<SFErrorAttr>().errorCode, thrown.ErrorCode);
         Assert.Contains("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)", thrown.Message);
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestReplayFlowOnInvalidTokenLogin()
+    {
+        // arrange — first login returns invalid token error (390303), then flow is replayed and second login succeeds
+        _fixture.Runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
+        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginInvalidTokenMappingPath);
+        _fixture.Runner.AddMappings(s_clientCredentialSuccessfulMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
+        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
+        var session = PrepareSession();
+
+        // act
+        session.Open();
+
+        // assert
+        AssertAccessTokenSetInAuthenticator(session, NewAccessToken);
+        AssertSessionSuccessfullyCreated(session);
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public async Task TestReplayFlowOnInvalidTokenLoginAsync()
+    {
+        // arrange — first login returns invalid token error (390303), then flow is replayed and second login succeeds
+        _fixture.Runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
+        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginInvalidTokenMappingPath);
+        _fixture.Runner.AddMappings(s_clientCredentialSuccessfulMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
+        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
+        var session = PrepareSession();
+
+        // act
+        await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // assert
+        AssertAccessTokenSetInAuthenticator(session, NewAccessToken);
+        AssertSessionSuccessfullyCreated(session);
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestDoNotReplayFlowOnNonTokenLoginError()
+    {
+        // arrange — login returns a non-token error (390120), original exception should be rethrown without attempting refresh
+        _fixture.Runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
+        _fixture.Runner.AddMappings(s_oauthSnowflakeNonTokenLoginErrorMappingPath);
+        var session = PrepareSession();
+
+        // act
+        var thrown = Assert.Throws<SnowflakeDbException>(() => session.Open());
+
+        // assert
+        Assert.Equal(390120, thrown.ErrorCode);
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public async Task TestDoNotReplayFlowOnNonTokenLoginErrorAsync()
+    {
+        // arrange — login returns a non-token error (390120), original exception should be rethrown without attempting refresh
+        _fixture.Runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
+        _fixture.Runner.AddMappings(s_oauthSnowflakeNonTokenLoginErrorMappingPath);
+        var session = PrepareSession();
+
+        // act
+        var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None)).ConfigureAwait(false);
+
+        // assert
+        Assert.Equal(390120, thrown.ErrorCode);
     }
 
     private static void AssertAccessTokenSetInAuthenticator(SFSession session, string expectedAccessToken = AccessToken)

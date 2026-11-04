@@ -48,6 +48,8 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     private static readonly string s_invalidScopeErrorMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "invalid_scope_error.json");
     private static readonly string s_invalidStateErrorMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "invalid_state_error.json");
     private static readonly string s_badTokenRequestErrorMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "token_request_error.json");
+    private static readonly string s_oauthSnowflakeNonTokenLoginErrorMappingPath = Path.Combine(s_oauthMappingPath, "snowflake_non_token_login_error.json");
+    private static readonly string s_refreshTokenErrorMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "refresh_token_error.json");
     private static readonly string s_externalAuthorizationUrl = $"http://localhost:{WiremockRunner.DefaultHttpPort}/oauth/authorize";
 
     public OAuthAuthorizationCodeFlowTest(OAuthAuthorizationCodeFlowTestFixture.Fixture fixture)
@@ -389,6 +391,38 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     }
 
     [SFFact(SkipCondition.SkipOnJenkins)]
+    public void TestDoNotRefreshTokenOnNonTokenLoginError()
+    {
+        // arrange — login returns a non-token error (390120), original exception should be rethrown without attempting refresh
+        _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
+        _fixture.Runner.AddMappings(s_oauthSnowflakeNonTokenLoginErrorMappingPath);
+        SaveTokenToCache(TokenType.OAuthRefreshToken, RefreshToken);
+        var session = PrepareSession();
+
+        // act
+        var thrown = Assert.Throws<SnowflakeDbException>(() => session.Open());
+
+        // assert
+        Assert.Equal(390120, thrown.ErrorCode);
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public async Task TestDoNotRefreshTokenOnNonTokenLoginErrorAsync()
+    {
+        // arrange — login returns a non-token error (390120), original exception should be rethrown without attempting refresh
+        _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
+        _fixture.Runner.AddMappings(s_oauthSnowflakeNonTokenLoginErrorMappingPath);
+        SaveTokenToCache(TokenType.OAuthRefreshToken, RefreshToken);
+        var session = PrepareSession();
+
+        // act
+        var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(() => session.OpenAsync(CancellationToken.None)).ConfigureAwait(false);
+
+        // assert
+        Assert.Equal(390120, thrown.ErrorCode);
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
     public void TestInvalidScope()
     {
         // arrange
@@ -528,6 +562,88 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
         Assert.Contains("Error on getting an OAuth token from IDP: Response status code does not indicate success: 400 (Bad Request)", thrown.Message);
         Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthAccessToken));
         Assert.Equal(string.Empty, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public async Task TestUseRefreshTokenWhenAccessTokenMissingAsync()
+    {
+        // arrange — only refresh token in cache, no access token
+        SaveTokenToCache(TokenType.OAuthRefreshToken, RefreshToken);
+        _fixture.Runner.AddMappings(s_refreshTokenMappingPath);
+        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
+        var session = PrepareSession();
+        var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
+
+        // act
+        await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // assert — refresh token was used to get a new access token, no browser popup
+        Assert.NotNull(authenticator.AccessToken);
+        Assert.Equal(NewAccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+        Assert.Equal(NewAccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+        Assert.Equal(NewRefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+        AssertSessionSuccessfullyCreated(session);
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public async Task TestFallBackToFullFlowWhenRefreshTokenFailsAsync()
+    {
+        // arrange — stale refresh token in cache, refresh exchange will fail, then full flow succeeds
+        SaveTokenToCache(TokenType.OAuthRefreshToken, RefreshToken);
+        _fixture.Runner.AddMappings(s_refreshTokenErrorMappingPath);
+        _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
+        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        var session = PrepareSession();
+        var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
+
+        // act
+        await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // assert — full flow succeeded despite stale refresh token
+        Assert.NotNull(authenticator.AccessToken);
+        Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+        Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+        Assert.Equal(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+        AssertSessionSuccessfullyCreated(session);
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public async Task TestSkipRefreshTokenWhenCacheDisabledAsync()
+    {
+        // arrange — cache disabled (client_store_temporary_credential=false), refresh token should not be attempted
+        _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
+        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        var session = PrepareSession(connectionStringSuffix: "client_store_temporary_credential=false;");
+        var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
+
+        // act
+        await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // assert — went straight to full flow, no cache interaction
+        Assert.NotNull(authenticator.AccessToken);
+        Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+        Assert.Equal(0, InMemoryCacheCount());
+        AssertSessionSuccessfullyCreated(session);
+    }
+
+    [SFFact(SkipCondition.SkipOnJenkins)]
+    public async Task TestGoStraightToFullFlowWhenCacheEnabledButNoTokensCachedAsync()
+    {
+        // arrange — cache enabled but empty (no access token, no refresh token)
+        _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
+        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        var session = PrepareSession();
+        var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
+
+        // act
+        await session.OpenAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // assert — went straight to full flow, refresh was never attempted
+        Assert.NotNull(authenticator.AccessToken);
+        Assert.Equal(AccessToken, SecureStringHelper.Decode(authenticator.AccessToken));
+        Assert.Equal(AccessToken, ExtractTokenFromCache(TokenType.OAuthAccessToken));
+        Assert.Equal(RefreshToken, ExtractTokenFromCache(TokenType.OAuthRefreshToken));
+        AssertSessionSuccessfullyCreated(session);
     }
 
     private static SFSession PrepareSession(bool clientSecretInConnectionString = true, bool userInConnectionString = true, string connectionStringSuffix = "client_store_temporary_credential=true;")

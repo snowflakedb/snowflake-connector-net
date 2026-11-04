@@ -5,6 +5,7 @@
   - Improved key-pair authentication PEM parse error messages.
   - Added public `SnowflakeDbConnection.SessionId` property exposing the Snowflake session id after opening a connection. (#1412)
   - Added `SECONDARY_ROLES` connection string property to activate secondary roles at login. Accepted values: `ALL`, `NONE`, `DEFAULT`. The value is sent uppercased in the login request. (#809)
+  - Bug fix: When a cached access token is missing but a refresh token is available, the OAuth authorization code flow now attempts to exchange the refresh token for a new access token before launching the browser.
   - Bug fix: `CLIENT_APP_VERSION` / `SFEnvironment.DriverVersion` now always reports a 3-part `Major.Minor.Patch` string so `ACCOUNT_USAGE.SESSIONS` matches `SYSTEM$CLIENT_VERSION_INFO()`. (SNOW-1041547)
   - Bug fix: GET file decryption now disposes the intermediate decrypt stream when decryption fails, so any spilled temporary file is deleted immediately. (SNOW-1900757)
 - v6.4.0

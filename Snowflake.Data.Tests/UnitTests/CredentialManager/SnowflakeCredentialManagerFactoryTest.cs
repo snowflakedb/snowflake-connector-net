@@ -60,13 +60,15 @@ public class SnowflakeCredentialManagerFactoryTest : IDisposable
     [SFFact]
     public void TestBuildCacheKeyThrowsWhenSnowflakeEmpty()
     {
-        Assert.Throws<ArgumentException>(() => SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "", "user", "")));
+        Assert.Throws<ArgumentException>(() =>
+            SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "", "user", "")));
     }
 
     [SFFact]
     public void TestBuildCacheKeyThrowsWhenUsernameEmpty()
     {
-        Assert.Throws<ArgumentException>(() => SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "snowflake", "", "")));
+        Assert.Throws<ArgumentException>(() =>
+            SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "snowflake", "", "")));
     }
 
     [SFFact]
@@ -83,16 +85,20 @@ public class SnowflakeCredentialManagerFactoryTest : IDisposable
     [SFFact]
     public void TestDimensionIsolationDifferentSnowflakeHost()
     {
-        var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "idp.example.com", "acct1.snowflakecomputing.com", "user", "role"));
-        var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "idp.example.com", "acct2.snowflakecomputing.com", "user", "role"));
+        var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "idp.example.com",
+            "acct1.snowflakecomputing.com", "user", "role"));
+        var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "idp.example.com",
+            "acct2.snowflakecomputing.com", "user", "role"));
         Assert.NotEqual(key1, key2);
     }
 
     [SFFact]
     public void TestDimensionIsolationDifferentRole()
     {
-        var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "idp.example.com", "acct.snowflakecomputing.com", "user", "analyst"));
-        var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "idp.example.com", "acct.snowflakecomputing.com", "user", "engineer"));
+        var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "idp.example.com",
+            "acct.snowflakecomputing.com", "user", "analyst"));
+        var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "idp.example.com",
+            "acct.snowflakecomputing.com", "user", "engineer"));
         Assert.NotEqual(key1, key2);
     }
 
@@ -100,8 +106,10 @@ public class SnowflakeCredentialManagerFactoryTest : IDisposable
     public void TestDimensionIsolationDifferentIdp()
     {
         // Same Snowflake account and user, different IdP — the multi-account/shared-IdP collision case.
-        var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "login.microsoftonline.com/tenantA", "acct.snowflakecomputing.com", "user", "role"));
-        var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "login.microsoftonline.com/tenantB", "acct.snowflakecomputing.com", "user", "role"));
+        var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "login.microsoftonline.com/tenantA",
+            "acct.snowflakecomputing.com", "user", "role"));
+        var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "login.microsoftonline.com/tenantB",
+            "acct.snowflakecomputing.com", "user", "role"));
         Assert.NotEqual(key1, key2);
     }
 
@@ -116,8 +124,10 @@ public class SnowflakeCredentialManagerFactoryTest : IDisposable
     [SFFact]
     public void TestDimensionIsolationDifferentTokenType()
     {
-        var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "idp.example.com", "acct.snowflakecomputing.com", "user", "role"));
-        var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthRefreshToken, "idp.example.com", "acct.snowflakecomputing.com", "user", "role"));
+        var key1 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthAccessToken, "idp.example.com",
+            "acct.snowflakecomputing.com", "user", "role"));
+        var key2 = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.OAuthRefreshToken, "idp.example.com",
+            "acct.snowflakecomputing.com", "user", "role"));
         Assert.NotEqual(key1, key2);
     }
 
@@ -134,11 +144,13 @@ public class SnowflakeCredentialManagerFactoryTest : IDisposable
     [SFFact]
     public void TestMfaKeyIgnoresIdpAndRole()
     {
-        var base_ = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "host.snowflake.com", "user", ""));
-        var withIdp = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "idp.example.com", "host.snowflake.com", "user", ""));
-        var withRole = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "host.snowflake.com", "user", "analyst"));
-        Assert.Equal(base_, withIdp);
-        Assert.Equal(base_, withRole);
+        var cacheKey = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "host.snowflake.com", "user", ""));
+        var withIdp = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "idp.example.com", "host.snowflake.com",
+            "user", ""));
+        var withRole = SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(TokenType.MFAToken, "", "host.snowflake.com", "user",
+            "analyst"));
+        Assert.Equal(cacheKey, withIdp);
+        Assert.Equal(cacheKey, withRole);
     }
 
     [SFFact]
@@ -306,19 +318,6 @@ public class SnowflakeCredentialManagerFactoryTest : IDisposable
     }
 
     [SFFact]
-    public void TestSettingCustomCredentialManager()
-    {
-        // arrange
-        SnowflakeCredentialManagerFactory.SetCredentialManager(SFCredentialManagerInMemoryImpl.Instance);
-
-        // act
-        var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
-
-        // assert
-        Assert.IsType<SFCredentialManagerInMemoryImpl>(credentialManager);
-    }
-
-    [SFFact]
     public void TestUseMemoryImplCredentialManager()
     {
         // arrange
@@ -336,7 +335,9 @@ public class SnowflakeCredentialManagerFactoryTest : IDisposable
     {
         // act and assert
         var exception = Assert.Throws<SnowflakeDbException>(() => SnowflakeCredentialManagerFactory.SetCredentialManager(null));
-        Assert.Contains("Credential manager cannot be null. If you want to use the default credential manager, please call the UseDefaultCredentialManager method.", exception.Message);
+        Assert.Contains(
+            "Credential manager cannot be null. If you want to use the default credential manager, please call the UseDefaultCredentialManager method.",
+            exception.Message);
     }
 
     [SFFact(SkipCondition.SkipOnWindows)]
@@ -358,6 +359,102 @@ public class SnowflakeCredentialManagerFactoryTest : IDisposable
         // assert
         Assert.Equal("File credential manager implementation is not supported on Windows", thrown.Message);
     }
+
+    [Collection(nameof(SnowflakeCredentialManagerFactoryTest))]
+    public sealed class Isolated : IDisposable
+    {
+        [CollectionDefinition(nameof(SnowflakeCredentialManagerFactoryTest), DisableParallelization = true)]
+        public sealed class Fixture : ICollectionFixture<Fixture>
+        {
+        }
+
+        [SFFact]
+        public void TestSettingCustomCredentialManager()
+        {
+            // arrange
+            SnowflakeCredentialManagerFactory.SetCredentialManager(SFCredentialManagerInMemoryImpl.Instance);
+
+            // act
+            var credentialManager = SnowflakeCredentialManagerFactory.GetCredentialManager();
+
+            // assert
+            Assert.IsType<SFCredentialManagerInMemoryImpl>(credentialManager);
+        }
+
+        [SFFact]
+        public void TestCustomTwoLayerCredentialManagerWithInMemoryPrimaryAndDefaultFallback()
+        {
+            // arrange — build a two-layer credential manager: in-memory first, default as fallback
+            var fallback = SnowflakeCredentialManagerFactory.GetCredentialManager(); // the platform default
+            SnowflakeCredentialManagerFactory.UseInMemoryCredentialManager();
+            var inMemory = SnowflakeCredentialManagerFactory.GetCredentialManager();
+
+            var twoLayer = new TwoLayerCredentialManager(inMemory, fallback);
+            SnowflakeCredentialManagerFactory.SetCredentialManager(twoLayer);
+
+            // act — verify the factory returns our custom manager
+            var active = SnowflakeCredentialManagerFactory.GetCredentialManager();
+
+            // assert
+            Assert.IsType<TwoLayerCredentialManager>(active);
+            Assert.Same(twoLayer, active);
+
+            // act — save via the two-layer manager, then read back
+            const string Key = "test-two-layer-key";
+            const string Token = "two-layer-secret-token";
+            active.SaveCredentials(Key, Token);
+            var retrieved = active.GetCredentials(Key);
+
+            // assert — primary layer serves the value
+            Assert.Equal(Token, retrieved);
+
+            // act — remove from primary, fallback returns empty (it was never written there)
+            inMemory.RemoveCredentials(Key);
+            var afterRemove = active.GetCredentials(Key);
+
+            // assert — demonstrates the fallback path.
+            Assert.Equal(Token, afterRemove);
+        }
+
+        /// <summary>
+        /// A minimal two-layer credential manager for tests.
+        /// </summary>
+        private sealed class TwoLayerCredentialManager : ISnowflakeCredentialManager
+        {
+            private readonly ISnowflakeCredentialManager _primary;
+            private readonly ISnowflakeCredentialManager _fallback;
+
+            public TwoLayerCredentialManager(ISnowflakeCredentialManager primary, ISnowflakeCredentialManager fallback)
+            {
+                _primary = primary;
+                _fallback = fallback;
+            }
+
+            public string GetCredentials(string key)
+            {
+                var value = _primary.GetCredentials(key);
+                return !string.IsNullOrEmpty(value) ? value : _fallback.GetCredentials(key);
+            }
+
+            public void SaveCredentials(string key, string token)
+            {
+                _primary.SaveCredentials(key, token);
+                _fallback.SaveCredentials(key, token);
+            }
+
+            public void RemoveCredentials(string key)
+            {
+                _primary.RemoveCredentials(key);
+                _fallback.RemoveCredentials(key);
+            }
+        }
+
+        public void Dispose()
+        {
+            SnowflakeCredentialManagerFactory.UseDefaultCredentialManager();
+        }
+    }
+
 
     public void Dispose()
     {

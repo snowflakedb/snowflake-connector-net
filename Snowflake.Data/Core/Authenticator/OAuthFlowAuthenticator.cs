@@ -29,8 +29,11 @@ internal abstract class OAuthFlowAuthenticator : BaseAuthenticator
         var accessToken = cacheKeys.GetAccessToken();
         if (string.IsNullOrEmpty(accessToken))
         {
-            var accessTokenRequest = RunFlowToAccessTokenRequest();
-            GetAccessToken(accessTokenRequest, cacheKeys);
+            if (!TryRefreshAccessToken(cacheKeys))
+            {
+                var accessTokenRequest = RunFlowToAccessTokenRequest();
+                GetAccessToken(accessTokenRequest, cacheKeys);
+            }
         }
         else
         {
@@ -43,13 +46,8 @@ internal abstract class OAuthFlowAuthenticator : BaseAuthenticator
         }
         catch (SnowflakeDbException exception)
         {
-            var renewAccessTokenRequest = GetRenewAccessTokenRequest(exception, cacheKeys);
-            if (renewAccessTokenRequest != null)
-            {
-                AccessToken = null;
-                GetAccessToken(renewAccessTokenRequest, cacheKeys);
-            }
-            if (renewAccessTokenRequest != null && AccessToken != null)
+            var refreshAccessToken = TryRefreshAccessToken(exception, cacheKeys);
+            if (refreshAccessToken && AccessToken != null)
             {
                 Login();
                 return;
@@ -65,8 +63,11 @@ internal abstract class OAuthFlowAuthenticator : BaseAuthenticator
         var accessToken = cacheKeys.GetAccessToken();
         if (string.IsNullOrEmpty(accessToken))
         {
-            var accessTokenRequest = RunFlowToAccessTokenRequest();
-            await GetAccessTokenAsync(accessTokenRequest, cacheKeys, cancellationToken).ConfigureAwait(false);
+            if (!await TryRefreshAccessTokenAsync(cacheKeys, cancellationToken).ConfigureAwait(false))
+            {
+                var accessTokenRequest = RunFlowToAccessTokenRequest();
+                await GetAccessTokenAsync(accessTokenRequest, cacheKeys, cancellationToken).ConfigureAwait(false);
+            }
         }
         else
         {
@@ -79,13 +80,8 @@ internal abstract class OAuthFlowAuthenticator : BaseAuthenticator
         }
         catch (SnowflakeDbException exception)
         {
-            var renewAccessTokenRequest = GetRenewAccessTokenRequest(exception, cacheKeys);
-            if (renewAccessTokenRequest != null)
-            {
-                AccessToken = null;
-                await GetAccessTokenAsync(renewAccessTokenRequest, cacheKeys, cancellationToken).ConfigureAwait(false);
-            }
-            if (renewAccessTokenRequest != null && AccessToken != null)
+            var refreshAccessToken = await TryRefreshAccessTokenAsync(exception, cacheKeys, cancellationToken).ConfigureAwait(false);
+            if (refreshAccessToken && AccessToken != null)
             {
                 await LoginAsync(cancellationToken).ConfigureAwait(false);
                 return;
@@ -208,6 +204,55 @@ internal abstract class OAuthFlowAuthenticator : BaseAuthenticator
         };
     }
 
+    private bool TryRefreshAccessToken(OAuthCacheKeys cacheKeys) => TryRefreshAccessToken(null, cacheKeys);
+
+    private bool TryRefreshAccessToken(SnowflakeDbException exception, OAuthCacheKeys cacheKeys)
+    {
+        var renewAccessTokenRequest = GetRenewAccessTokenRequest(exception, cacheKeys);
+        if (renewAccessTokenRequest == null)
+            return false;
+
+        s_logger.Debug($"Attempting to use refresh token to obtain access token for {AuthName} authentication.");
+        try
+        {
+            AccessToken = null;
+            GetAccessToken(renewAccessTokenRequest, cacheKeys);
+            return true;
+        }
+        catch (SnowflakeDbException accessTokenException)
+        {
+            var exceptionMessage = SecretDetector.Instance.MaskSecrets(accessTokenException.Message).MaskedText;
+            s_logger.Warn($"Failed to renew access token for {AuthName} authentication: {exceptionMessage}");
+            cacheKeys.RemoveRefreshToken();
+            return false;
+        }
+    }
+
+    private Task<bool> TryRefreshAccessTokenAsync(OAuthCacheKeys cacheKeys, CancellationToken cancellationToken) =>
+        TryRefreshAccessTokenAsync(null, cacheKeys, cancellationToken);
+
+    private async Task<bool> TryRefreshAccessTokenAsync(SnowflakeDbException exception, OAuthCacheKeys cacheKeys, CancellationToken cancellationToken)
+    {
+        var renewAccessTokenRequest = GetRenewAccessTokenRequest(exception, cacheKeys);
+        if (renewAccessTokenRequest == null)
+            return false;
+
+        s_logger.Debug($"Attempting to use refresh token to obtain access token for {AuthName} authentication.");
+        try
+        {
+            AccessToken = null;
+            await GetAccessTokenAsync(renewAccessTokenRequest, cacheKeys, cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (SnowflakeDbException accessTokenException)
+        {
+            var exceptionMessage = SecretDetector.Instance.MaskSecrets(accessTokenException.Message).MaskedText;
+            s_logger.Warn($"Failed to renew access token for {AuthName} authentication: {exceptionMessage}");
+            cacheKeys.RemoveRefreshToken();
+            return false;
+        }
+    }
+
     protected string GetAuthorizationScope()
     {
         var scope = ExtractPropertyOrEmptyString(SFSessionProperty.OAUTHSCOPE);
@@ -247,5 +292,12 @@ internal abstract class OAuthFlowAuthenticator : BaseAuthenticator
         if (Session.properties.TryGetValue(property, out var value) && !string.IsNullOrEmpty(value))
             return value;
         return defaultValue;
+    }
+
+    protected enum RenewTokenResult
+    {
+        NotValidToRenew,
+        UnsuccessfulRenew,
+        Renewed
     }
 }

@@ -94,7 +94,7 @@ You can close this window now and go back where you started from.
 
     protected override BaseOAuthAccessTokenRequest GetRenewAccessTokenRequest(SnowflakeDbException exception, OAuthCacheKeys cacheKeys)
     {
-        if (!IsAccessTokenExpiredOrInvalid(exception))
+        if (exception != null && !IsAccessTokenExpiredOrInvalid(exception))
         {
             s_logger.Debug($"Exception code returned for {AuthName} authentication does not indicate expired or invalid token so the authentication flow is failing");
             return null;
