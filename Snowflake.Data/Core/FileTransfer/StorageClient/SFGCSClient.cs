@@ -51,7 +51,7 @@ internal class SFGCSClient : ISFRemoteStorageClient
     /// <summary>
     /// The custom WebRequest.
     /// </summary>
-    private WebRequest _customWebRequest = null;
+    private WebRequest _customWebRequest;
 
     /// <summary>
     /// TLS protocols requested by MINTLS/MAXTLS. GCS cannot apply them: the storage SDK hands back

@@ -9,11 +9,11 @@ internal class SFLoggerImpl : SFLogger
     internal static List<SFAppender> s_appenders = new();
     internal static LoggingEvent s_level = LoggingEvent.OFF;
     private static readonly object s_lock = new();
-    private static bool s_isTraceEnabled = false;
-    private static bool s_isDebugEnabled = false;
-    private static bool s_isInfoEnabled = false;
-    private static bool s_isWarnEnabled = false;
-    private static bool s_isErrorEnabled = false;
+    private static bool s_isTraceEnabled;
+    private static bool s_isDebugEnabled;
+    private static bool s_isInfoEnabled;
+    private static bool s_isWarnEnabled;
+    private static bool s_isErrorEnabled;
 
     internal SFLoggerImpl(Type type)
     {

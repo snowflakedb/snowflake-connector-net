@@ -14,8 +14,8 @@ public class SnowflakeDbTransaction : DbTransaction
 
     private readonly SnowflakeDbConnection connection;
 
-    private bool disposed = false;
-    private bool isCommittedOrRollbacked = false;
+    private bool disposed;
+    private bool isCommittedOrRollbacked;
 
     internal bool IsActive => !disposed && !isCommittedOrRollbacked;
 

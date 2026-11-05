@@ -22,7 +22,7 @@ internal class SFCredentialManagerFileImpl : ISnowflakeCredentialManager
 
     private static readonly object s_lock = new();
 
-    internal SFCredentialManagerFileStorage _fileStorage = null;
+    internal SFCredentialManagerFileStorage _fileStorage;
 
     private readonly FileOperations _fileOperations;
 

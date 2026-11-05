@@ -30,7 +30,7 @@ internal class TomlConnectionBuilder
     private readonly FileOperations _fileOperations;
     private readonly IEnvironmentFacade _environmentFacade;
 
-    private static bool _skipWarningForReadPermissions = false;
+    private static bool _skipWarningForReadPermissions;
 
     public static readonly TomlConnectionBuilder Instance = new();
 

@@ -12,7 +12,7 @@ internal class MockRestSessionExpiredInQueryExec : MockBaseRestRequester
 
     private static readonly int SESSION_EXPIRED_CODE = 390112;
 
-    private int getResultCallCount = 0;
+    private int getResultCallCount;
 
     public override Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
     {

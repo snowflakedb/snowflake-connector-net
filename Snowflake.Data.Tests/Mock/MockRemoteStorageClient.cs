@@ -19,9 +19,9 @@ internal class MockRemoteStorageClient
     internal const string ErrorMessage = "Mock GCS Remote Storage Error";
 
     // Variables for the encryption data
-    [ThreadStatic] private static Stream t_encryptedStream = null;
-    [ThreadStatic] private static string t_encryptedStreamIV = null;
-    [ThreadStatic] private static string t_encryptedStreamKey = null;
+    [ThreadStatic] private static Stream t_encryptedStream;
+    [ThreadStatic] private static string t_encryptedStreamIV;
+    [ThreadStatic] private static string t_encryptedStreamKey;
 
     internal static void SetEncryptionData(Stream stream, string iv, string key)
     {

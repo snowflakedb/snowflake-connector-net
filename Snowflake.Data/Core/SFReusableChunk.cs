@@ -87,8 +87,8 @@ internal class SFReusableChunk : BaseResultChunk
         private readonly List<byte[]> data = new();
         private readonly List<int[]> offsets = new();
         private readonly List<int[]> lengths = new();
-        private int nextIndex = 0;
-        private int currentDatOffset = 0;
+        private int nextIndex;
+        private int currentDatOffset;
 
         private int savedRowCount;
         private int savedColCount;

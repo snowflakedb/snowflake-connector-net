@@ -30,7 +30,7 @@ internal class SFBindUploader
 
     private static readonly long inputStreamBufferSize = 1024 * 1024 * 10;
 
-    private int fileCount = 0;
+    private int fileCount;
 
     private readonly SFSession session;
 

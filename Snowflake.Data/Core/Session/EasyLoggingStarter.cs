@@ -24,7 +24,7 @@ internal class EasyLoggingStarter
 
     private readonly object _lockForExclusiveInit = new();
 
-    private EasyLoggingInitTrialParameters _initTrialParameters = null;
+    private EasyLoggingInitTrialParameters _initTrialParameters;
 
     internal const FileAccessPermissions DefaultFileUnixPermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
 

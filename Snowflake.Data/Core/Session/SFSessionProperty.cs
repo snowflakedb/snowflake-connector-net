@@ -184,7 +184,7 @@ internal class SFSessionPropertyAttr : Attribute
 
     public string defaultNonWindowsValue { get; set; }
 
-    public bool IsSecret { get; set; } = false;
+    public bool IsSecret { get; set; }
 }
 
 internal class SFSessionProperties : Dictionary<SFSessionProperty, string>

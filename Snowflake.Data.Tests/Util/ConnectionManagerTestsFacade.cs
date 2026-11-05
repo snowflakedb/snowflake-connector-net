@@ -13,7 +13,7 @@ internal class ConnectionManagerTestsFacade : IConnectionManager
 {
     private readonly IConnectionManager _globalInstance;
     private static readonly AsyncLocal<AmbientContext> t_asyncLocalConnectionManager = new();
-    private static volatile int s_initState = 0;
+    private static volatile int s_initState;
 
     private IConnectionManager ConnectionManagerImplementation => t_asyncLocalConnectionManager.Value.ConnectionManager ?? _globalInstance;
 

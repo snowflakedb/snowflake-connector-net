@@ -9,7 +9,7 @@ using System;
 using System.Collections.Generic;
 public class QueryContextCacheTest
 {
-    private QueryContextCache _qcc = null;
+    private QueryContextCache _qcc;
     private const long BaseReadTimestamp = 1668727958;
     private const string Context = "Some query context";
     private const long BaseId = 0;

@@ -10,7 +10,7 @@ namespace Snowflake.Data.Tests.Util;
 public static class TestEnvironment
 {
     private static readonly CancellationTokenSource s_cts = new();
-    private static volatile int s_initState = 0;
+    private static volatile int s_initState;
 
     static TestEnvironment()
     {

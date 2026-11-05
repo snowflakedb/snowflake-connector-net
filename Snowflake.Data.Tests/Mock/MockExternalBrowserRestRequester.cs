@@ -12,7 +12,7 @@ internal class MockExternalBrowserRestRequester : MockBaseRestRequester
 
     public string IdToken { get; set; }
 
-    public bool ThrowInvalidIdToken { get; set; } = false;
+    public bool ThrowInvalidIdToken { get; set; }
 
     public bool ThrowNonInvalidIdToken { get; set; } = false;
 

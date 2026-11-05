@@ -28,7 +28,7 @@ public class SnowflakeDbConnection : DbConnection
 
     internal int _connectionTimeout;
 
-    private bool _disposed = false;
+    private bool _disposed;
 
     private static readonly Mutex _arraybindingMutex = new();
 

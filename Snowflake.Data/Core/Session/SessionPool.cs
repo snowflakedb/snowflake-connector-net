@@ -33,8 +33,8 @@ internal sealed class SessionPool : IDisposable
     private readonly ICounter _busySessionsCounter;
     private ISessionPoolEventHandler _sessionPoolEventHandler = new SessionPoolEventHandler(); // a way to inject some additional behaviour after certain events. Can be used for example to measure time of given steps.
     private readonly ConnectionPoolConfig _poolConfig;
-    private bool _configOverriden = false;
-    private bool _underDestruction = false;
+    private bool _configOverriden;
+    private bool _underDestruction;
 
     private static readonly InvalidOperationException s_notSupportedInCachePoolException = new("Feature not supported in a Connection Cache");
 

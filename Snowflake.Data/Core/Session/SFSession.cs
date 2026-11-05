@@ -56,7 +56,7 @@ internal class SFSession
     internal string schema;
     internal string role;
     internal string warehouse;
-    internal bool sessionPropertiesChanged = false;
+    internal bool sessionPropertiesChanged;
 
     internal string serverVersion;
 
@@ -66,15 +66,15 @@ internal class SFSession
 
     internal bool isHeartBeatEnabled;
 
-    private string arrayBindStage = null;
-    private int arrayBindStageThreshold = 0;
-    internal TimeSpan MasterValidity = TimeSpan.Zero;
+    private string arrayBindStage;
+    private int arrayBindStageThreshold;
+    internal TimeSpan MasterValidity;
 
     private readonly EasyLoggingStarter _easyLoggingStarter = EasyLoggingStarter.Instance;
 
-    private long _startTime = 0;
+    private long _startTime;
 
-    private long _timeSinceLastRenew = 0;
+    private long _timeSinceLastRenew;
 
     internal string ConnectionString { get; }
 
@@ -86,7 +86,7 @@ internal class SFSession
 
     private int _queryContextCacheSize = _defaultQueryContextCacheSize;
 
-    private readonly bool _disableQueryContextCache = false;
+    private readonly bool _disableQueryContextCache;
 
     internal bool _disableConsoleLogin;
 
@@ -109,9 +109,9 @@ internal class SFSession
 
     private bool _isClientTelemetryEnabled;
 
-    private readonly bool _honorSessionTimezone = false;
+    private readonly bool _honorSessionTimezone;
 
-    private readonly bool _allowNumberOverflowAsStringEnabled = false;
+    private readonly bool _allowNumberOverflowAsStringEnabled;
 
     private volatile TimeZoneInfo _cachedSessionTimezone;
 

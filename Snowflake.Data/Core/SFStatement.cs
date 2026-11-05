@@ -130,16 +130,16 @@ internal class SFStatement
     private CancellationTokenSource _linkedCancellationTokenSource;
 
     // Flag indicating if the SQL query is a regular query or a PUT/GET query
-    internal bool isPutGetQuery = false;
+    internal bool isPutGetQuery;
 
-    private MemoryStream _uploadStream = null;
+    private MemoryStream _uploadStream;
 
-    private string _bindStage = null;
+    private string _bindStage;
 
     // the query id of the last query
-    private string _lastQueryId = null;
+    private string _lastQueryId;
 
-    private readonly string _queryTag = null;
+    private readonly string _queryTag;
     private readonly IQuerySFLogger _logger;
 
     internal SFStatement(SFSession session) : this(session, session._queryTag)
