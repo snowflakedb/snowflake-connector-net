@@ -2,6 +2,7 @@
 
 # Changelog
 - Upcoming release
+- v6.5.0
   - Heartbeat interval now honors the `CLIENT_SESSION_KEEP_ALIVE_HEARTBEAT_FREQUENCY` session parameter.
   - Improved key-pair authentication PEM parse error messages.
   - Added public `SnowflakeDbConnection.SessionId` property exposing the Snowflake session id after opening a connection. (#1412)
