@@ -10,7 +10,9 @@ using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
+#if NETFRAMEWORK
 using Snowflake.Data.Tests.Util.Shims;
+#endif
 
 namespace Snowflake.Data.Tests.IntegrationTests;
 

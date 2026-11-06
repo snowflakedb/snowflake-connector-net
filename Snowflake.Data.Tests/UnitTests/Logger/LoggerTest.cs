@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using System.IO;
 using System;
-using System.Diagnostics;
 using Snowflake.Data.Client;
 using Snowflake.Data.Tests.Util;
 

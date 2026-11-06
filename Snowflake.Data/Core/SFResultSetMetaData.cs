@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
 using Snowflake.Data.Log;
 using Snowflake.Data.Client;
 

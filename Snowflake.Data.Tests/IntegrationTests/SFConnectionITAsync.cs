@@ -16,7 +16,9 @@ using Snowflake.Data.Core.Tools;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
 using Snowflake.Data.Tests.Util;
+#if NETFRAMEWORK
 using Snowflake.Data.Tests.Util.Shims;
+#endif
 using Xunit;
 
 namespace Snowflake.Data.Tests.IntegrationTests;

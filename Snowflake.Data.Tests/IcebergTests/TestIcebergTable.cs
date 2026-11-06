@@ -7,7 +7,6 @@ using System.Text;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
-using Snowflake.Data.Tests.IntegrationTests;
 using Snowflake.Data.Tests.Util;
 using static Snowflake.Data.Tests.Util.TestData;
 

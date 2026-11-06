@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Threading;
-using System.Net.Http;
 
 namespace Snowflake.Data.Tests.Mock;
 

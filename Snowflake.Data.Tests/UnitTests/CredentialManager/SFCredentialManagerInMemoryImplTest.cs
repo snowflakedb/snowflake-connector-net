@@ -1,5 +1,3 @@
-using System;
-using Xunit;
 using Snowflake.Data.Core.CredentialManager.Infrastructure;
 
 namespace Snowflake.Data.Tests.UnitTests.CredentialManager;

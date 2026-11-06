@@ -4,7 +4,6 @@ using System;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Snowflake.Data.Log;
 using Xunit;

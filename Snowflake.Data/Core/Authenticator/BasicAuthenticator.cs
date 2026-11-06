@@ -1,5 +1,4 @@
 using System;
-using Snowflake.Data.Log;
 using System.Threading;
 using System.Threading.Tasks;
 

@@ -6,7 +6,7 @@ using Xunit;
 using Snowflake.Data.Client;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
+
 public sealed class SFDbCommandTest
 {
     private SnowflakeDbCommand command;

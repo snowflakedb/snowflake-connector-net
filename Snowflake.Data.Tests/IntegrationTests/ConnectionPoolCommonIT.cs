@@ -8,7 +8,9 @@ using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Util;
+#if NETFRAMEWORK
 using Snowflake.Data.Tests.Util.Shims;
+#endif
 
 namespace Snowflake.Data.Tests.IntegrationTests;
 

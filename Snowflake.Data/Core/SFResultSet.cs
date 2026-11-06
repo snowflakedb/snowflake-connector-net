@@ -2,9 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Log;
-using Snowflake.Data.Client;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Snowflake.Data.Core;
 

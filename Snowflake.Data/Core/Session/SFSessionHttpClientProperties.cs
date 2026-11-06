@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Authenticator;
 using Snowflake.Data.Core.Session;

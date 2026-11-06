@@ -3,13 +3,14 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
+#if NETFRAMEWORK
 using Snowflake.Data.Tests.Util.Shims;
+#endif
 using Xunit;
 
 namespace Snowflake.Data.Tests.IntegrationTests;

@@ -1,5 +1,3 @@
-using System;
-
 namespace Snowflake.Data.Configuration;
 
 public class SFConfiguration

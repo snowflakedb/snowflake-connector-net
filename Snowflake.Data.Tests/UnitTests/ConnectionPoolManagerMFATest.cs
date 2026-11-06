@@ -1,6 +1,5 @@
 using System.Security;
 using System.Threading.Tasks;
-using Snowflake.Data.Tests.IntegrationTests;
 
 namespace Snowflake.Data.Tests.UnitTests;
 

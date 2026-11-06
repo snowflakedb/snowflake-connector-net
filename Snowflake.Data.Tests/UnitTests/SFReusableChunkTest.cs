@@ -1,11 +1,9 @@
-using System;
 using System.Threading;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests;
 
 using Xunit;
-using System.Data;
 using System.IO;
 using System.Text;
 using Snowflake.Data.Core;

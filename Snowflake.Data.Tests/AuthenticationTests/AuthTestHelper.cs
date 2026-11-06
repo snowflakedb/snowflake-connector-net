@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Data;
 using Xunit;
 using Snowflake.Data.Client;
-using Snowflake.Data.Core;
 using Snowflake.Data.Core.CredentialManager;
 using Snowflake.Data.Log;
 

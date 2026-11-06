@@ -1,8 +1,6 @@
 using System;
 using Xunit;
-using Snowflake.Data.Client;
 using Snowflake.Data.Core.Session;
-using Snowflake.Data.Tests.IntegrationTests;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests;

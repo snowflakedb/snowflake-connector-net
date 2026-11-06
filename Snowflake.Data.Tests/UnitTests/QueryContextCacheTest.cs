@@ -5,8 +5,7 @@ namespace Snowflake.Data.Tests.UnitTests;
 using Newtonsoft.Json;
 using Xunit;
 using Snowflake.Data.Core;
-using System;
-using System.Collections.Generic;
+
 public class QueryContextCacheTest
 {
     private QueryContextCache _qcc;

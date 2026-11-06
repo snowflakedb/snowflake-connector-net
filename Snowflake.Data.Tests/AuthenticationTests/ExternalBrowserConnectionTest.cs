@@ -1,4 +1,3 @@
-using System.Threading;
 using Xunit;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;

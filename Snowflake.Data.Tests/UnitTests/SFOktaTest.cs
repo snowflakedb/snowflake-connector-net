@@ -2,7 +2,6 @@ using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
 using System.Threading;
-using System.Threading.Tasks;
 using Snowflake.Data.Core.Session;
 using Snowflake.Data.Tests.Util;
 

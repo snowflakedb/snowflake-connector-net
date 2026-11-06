@@ -1,6 +1,5 @@
 using System;
 using System.Data.Common;
-using Snowflake.Data.Core;
 using System.Data;
 
 namespace Snowflake.Data.Client;

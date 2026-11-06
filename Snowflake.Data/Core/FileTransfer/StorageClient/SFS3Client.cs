@@ -11,7 +11,6 @@ using System.Runtime.CompilerServices;
 using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
-using Amazon.Runtime.Internal;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Tools;
 

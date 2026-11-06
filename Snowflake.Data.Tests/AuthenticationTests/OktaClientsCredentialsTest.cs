@@ -1,5 +1,4 @@
 using Xunit;
-using Snowflake.Data.Tests;
 using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
 

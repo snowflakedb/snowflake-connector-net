@@ -2,9 +2,7 @@ using Xunit;
 using Snowflake.Data.Log;
 using Snowflake.Data.Tests.Mock;
 using System;
-using System.Linq;
 using System.Text;
-using Snowflake.Data.Core;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests;

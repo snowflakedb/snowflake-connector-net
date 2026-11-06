@@ -8,7 +8,6 @@ using Snowflake.Data.Core.Session;
 using Moq;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core.Tools;
-using Snowflake.Data.Tests.IntegrationTests;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.Tests.UnitTests;

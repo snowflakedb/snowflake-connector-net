@@ -7,18 +7,18 @@ using Snowflake.Data.Core;
 using System.Linq;
 using System.IO;
 using Snowflake.Data.Telemetry;
-using Snowflake.Data.Tests.Util.Shims;
 
 namespace Snowflake.Data.Tests.IntegrationTests;
 
 using Xunit;
 using Snowflake.Data.Client;
-using Snowflake.Data.Configuration;
 using Snowflake.Data.Tests.Util;
+#if NETFRAMEWORK
+using Snowflake.Data.Tests.Util.Shims;
+#endif
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Globalization;
-using Snowflake.Data.Tests.Mock;
 
 public class SFDbCommandITAsync : SFBaseTestAsync
 {

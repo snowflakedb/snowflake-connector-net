@@ -3,7 +3,6 @@ using System.Data;
 using System.Diagnostics;
 using Xunit;
 using Snowflake.Data.Client;
-using Snowflake.Data.Tests;
 using Snowflake.Data.Tests.Util;
 
 namespace Snowflake.Data.WIFTests;
