@@ -7,59 +7,59 @@ namespace Snowflake.Data.Client;
 
 public class SnowflakeDbTransaction : DbTransaction
 {
-    private readonly SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbTransaction>();
+    private readonly SFLogger _logger = SFLoggerFactory.GetLogger<SnowflakeDbTransaction>();
 
-    private readonly IsolationLevel isolationLevel;
+    private readonly IsolationLevel _isolationLevel;
 
-    private readonly SnowflakeDbConnection connection;
+    private readonly SnowflakeDbConnection _connection;
 
-    private bool disposed;
-    private bool isCommittedOrRollbacked;
+    private bool _disposed;
+    private bool _isCommittedOrRollbacked;
 
-    internal bool IsActive => !disposed && !isCommittedOrRollbacked;
+    internal bool IsActive => !_disposed && !_isCommittedOrRollbacked;
 
     public SnowflakeDbTransaction(IsolationLevel isolationLevel, SnowflakeDbConnection connection)
     {
-        logger.Debug("Begin transaction.");
+        _logger.Debug("Begin transaction.");
         if (isolationLevel != IsolationLevel.ReadCommitted)
         {
             throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
         }
         if (connection == null)
         {
-            logger.Error("Transaction cannot be started for an unknown connection");
+            _logger.Error("Transaction cannot be started for an unknown connection");
             throw new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY);
         }
         if (!connection.IsOpen())
         {
-            logger.Error("Transaction cannot be started for a closed connection");
+            _logger.Error("Transaction cannot be started for a closed connection");
             throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
         }
 
-        this.isolationLevel = isolationLevel;
-        this.connection = connection;
+        this._isolationLevel = isolationLevel;
+        this._connection = connection;
 
         using (IDbCommand command = connection.CreateCommand())
         {
-            isCommittedOrRollbacked = false;
+            _isCommittedOrRollbacked = false;
             command.CommandText = "BEGIN";
             command.ExecuteNonQuery();
         }
         connection.ExplicitTransaction = this;
     }
 
-    public override IsolationLevel IsolationLevel => isolationLevel;
+    public override IsolationLevel IsolationLevel => _isolationLevel;
 
-    protected override DbConnection DbConnection => connection;
+    protected override DbConnection DbConnection => _connection;
 
     public override void Commit()
     {
-        logger.Debug("Commit transaction.");
-        if (!isCommittedOrRollbacked)
+        _logger.Debug("Commit transaction.");
+        if (!_isCommittedOrRollbacked)
         {
-            using (IDbCommand command = connection.CreateCommand())
+            using (IDbCommand command = _connection.CreateCommand())
             {
-                isCommittedOrRollbacked = true;
+                _isCommittedOrRollbacked = true;
                 command.CommandText = "COMMIT";
                 command.ExecuteNonQuery();
             }
@@ -68,12 +68,12 @@ public class SnowflakeDbTransaction : DbTransaction
 
     public override void Rollback()
     {
-        logger.Debug("Rollback transaction.");
-        if (!isCommittedOrRollbacked)
+        _logger.Debug("Rollback transaction.");
+        if (!_isCommittedOrRollbacked)
         {
-            using (IDbCommand command = connection.CreateCommand())
+            using (IDbCommand command = _connection.CreateCommand())
             {
-                isCommittedOrRollbacked = true;
+                _isCommittedOrRollbacked = true;
                 command.CommandText = "ROLLBACK";
                 command.ExecuteNonQuery();
             }
@@ -82,20 +82,20 @@ public class SnowflakeDbTransaction : DbTransaction
 
     protected override void Dispose(bool disposing)
     {
-        if (disposed)
+        if (_disposed)
             return;
         // Rollback the uncommitted transaction when the connection is open
-        if (connection != null && connection.IsOpen())
+        if (_connection != null && _connection.IsOpen())
         {
             // When there is no uncommitted transaction, Snowflake would just ignore the rollback request;
-            if (!isCommittedOrRollbacked)
+            if (!_isCommittedOrRollbacked)
             {
                 Rollback();
             }
-            isCommittedOrRollbacked = true;
-            connection.ExplicitTransaction = null; // let GC clean it
+            _isCommittedOrRollbacked = true;
+            _connection.ExplicitTransaction = null; // let GC clean it
         }
-        disposed = true;
+        _disposed = true;
 
         base.Dispose(disposing);
     }

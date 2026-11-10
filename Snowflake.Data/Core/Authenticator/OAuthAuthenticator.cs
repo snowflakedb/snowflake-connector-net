@@ -15,7 +15,7 @@ internal class OAuthAuthenticator : BaseAuthenticator, IAuthenticator
     private const string AUTH_NAME = "oauth";
 
     // The logger.
-    private static readonly SFLogger logger =
+    private static readonly SFLogger s_logger =
         SFLoggerFactory.GetLogger<OAuthAuthenticator>();
 
     /// <summary>

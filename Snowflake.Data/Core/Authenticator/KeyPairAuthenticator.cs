@@ -233,19 +233,19 @@ Verify the content was not corrupted during injection.";
     /// </summary>
     private class PasswordFinder : IPasswordFinder
     {
-        private readonly string password;
+        private readonly string _password;
 
         public PasswordFinder(string password)
         {
-            this.password = password;
+            this._password = password;
         }
 
         public char[] GetPassword()
         {
-            if (null == password || (0 == password.Length))
+            if (null == _password || (0 == _password.Length))
                 return null;
 
-            return password.ToCharArray();
+            return _password.ToCharArray();
         }
     }
 

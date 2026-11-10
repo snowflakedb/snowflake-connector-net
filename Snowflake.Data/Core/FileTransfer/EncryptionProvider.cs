@@ -14,13 +14,13 @@ internal class EncryptionProvider
 {
     // The default block size for AES
     private const int AES_BLOCK_SIZE = 128;
-    private const int blockSize = AES_BLOCK_SIZE / 8;  // in bytes
+    private const int BlockSize = AES_BLOCK_SIZE / 8;  // in bytes
     private const int DefaultBufferSize = 1 << 20;
 
     /// <summary>
     /// The logger.
     /// </summary>
-    private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<EncryptionProvider>();
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<EncryptionProvider>();
 
     /// <summary>
     /// Encrypt data and write to the outStream.
@@ -58,11 +58,11 @@ internal class EncryptionProvider
     {
         var decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
         var masterKeySize = decodedMasterKey.Length;
-        Logger.Debug($"Master key size : {masterKeySize}");
+        s_logger.Debug($"Master key size : {masterKeySize}");
 
         // Generate file key
-        var ivData = new byte[blockSize];
-        var keyData = new byte[blockSize];
+        var ivData = new byte[BlockSize];
+        var keyData = new byte[BlockSize];
 
         using (var rng = RandomNumberGenerator.Create())
         {

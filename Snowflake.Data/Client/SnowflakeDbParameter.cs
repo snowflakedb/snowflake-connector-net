@@ -9,21 +9,21 @@ public class SnowflakeDbParameter : DbParameter
 {
     public SFDataType SFDataType { get; set; }
 
-    private readonly SFDataType OriginType;
+    private readonly SFDataType _originType;
 
     private DbType _dbType;
 
     public SnowflakeDbParameter()
     {
         SFDataType = SFDataType.None;
-        OriginType = SFDataType.None;
+        _originType = SFDataType.None;
     }
 
     public SnowflakeDbParameter(string ParameterName, SFDataType SFDataType)
     {
         this.ParameterName = ParameterName;
         this.SFDataType = SFDataType;
-        OriginType = SFDataType;
+        _originType = SFDataType;
     }
 
     public SnowflakeDbParameter(int ParameterIndex, SFDataType SFDataType)
@@ -82,6 +82,6 @@ public class SnowflakeDbParameter : DbParameter
 
     public override void ResetDbType()
     {
-        SFDataType = OriginType;
+        SFDataType = _originType;
     }
 }

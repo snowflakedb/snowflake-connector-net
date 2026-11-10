@@ -14,61 +14,61 @@ namespace Snowflake.Data.Client;
 
 public class SnowflakeDbDataReader : DbDataReader
 {
-    private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbDataReader>();
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SnowflakeDbDataReader>();
 
-    private SnowflakeDbCommand dbCommand;
+    private SnowflakeDbCommand _dbCommand;
 
-    private readonly SFBaseResultSet resultSet;
+    private readonly SFBaseResultSet _resultSet;
 
-    private bool isClosed;
+    private bool _isClosed;
 
     private readonly bool _schemaOnly;
 
-    private DataTable SchemaTable;
+    private DataTable _schemaTable;
 
-    private int RecordsAffectedInternal;
+    private int _recordsAffectedInternal;
 
-    internal ResultFormat ResultFormat => resultSet.ResultFormat;
+    internal ResultFormat ResultFormat => _resultSet.ResultFormat;
 
     private const int MaxStringLength = 16777216; // Default maximum allowed length for VARCHAR
 
     internal SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet, bool schemaOnly)
     {
-        dbCommand = command;
-        this.resultSet = resultSet;
+        _dbCommand = command;
+        this._resultSet = resultSet;
         _schemaOnly = schemaOnly;
-        isClosed = false;
-        SchemaTable = PopulateSchemaTable(resultSet);
-        RecordsAffectedInternal = schemaOnly ? -1 : resultSet.CalculateUpdateCount();
+        _isClosed = false;
+        _schemaTable = PopulateSchemaTable(resultSet);
+        _recordsAffectedInternal = schemaOnly ? -1 : resultSet.CalculateUpdateCount();
     }
 
-    public override object this[string name] => resultSet.GetValue(GetOrdinal(name));
+    public override object this[string name] => _resultSet.GetValue(GetOrdinal(name));
 
-    public override object this[int ordinal] => resultSet.GetValue(ordinal);
+    public override object this[int ordinal] => _resultSet.GetValue(ordinal);
 
     public override int Depth => 0;
 
-    public override int FieldCount => resultSet.columnCount;
+    public override int FieldCount => _resultSet.columnCount;
 
-    public override bool HasRows => !resultSet.isClosed && resultSet.HasRows();
+    public override bool HasRows => !_resultSet.isClosed && _resultSet.HasRows();
 
-    public override bool IsClosed => isClosed;
+    public override bool IsClosed => _isClosed;
 
     /// <summary>
     /// Gets the number of rows changed, inserted, or deleted by execution of the SQL statement.
     /// Returns -1 for SELECT statements and when the reader was opened with
     /// <see cref="CommandBehavior.SchemaOnly"/>.
     /// </summary>
-    public override int RecordsAffected => RecordsAffectedInternal;
+    public override int RecordsAffected => _recordsAffectedInternal;
 
     public override DataTable GetSchemaTable()
     {
-        return SchemaTable;
+        return _schemaTable;
     }
 
     public string GetQueryId()
     {
-        return resultSet.queryId;
+        return _resultSet.queryId;
     }
 
     private static DataTable PopulateSchemaTable(SFBaseResultSet resultSet)
@@ -110,107 +110,107 @@ public class SnowflakeDbDataReader : DbDataReader
 
     public override bool GetBoolean(int ordinal)
     {
-        return resultSet.GetBoolean(ordinal);
+        return _resultSet.GetBoolean(ordinal);
     }
 
     public override byte GetByte(int ordinal)
     {
-        return resultSet.GetByte(ordinal);
+        return _resultSet.GetByte(ordinal);
     }
 
     public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
     {
-        return resultSet.GetBytes(ordinal, dataOffset, buffer, bufferOffset, length);
+        return _resultSet.GetBytes(ordinal, dataOffset, buffer, bufferOffset, length);
     }
 
     public override char GetChar(int ordinal)
     {
-        return resultSet.GetChar(ordinal);
+        return _resultSet.GetChar(ordinal);
     }
 
     public override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
     {
-        return resultSet.GetChars(ordinal, dataOffset, buffer, bufferOffset, length);
+        return _resultSet.GetChars(ordinal, dataOffset, buffer, bufferOffset, length);
     }
 
     public override string GetDataTypeName(int ordinal)
     {
-        resultSet.ThrowIfOutOfBounds(ordinal);
-        return resultSet.sfResultSetMetaData.GetColumnTypeByIndex(ordinal).ToString();
+        _resultSet.ThrowIfOutOfBounds(ordinal);
+        return _resultSet.sfResultSetMetaData.GetColumnTypeByIndex(ordinal).ToString();
     }
 
     public override DateTime GetDateTime(int ordinal)
     {
-        return resultSet.GetDateTime(ordinal);
+        return _resultSet.GetDateTime(ordinal);
     }
 
     public TimeSpan GetTimeSpan(int ordinal)
     {
-        return resultSet.GetTimeSpan(ordinal);
+        return _resultSet.GetTimeSpan(ordinal);
     }
 
     public override decimal GetDecimal(int ordinal)
     {
-        return resultSet.GetDecimal(ordinal);
+        return _resultSet.GetDecimal(ordinal);
     }
 
     public override double GetDouble(int ordinal)
     {
-        return resultSet.GetDouble(ordinal);
+        return _resultSet.GetDouble(ordinal);
     }
 
     public override IEnumerator GetEnumerator() => new DbEnumerator(this, closeReader: false);
 
     public override Type GetFieldType(int ordinal)
     {
-        resultSet.ThrowIfOutOfBounds(ordinal);
-        return resultSet.sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
+        _resultSet.ThrowIfOutOfBounds(ordinal);
+        return _resultSet.sfResultSetMetaData.GetCSharpTypeByIndex(ordinal);
     }
 
     public override float GetFloat(int ordinal)
     {
-        return resultSet.GetFloat(ordinal);
+        return _resultSet.GetFloat(ordinal);
     }
 
     public override Guid GetGuid(int ordinal)
     {
-        return resultSet.GetGuid(ordinal);
+        return _resultSet.GetGuid(ordinal);
     }
 
     public override short GetInt16(int ordinal)
     {
-        return resultSet.GetInt16(ordinal);
+        return _resultSet.GetInt16(ordinal);
     }
 
     public override int GetInt32(int ordinal)
     {
-        return resultSet.GetInt32(ordinal);
+        return _resultSet.GetInt32(ordinal);
     }
 
     public override long GetInt64(int ordinal)
     {
-        return resultSet.GetInt64(ordinal);
+        return _resultSet.GetInt64(ordinal);
     }
 
     public override string GetName(int ordinal)
     {
-        resultSet.ThrowIfOutOfBounds(ordinal);
-        return resultSet.sfResultSetMetaData.GetColumnNameByIndex(ordinal);
+        _resultSet.ThrowIfOutOfBounds(ordinal);
+        return _resultSet.sfResultSetMetaData.GetColumnNameByIndex(ordinal);
     }
 
     public override int GetOrdinal(string name)
     {
-        return resultSet.sfResultSetMetaData.GetColumnIndexByName(name);
+        return _resultSet.sfResultSetMetaData.GetColumnIndexByName(name);
     }
 
     public override string GetString(int ordinal)
     {
-        return resultSet.GetString(ordinal);
+        return _resultSet.GetString(ordinal);
     }
 
     public override object GetValue(int ordinal)
     {
-        return resultSet.GetValue(ordinal);
+        return _resultSet.GetValue(ordinal);
     }
 
     public override int GetValues(object[] values)
@@ -228,7 +228,7 @@ public class SnowflakeDbDataReader : DbDataReader
     {
         try
         {
-            var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+            var rowType = _resultSet.sfResultSetMetaData.rowTypes[ordinal];
             var fields = rowType.fields;
             if (fields == null || fields.Count == 0 || !JsonToStructuredTypeConverter.IsObjectType(rowType.type))
             {
@@ -240,13 +240,13 @@ public class SnowflakeDbDataReader : DbDataReader
                 case string stringValue:
                     {
                         var json = stringValue == null ? null : JObject.Parse(stringValue);
-                        var sessionTimezone = resultSet.sfStatement.SfSession.GetSessionTimezone();
+                        var sessionTimezone = _resultSet.sfStatement.SfSession.GetSessionTimezone();
                         return JsonToStructuredTypeConverter.ConvertObject<T>(fields, json, sessionTimezone);
                     }
                 case Dictionary<string, object> structArray:
                     return ArrowConverter.ConvertObject<T>(structArray);
                 default:
-                    logger.Debug($"Unexpected value of type {val?.GetType().FullName} at ordinal {ordinal}.");
+                    s_logger.Debug($"Unexpected value of type {val?.GetType().FullName} at ordinal {ordinal}.");
                     return null;
             }
         }
@@ -262,7 +262,7 @@ public class SnowflakeDbDataReader : DbDataReader
     {
         try
         {
-            var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+            var rowType = _resultSet.sfResultSetMetaData.rowTypes[ordinal];
             var fields = rowType.fields;
             var isArrayOrVector = JsonToStructuredTypeConverter.IsArrayType(rowType.type) ||
                                   JsonToStructuredTypeConverter.IsVectorType(rowType.type);
@@ -276,13 +276,13 @@ public class SnowflakeDbDataReader : DbDataReader
                 case string stringValue:
                     {
                         var json = stringValue == null ? null : JArray.Parse(stringValue);
-                        var sessionTimezone = resultSet.sfStatement.SfSession.GetSessionTimezone();
+                        var sessionTimezone = _resultSet.sfStatement.SfSession.GetSessionTimezone();
                         return JsonToStructuredTypeConverter.ConvertArray<T>(fields, json, sessionTimezone);
                     }
                 case List<object> listArray:
                     return ArrowConverter.ConvertArray<T>(listArray);
                 default:
-                    logger.Debug($"Unexpected value of type {val?.GetType().FullName} at ordinal {ordinal}.");
+                    s_logger.Debug($"Unexpected value of type {val?.GetType().FullName} at ordinal {ordinal}.");
                     return null;
             }
         }
@@ -298,7 +298,7 @@ public class SnowflakeDbDataReader : DbDataReader
     {
         try
         {
-            var rowType = resultSet.sfResultSetMetaData.rowTypes[ordinal];
+            var rowType = _resultSet.sfResultSetMetaData.rowTypes[ordinal];
             var fields = rowType.fields;
             if (fields == null || fields.Count == 0 || !JsonToStructuredTypeConverter.IsMapType(rowType.type))
             {
@@ -310,13 +310,13 @@ public class SnowflakeDbDataReader : DbDataReader
                 case string stringValue:
                     {
                         var json = stringValue == null ? null : JObject.Parse(stringValue);
-                        var sessionTimezone = resultSet.sfStatement.SfSession.GetSessionTimezone();
+                        var sessionTimezone = _resultSet.sfStatement.SfSession.GetSessionTimezone();
                         return JsonToStructuredTypeConverter.ConvertMap<TKey, TValue>(fields, json, sessionTimezone);
                     }
                 case Dictionary<object, object> mapArray:
                     return ArrowConverter.ConvertMap<TKey, TValue>(mapArray);
                 default:
-                    logger.Debug($"Unexpected value of type {val?.GetType().FullName} at ordinal {ordinal}.");
+                    s_logger.Debug($"Unexpected value of type {val?.GetType().FullName} at ordinal {ordinal}.");
                     return null;
             }
         }
@@ -330,15 +330,15 @@ public class SnowflakeDbDataReader : DbDataReader
 
     public override bool IsDBNull(int ordinal)
     {
-        return resultSet.IsDBNull(ordinal);
+        return _resultSet.IsDBNull(ordinal);
     }
 
     public override bool NextResult()
     {
-        if (resultSet.NextResult())
+        if (_resultSet.NextResult())
         {
-            SchemaTable = PopulateSchemaTable(resultSet);
-            RecordsAffectedInternal = _schemaOnly ? -1 : resultSet.CalculateUpdateCount();
+            _schemaTable = PopulateSchemaTable(_resultSet);
+            _recordsAffectedInternal = _schemaOnly ? -1 : _resultSet.CalculateUpdateCount();
             return true;
         }
         return false;
@@ -346,10 +346,10 @@ public class SnowflakeDbDataReader : DbDataReader
 
     public override async Task<bool> NextResultAsync(CancellationToken cancellationToken)
     {
-        if (await resultSet.NextResultAsync(cancellationToken).ConfigureAwait(false))
+        if (await _resultSet.NextResultAsync(cancellationToken).ConfigureAwait(false))
         {
-            SchemaTable = PopulateSchemaTable(resultSet);
-            RecordsAffectedInternal = _schemaOnly ? -1 : resultSet.CalculateUpdateCount();
+            _schemaTable = PopulateSchemaTable(_resultSet);
+            _recordsAffectedInternal = _schemaOnly ? -1 : _resultSet.CalculateUpdateCount();
             return true;
         }
         return false;
@@ -357,21 +357,21 @@ public class SnowflakeDbDataReader : DbDataReader
 
     public override bool Read()
     {
-        return resultSet.Next();
+        return _resultSet.Next();
     }
 
     public override async Task<bool> ReadAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        return await resultSet.NextAsync().ConfigureAwait(false);
+        return await _resultSet.NextAsync().ConfigureAwait(false);
     }
 
     public override void Close()
     {
         base.Close();
-        resultSet.Close();
-        isClosed = true;
+        _resultSet.Close();
+        _isClosed = true;
     }
 
     private static bool IsStructuredOrSemiStructuredType(string type)

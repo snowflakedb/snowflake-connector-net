@@ -11,7 +11,7 @@ namespace Snowflake.Data.Core.Revocation;
 
 internal class FileCrlCache : ICrlCache
 {
-    private static readonly object _lock = new();
+    private static readonly object s_lock = new();
     private const FileAccessPermissions UnwantedUnixPermissions = FileAccessPermissions.GroupWrite | FileAccessPermissions.OtherWrite;
     private const FileAccessPermissions WantedUnixDirPermissions = FileAccessPermissions.UserReadWriteExecute;
     private const FileAccessPermissions WantedUnixFilePermissions = FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite;
@@ -44,7 +44,7 @@ internal class FileCrlCache : ICrlCache
         s_logger.Debug($"Reading crl from file cache for url: {crlUrl}");
         try
         {
-            lock (_lock)
+            lock (s_lock)
             {
                 var filePath = ResolveFilePath(crlUrl);
                 byte[] fileBytes;
@@ -86,7 +86,7 @@ internal class FileCrlCache : ICrlCache
         s_logger.Debug($"Updating file crl cache for crl url: {crlUrl}");
         try
         {
-            lock (_lock)
+            lock (s_lock)
             {
                 var filePath = ResolveFilePath(crlUrl);
                 if (!MakeCacheDirectorySecure())
@@ -268,7 +268,7 @@ internal class FileCrlCache : ICrlCache
 
         try
         {
-            lock (_lock)
+            lock (s_lock)
             {
                 if (!_directoryOperations.Exists(_config.DirectoryPath))
                 {

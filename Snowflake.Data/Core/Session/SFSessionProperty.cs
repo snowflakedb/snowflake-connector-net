@@ -189,7 +189,7 @@ internal class SFSessionPropertyAttr : Attribute
 
 internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
 {
-    private static SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
+    private static SFLogger s_logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
 
     internal string ConnectionStringWithoutSecrets { get; set; }
 
@@ -243,7 +243,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         }
         catch (InvalidCastException)
         {
-            logger.Warn("Invalid casting to SFSessionProperties");
+            s_logger.Warn("Invalid casting to SFSessionProperties");
             return false;
         }
     }
@@ -255,7 +255,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
 
     internal static SFSessionProperties ParseConnectionString(string connectionString, SessionPropertiesContext propertiesContext)
     {
-        logger.Info("Start parsing connection string.");
+        s_logger.Info("Start parsing connection string.");
         var builder = new DbConnectionStringBuilder();
         try
         {
@@ -263,7 +263,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         }
         catch (ArgumentException e)
         {
-            logger.Warn("Invalid connectionString", e);
+            s_logger.Warn("Invalid connectionString", e);
             throw new SnowflakeDbException(e,
                 SFError.INVALID_CONNECTION_STRING,
                 args: e.Message);
@@ -289,9 +289,9 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
             catch (ArgumentException)
             {
                 if (s_noLongerSupportedProperties.Contains(keys[i].ToUpperInvariant()))
-                    logger.Warn($"Property {keys[i]} is no longer supported. Its value is ignored.");
+                    s_logger.Warn($"Property {keys[i]} is no longer supported. Its value is ignored.");
                 else
-                    logger.Debug($"Property {keys[i]} not found - ignored.");
+                    s_logger.Debug($"Property {keys[i]} not found - ignored.");
             }
         }
 
@@ -307,7 +307,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
             catch (Exception e)
             {
                 // The useProxy setting is not a valid boolean value
-                logger.Error("Unable to connect", e);
+                s_logger.Error("Unable to connect", e);
                 throw new SnowflakeDbException(e,
                     SFError.INVALID_CONNECTION_STRING,
                     args: e.Message);
@@ -356,16 +356,16 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
             if (!allowUnderscoresInHost && compliantAccountName.Contains('_'))
             {
                 compliantAccountName = compliantAccountName.Replace('_', '-');
-                logger.Info($"Replacing _ with - in the account name. Old: {properties[SFSessionProperty.ACCOUNT]}, new: {compliantAccountName}.");
+                s_logger.Info($"Replacing _ with - in the account name. Old: {properties[SFSessionProperty.ACCOUNT]}, new: {compliantAccountName}.");
             }
             var hostName = $"{compliantAccountName}.{SnowflakeHost.DefaultHost}";
             // Remove in case it's here but empty
             properties.Remove(SFSessionProperty.HOST);
             properties.Add(SFSessionProperty.HOST, hostName);
-            logger.Info($"Compose host name: {hostName}");
+            s_logger.Info($"Compose host name: {hostName}");
         }
         ValidateSchemeHostPort(properties);
-        logger.Info(ResolveConnectionAreaMessage(properties[SFSessionProperty.HOST]));
+        s_logger.Info(ResolveConnectionAreaMessage(properties[SFSessionProperty.HOST]));
 
         // Trim the account name to remove the region and cloud platform if any were provided
         // because the login request data does not expect region and cloud information to be
@@ -375,7 +375,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         return properties;
     }
 
-    private static void ValidateLoggingConfig(SFSessionProperties properties) => QueryLoggingConfig.ValidateAndExtract(properties, logger, out _);
+    private static void ValidateLoggingConfig(SFSessionProperties properties) => QueryLoggingConfig.ValidateAndExtract(properties, s_logger, out _);
 
     private static void ValidateCrlParameters(SFSessionProperties properties)
     {
@@ -395,19 +395,19 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         if (!validTlsValues.Contains(minTls))
         {
             var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.MINTLS.ToString()} should have one of the following values: TLS12, TLS13.");
-            logger.Error(exception.Message, exception);
+            s_logger.Error(exception.Message, exception);
             throw exception;
         }
         if (!validTlsValues.Contains(maxTls))
         {
             var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.MAXTLS.ToString()} should have one of the following values: TLS12, TLS13.");
-            logger.Error(exception.Message, exception);
+            s_logger.Error(exception.Message, exception);
             throw exception;
         }
         if (validTlsValues.IndexOf(minTls) > validTlsValues.IndexOf(maxTls))
         {
             var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.MINTLS.ToString()} value cannot be higher than {SFSessionProperty.MAXTLS.ToString()} value.");
-            logger.Error(exception.Message, exception);
+            s_logger.Error(exception.Message, exception);
             throw exception;
         }
     }
@@ -418,7 +418,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         if (!Enum.TryParse<CertRevocationCheckMode>(certRevocationCheckModeString, true, out var certRevocationCheckMode))
         {
             var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.CERTREVOCATIONCHECKMODE.ToString()} should have one of following values: ENABLED, ADVISORY, DISABLED, NATIVE.");
-            logger.Error(exception.Message, exception);
+            s_logger.Error(exception.Message, exception);
             throw exception;
         }
         return certRevocationCheckMode;
@@ -430,7 +430,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         if (!bool.TryParse(propertyString, out var result))
         {
             var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should have a boolean value.");
-            logger.Error(exception.Message, exception);
+            s_logger.Error(exception.Message, exception);
             throw exception;
         }
         return result;
@@ -442,13 +442,13 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         if (!int.TryParse(propertyString, out var result))
         {
             var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should have an integer value.");
-            logger.Error(exception.Message, exception);
+            s_logger.Error(exception.Message, exception);
             throw exception;
         }
         if (result <= 0)
         {
             var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should be greater than 0.");
-            logger.Error(exception.Message, exception);
+            s_logger.Error(exception.Message, exception);
             throw exception;
         }
         return result;
@@ -460,13 +460,13 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         if (!long.TryParse(propertyString, out var result))
         {
             var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should have a long value.");
-            logger.Error(exception.Message, exception);
+            s_logger.Error(exception.Message, exception);
             throw exception;
         }
         if (result <= 0)
         {
             var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {property.ToString()} should be greater than 0.");
-            logger.Error(exception.Message, exception);
+            s_logger.Error(exception.Message, exception);
             throw exception;
         }
         return result;
@@ -480,7 +480,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         if (!int.TryParse(properties[SFSessionProperty.PORT], out var port))
         {
             var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_PARAMETER_VALUE, SFSessionProperty.PORT, "a non integer value");
-            logger.Error(exception.Message, exception);
+            s_logger.Error(exception.Message, exception);
             throw exception;
         }
         uriBuilder.Port = port;
@@ -488,7 +488,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         if (!Uri.IsWellFormedUriString(uri, UriKind.Absolute))
         {
             var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, "scheme/host/port properties do not combine into a valid uri");
-            logger.Error(exception.Message, exception);
+            s_logger.Error(exception.Message, exception);
             throw exception;
         }
     }
@@ -500,7 +500,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
             if (!bool.TryParse(clientStoreTemporaryCredential, out _))
             {
                 var errorMessage = $"Invalid value of {SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL} parameter";
-                logger.Error(errorMessage);
+                s_logger.Error(errorMessage);
                 throw new SnowflakeDbException(
                     new Exception(errorMessage),
                     SFError.INVALID_CONNECTION_PARAMETER_VALUE,
@@ -519,7 +519,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
             var isSnowflakeHost = ValidateOAuthUrlsReturningIfTheyAreSnowflake(properties);
             if (isSnowflakeHost && !IsPropertyProvided(SFSessionProperty.OAUTHCLIENTID, properties) && !IsPropertyProvided(SFSessionProperty.OAUTHCLIENTSECRET, properties))
             {
-                logger.Debug($"Using default values for OAUTHCLIENTID and OAUTHCLIENTSECRET");
+                s_logger.Debug($"Using default values for OAUTHCLIENTID and OAUTHCLIENTSECRET");
                 properties[SFSessionProperty.OAUTHCLIENTID] = DefaultOAuthClientIdAndSecret;
                 properties[SFSessionProperty.OAUTHCLIENTSECRET] = DefaultOAuthClientIdAndSecret;
             }
@@ -558,7 +558,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         if (!bool.TryParse(enableSingleUserRefreshTokens, out _))
         {
             var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Parameter {SFSessionProperty.OAUTHENABLESINGLEUSEREFRESHTOKENS.ToString()} value should be parsable as boolean.");
-            logger.Error(exception.Message);
+            s_logger.Error(exception.Message);
             throw exception;
         }
     }
@@ -613,7 +613,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         {
             var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING,
                 "You cannot enable pooling for oauth authorization code authentication without specifying a user in the connection string.");
-            logger.Error("Invalid connection string", exception);
+            s_logger.Error("Invalid connection string", exception);
             throw exception;
         }
     }
@@ -625,7 +625,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         if (properties.TryGetValue(SFSessionProperty.ROLE, out var role) && !string.IsNullOrEmpty(role))
             return;
         var errorMessage = $"Either property {SFSessionProperty.OAUTHSCOPE.ToString()} or {SFSessionProperty.ROLE.ToString()} should be specified";
-        logger.Error(errorMessage);
+        s_logger.Error(errorMessage);
         throw new SnowflakeDbException(
             new Exception(errorMessage),
             SFError.MISSING_CONNECTION_PROPERTY,
@@ -645,7 +645,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
             var missingParameter = string.IsNullOrEmpty(externalAuthorizationUrl)
                 ? SFSessionProperty.OAUTHAUTHORIZATIONURL
                 : SFSessionProperty.OAUTHTOKENREQUESTURL;
-            logger.Error(errorMessage);
+            s_logger.Error(errorMessage);
             throw new SnowflakeDbException(
                 new Exception(errorMessage),
                 SFError.MISSING_CONNECTION_PROPERTY,
@@ -659,7 +659,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         var externalTokenRequestUrlHost = GetHost(externalTokenRequestUrl);
         if (!externalAuthorizationUrlHost.Equals(externalTokenRequestUrlHost))
         {
-            logger.Warn($"Properties {SFSessionProperty.OAUTHAUTHORIZATIONURL.ToString()} and {SFSessionProperty.OAUTHTOKENREQUESTURL.ToString()} are configured for a different host");
+            s_logger.Warn($"Properties {SFSessionProperty.OAUTHAUTHORIZATIONURL.ToString()} and {SFSessionProperty.OAUTHTOKENREQUESTURL.ToString()} are configured for a different host");
         }
         return SnowflakeHost.IsSnowflakeHost(externalAuthorizationUrlHost) && SnowflakeHost.IsSnowflakeHost(externalTokenRequestUrlHost);
     }
@@ -670,7 +670,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         if (scheme != "https")
         {
             var message = $"Insecure {SFSessionProperty.SCHEME} property value. Http protocol is not secure.";
-            logger.Warn(message);
+            s_logger.Warn(message);
         }
     }
 
@@ -686,13 +686,13 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         if (!string.IsNullOrEmpty(url) && !url.StartsWith("https://") && !url.StartsWith("http://"))
         {
             var exception = new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, $"Missing or invalid protocol in the {oauthUrlProperty} url.");
-            logger.Error("Invalid connection string", exception);
+            s_logger.Error("Invalid connection string", exception);
             throw exception;
         }
         if (!string.IsNullOrEmpty(url) && !url.StartsWith("https://"))
         {
             var message = $"Insecure {oauthUrlProperty.ToString()} property value. It does not start with 'https://'";
-            logger.Warn(message);
+            s_logger.Warn(message);
         }
         return url;
     }
@@ -738,7 +738,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
             {
                 authenticator = authenticator.ToLower();
                 var error = $"Unknown authenticator: {authenticator}";
-                logger.Error(error);
+                s_logger.Error(error);
                 throw new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, authenticator);
             }
         }
@@ -751,7 +751,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
             if (!bool.TryParse(passCodeInPassword, out _))
             {
                 var errorMessage = $"Invalid value of {SFSessionProperty.PASSCODEINPASSWORD.ToString()} parameter";
-                logger.Error(errorMessage);
+                s_logger.Error(errorMessage);
                 throw new SnowflakeDbException(
                     new Exception(errorMessage),
                     SFError.INVALID_CONNECTION_PARAMETER_VALUE,
@@ -847,7 +847,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
             return;
         if (IsAccountRegexMatched(account))
             return;
-        logger.Error($"Invalid account {account}");
+        s_logger.Error($"Invalid account {account}");
         throw new SnowflakeDbException(
             new Exception("Invalid account"),
             SFError.INVALID_CONNECTION_PARAMETER_VALUE,
@@ -877,12 +877,12 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
             {
                 if (defaultNonWindowsVal != null && !isWindows)
                 {
-                    logger.Debug($"Session property {sessionProperty} set to default value: {defaultNonWindowsVal}");
+                    s_logger.Debug($"Session property {sessionProperty} set to default value: {defaultNonWindowsVal}");
                     properties.Add(sessionProperty, defaultNonWindowsVal);
                 }
                 else if (defaultVal != null)
                 {
-                    logger.Debug($"Session property {sessionProperty} set to default value: {defaultVal}");
+                    s_logger.Debug($"Session property {sessionProperty} set to default value: {defaultVal}");
                     properties.Add(sessionProperty, defaultVal);
                 }
             }
@@ -899,13 +899,13 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         if (!properties.ContainsKey(sessionProperty))
         {
             var e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
-            logger.Error("Missing connection property", e);
+            s_logger.Error("Missing connection property", e);
             throw e;
         }
         if (string.IsNullOrEmpty(properties[sessionProperty]))
         {
             var e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
-            logger.Error("Empty connection property", e);
+            s_logger.Error("Empty connection property", e);
             throw e;
         }
     }
@@ -925,13 +925,13 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         }
         catch (Exception e)
         {
-            logger.Error($"Value for parameter {propertyName} could not be parsed");
+            s_logger.Error($"Value for parameter {propertyName} could not be parsed");
             throw new SnowflakeDbException(e, SFError.INVALID_CONNECTION_PARAMETER_VALUE, args: [maxBytesInMemoryString, propertyName]);
         }
 
         if (maxBytesInMemory is < -1 or 0)
         {
-            logger.Error($"Value for parameter {propertyName} should be positive or -1");
+            s_logger.Error($"Value for parameter {propertyName} should be positive or -1");
             throw new SnowflakeDbException(
                 new Exception($"Value for parameter {propertyName} should be positive or -1"),
                 SFError.INVALID_CONNECTION_PARAMETER_VALUE, args: [maxBytesInMemoryString, propertyName]);
@@ -945,7 +945,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
             if (!int.TryParse(servicePointConnectionLimit, out _))
             {
                 var errorMessage = $"Invalid value of {SFSessionProperty.SERVICE_POINT_CONNECTION_LIMIT.ToString()} parameter";
-                logger.Error(errorMessage);
+                s_logger.Error(errorMessage);
                 throw new SnowflakeDbException(
                     new Exception(errorMessage),
                     SFError.INVALID_CONNECTION_PARAMETER_VALUE,
@@ -1013,7 +1013,7 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
         }
         catch (Exception e)
         {
-            logger.Warn("Unable to parse property 'allowUnderscoresInHost'", e);
+            s_logger.Warn("Unable to parse property 'allowUnderscoresInHost'", e);
         }
 
         return allowUnderscoresInHost;
@@ -1021,8 +1021,8 @@ internal class SFSessionProperties : Dictionary<SFSessionProperty, string>
 
     internal static SFLogger ReplaceLogger(SFLogger newLogger)
     {
-        var oldLogger = logger;
-        logger = newLogger;
+        var oldLogger = s_logger;
+        s_logger = newLogger;
         return oldLogger;
     }
 }

@@ -369,8 +369,8 @@ internal class CertificateRevocationVerifier
 
     private static byte[] GetSubjectKeyIdentifierOctets(X509Certificate2 certificate)
     {
-        const string skiOid = "2.5.29.14";
-        var skiExt = certificate.Extensions[skiOid];
+        const string SkiOid = "2.5.29.14";
+        var skiExt = certificate.Extensions[SkiOid];
         if (skiExt == null)
             return null;
         var ski = SubjectKeyIdentifier.GetInstance(Asn1Object.FromByteArray(skiExt.RawData));

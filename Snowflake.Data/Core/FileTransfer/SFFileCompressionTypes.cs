@@ -129,7 +129,7 @@ internal class SFFileCompressionTypes
     public static readonly SFFileCompressionType NONE = new(NONE_EXTENSION, NONE_NAME, true);
 
 
-    private static readonly IReadOnlyList<SFFileCompressionType> compressionTypes =
+    private static readonly IReadOnlyList<SFFileCompressionType> s_compressionTypes =
         new List<SFFileCompressionType> {
             GZIP,
             DEFLATE,
@@ -166,7 +166,7 @@ internal class SFFileCompressionTypes
 #endif
         stream.Position = 0;
 
-        var compType = compressionTypes.FirstOrDefault(x => x.MatchMagicNumber(header));
+        var compType = s_compressionTypes.FirstOrDefault(x => x.MatchMagicNumber(header));
         return compType == default ? NONE : compType;
     }
 
@@ -183,7 +183,7 @@ internal class SFFileCompressionTypes
 #endif
         }
 
-        foreach (var compType in compressionTypes)
+        foreach (var compType in s_compressionTypes)
         {
             if (!compType.MatchMagicNumber(header))
                 continue;
@@ -209,7 +209,7 @@ internal class SFFileCompressionTypes
         {
             fileExtension = "." + fileExtension;
         }
-        foreach (var compType in compressionTypes)
+        foreach (var compType in s_compressionTypes)
         {
             if (compType.FileExtension.Equals(fileExtension, StringComparison.InvariantCultureIgnoreCase))
             {
@@ -230,7 +230,7 @@ internal class SFFileCompressionTypes
         {
             name = name.Substring(1);
         }
-        foreach (var compType in compressionTypes)
+        foreach (var compType in s_compressionTypes)
         {
             if (compType.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
             {

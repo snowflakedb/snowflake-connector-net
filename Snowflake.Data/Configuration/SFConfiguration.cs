@@ -11,11 +11,11 @@ public class SFConfiguration
         ChunkParserVersion = 3;
     }
 
-    private static readonly SFConfiguration Config = new();
+    private static readonly SFConfiguration s_config = new();
 
     public static SFConfiguration Instance()
     {
-        return Config;
+        return s_config;
     }
 
     public int GetChunkParserVersion()

@@ -6,7 +6,7 @@ namespace Snowflake.Data.Core.Session;
 
 internal class SessionOrCreationTokens
 {
-    internal static readonly List<SessionCreationToken> s_emptySessionCreationTokenList = new(); // used as a memory optimization not to create many short living empty list
+    internal static readonly List<SessionCreationToken> EmptySessionCreationTokenList = new(); // used as a memory optimization not to create many short living empty list
 
     public SFSession Session { get; }
     public List<SessionCreationToken> SessionCreationTokens { get; }
@@ -14,7 +14,7 @@ internal class SessionOrCreationTokens
     public SessionOrCreationTokens(SFSession session)
     {
         Session = session ?? throw new Exception("Internal error: missing session");
-        SessionCreationTokens = s_emptySessionCreationTokenList;
+        SessionCreationTokens = EmptySessionCreationTokenList;
     }
 
     public SessionOrCreationTokens(List<SessionCreationToken> sessionCreationTokens)

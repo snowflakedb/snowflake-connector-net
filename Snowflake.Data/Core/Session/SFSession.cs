@@ -21,13 +21,13 @@ namespace Snowflake.Data.Core;
 
 internal class SFSession
 {
-    private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSession>();
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFSession>();
 
     private static readonly Regex APPLICATION_REGEX = new(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
 
     private const string SF_AUTHORIZATION_SNOWFLAKE_FMT = "Snowflake Token=\"{0}\"";
 
-    private const int _defaultQueryContextCacheSize = 5;
+    private const int DefaultQueryContextCacheSize = 5;
 
     internal string sessionId;
 
@@ -66,8 +66,8 @@ internal class SFSession
 
     internal bool isHeartBeatEnabled;
 
-    private string arrayBindStage;
-    private int arrayBindStageThreshold;
+    private string _arrayBindStage;
+    private int _arrayBindStageThreshold;
     internal TimeSpan MasterValidity;
 
     private readonly EasyLoggingStarter _easyLoggingStarter = EasyLoggingStarter.Instance;
@@ -82,9 +82,9 @@ internal class SFSession
 
     internal SFSessionHttpClientProperties ClientProperties { get; }
 
-    private readonly QueryContextCache _queryContextCache = new(_defaultQueryContextCacheSize);
+    private readonly QueryContextCache _queryContextCache = new(DefaultQueryContextCacheSize);
 
-    private int _queryContextCacheSize = _defaultQueryContextCacheSize;
+    private int _queryContextCacheSize = DefaultQueryContextCacheSize;
 
     private readonly bool _disableQueryContextCache;
 
@@ -131,7 +131,7 @@ internal class SFSession
             UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
             if (_disableQueryContextCache)
             {
-                logger.Debug("Query context cache disabled.");
+                s_logger.Debug("Query context cache disabled.");
             }
 
             if (bool.Parse(properties[SFSessionProperty.CLIENT_STORE_TEMPORARY_CREDENTIAL]) &&
@@ -146,7 +146,7 @@ internal class SFSession
                 SnowflakeCredentialManagerFactory.GetCredentialManager().SaveCredentials(
                     BuildTokenCacheKey(TokenType.MFAToken), authnResponse.data.mfaToken);
             }
-            logger.Debug($"Session opened: {sessionId}");
+            s_logger.Debug($"Session opened: {sessionId}");
             _startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             _timeSinceLastRenew = _startTime;
             SnowflakeTelemetryModule.Register(this);
@@ -159,11 +159,11 @@ internal class SFSession
                 authnResponse.message,
                 "");
 
-            logger.Error("Authentication failed", e);
+            s_logger.Error("Authentication failed", e);
 
             if (SFMFATokenErrors.IsInvalidMFATokenContinueError(e.ErrorCode))
             {
-                logger.Info($"Unable to use cached MFA token is expired or invalid. Fails with the {e.Message}. ", e);
+                s_logger.Info($"Unable to use cached MFA token is expired or invalid. Fails with the {e.Message}. ", e);
                 _mfaToken = null;
                 SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(
                     BuildTokenCacheKey(TokenType.MFAToken));
@@ -233,7 +233,7 @@ internal class SFSession
             properties.TryGetValue(SFSessionProperty.CLIENT_CONFIG_FILE, out var easyLoggingConfigFile);
             _easyLoggingStarter.Init(easyLoggingConfigFile);
             properties.TryGetValue(SFSessionProperty.QUERY_TAG, out _queryTag);
-            QueryLoggingConfig.ValidateAndExtract(properties, logger, out _queryLoggingConfig);
+            QueryLoggingConfig.ValidateAndExtract(properties, s_logger, out _queryLoggingConfig);
 
             if (properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var _authenticatorType) &&
                 MFACacheAuthenticator.IsMfaCacheAuthenticator(_authenticatorType))
@@ -244,12 +244,12 @@ internal class SFSession
         }
         catch (SnowflakeDbException e)
         {
-            logger.Error("Unable to initialize session ", e);
+            s_logger.Error("Unable to initialize session ", e);
             throw;
         }
         catch (Exception e)
         {
-            logger.Error("Unable to initialize session ", e);
+            s_logger.Error("Unable to initialize session ", e);
             throw new SnowflakeDbException(e,
                 SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
                 SFError.INVALID_CONNECTION_STRING,
@@ -331,13 +331,13 @@ internal class SFSession
 
     internal virtual void Open()
     {
-        logger.Debug("Open Session");
+        s_logger.Debug("Open Session");
         _authenticator.Value.Authenticate();
     }
 
     internal virtual async Task OpenAsync(CancellationToken cancellationToken)
     {
-        logger.Debug("Open Session Async");
+        s_logger.Debug("Open Session Async");
         await _authenticator.Value.AuthenticateAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -345,7 +345,7 @@ internal class SFSession
     {
         // Nothing to do if the session is not open
         if (!IsEstablished()) return;
-        logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
+        s_logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
         StopHeartBeatForThisSession();
         SnowflakeTelemetryModule.Unregister(sessionId);
         var closeSessionRequest = PrepareCloseSessionRequest();
@@ -357,7 +357,7 @@ internal class SFSession
     {
         // Nothing to do if the session is not open
         if (!IsEstablished()) return;
-        logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
+        s_logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
         StopHeartBeatForThisSession();
         var closeSessionRequest = PrepareCloseSessionRequest();
         Task.Run(() =>
@@ -372,19 +372,19 @@ internal class SFSession
     {
         // Nothing to do if the session is not open
         if (!IsEstablished()) return;
-        logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
+        s_logger.Debug($"Closing session with id: {sessionId}, user: {_user}, database: {database}, schema: {schema}, role: {role}, warehouse: {warehouse}, connection start timestamp: {_startTime}");
         StopHeartBeatForThisSession();
         await SnowflakeTelemetryModule.UnregisterAsync(sessionId, cancellationToken).ConfigureAwait(false);
         var closeSessionRequest = PrepareCloseSessionRequest();
 
-        logger.Debug($"Closing session async");
+        s_logger.Debug($"Closing session async");
         var response = await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
         if (!response.success)
         {
-            logger.Error($"Failed to close session {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
+            s_logger.Error($"Failed to close session {sessionId}, error ignored. Code: {response.code} Message: {response.message}");
         }
 
-        logger.Debug($"Session closed: {sessionId}");
+        s_logger.Debug($"Session closed: {sessionId}");
         sessionToken = null;
     }
 
@@ -392,18 +392,18 @@ internal class SFSession
     {
         try
         {
-            logger.Debug($"Closing session");
+            s_logger.Debug($"Closing session");
             var response = restRequester.Post<CloseResponse>(closeSessionRequest);
             if (!response.success)
             {
-                logger.Error($"Failed to close session: {closeSessionRequest.SessionId}, error ignored. Code: {response.code} Message: {response.message}");
+                s_logger.Error($"Failed to close session: {closeSessionRequest.SessionId}, error ignored. Code: {response.code} Message: {response.message}");
             }
 
-            logger.Debug($"Session closed: {closeSessionRequest.SessionId}");
+            s_logger.Debug($"Session closed: {closeSessionRequest.SessionId}");
         }
         catch (Exception)
         {
-            logger.Error($"Failed to close session: {closeSessionRequest.SessionId}, because of exception.");
+            s_logger.Error($"Failed to close session: {closeSessionRequest.SessionId}, because of exception.");
             throw;
         }
     }
@@ -427,13 +427,13 @@ internal class SFSession
 
     internal void RenewSession()
     {
-        logger.Info("Renew the session.");
+        s_logger.Info("Renew the session.");
         var response = restRequester.Post<RenewSessionResponse>(GetRenewSessionRequest());
         if (!response.success)
         {
             var e = new SnowflakeDbException("",
                 response.code, response.message, sessionId);
-            logger.Error($"Renew session (ID: {sessionId}) failed", e);
+            s_logger.Error($"Renew session (ID: {sessionId}) failed", e);
             throw e;
         }
         else
@@ -447,7 +447,7 @@ internal class SFSession
 
     internal async Task RenewSessionAsync(CancellationToken cancellationToken)
     {
-        logger.Info("Renew the session.");
+        s_logger.Info("Renew the session.");
         var response =
             await restRequester.PostAsync<RenewSessionResponse>(
                 GetRenewSessionRequest(),
@@ -457,7 +457,7 @@ internal class SFSession
         {
             var e = new SnowflakeDbException("",
                 response.code, response.message, sessionId);
-            logger.Error($"Renew session (ID: {sessionId}) failed", e);
+            s_logger.Error($"Renew session (ID: {sessionId}) failed", e);
             throw e;
         }
         else
@@ -495,7 +495,7 @@ internal class SFSession
 
     internal void UpdateSessionParameterMap(List<NameValueParameter> parameterList)
     {
-        logger.Debug("Update parameter map");
+        s_logger.Debug("Update parameter map");
         // with HTAP parameter removal parameters might not returned
         // query response
         if (parameterList is null)
@@ -517,7 +517,7 @@ internal class SFSession
         if (ParameterMap.ContainsKey(SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD))
         {
             var val = ParameterMap[SFSessionParameter.CLIENT_STAGE_ARRAY_BINDING_THRESHOLD].ToString();
-            arrayBindStageThreshold = int.Parse(val);
+            _arrayBindStageThreshold = int.Parse(val);
         }
         if (ParameterMap.TryGetValue(SFSessionParameter.CLIENT_SESSION_KEEP_ALIVE, out var value))
         {
@@ -607,7 +607,7 @@ internal class SFSession
             }
             catch (TimeZoneNotFoundException)
             {
-                logger.Warn($"Session timezone '{timezoneString}' not found, falling back to local time");
+                s_logger.Warn($"Session timezone '{timezoneString}' not found, falling back to local time");
                 return TimeZoneInfo.Local;
             }
         }
@@ -685,27 +685,27 @@ internal class SFSession
 
     public string GetArrayBindStage()
     {
-        return arrayBindStage;
+        return _arrayBindStage;
     }
 
     public void SetArrayBindStage(string arrayBindStage)
     {
-        this.arrayBindStage = string.Format("{0}.{1}.{2}", database, schema, arrayBindStage);
+        this._arrayBindStage = string.Format("{0}.{1}.{2}", database, schema, arrayBindStage);
     }
 
     public int GetArrayBindStageThreshold()
     {
-        return arrayBindStageThreshold;
+        return _arrayBindStageThreshold;
     }
 
     public void SetArrayBindStageThreshold(int arrayBindStageThreshold)
     {
-        this.arrayBindStageThreshold = arrayBindStageThreshold;
+        this._arrayBindStageThreshold = arrayBindStageThreshold;
     }
 
     internal void Heartbeat()
     {
-        logger.Debug("heartbeat");
+        s_logger.Debug("heartbeat");
 
         var retry = false;
         if (IsEstablished())
@@ -732,25 +732,25 @@ internal class SFSession
                 }
                 catch (HttpRequestException ex)
                 {
-                    logger.Error($"heartbeat HTTP request failed for session ID: {sessionId}.", ex);
+                    s_logger.Error($"heartbeat HTTP request failed for session ID: {sessionId}.", ex);
                     return;
                 }
                 catch (Exception ex)
                 {
-                    logger.Error($"heartbeat request failed for session ID: {sessionId}.", ex);
+                    s_logger.Error($"heartbeat request failed for session ID: {sessionId}.", ex);
                     return;
                 }
 
-                logger.Debug("heartbeat response=" + response);
+                s_logger.Debug("heartbeat response=" + response);
                 if (response.success)
                 {
-                    logger.Debug("SFSession::heartbeat success, session token did not expire.");
+                    s_logger.Debug("SFSession::heartbeat success, session token did not expire.");
                 }
                 else
                 {
                     if (response.IsSessionExpired())
                     {
-                        logger.Debug($"SFSession ::heartbeat Session ID: {sessionId} session token expired and retry heartbeat");
+                        s_logger.Debug($"SFSession ::heartbeat Session ID: {sessionId} session token expired and retry heartbeat");
                         try
                         {
                             RenewSession();
@@ -763,12 +763,12 @@ internal class SFSession
                             // the heart beat, it's possible that the session get
                             // closed when sending renew request and caused exception
                             // thrown from renewSession(), simply ignore that
-                            logger.Error($"renew session (ID: {sessionId}) failed.", ex);
+                            s_logger.Error($"renew session (ID: {sessionId}) failed.", ex);
                         }
                     }
                     else
                     {
-                        logger.Error($"heartbeat failed for session ID: {sessionId}.");
+                        s_logger.Error($"heartbeat failed for session ID: {sessionId}.");
                     }
                 }
                 retry = false;
@@ -804,7 +804,7 @@ internal class SFSession
     {
         if (_invalidatedForPooling)
             return;
-        logger.Info($"Session {sessionId} invalidated for pooling due to authentication failure or session being destroyed server-side.");
+        s_logger.Info($"Session {sessionId} invalidated for pooling due to authentication failure or session being destroyed server-side.");
         _invalidatedForPooling = true;
     }
 

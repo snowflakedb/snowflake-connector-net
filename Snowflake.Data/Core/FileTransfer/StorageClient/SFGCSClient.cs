@@ -41,12 +41,12 @@ internal class SFGCSClient : ISFRemoteStorageClient
     /// <summary>
     /// The logger.
     /// </summary>
-    private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFGCSClient>();
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFGCSClient>();
 
     /// <summary>
     /// The storage client.
     /// </summary>
-    private Google.Cloud.Storage.V1.StorageClient StorageClient;
+    private Google.Cloud.Storage.V1.StorageClient _storageClient;
 
     /// <summary>
     /// The custom WebRequest.
@@ -76,26 +76,26 @@ internal class SFGCSClient : ISFRemoteStorageClient
     public SFGCSClient(PutGetStageInfo stageInfo, SslProtocols tlsProtocols = SslProtocols.None,
         bool tlsProtocolsExplicitlyRequested = false)
     {
-        Logger.Debug("Setting up a new GCS client ");
+        s_logger.Debug("Setting up a new GCS client ");
         _tlsProtocols = tlsProtocols;
         _tlsProtocolsExplicitlyRequested = tlsProtocolsExplicitlyRequested;
         if (_tlsProtocolsExplicitlyRequested)
         {
-            Logger.Warn($"GCS stage transfers cannot apply the requested TLS protocols ({_tlsProtocols.ToDisplayString()}): "
+            s_logger.Warn($"GCS stage transfers cannot apply the requested TLS protocols ({_tlsProtocols.ToDisplayString()}): "
                         + "the storage SDK exposes no TLS protocol setting and the upload/download path uses WebRequest. "
                         + "The transfer proceeds on the protocols chosen by the operating system (SNOW-3662960)");
         }
         var cipherPolicy = TlsCipherPolicy.FromEnvironment();
         if (cipherPolicy != null)
         {
-            Logger.Warn($"GCS stage transfers cannot apply {EnvVars.TlsCiphers.Name} ({cipherPolicy.RawValue}): "
+            s_logger.Warn($"GCS stage transfers cannot apply {EnvVars.TlsCiphers.Name} ({cipherPolicy.RawValue}): "
                         + "the storage SDK and upload/download WebRequest path do not expose TLS cipher configuration. "
                         + "The transfer proceeds on the cipher suites chosen by the operating system (SNOW-3662960)");
         }
 
         if (stageInfo.stageCredentials.TryGetValue(GCS_ACCESS_TOKEN, out var accessToken))
         {
-            Logger.Debug("Constructing client using access token");
+            s_logger.Debug("Constructing client using access token");
             AccessToken = accessToken;
             var creds = GoogleCredential.FromAccessToken(accessToken, null);
             var storageClientBuilder = new StorageClientBuilder
@@ -103,16 +103,16 @@ internal class SFGCSClient : ISFRemoteStorageClient
                 Credential = creds?.CreateScoped(s_scopes),
                 EncryptionKey = null
             };
-            StorageClient = BuildStorageClient(storageClientBuilder, stageInfo);
+            _storageClient = BuildStorageClient(storageClientBuilder, stageInfo);
         }
         else
         {
-            Logger.Info("No access token received from GS, constructing anonymous client with no encryption support");
+            s_logger.Info("No access token received from GS, constructing anonymous client with no encryption support");
             var storageClientBuilder = new StorageClientBuilder
             {
                 UnauthenticatedAccess = true
             };
-            StorageClient = BuildStorageClient(storageClientBuilder, stageInfo);
+            _storageClient = BuildStorageClient(storageClientBuilder, stageInfo);
         }
     }
 
@@ -504,7 +504,7 @@ internal class SFGCSClient : ISFRemoteStorageClient
     /// <returns>File Metadata</returns>
     private static SFFileMetadata HandleFileHeaderErrForPresignedUrls(WebException ex, SFFileMetadata fileMetadata)
     {
-        Logger.Error("Failed to get file header for presigned url: " + ex.Message);
+        s_logger.Error("Failed to get file header for presigned url: " + ex.Message);
 
         var response = (HttpWebResponse)ex.Response;
         if (response.StatusCode == HttpStatusCode.Unauthorized ||
@@ -530,7 +530,7 @@ internal class SFGCSClient : ISFRemoteStorageClient
     /// <returns>File Metadata</returns>
     private static SFFileMetadata HandleFileHeaderErrForGeneratedUrls(WebException ex, SFFileMetadata fileMetadata)
     {
-        Logger.Error("Failed to get file header for non-presigned url: " + ex.Message);
+        s_logger.Error("Failed to get file header for non-presigned url: " + ex.Message);
 
         var response = (HttpWebResponse)ex.Response;
         if (response.StatusCode == HttpStatusCode.Unauthorized)
@@ -565,7 +565,7 @@ internal class SFGCSClient : ISFRemoteStorageClient
     /// <returns>File Metadata</returns>
     private static SFFileMetadata HandleUploadFileErr(WebException ex, SFFileMetadata fileMetadata)
     {
-        Logger.Error("Failed to upload file: " + ex.Message);
+        s_logger.Error("Failed to upload file: " + ex.Message);
 
         fileMetadata.lastError = ex;
 
@@ -599,7 +599,7 @@ internal class SFGCSClient : ISFRemoteStorageClient
     /// <returns>File Metadata</returns>
     private static SFFileMetadata HandleDownloadFileErr(WebException ex, SFFileMetadata fileMetadata)
     {
-        Logger.Error("Failed to download file: " + ex.Message);
+        s_logger.Error("Failed to download file: " + ex.Message);
 
         fileMetadata.lastError = ex;
 

@@ -25,7 +25,7 @@ namespace Snowflake.Data.Core.Authenticator;
 internal class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 {
     private const string AUTH_NAME = "externalbrowser";
-    private static readonly SFLogger logger = SFLoggerFactory.GetLogger<ExternalBrowserAuthenticator>();
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ExternalBrowserAuthenticator>();
     private static readonly string TOKEN_REQUEST_PREFIX = "?token=";
     private const string OriginHeader = "Origin";
     private const string AccessControlRequestMethodHeader = "Access-Control-Request-Method";
@@ -35,13 +35,13 @@ internal class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
     private const string AccessControlAllowHeadersHeader = "Access-Control-Allow-Headers";
     private const string AllowedCorsMethods = "POST, GET, OPTIONS";
 
-    private static readonly string SuccessResponse =
+    private static readonly string s_successResponse =
         "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"/>" +
         "<title> SAML Response for Snowflake </title></head>" +
         "<body>Your identity was confirmed and propagated to Snowflake .NET driver. You can close this window now and go back where you started from." +
         "</body></html>";
 
-    private static readonly string ErrorResponse =
+    private static readonly string s_errorResponse =
         "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"/>" +
         "<title> SAML Response for Snowflake </title></head>" +
         "<body>Authentication failed due to an error and was unable to extract a SAML response token." +
@@ -85,7 +85,7 @@ internal class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
     /// <see cref="IAuthenticator"/>
     public async Task AuthenticateAsync(CancellationToken cancellationToken)
     {
-        logger.Info("External Browser Authentication");
+        s_logger.Info("External Browser Authentication");
         var idToken = string.IsNullOrEmpty(_idTokenKey) ? "" :
             SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(_idTokenKey);
         _idToken = string.IsNullOrEmpty(idToken) ? null : SecureStringHelper.Encode(idToken);
@@ -95,14 +95,14 @@ internal class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
             var localhostEndpoints = GetLocalhostEndpoints(localPort);
             using (var httpListener = _listenerStarter.StartHttpListener(localhostEndpoints))
             {
-                logger.Debug("Get IdpUrl and ProofKey");
+                s_logger.Debug("Get IdpUrl and ProofKey");
                 var loginUrl = await GetIdpUrlAndProofKeyAsync(localPort, cancellationToken).ConfigureAwait(false);
-                logger.Debug("Get the redirect SAML request");
+                s_logger.Debug("Get the redirect SAML request");
                 _samlResponseToken = GetRedirectSamlRequest(httpListener, loginUrl);
             }
         }
 
-        logger.Debug("Send login request");
+        s_logger.Debug("Send login request");
         try
         {
             await LoginAsync(cancellationToken).ConfigureAwait(false);
@@ -123,7 +123,7 @@ internal class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
     /// <see cref="IAuthenticator"/>
     public void Authenticate()
     {
-        logger.Info("External Browser Authentication");
+        s_logger.Info("External Browser Authentication");
         var idToken = string.IsNullOrEmpty(_idTokenKey) ? "" :
             SnowflakeCredentialManagerFactory.GetCredentialManager().GetCredentials(_idTokenKey);
         _idToken = string.IsNullOrEmpty(idToken) ? null : SecureStringHelper.Encode(idToken);
@@ -133,14 +133,14 @@ internal class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
             var localhostEndpoints = GetLocalhostEndpoints(localPort);
             using (var httpListener = _listenerStarter.StartHttpListener(localhostEndpoints))
             {
-                logger.Debug("Get IdpUrl and ProofKey");
+                s_logger.Debug("Get IdpUrl and ProofKey");
                 var loginUrl = GetIdpUrlAndProofKey(localPort);
-                logger.Debug("Get the redirect SAML request");
+                s_logger.Debug("Get the redirect SAML request");
                 _samlResponseToken = GetRedirectSamlRequest(httpListener, loginUrl);
             }
         }
 
-        logger.Debug("Send login request");
+        s_logger.Debug("Send login request");
         try
         {
             Login();
@@ -162,7 +162,7 @@ internal class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
     {
         if (e.ErrorCode == SFError.ID_TOKEN_INVALID.GetAttribute<SFErrorAttr>().errorCode)
         {
-            logger.Info("SSO Token has expired or not valid. Reauthenticating without SSO token...", e);
+            s_logger.Info("SSO Token has expired or not valid. Reauthenticating without SSO token...", e);
             SnowflakeCredentialManagerFactory.GetCredentialManager().RemoveCredentials(_idTokenKey);
             return true;
         }
@@ -214,16 +214,16 @@ internal class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
         var timeoutInSec = int.Parse(Session.properties[SFSessionProperty.BROWSER_RESPONSE_TIMEOUT]);
         var timeout = TimeSpan.FromSeconds(timeoutInSec);
         var accountUrl = Session.BuildUri(string.Empty);
-        logger.Debug($"External browser callback account origin: {accountUrl.Scheme}://{accountUrl.Host}:{accountUrl.Port}");
+        s_logger.Debug($"External browser callback account origin: {accountUrl.Scheme}://{accountUrl.Host}:{accountUrl.Port}");
         using (var browserListener = new WebBrowserListener<ExternalBrowserToken>(
                    httpListener,
                    context => HandleCallbackRequest(context, accountUrl)
                        ? null
                        : ValidateAndExtractToken(context.Request),
-                   SuccessResponse,
-                   ErrorResponse))
+                   s_successResponse,
+                   s_errorResponse))
         {
-            logger.Debug("Open browser");
+            s_logger.Debug("Open browser");
             _browserStarter.StartBrowser(new Url(loginUrl));
             return browserListener.WaitAndGetResult(timeout).Token;
         }
@@ -247,7 +247,7 @@ internal class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
         var isPost = request.HttpMethod.Equals(HttpMethod.Post.Method, StringComparison.OrdinalIgnoreCase);
         if ((isPost || !isOriginless) && !OriginMatchesAccount(origin, accountUrl))
         {
-            logger.Warn("Ignoring external browser callback with an unexpected Origin.");
+            s_logger.Warn("Ignoring external browser callback with an unexpected Origin.");
             CloseResponse(context.Response, HttpStatusCode.Forbidden);
             return true;
         }
@@ -257,7 +257,7 @@ internal class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
             var postToken = TryExtractTokenFromPost(request);
             if (string.IsNullOrEmpty(postToken))
             {
-                logger.Warn("Ignoring external browser callback POST without a token.");
+                s_logger.Warn("Ignoring external browser callback POST without a token.");
                 CloseResponse(context.Response, HttpStatusCode.OK);
                 return true;
             }
@@ -269,14 +269,14 @@ internal class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 
         if (!request.HttpMethod.Equals(HttpMethod.Get.Method, StringComparison.OrdinalIgnoreCase))
         {
-            logger.Warn("Ignoring external browser callback with an unexpected HTTP method.");
+            s_logger.Warn("Ignoring external browser callback with an unexpected HTTP method.");
             CloseResponse(context.Response, HttpStatusCode.MethodNotAllowed);
             return true;
         }
 
         if (!HasTokenQueryParameter(request))
         {
-            logger.Warn("Ignoring external browser callback GET without a token.");
+            s_logger.Warn("Ignoring external browser callback GET without a token.");
             CloseResponse(context.Response, HttpStatusCode.OK);
             return true;
         }
@@ -364,20 +364,20 @@ internal class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 
         if (request.HttpMethod != HttpMethod.Get.Method)
         {
-            logger.Error("Failed to extract token due to invalid HTTP method.");
+            s_logger.Error("Failed to extract token due to invalid HTTP method.");
             return Result<ExternalBrowserToken, IBrowserError>.CreateError(new BrowserError
             {
-                BrowserMessage = ErrorResponse,
+                BrowserMessage = s_errorResponse,
                 Exception = new SnowflakeDbException(SFError.BROWSER_RESPONSE_WRONG_METHOD, request.HttpMethod)
             });
         }
 
         if (request.Url.Query == null || !request.Url.Query.StartsWith(TOKEN_REQUEST_PREFIX))
         {
-            logger.Error("Failed to extract token due to invalid query.");
+            s_logger.Error("Failed to extract token due to invalid query.");
             return Result<ExternalBrowserToken, IBrowserError>.CreateError(new BrowserError
             {
-                BrowserMessage = ErrorResponse,
+                BrowserMessage = s_errorResponse,
                 Exception = new SnowflakeDbException(SFError.BROWSER_RESPONSE_INVALID_PREFIX, request.Url.Query)
             });
         }
@@ -387,7 +387,7 @@ internal class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
         {
             return Result<ExternalBrowserToken, IBrowserError>.CreateError(new BrowserError
             {
-                BrowserMessage = ErrorResponse,
+                BrowserMessage = s_errorResponse,
                 Exception = new SnowflakeDbException(SFError.BROWSER_RESPONSE_ERROR, "could not retrieve token")
             });
         }
@@ -414,7 +414,7 @@ internal class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
         }
         catch (JsonException e)
         {
-            logger.Warn("POST callback body is not valid JSON; falling back to form-encoded parsing.", e);
+            s_logger.Warn("POST callback body is not valid JSON; falling back to form-encoded parsing.", e);
         }
 
         var formToken = HttpUtility.ParseQueryString(body)["token"];

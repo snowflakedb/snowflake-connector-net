@@ -14,7 +14,7 @@ internal class GcmEncryptionProvider
     internal const int TagSizeInBytes = TagSizeInBits / 8;
     private const int InitVectorSizeInBytes = 12;
     private const string AesGcmNoPaddingCipher = "AES/GCM/NoPadding";
-    private static readonly int DefaultBufferSize = 1 << 20;
+    private static readonly int s_defaultBufferSize = 1 << 20;
 
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<GcmEncryptionProvider>();
 
@@ -116,7 +116,7 @@ internal class GcmEncryptionProvider
     {
         var contentCipher = BuildAesGcmNoPaddingCipher(true, fileKeyBytes, contentIV, contentAad);
         var (targetStream, buffer) = transferConfiguration.MaxBytesInMemory == -1
-            ? ((Stream)new MemoryStream(), new byte[DefaultBufferSize])
+            ? ((Stream)new MemoryStream(), new byte[s_defaultBufferSize])
             : (new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir), new byte[transferConfiguration.MaxBytesInMemory]);
         try
         {
@@ -153,7 +153,7 @@ internal class GcmEncryptionProvider
     {
         var contentCipher = BuildAesGcmNoPaddingCipher(false, fileKeyBytes, contentIV, contentAad);
         var (targetStream, buffer) = transferConfiguration.MaxBytesInMemory == -1
-            ? ((Stream)new MemoryStream(), new byte[DefaultBufferSize])
+            ? ((Stream)new MemoryStream(), new byte[s_defaultBufferSize])
             : (new FileBackedOutputStream(transferConfiguration.MaxBytesInMemory, transferConfiguration.TempDir), new byte[transferConfiguration.MaxBytesInMemory]);
         try
         {

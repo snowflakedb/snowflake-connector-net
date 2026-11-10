@@ -14,23 +14,23 @@ namespace Snowflake.Data.Client;
 [System.ComponentModel.DesignerCategory("Code")]
 public class SnowflakeDbCommand : DbCommand
 {
-    private SnowflakeDbConnection connection;
+    private SnowflakeDbConnection _connection;
 
-    private SFStatement sfStatement;
+    private SFStatement _sfStatement;
 
-    private readonly SnowflakeDbParameterCollection parameterCollection;
+    private readonly SnowflakeDbParameterCollection _parameterCollection;
 
-    private readonly SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
+    private readonly SFLogger _logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
 
     public SnowflakeDbCommand()
     {
-        logger.Debug("Constructing SnowflakeDbCommand class");
-        parameterCollection = new SnowflakeDbParameterCollection();
+        _logger.Debug("Constructing SnowflakeDbCommand class");
+        _parameterCollection = new SnowflakeDbParameterCollection();
     }
 
     public SnowflakeDbCommand(SnowflakeDbConnection connection) : this()
     {
-        this.connection = connection;
+        this._connection = connection;
     }
 
     public SnowflakeDbCommand(SnowflakeDbConnection connection, string cmdText) : this(connection)
@@ -80,13 +80,13 @@ public class SnowflakeDbCommand : DbCommand
 
     protected override DbConnection DbConnection
     {
-        get => connection;
+        get => _connection;
 
         set
         {
             if (value == null)
             {
-                if (connection == null)
+                if (_connection == null)
                 {
                     return;
                 }
@@ -101,36 +101,36 @@ public class SnowflakeDbCommand : DbCommand
                 throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
             }
 
-            if (connection != null && connection != sfc)
+            if (_connection != null && _connection != sfc)
             {
                 // Connection already set.
                 throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
             }
 
-            connection = sfc;
+            _connection = sfc;
             if (sfc.SfSession != null)
             {
-                sfStatement = new SFStatement(sfc.SfSession, QueryTag);
+                _sfStatement = new SFStatement(sfc.SfSession, QueryTag);
             }
         }
     }
 
-    protected override DbParameterCollection DbParameterCollection => parameterCollection;
+    protected override DbParameterCollection DbParameterCollection => _parameterCollection;
 
     protected override DbTransaction DbTransaction { get; set; }
 
     public override void Cancel()
     {
         // doesn't throw exception when sfStatement is null
-        sfStatement?.Cancel();
+        _sfStatement?.Cancel();
     }
 
     public override int ExecuteNonQuery() => ExecuteNonQuery(GetStatementContext());
 
     private int ExecuteNonQuery(StatementContext statementContext)
     {
-        logger.Debug("ExecuteNonQuery");
-        using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteNonQuery);
+        _logger.Debug("ExecuteNonQuery");
+        using var activity = _connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteNonQuery);
         try
         {
             var resultSet = ExecuteInternal(statementContext);
@@ -170,8 +170,8 @@ public class SnowflakeDbCommand : DbCommand
 
     public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
     {
-        logger.Debug("ExecuteNonQueryAsync");
-        using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteNonQueryAsync);
+        _logger.Debug("ExecuteNonQueryAsync");
+        using var activity = _connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteNonQueryAsync);
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -213,8 +213,8 @@ public class SnowflakeDbCommand : DbCommand
 
     public override object ExecuteScalar()
     {
-        logger.Debug("ExecuteScalar");
-        using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteScalar);
+        _logger.Debug("ExecuteScalar");
+        using var activity = _connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteScalar);
         try
         {
             var statementContext = GetStatementContext();
@@ -238,8 +238,8 @@ public class SnowflakeDbCommand : DbCommand
 
     public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
     {
-        logger.Debug("ExecuteScalarAsync");
-        using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteScalarAsync);
+        _logger.Debug("ExecuteScalarAsync");
+        using var activity = _connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteScalarAsync);
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -273,9 +273,9 @@ public class SnowflakeDbCommand : DbCommand
 
     public string GetQueryId()
     {
-        if (sfStatement != null)
+        if (_sfStatement != null)
         {
-            return sfStatement.GetQueryId();
+            return _sfStatement.GetQueryId();
         }
         return null;
     }
@@ -287,8 +287,8 @@ public class SnowflakeDbCommand : DbCommand
 
     private DbDataReader ExecuteDbDataReader(StatementContext statementContext)
     {
-        logger.Debug("ExecuteDbDataReader");
-        using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteDbDataReader);
+        _logger.Debug("ExecuteDbDataReader");
+        using var activity = _connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteDbDataReader);
         try
         {
             var resultSet = ExecuteInternal(statementContext);
@@ -311,8 +311,8 @@ public class SnowflakeDbCommand : DbCommand
 
     protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
     {
-        logger.Debug("ExecuteDbDataReaderAsync");
-        using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteDbDataReaderAsync);
+        _logger.Debug("ExecuteDbDataReaderAsync");
+        using var activity = _connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteDbDataReaderAsync);
         try
         {
             var schemaOnly = behavior.HasFlag(CommandBehavior.SchemaOnly);
@@ -324,7 +324,7 @@ public class SnowflakeDbCommand : DbCommand
         catch (Exception ex)
         {
             activity?.SetException(ex);
-            logger.Error("The command failed to execute.", ex);
+            _logger.Error("The command failed to execute.", ex);
             throw;
         }
     }
@@ -343,8 +343,8 @@ public class SnowflakeDbCommand : DbCommand
         if (stream.Position != 0)
             throw new InvalidOperationException($"{nameof(stream)} needs to be positioned before reading.");
 
-        logger.Debug($"{nameof(ExecuteDbDataReaderWithMemoryStream)}");
-        using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteWithCustomUploadStream);
+        _logger.Debug($"{nameof(ExecuteDbDataReaderWithMemoryStream)}");
+        using var activity = _connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteWithCustomUploadStream);
         try
         {
             var statementContext = GetStatementContext() with { Stream = stream };
@@ -364,8 +364,8 @@ public class SnowflakeDbCommand : DbCommand
     /// <returns>The query id.</returns>
     public string ExecuteInAsyncMode()
     {
-        logger.Debug("ExecuteInAsyncMode");
-        using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteInAsyncMode);
+        _logger.Debug("ExecuteInAsyncMode");
+        using var activity = _connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteInAsyncMode);
         try
         {
             var statementContext = GetStatementContext() with { AsyncExec = true };
@@ -388,8 +388,8 @@ public class SnowflakeDbCommand : DbCommand
     /// <returns>The query id.</returns>
     public async Task<string> ExecuteAsyncInAsyncMode(CancellationToken cancellationToken)
     {
-        logger.Debug("ExecuteAsyncInAsyncMode");
-        using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteAsyncInAsyncMode);
+        _logger.Debug("ExecuteAsyncInAsyncMode");
+        using var activity = _connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteAsyncInAsyncMode);
         try
         {
             var statementContext = GetStatementContext() with { AsyncExec = true };
@@ -411,11 +411,11 @@ public class SnowflakeDbCommand : DbCommand
     /// <returns>The query status.</returns>
     public QueryStatus GetQueryStatus(string queryId)
     {
-        logger.Debug("GetQueryStatus");
-        using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.GetQueryStatus);
+        _logger.Debug("GetQueryStatus");
+        using var activity = _connection?.SfSession?.StartActivity(TelemetryActivities.GetQueryStatus);
         try
         {
-            var status = QueryResultsAwaiter.GetQueryStatus(connection, queryId);
+            var status = QueryResultsAwaiter.GetQueryStatus(_connection, queryId);
             activity?.SetSuccess();
             return status;
         }
@@ -434,11 +434,11 @@ public class SnowflakeDbCommand : DbCommand
     /// <returns>The query status.</returns>
     public async Task<QueryStatus> GetQueryStatusAsync(string queryId, CancellationToken cancellationToken)
     {
-        logger.Debug("GetQueryStatusAsync");
-        using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.GetQueryStatusAsync);
+        _logger.Debug("GetQueryStatusAsync");
+        using var activity = _connection?.SfSession?.StartActivity(TelemetryActivities.GetQueryStatusAsync);
         try
         {
-            var status = await QueryResultsAwaiter.GetQueryStatusAsync(connection, queryId, cancellationToken).ConfigureAwait(false);
+            var status = await QueryResultsAwaiter.GetQueryStatusAsync(_connection, queryId, cancellationToken).ConfigureAwait(false);
             activity?.SetSuccess();
             return status;
         }
@@ -456,15 +456,15 @@ public class SnowflakeDbCommand : DbCommand
     /// <returns>The query results.</returns>
     public DbDataReader GetResultsFromQueryId(string queryId)
     {
-        logger.Debug("GetResultsFromQueryId");
-        using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.GetResultsFromQueryId);
+        _logger.Debug("GetResultsFromQueryId");
+        using var activity = _connection?.SfSession?.StartActivity(TelemetryActivities.GetResultsFromQueryId);
 
         try
         {
-            var task = QueryResultsAwaiter.Instance.RetryUntilQueryResultIsAvailable(connection, queryId, CancellationToken.None, false);
+            var task = QueryResultsAwaiter.Instance.RetryUntilQueryResultIsAvailable(_connection, queryId, CancellationToken.None, false);
             task.Wait();
 
-            var resultSet = sfStatement.GetResultWithId(queryId);
+            var resultSet = _sfStatement.GetResultWithId(queryId);
 
             activity?.SetSuccess();
             return new SnowflakeDbDataReader(this, resultSet, false);
@@ -484,14 +484,14 @@ public class SnowflakeDbCommand : DbCommand
     /// <returns>The query results.</returns>
     public async Task<DbDataReader> GetResultsFromQueryIdAsync(string queryId, CancellationToken cancellationToken)
     {
-        logger.Debug("GetResultsFromQueryIdAsync");
-        using var activity = connection?.SfSession?.StartActivity(TelemetryActivities.GetResultsFromQueryIdAsync);
+        _logger.Debug("GetResultsFromQueryIdAsync");
+        using var activity = _connection?.SfSession?.StartActivity(TelemetryActivities.GetResultsFromQueryIdAsync);
 
         try
         {
-            await QueryResultsAwaiter.Instance.RetryUntilQueryResultIsAvailable(connection, queryId, cancellationToken, true).ConfigureAwait(false);
+            await QueryResultsAwaiter.Instance.RetryUntilQueryResultIsAvailable(_connection, queryId, cancellationToken, true).ConfigureAwait(false);
 
-            var resultSet = await sfStatement.GetResultWithIdAsync(queryId, cancellationToken).ConfigureAwait(false);
+            var resultSet = await _sfStatement.GetResultWithIdAsync(queryId, cancellationToken).ConfigureAwait(false);
 
             activity?.SetSuccess();
             return new SnowflakeDbDataReader(this, resultSet, false);
@@ -573,33 +573,33 @@ public class SnowflakeDbCommand : DbCommand
 
     private void SetStatement()
     {
-        if (connection == null)
+        if (_connection == null)
         {
             throw new SnowflakeDbException(SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
         }
 
-        var session = connection.SfSession;
+        var session = _connection.SfSession;
 
         // SetStatement is called when executing a command. If SfSession is null
         // the connection has never been opened. Exception might be a bit vague.
         if (session == null)
             throw new SnowflakeDbException(SFError.EXECUTE_COMMAND_ON_CLOSED_CONNECTION);
 
-        sfStatement = new SFStatement(session, QueryTag);
+        _sfStatement = new SFStatement(session, QueryTag);
     }
 
     private SFBaseResultSet ExecuteInternal(StatementContext statementContext)
     {
         CheckIfCommandTextIsSet();
         SetStatement();
-        return sfStatement.Execute(statementContext, ConvertToBindList(parameterCollection.parameterList));
+        return _sfStatement.Execute(statementContext, ConvertToBindList(_parameterCollection.parameterList));
     }
 
     private Task<SFBaseResultSet> ExecuteInternalAsync(StatementContext statementContext, CancellationToken cancellationToken)
     {
         CheckIfCommandTextIsSet();
         SetStatement();
-        return sfStatement.ExecuteAsync(statementContext, ConvertToBindList(parameterCollection.parameterList), cancellationToken);
+        return _sfStatement.ExecuteAsync(statementContext, ConvertToBindList(_parameterCollection.parameterList), cancellationToken);
     }
 
     private void CheckIfCommandTextIsSet()
@@ -608,11 +608,11 @@ public class SnowflakeDbCommand : DbCommand
             return;
 
         var errorMessage = "Unable to execute command due to command text not being set";
-        logger.Error(errorMessage);
+        _logger.Error(errorMessage);
         throw new Exception(errorMessage);
     }
 
-    internal string GetBindStage() => sfStatement?.GetBindStage();
+    internal string GetBindStage() => _sfStatement?.GetBindStage();
 
     private StatementContext GetStatementContext() => new(null, false, false, CommandText, CommandTimeout, QueryTag);
 }

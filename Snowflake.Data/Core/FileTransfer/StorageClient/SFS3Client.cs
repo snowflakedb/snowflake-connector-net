@@ -72,7 +72,7 @@ internal class SFS3Client : ISFRemoteStorageClient
     /// <summary>
     /// The logger.
     /// </summary>
-    private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFS3Client>();
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFS3Client>();
 
     /// <summary>
     /// The underlying S3 client.
@@ -91,7 +91,7 @@ internal class SFS3Client : ISFRemoteStorageClient
         SslProtocols tlsProtocols = SslProtocols.None,
         bool tlsProtocolsExplicitlyRequested = false)
     {
-        Logger.Debug("Setting up a new AWS client ");
+        s_logger.Debug("Setting up a new AWS client ");
 
         // Get the key id and secret key from the response
         stageInfo.stageCredentials.TryGetValue(AWS_KEY_ID, out var awsAccessKeyId);
@@ -578,7 +578,7 @@ internal class SFS3Client : ISFRemoteStorageClient
     /// <param name="fileMetadata">The file metadata.</param>
     private static void HandleFileHeaderErr(Exception ex, SFFileMetadata fileMetadata)
     {
-        Logger.Error($"Failed to get file header: {ex.Message}");
+        s_logger.Error($"Failed to get file header: {ex.Message}");
 
         fileMetadata.resultStatus = ex switch
         {
@@ -599,7 +599,7 @@ internal class SFS3Client : ISFRemoteStorageClient
     /// <param name="fileMetadata">The file metadata.</param>
     private static void HandleUploadFileErr(Exception ex, SFFileMetadata fileMetadata)
     {
-        Logger.Error("Failed to upload file: " + ex.Message);
+        s_logger.Error("Failed to upload file: " + ex.Message);
 
         switch (ex)
         {
@@ -629,7 +629,7 @@ internal class SFS3Client : ISFRemoteStorageClient
     /// <param name="fileMetadata">The file metadata.</param>
     private static void HandleDownloadFileErr(Exception ex, SFFileMetadata fileMetadata)
     {
-        Logger.Error($"Failed to download file: {ex.Message}");
+        s_logger.Error($"Failed to download file: {ex.Message}");
 
         switch (ex)
         {

@@ -46,7 +46,7 @@ internal abstract class BaseAuthenticator
     internal const string SF_AUTHORIZATION_BASIC = "Basic";
 
     // The logger.
-    private static readonly SFLogger logger =
+    private static readonly SFLogger s_logger =
         SFLoggerFactory.GetLogger<BaseAuthenticator>();
 
     // The name of the authenticator.
@@ -58,7 +58,7 @@ internal abstract class BaseAuthenticator
     protected SFSession Session;
 
     // The client environment properties
-    private readonly LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv.CloneForSession();
+    private readonly LoginRequestClientEnv _clientEnv = SFEnvironment.ClientEnv.CloneForSession();
 
     // Provider for the SPCS container identity token
     internal SpcsTokenProvider SpcsTokenProvider = SpcsTokenProvider.CreateIfRunningInSpcs();
@@ -77,14 +77,14 @@ internal abstract class BaseAuthenticator
     {
         Session = session;
         _restRequester = restRequester;
-        ClientEnv.certRevocationCheckMode = session.properties[SFSessionProperty.CERTREVOCATIONCHECKMODE];
+        _clientEnv.certRevocationCheckMode = session.properties[SFSessionProperty.CERTREVOCATIONCHECKMODE];
         if (session.properties.TryGetValue(SFSessionProperty.APPLICATION, out var applicationName))
         {
-            ClientEnv.application = applicationName;
+            _clientEnv.application = applicationName;
         }
         else
         {
-            ClientEnv.application = ClientEnv.processName;
+            _clientEnv.application = _clientEnv.processName;
         }
     }
 
@@ -183,7 +183,7 @@ internal abstract class BaseAuthenticator
             accountName = Session.properties[SFSessionProperty.ACCOUNT],
             clientAppId = SFEnvironment.DriverName,
             clientAppVersion = SFEnvironment.DriverVersion,
-            clientEnv = ClientEnv,
+            clientEnv = _clientEnv,
             SessionParameters = Session.ParameterMap,
             Authenticator = AuthName,
             SecondaryRoles = Session.properties.TryGetValue(SFSessionProperty.SECONDARY_ROLES, out var secondaryRoles) ? secondaryRoles.ToUpperInvariant() : null,

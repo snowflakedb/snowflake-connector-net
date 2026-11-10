@@ -29,12 +29,12 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
     /// <summary>
     /// The logger.
     /// </summary>
-    private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFSnowflakeAzureClient>();
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFSnowflakeAzureClient>();
 
     /// <summary>
     /// The cloud blob client to use to upload and download data on Azure.
     /// </summary>
-    private readonly BlobServiceClient blobServiceClient;
+    private readonly BlobServiceClient _blobServiceClient;
 
     /// <summary>
     /// Azure client without client-side encryption.
@@ -43,13 +43,13 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
     public SFSnowflakeAzureClient(PutGetStageInfo stageInfo, SslProtocols tlsProtocols = SslProtocols.None,
         bool tlsProtocolsExplicitlyRequested = false, ProxyCredentials proxyCredentials = null)
     {
-        Logger.Debug("Setting up a new Azure client ");
+        s_logger.Debug("Setting up a new Azure client ");
 
         // Get the Azure SAS token and create the client
         if (stageInfo.stageCredentials.TryGetValue(AZURE_SAS_TOKEN, out var sasToken))
         {
             var blobEndpoint = string.Format("https://{0}.{1}", stageInfo.storageAccount, stageInfo.endPoint);
-            blobServiceClient = new BlobServiceClient(new Uri(blobEndpoint),
+            _blobServiceClient = new BlobServiceClient(new Uri(blobEndpoint),
                 new AzureSasCredential(sasToken),
                 BuildClientOptions(tlsProtocols, tlsProtocolsExplicitlyRequested, proxyCredentials));
         }
@@ -58,7 +58,7 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
     internal SFSnowflakeAzureClient(PutGetStageInfo stageInfo, BlobServiceClient blobServiceClientMock) : this(stageInfo)
     {
         // Inject the mock BlobServiceClient
-        blobServiceClient = blobServiceClientMock;
+        _blobServiceClient = blobServiceClientMock;
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
         var location = ExtractBucketNameAndPath(stageInfo.location);
 
         // Get the Azure client
-        var containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
+        var containerClient = _blobServiceClient.GetBlobContainerClient(location.bucket);
         var blobClient = containerClient.GetBlobClient(location.key + fileMetadata.RemoteFileName());
 
         BlobProperties response;
@@ -147,7 +147,7 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
         }
         catch (Exception ex)
         {
-            Logger.Error("Blob client unknown get file header error: " + ex.Message);
+            s_logger.Error("Blob client unknown get file header error: " + ex.Message);
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
             return null;
         }
@@ -166,7 +166,7 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
         var location = ExtractBucketNameAndPath(stageInfo.location);
 
         // Get the Azure client
-        var containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
+        var containerClient = _blobServiceClient.GetBlobContainerClient(location.bucket);
         var blobClient = containerClient.GetBlobClient(location.key + fileMetadata.RemoteFileName());
 
         BlobProperties response;
@@ -182,7 +182,7 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
         }
         catch (Exception ex)
         {
-            Logger.Error("Blob client unknown get file header error: " + ex.Message);
+            s_logger.Error("Blob client unknown get file header error: " + ex.Message);
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
             return null;
         }
@@ -212,7 +212,7 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
 
         if (fileMetadata.stageInfo.isClientSideEncrypted && encryptionMetadata == null)
         {
-            Logger.Error("File is expected to be client-side encrypted but no encryption metadata found.");
+            s_logger.Error("File is expected to be client-side encrypted but no encryption metadata found.");
         }
 
         return new FileHeader
@@ -270,13 +270,13 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
         }
         catch (RequestFailedException ex)
         {
-            Logger.Error("Blob client request upload error: " + ex.Message);
+            s_logger.Error("Blob client request upload error: " + ex.Message);
             HandleUploadFileErr(ex, fileMetadata);
             return;
         }
         catch (Exception ex)
         {
-            Logger.Error("Blob client unknown upload error: " + ex.Message);
+            s_logger.Error("Blob client unknown upload error: " + ex.Message);
             fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             return;
         }
@@ -310,13 +310,13 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
         }
         catch (RequestFailedException ex)
         {
-            Logger.Error("Blob client request upload error: " + ex.Message);
+            s_logger.Error("Blob client request upload error: " + ex.Message);
             HandleUploadFileErr(ex, fileMetadata);
             return;
         }
         catch (Exception ex)
         {
-            Logger.Error("Blob client unknown upload error: " + ex.Message);
+            s_logger.Error("Blob client unknown upload error: " + ex.Message);
             fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
             return;
         }
@@ -368,7 +368,7 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
         var location = ExtractBucketNameAndPath(stageInfo.location);
 
         // Get the Azure client
-        var containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
+        var containerClient = _blobServiceClient.GetBlobContainerClient(location.bucket);
         return containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
     }
 
@@ -384,7 +384,7 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
         var location = ExtractBucketNameAndPath(stageInfo.location);
 
         // Get the Azure client
-        var containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
+        var containerClient = _blobServiceClient.GetBlobContainerClient(location.bucket);
         var blobClient = containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
 
         try
@@ -404,7 +404,7 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
         catch (Exception ex)
         {
             File.Delete(fullDstPath);
-            Logger.Error("Blob client unknown download error: " + ex.Message);
+            s_logger.Error("Blob client unknown download error: " + ex.Message);
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
             return;
         }
@@ -424,7 +424,7 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
         var location = ExtractBucketNameAndPath(stageInfo.location);
 
         // Get the Azure client
-        var containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
+        var containerClient = _blobServiceClient.GetBlobContainerClient(location.bucket);
         var blobClient = containerClient.GetBlobClient(location.key + fileMetadata.srcFileName);
 
         try
@@ -444,7 +444,7 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
         catch (Exception ex)
         {
             File.Delete(fullDstPath);
-            Logger.Error("Blob client unknown download error: " + ex.Message);
+            s_logger.Error("Blob client unknown download error: " + ex.Message);
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
             return;
         }
@@ -464,7 +464,7 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
         }
         else
         {
-            Logger.Error($"Unexpected HTTP status for file header operation: {ex.Status} {ex.ErrorCode}");
+            s_logger.Error($"Unexpected HTTP status for file header operation: {ex.Status} {ex.ErrorCode}");
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
         }
         return fileMetadata;
@@ -496,13 +496,13 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
                  ex.Status == (int)HttpStatusCode.RequestedRangeNotSatisfiable)
         {
             var error = $"Unrecoverable HTTP status for file upload operation: {ex.Status} {ex.ErrorCode}";
-            Logger.Error(error);
+            s_logger.Error(error);
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
         }
         else
         {
             var error = $"Unexpected HTTP status for file upload operation: {ex.Status} {ex.ErrorCode}";
-            Logger.Error(error);
+            s_logger.Error(error);
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
         }
         return fileMetadata;
@@ -523,7 +523,7 @@ internal class SFSnowflakeAzureClient : ISFRemoteStorageClient
         else
         {
             var error = $"Unexpected HTTP status for file download operation: {ex.Status} {ex.ErrorCode}";
-            Logger.Error(error);
+            s_logger.Error(error);
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
         }
         return fileMetadata;

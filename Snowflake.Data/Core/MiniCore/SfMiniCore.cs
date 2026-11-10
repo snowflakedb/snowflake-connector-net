@@ -13,7 +13,7 @@ internal static class SfMiniCore
     internal const string FAILED_TO_LOAD_MESSAGE = "Failed to load binary";
     internal const string STILL_LOADING_MESSAGE = "Minicore is still loading";
 
-    private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<object>();
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<object>();
     private static readonly object s_lock = new();
     private static Task<LoadResult> s_loadTask;
 
@@ -87,21 +87,21 @@ internal static class SfMiniCore
         {
             var version = GetFullVersion();
             logs.Append($"MiniCore loaded successfully. Version: {version}");
-            Logger.Debug(logs.ToString());
+            s_logger.Debug(logs.ToString());
             return new LoadResult { Version = version, Logs = logs.ToString(), Error = null };
         }
         catch (DllNotFoundException ex)
         {
             logs.Append($"MiniCore library not found. Error: {ex.Message}");
             var maskedLogs = SecretDetector.Instance.MaskSecrets(logs.ToString()).MaskedText;
-            Logger.Debug(maskedLogs);
+            s_logger.Debug(maskedLogs);
             return new LoadResult { Version = null, Logs = maskedLogs, Error = FAILED_TO_LOAD_MESSAGE };
         }
         catch (Exception ex)
         {
             logs.Append($"Failed to load MiniCore: {ex.Message}");
             var maskedLogs = SecretDetector.Instance.MaskSecrets(logs.ToString()).MaskedText;
-            Logger.Debug(maskedLogs, ex);
+            s_logger.Debug(maskedLogs, ex);
             return new LoadResult { Version = null, Logs = maskedLogs, Error = FAILED_TO_LOAD_MESSAGE };
         }
     }

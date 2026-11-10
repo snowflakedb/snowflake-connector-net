@@ -575,7 +575,7 @@ internal sealed class SessionPool : IDisposable
                 _busySessionsCounter.Decrease();
                 var sessionCreationTokens = ensureMinPoolSize
                     ? RegisterSessionCreationsToEnsureMinPoolSize()
-                    : SessionOrCreationTokens.s_emptySessionCreationTokenList;
+                    : SessionOrCreationTokens.EmptySessionCreationTokenList;
                 var poolState = GetCurrentState();
                 s_logger.Debug($"Could not return session to pool {poolState}" + PoolIdentification());
                 return Tuple.Create(false, sessionCreationTokens);
@@ -590,7 +590,7 @@ internal sealed class SessionPool : IDisposable
             {
                 var sessionCreationTokens = ensureMinPoolSize
                     ? RegisterSessionCreationsToEnsureMinPoolSize()
-                    : SessionOrCreationTokens.s_emptySessionCreationTokenList;
+                    : SessionOrCreationTokens.EmptySessionCreationTokenList;
                 var poolState = GetCurrentState();
                 s_logger.Debug($"Could not return session to pool {poolState}" + PoolIdentification());
                 return Tuple.Create(false, sessionCreationTokens);
@@ -599,13 +599,13 @@ internal sealed class SessionPool : IDisposable
             if (poolStateBeforeReturningToPool.Count() >= _poolConfig.MaxPoolSize)
             {
                 s_logger.Warn($"Pool is full - unable to add session with sid {session.sessionId} {poolStateBeforeReturningToPool}");
-                return Tuple.Create(false, SessionOrCreationTokens.s_emptySessionCreationTokenList);
+                return Tuple.Create(false, SessionOrCreationTokens.EmptySessionCreationTokenList);
             }
             _idleSessions.Add(session);
             _waitingForIdleSessionQueue.OnResourceIncrease();
             var sessionCreationTokensAfterReturningToPool = ensureMinPoolSize
                 ? RegisterSessionCreationsToEnsureMinPoolSize()
-                : SessionOrCreationTokens.s_emptySessionCreationTokenList;
+                : SessionOrCreationTokens.EmptySessionCreationTokenList;
             var poolStateAfterReturningToPool = GetCurrentState();
             s_logger.Debug($"returned session with sid {session.sessionId} to pool {poolStateAfterReturningToPool}" + PoolIdentification());
             return Tuple.Create(true, sessionCreationTokensAfterReturningToPool);

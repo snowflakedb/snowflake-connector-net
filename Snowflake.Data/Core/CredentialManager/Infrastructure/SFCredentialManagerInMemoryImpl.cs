@@ -13,7 +13,7 @@ internal class SFCredentialManagerInMemoryImpl : ISnowflakeCredentialManager
 
     private readonly ReaderWriterLockSlim _lock = new();
 
-    private readonly Dictionary<string, SecureString> s_credentials = new();
+    private readonly Dictionary<string, SecureString> _credentials = new();
 
     public static readonly SFCredentialManagerInMemoryImpl Instance = new();
 
@@ -25,7 +25,7 @@ internal class SFCredentialManagerInMemoryImpl : ISnowflakeCredentialManager
         _lock.EnterReadLock();
         try
         {
-            found = s_credentials.TryGetValue(key, out secureToken);
+            found = _credentials.TryGetValue(key, out secureToken);
         }
         finally
         {
@@ -45,7 +45,7 @@ internal class SFCredentialManagerInMemoryImpl : ISnowflakeCredentialManager
         _lock.EnterWriteLock();
         try
         {
-            s_credentials.Remove(key);
+            _credentials.Remove(key);
         }
         finally
         {
@@ -60,7 +60,7 @@ internal class SFCredentialManagerInMemoryImpl : ISnowflakeCredentialManager
         _lock.EnterWriteLock();
         try
         {
-            s_credentials[key] = secureToken;
+            _credentials[key] = secureToken;
         }
         finally
         {
@@ -73,7 +73,7 @@ internal class SFCredentialManagerInMemoryImpl : ISnowflakeCredentialManager
         _lock.EnterReadLock();
         try
         {
-            return s_credentials.Count;
+            return _credentials.Count;
         }
         finally
         {

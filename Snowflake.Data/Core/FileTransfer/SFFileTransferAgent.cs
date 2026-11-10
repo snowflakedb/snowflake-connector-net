@@ -58,7 +58,7 @@ internal class SFFileTransferAgent
     /// <summary>
     /// The logger.
     /// </summary>
-    private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFFileTransferAgent>();
+    private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<SFFileTransferAgent>();
 
     /// <summary>
     /// Auto-detect keyword for source compression type auto detection.
@@ -68,42 +68,42 @@ internal class SFFileTransferAgent
     /// <summary>
     /// The Snowflake query
     /// </summary>
-    private readonly string Query;
+    private readonly string _query;
 
     /// <summary>
     /// The Snowflake session
     /// </summary>
-    private readonly SFSession Session;
+    private readonly SFSession _session;
 
     private readonly IEnvironmentFacade _environmentFacade;
 
     /// <summary>
     /// The type of transfer either UPLOAD or DOWNLOAD.
     /// </summary>
-    private readonly CommandTypes CommandType;
+    private readonly CommandTypes _commandType;
 
     /// <summary>
     /// The file metadata. Applies to all files being uploaded/downloaded
     /// </summary>
-    private PutGetResponseData TransferMetadata;
+    private PutGetResponseData _transferMetadata;
 
     /// <summary>
     /// List of metadata for small and large files.
     /// </summary>
-    private readonly List<SFFileMetadata> FilesMetas = new();
+    private readonly List<SFFileMetadata> _filesMetas = new();
 
-    private readonly List<SFFileMetadata> SmallFilesMetas = new();
-    private readonly List<SFFileMetadata> LargeFilesMetas = new();
+    private readonly List<SFFileMetadata> _smallFilesMetas = new();
+    private readonly List<SFFileMetadata> _largeFilesMetas = new();
 
     /// <summary>
     /// List of metadata for the resulting file after upload/download.
     /// </summary>
-    private readonly List<SFFileMetadata> ResultsMetas = new();
+    private readonly List<SFFileMetadata> _resultsMetas = new();
 
     /// <summary>
     /// List of encryption materials of the files to be uploaded/downloaded.
     /// </summary>
-    private readonly List<PutGetEncryptionMaterial> EncryptionMaterials = new();
+    private readonly List<PutGetEncryptionMaterial> _encryptionMaterials = new();
 
     /// <summary>
     /// Time to wait before uploading the next file.
@@ -126,7 +126,7 @@ internal class SFFileTransferAgent
     /// <summary>
     /// Mutex for renewing expired client.
     /// </summary>
-    private static readonly Mutex RenewClientMutex = new();
+    private static readonly Mutex s_renewClientMutex = new();
 
     /// <summary>
     /// Placeholder threshold value using max long value.
@@ -142,11 +142,11 @@ internal class SFFileTransferAgent
         PutGetResponseData responseData,
         IEnvironmentFacade environmentFacade = null)
     {
-        Query = query;
-        Session = session;
-        TransferMetadata = responseData;
-        TransferMetadata.threshold = DATA_SIZE_THRESHOLD;
-        CommandType = (CommandTypes)Enum.Parse(typeof(CommandTypes), TransferMetadata.command, true);
+        _query = query;
+        _session = session;
+        _transferMetadata = responseData;
+        _transferMetadata.threshold = DATA_SIZE_THRESHOLD;
+        _commandType = (CommandTypes)Enum.Parse(typeof(CommandTypes), _transferMetadata.command, true);
         _environmentFacade = environmentFacade ?? EnvironmentFacade.Instance;
     }
 
@@ -157,7 +157,7 @@ internal class SFFileTransferAgent
         BorrowedMemoryStream inputStream,
         IEnvironmentFacade environmentFacade = null) : this(query, session, responseData, environmentFacade)
     {
-        if (CommandType != CommandTypes.UPLOAD)
+        if (_commandType != CommandTypes.UPLOAD)
             throw new NotSupportedException("In-memory stream for GET queries is not supported.");
 
         _memoryStream = inputStream;
@@ -173,58 +173,58 @@ internal class SFFileTransferAgent
             // Initialize the encryption metadata
             InitEncryptionMaterial();
 
-            if (CommandTypes.UPLOAD == CommandType)
+            if (CommandTypes.UPLOAD == _commandType)
             {
                 InitFileMetadataForUpload();
             }
-            else if (CommandTypes.DOWNLOAD == CommandType)
+            else if (CommandTypes.DOWNLOAD == _commandType)
             {
-                InitFileMetadata(TransferMetadata.src_locations);
+                InitFileMetadata(_transferMetadata.src_locations);
 
-                Directory.CreateDirectory(TransferMetadata.localLocation);
+                Directory.CreateDirectory(_transferMetadata.localLocation);
             }
 
             // Update the file metadata with GCS presigned URL
             UpdatePresignedUrl();
 
-            foreach (var fileMetadata in FilesMetas)
+            foreach (var fileMetadata in _filesMetas)
             {
                 // If the file is larger than the threshold, add it to the large files list
                 // Otherwise add it to the small files list
-                if (fileMetadata.srcFileSize > TransferMetadata.threshold)
+                if (fileMetadata.srcFileSize > _transferMetadata.threshold)
                 {
-                    LargeFilesMetas.Add(fileMetadata);
+                    _largeFilesMetas.Add(fileMetadata);
                 }
                 else
                 {
-                    SmallFilesMetas.Add(fileMetadata);
+                    _smallFilesMetas.Add(fileMetadata);
                 }
             }
 
             // Check command type
-            if (CommandTypes.UPLOAD == CommandType)
+            if (CommandTypes.UPLOAD == _commandType)
             {
                 Upload();
             }
-            else if (CommandTypes.DOWNLOAD == CommandType)
+            else if (CommandTypes.DOWNLOAD == _commandType)
             {
                 Download();
             }
         }
         catch (Exception e)
         {
-            Logger.Error("Error while transferring file(s): " + e.Message);
+            s_logger.Error("Error while transferring file(s): " + e.Message);
             if (e is SnowflakeDbException snowflakeException)
             {
                 if (snowflakeException.QueryId == null)
                 {
-                    snowflakeException.QueryId = TransferMetadata.queryId;
+                    snowflakeException.QueryId = _transferMetadata.queryId;
                 }
 
                 throw snowflakeException;
             }
 
-            throw new SnowflakeDbException(SFError.IO_ERROR_ON_GETPUT_COMMAND, TransferMetadata.queryId, e);
+            throw new SnowflakeDbException(SFError.IO_ERROR_ON_GETPUT_COMMAND, _transferMetadata.queryId, e);
         }
     }
 
@@ -233,40 +233,40 @@ internal class SFFileTransferAgent
         // Initialize the encryption metadata
         InitEncryptionMaterial();
 
-        if (CommandTypes.UPLOAD == CommandType)
+        if (CommandTypes.UPLOAD == _commandType)
         {
             InitFileMetadataForUpload();
         }
-        else if (CommandTypes.DOWNLOAD == CommandType)
+        else if (CommandTypes.DOWNLOAD == _commandType)
         {
-            InitFileMetadata(TransferMetadata.src_locations);
+            InitFileMetadata(_transferMetadata.src_locations);
 
-            Directory.CreateDirectory(TransferMetadata.localLocation);
+            Directory.CreateDirectory(_transferMetadata.localLocation);
         }
 
         // Update the file metadata with GCS presigned URL
         await UpdatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
 
-        foreach (var fileMetadata in FilesMetas)
+        foreach (var fileMetadata in _filesMetas)
         {
             // If the file is larger than the threshold, add it to the large files list
             // Otherwise add it to the small files list
-            if (fileMetadata.srcFileSize > TransferMetadata.threshold)
+            if (fileMetadata.srcFileSize > _transferMetadata.threshold)
             {
-                LargeFilesMetas.Add(fileMetadata);
+                _largeFilesMetas.Add(fileMetadata);
             }
             else
             {
-                SmallFilesMetas.Add(fileMetadata);
+                _smallFilesMetas.Add(fileMetadata);
             }
         }
 
         // Check command type
-        if (CommandTypes.UPLOAD == CommandType)
+        if (CommandTypes.UPLOAD == _commandType)
         {
             await UploadAsync(cancellationToken).ConfigureAwait(false);
         }
-        else if (CommandTypes.DOWNLOAD == CommandType)
+        else if (CommandTypes.DOWNLOAD == _commandType)
         {
             await DownloadAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -279,51 +279,51 @@ internal class SFFileTransferAgent
     public SFResultSet Result()
     {
         // Set the row count using the number of metadata in the result metas
-        TransferMetadata.rowSet = new string[ResultsMetas.Count, 8];
+        _transferMetadata.rowSet = new string[_resultsMetas.Count, 8];
 
         // For each file metadata, set the result set variables
-        for (var index = 0; index < ResultsMetas.Count; index++)
+        for (var index = 0; index < _resultsMetas.Count; index++)
         {
-            TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceFileName] = ResultsMetas[index].srcFileName;
-            TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName] = ResultsMetas[index].destFileName;
-            TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize] =
-                ResultsMetas[index].srcFileSize.ToString();
-            TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize] =
-                ResultsMetas[index].destFileSize.ToString();
-            TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus] = ResultsMetas[index].resultStatus;
+            _transferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceFileName] = _resultsMetas[index].srcFileName;
+            _transferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationFileName] = _resultsMetas[index].destFileName;
+            _transferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceFileSize] =
+                _resultsMetas[index].srcFileSize.ToString();
+            _transferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationFileSize] =
+                _resultsMetas[index].destFileSize.ToString();
+            _transferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus] = _resultsMetas[index].resultStatus;
 
-            if (ResultsMetas[index].lastError != null)
+            if (_resultsMetas[index].lastError != null)
             {
-                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails] =
-                    ResultsMetas[index].lastError.ToString();
+                _transferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails] =
+                    _resultsMetas[index].lastError.ToString();
             }
             else
             {
-                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails] = null;
+                _transferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.ErrorDetails] = null;
             }
 
-            if (ResultsMetas[index].sourceCompression.Name != null)
+            if (_resultsMetas[index].sourceCompression.Name != null)
             {
-                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType] =
-                    ResultsMetas[index].sourceCompression.Name;
+                _transferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType] =
+                    _resultsMetas[index].sourceCompression.Name;
             }
             else
             {
-                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType] = null;
+                _transferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.SourceCompressionType] = null;
             }
 
-            if (ResultsMetas[index].targetCompression.Name != null)
+            if (_resultsMetas[index].targetCompression.Name != null)
             {
-                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType] =
-                    ResultsMetas[index].targetCompression.Name;
+                _transferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType] =
+                    _resultsMetas[index].targetCompression.Name;
             }
             else
             {
-                TransferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType] = null;
+                _transferMetadata.rowSet[index, (int)SFResultSet.PutGetResponseRowTypeInfo.DestinationCompressionType] = null;
             }
         }
 
-        return new SFResultSet(TransferMetadata, new SFStatement(Session));
+        return new SFResultSet(_transferMetadata, new SFStatement(_session));
     }
 
     /// <summary>
@@ -334,22 +334,22 @@ internal class SFFileTransferAgent
         //Start the upload tasks(for small files upload in parallel using the given parallelism
         //factor, for large file updload sequentially)
         //For each file, using the remote client
-        if (0 < LargeFilesMetas.Count)
+        if (0 < _largeFilesMetas.Count)
         {
-            Logger.Debug("Start uploading large files");
-            foreach (var fileMetadata in LargeFilesMetas)
+            s_logger.Debug("Start uploading large files");
+            foreach (var fileMetadata in _largeFilesMetas)
             {
                 UploadFilesInSequential(fileMetadata);
             }
 
-            Logger.Debug("End uploading large files");
+            s_logger.Debug("End uploading large files");
         }
 
-        if (0 < SmallFilesMetas.Count)
+        if (0 < _smallFilesMetas.Count)
         {
-            Logger.Debug("Start uploading small files");
-            UploadFilesInParallel(SmallFilesMetas, TransferMetadata.parallel);
-            Logger.Debug("End uploading small files");
+            s_logger.Debug("Start uploading small files");
+            UploadFilesInParallel(_smallFilesMetas, _transferMetadata.parallel);
+            s_logger.Debug("End uploading small files");
         }
     }
 
@@ -361,22 +361,22 @@ internal class SFFileTransferAgent
         //Start the upload tasks(for small files upload in parallel using the given parallelism
         //factor, for large file updload sequentially)
         //For each file, using the remote client
-        if (0 < LargeFilesMetas.Count)
+        if (0 < _largeFilesMetas.Count)
         {
-            Logger.Debug("Start uploading large files");
-            foreach (var fileMetadata in LargeFilesMetas)
+            s_logger.Debug("Start uploading large files");
+            foreach (var fileMetadata in _largeFilesMetas)
             {
                 await UploadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
             }
 
-            Logger.Debug("End uploading large files");
+            s_logger.Debug("End uploading large files");
         }
 
-        if (0 < SmallFilesMetas.Count)
+        if (0 < _smallFilesMetas.Count)
         {
-            Logger.Debug("Start uploading small files");
-            await UploadFilesInParallelAsync(SmallFilesMetas, cancellationToken).ConfigureAwait(false);
-            Logger.Debug("End uploading small files");
+            s_logger.Debug("Start uploading small files");
+            await UploadFilesInParallelAsync(_smallFilesMetas, cancellationToken).ConfigureAwait(false);
+            s_logger.Debug("End uploading small files");
         }
     }
 
@@ -389,22 +389,22 @@ internal class SFFileTransferAgent
         //Start the download tasks(for small files download in parallel using the given parallelism
         //factor, for large file download sequentially)
         //For each file, using the remote client
-        if (0 < LargeFilesMetas.Count)
+        if (0 < _largeFilesMetas.Count)
         {
-            Logger.Debug("Start uploading large files");
-            foreach (var fileMetadata in LargeFilesMetas)
+            s_logger.Debug("Start uploading large files");
+            foreach (var fileMetadata in _largeFilesMetas)
             {
                 DownloadFilesInSequential(fileMetadata);
             }
 
-            Logger.Debug("End uploading large files");
+            s_logger.Debug("End uploading large files");
         }
 
-        if (0 < SmallFilesMetas.Count)
+        if (0 < _smallFilesMetas.Count)
         {
-            Logger.Debug("Start uploading small files");
-            DownloadFilesInParallel(SmallFilesMetas, TransferMetadata.parallel);
-            Logger.Debug("End uploading small files");
+            s_logger.Debug("Start uploading small files");
+            DownloadFilesInParallel(_smallFilesMetas, _transferMetadata.parallel);
+            s_logger.Debug("End uploading small files");
         }
     }
 
@@ -416,22 +416,22 @@ internal class SFFileTransferAgent
         //Start the download tasks(for small files download in parallel using the given parallelism
         //factor, for large file download sequentially)
         //For each file, using the remote client
-        if (0 < LargeFilesMetas.Count)
+        if (0 < _largeFilesMetas.Count)
         {
-            Logger.Debug("Start uploading large files");
-            foreach (var fileMetadata in LargeFilesMetas)
+            s_logger.Debug("Start uploading large files");
+            foreach (var fileMetadata in _largeFilesMetas)
             {
                 await DownloadFilesInSequentialAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
             }
 
-            Logger.Debug("End uploading large files");
+            s_logger.Debug("End uploading large files");
         }
 
-        if (0 < SmallFilesMetas.Count)
+        if (0 < _smallFilesMetas.Count)
         {
-            Logger.Debug("Start uploading small files");
-            await DownloadFilesInParallelAsync(SmallFilesMetas, TransferMetadata.parallel, cancellationToken).ConfigureAwait(false);
-            Logger.Debug("End uploading small files");
+            s_logger.Debug("Start uploading small files");
+            await DownloadFilesInParallelAsync(_smallFilesMetas, _transferMetadata.parallel, cancellationToken).ConfigureAwait(false);
+            s_logger.Debug("End uploading small files");
         }
     }
 
@@ -441,35 +441,35 @@ internal class SFFileTransferAgent
     private void UpdatePresignedUrl()
     {
         // Presigned url only applies to GCS
-        if (TransferMetadata.stageInfo.locationType != "GCS")
+        if (_transferMetadata.stageInfo.locationType != "GCS")
             return;
 
-        if (CommandTypes.DOWNLOAD == CommandType)
+        if (CommandTypes.DOWNLOAD == _commandType)
         {
-            for (var index = 0; index < FilesMetas.Count; index++)
+            for (var index = 0; index < _filesMetas.Count; index++)
             {
-                FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
+                _filesMetas[index].presignedUrl = _transferMetadata.presignedUrls[index];
             }
 
             return;
         }
 
-        if (CommandType != CommandTypes.UPLOAD)
+        if (_commandType != CommandTypes.UPLOAD)
             return;
 
         // Skip entirely in access-token mode: a downscoped token is folder-scoped and already covers every file, so there is nothing per-file to fetch.
-        if (TransferMetadata.stageInfo.stageCredentials?.TryGetValue(SFGCSClient.GCS_ACCESS_TOKEN, out var value) == true &&
+        if (_transferMetadata.stageInfo.stageCredentials?.TryGetValue(SFGCSClient.GCS_ACCESS_TOKEN, out var value) == true &&
             !string.IsNullOrEmpty(value))
             return;
 
-        foreach (var fileMeta in FilesMetas)
+        foreach (var fileMeta in _filesMetas)
         {
-            var filePathToReplace = GetFilePathFromPutCommand(Query);
+            var filePathToReplace = GetFilePathFromPutCommand(_query);
             var fileNameToReplaceWith = fileMeta.destFileName;
-            var queryWithSingleFile = Query;
+            var queryWithSingleFile = _query;
             queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
 
-            var sfStatement = new SFStatement(Session)
+            var sfStatement = new SFStatement(_session)
             {
                 isPutGetQuery = true
             };
@@ -487,35 +487,35 @@ internal class SFFileTransferAgent
     private async Task UpdatePresignedUrlAsync(CancellationToken cancellationToken)
     {
         // Presigned url only applies to GCS
-        if (TransferMetadata.stageInfo.locationType != "GCS")
+        if (_transferMetadata.stageInfo.locationType != "GCS")
             return;
 
-        if (CommandType == CommandTypes.DOWNLOAD)
+        if (_commandType == CommandTypes.DOWNLOAD)
         {
-            for (var index = 0; index < FilesMetas.Count; index++)
+            for (var index = 0; index < _filesMetas.Count; index++)
             {
-                FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
+                _filesMetas[index].presignedUrl = _transferMetadata.presignedUrls[index];
             }
 
             return;
         }
 
-        if (CommandType != CommandTypes.UPLOAD)
+        if (_commandType != CommandTypes.UPLOAD)
             return;
 
         // Skip entirely in access-token mode: a downscoped token is folder-scoped and already covers every file, so there is nothing per-file to fetch.
-        if (TransferMetadata.stageInfo.stageCredentials?.TryGetValue(SFGCSClient.GCS_ACCESS_TOKEN, out var value) == true &&
+        if (_transferMetadata.stageInfo.stageCredentials?.TryGetValue(SFGCSClient.GCS_ACCESS_TOKEN, out var value) == true &&
             !string.IsNullOrEmpty(value))
             return;
 
-        foreach (var fileMeta in FilesMetas)
+        foreach (var fileMeta in _filesMetas)
         {
-            var filePathToReplace = GetFilePathFromPutCommand(Query);
+            var filePathToReplace = GetFilePathFromPutCommand(_query);
             var fileNameToReplaceWith = fileMeta.destFileName;
-            var queryWithSingleFile = Query;
+            var queryWithSingleFile = _query;
             queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
 
-            var sfStatement = new SFStatement(Session)
+            var sfStatement = new SFStatement(_session)
             {
                 isPutGetQuery = true
             };
@@ -556,11 +556,11 @@ internal class SFFileTransferAgent
     /// </summary>
     private void InitEncryptionMaterial()
     {
-        if (CommandTypes.UPLOAD == CommandType)
+        if (CommandTypes.UPLOAD == _commandType)
         {
-            if (TransferMetadata.stageInfo.isClientSideEncrypted)
+            if (_transferMetadata.stageInfo.isClientSideEncrypted)
             {
-                EncryptionMaterials.Add(TransferMetadata.encryptionMaterial[0]);
+                _encryptionMaterials.Add(_transferMetadata.encryptionMaterial[0]);
             }
         }
     }
@@ -585,8 +585,8 @@ internal class SFFileTransferAgent
 
         SFFileCompressionTypes.SFFileCompressionType compressionType;
 
-        if (TransferMetadata.autoCompress &&
-            TransferMetadata.sourceCompression.Equals(COMPRESSION_AUTO_DETECT))
+        if (_transferMetadata.autoCompress &&
+            _transferMetadata.sourceCompression.Equals(COMPRESSION_AUTO_DETECT))
         {
             // Auto-detect source compression type
             // Will return NONE if no matching type is found
@@ -594,13 +594,13 @@ internal class SFFileTransferAgent
                 ? SFFileCompressionTypes.GuessCompressionType(_memoryStream)
                 : SFFileCompressionTypes.GuessCompressionType(name);
 
-            Logger.Debug($"File compression detected as {compressionType.Name} for: {name}");
+            s_logger.Debug($"File compression detected as {compressionType.Name} for: {name}");
         }
         else
         {
             // User defined source compression type
             compressionType =
-                SFFileCompressionTypes.LookUpByName(TransferMetadata.sourceCompression);
+                SFFileCompressionTypes.LookUpByName(_transferMetadata.sourceCompression);
         }
 
         // Verify that the compression type is supported
@@ -619,7 +619,7 @@ internal class SFFileTransferAgent
     /// <param name="files">List of files to obtain metadata from</param>
     private void InitFileMetadata(List<string> files)
     {
-        if (CommandTypes.UPLOAD == CommandType)
+        if (CommandTypes.UPLOAD == _commandType)
         {
             foreach (var file in files)
             {
@@ -630,15 +630,15 @@ internal class SFFileTransferAgent
                     srcFilePath = file,
                     srcFileName = sourceName,
                     srcFileSize = length,
-                    stageInfo = TransferMetadata.stageInfo,
-                    overwrite = TransferMetadata.overwrite,
+                    stageInfo = _transferMetadata.stageInfo,
+                    overwrite = _transferMetadata.overwrite,
                     // Need to compress before sending only if autoCompress is On and the file is
                     // not compressed yet
-                    requireCompress = TransferMetadata.autoCompress && SFFileCompressionTypes.NONE.Equals(compressionType),
+                    requireCompress = _transferMetadata.autoCompress && SFFileCompressionTypes.NONE.Equals(compressionType),
                     sourceCompression = compressionType,
-                    presignedUrl = TransferMetadata.stageInfo.presignedUrl,
+                    presignedUrl = _transferMetadata.stageInfo.presignedUrl,
                     // If the file is under the threshold, don't upload in chunks, set parallel to 1
-                    parallel = (_memoryStream == null && length > TransferMetadata.threshold) ? TransferMetadata.parallel : 1,
+                    parallel = (_memoryStream == null && length > _transferMetadata.threshold) ? _transferMetadata.parallel : 1,
                     memoryStream = _memoryStream,
                     canCompressSpillToFile = _memoryStream?.Owned != false || _environmentFacade.GetBool(EnvVars.PutDisableInMemoryCompress),
                     proxyCredentials = null,
@@ -648,9 +648,9 @@ internal class SFFileTransferAgent
 
                 /// The storage client used to upload data from files or streams
                 /// This is only needed for remote storage types
-                if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
+                if (StorageClientType.REMOTE == GetStorageClientType(_transferMetadata.stageInfo))
                 {
-                    fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata, tlsProtocols: Session.TlsProtocols, tlsProtocolsExplicitlyRequested: Session.TlsProtocolsExplicitlyRequested);
+                    fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(_transferMetadata, tlsProtocols: _session.TlsProtocols, tlsProtocolsExplicitlyRequested: _session.TlsProtocolsExplicitlyRequested);
                 }
 
                 if (!fileMetadata.requireCompress)
@@ -666,18 +666,18 @@ internal class SFFileTransferAgent
                     fileMetadata.destFileName = sourceName + SFFileCompressionTypes.GZIP.FileExtension;
                 }
 
-                if (EncryptionMaterials.Count > 0)
+                if (_encryptionMaterials.Count > 0)
                 {
-                    fileMetadata.encryptionMaterial = EncryptionMaterials[0];
+                    fileMetadata.encryptionMaterial = _encryptionMaterials[0];
                 }
 
-                if (Session.properties.ContainsKey(SFSessionProperty.PROXYHOST))
+                if (_session.properties.ContainsKey(SFSessionProperty.PROXYHOST))
                 {
                     string host, port, user, password;
-                    Session.properties.TryGetValue(SFSessionProperty.PROXYHOST, out host);
-                    Session.properties.TryGetValue(SFSessionProperty.PROXYPORT, out port);
-                    Session.properties.TryGetValue(SFSessionProperty.PROXYUSER, out user);
-                    Session.properties.TryGetValue(SFSessionProperty.PROXYPASSWORD, out password);
+                    _session.properties.TryGetValue(SFSessionProperty.PROXYHOST, out host);
+                    _session.properties.TryGetValue(SFSessionProperty.PROXYPORT, out port);
+                    _session.properties.TryGetValue(SFSessionProperty.PROXYUSER, out user);
+                    _session.properties.TryGetValue(SFSessionProperty.PROXYPASSWORD, out password);
 
 
                     fileMetadata.proxyCredentials = new ProxyCredentials()
@@ -689,10 +689,10 @@ internal class SFFileTransferAgent
                     };
                 }
 
-                FilesMetas.Add(fileMetadata);
+                _filesMetas.Add(fileMetadata);
             }
         }
-        else if (CommandTypes.DOWNLOAD == CommandType)
+        else if (CommandTypes.DOWNLOAD == _commandType)
         {
             for (var index = 0; index < files.Count; index++)
             {
@@ -701,13 +701,13 @@ internal class SFFileTransferAgent
                 {
                     srcFileName = file,
                     destFileName = file.Split('/').Last(),
-                    localLocation = TransferMetadata.localLocation,
-                    stageInfo = TransferMetadata.stageInfo,
-                    overwrite = TransferMetadata.overwrite,
-                    presignedUrl = TransferMetadata.stageInfo.presignedUrl,
-                    parallel = TransferMetadata.parallel,
-                    encryptionMaterial = index < TransferMetadata.encryptionMaterial.Count
-                        ? TransferMetadata.encryptionMaterial[index]
+                    localLocation = _transferMetadata.localLocation,
+                    stageInfo = _transferMetadata.stageInfo,
+                    overwrite = _transferMetadata.overwrite,
+                    presignedUrl = _transferMetadata.stageInfo.presignedUrl,
+                    parallel = _transferMetadata.parallel,
+                    encryptionMaterial = index < _transferMetadata.encryptionMaterial.Count
+                        ? _transferMetadata.encryptionMaterial[index]
                         : null,
                     MaxBytesInMemory = GetFileTransferMaxBytesInMemory(),
                     _operationType = CommandTypes.DOWNLOAD
@@ -715,9 +715,9 @@ internal class SFFileTransferAgent
 
                 /// The storage client used to download data from files or streams
                 /// This is only needed for remote storage types
-                if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
+                if (StorageClientType.REMOTE == GetStorageClientType(_transferMetadata.stageInfo))
                 {
-                    fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(TransferMetadata, tlsProtocols: Session.TlsProtocols, tlsProtocolsExplicitlyRequested: Session.TlsProtocolsExplicitlyRequested);
+                    fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorage(_transferMetadata, tlsProtocols: _session.TlsProtocols, tlsProtocolsExplicitlyRequested: _session.TlsProtocolsExplicitlyRequested);
 
                     var fileHeader = fileMetadata.client.GetFileHeader(fileMetadata);
 
@@ -728,14 +728,14 @@ internal class SFFileTransferAgent
                     }
                 }
 
-                FilesMetas.Add(fileMetadata);
+                _filesMetas.Add(fileMetadata);
             }
         }
     }
 
     private int GetFileTransferMaxBytesInMemory()
     {
-        if (!Session.properties.TryGetValue(SFSessionProperty.FILE_TRANSFER_MEMORY_THRESHOLD, out var maxBytesInMemoryString))
+        if (!_session.properties.TryGetValue(SFSessionProperty.FILE_TRANSFER_MEMORY_THRESHOLD, out var maxBytesInMemoryString))
         {
             return FileTransferConfiguration.DefaultMaxBytesInMemory;
         }
@@ -751,7 +751,7 @@ internal class SFFileTransferAgent
         }
         catch (Exception)
         {
-            Logger.Warn("Default for FILE_TRANSFER_MEMORY_THRESHOLD used due to invalid session value.");
+            s_logger.Warn("Default for FILE_TRANSFER_MEMORY_THRESHOLD used due to invalid session value.");
             return FileTransferConfiguration.DefaultMaxBytesInMemory;
         }
     }
@@ -818,12 +818,12 @@ internal class SFFileTransferAgent
             }
         }
 
-        if (Logger.IsDebugEnabled())
+        if (s_logger.IsDebugEnabled())
         {
-            Logger.Debug("Expand " + location + " into: ");
+            s_logger.Debug("Expand " + location + " into: ");
             foreach (var filepath in filePaths)
             {
-                Logger.Debug("\t" + filepath);
+                s_logger.Debug("\t" + filepath);
             }
         }
 
@@ -970,7 +970,7 @@ internal class SFFileTransferAgent
             fileMetadata.memoryStream = null;
         }
 
-        Logger.Debug($"Compressed {fileMetadata.srcFileName} to {fileMetadata.realSrcFilePath}");
+        s_logger.Debug($"Compressed {fileMetadata.srcFileName} to {fileMetadata.realSrcFilePath}");
         var destInfo = new FileInfo(fileMetadata.realSrcFilePath);
         fileMetadata.destFileSize = destInfo.Length;
     }
@@ -1003,17 +1003,17 @@ internal class SFFileTransferAgent
     /// <returns>The renewed storage client.</returns>
     private ISFRemoteStorageClient RenewExpiredClient(ProxyCredentials proxyCredentials)
     {
-        RenewClientMutex.WaitOne();
+        s_renewClientMutex.WaitOne();
 
-        var sfStatement = new SFStatement(Session);
-        var statementContext = StatementContext.Default with { CommandText = TransferMetadata.command };
+        var sfStatement = new SFStatement(_session);
+        var statementContext = StatementContext.Default with { CommandText = _transferMetadata.command };
         var response = sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(statementContext, null);
 
-        TransferMetadata = response.data;
+        _transferMetadata = response.data;
 
-        RenewClientMutex.ReleaseMutex();
+        s_renewClientMutex.ReleaseMutex();
 
-        return SFRemoteStorageUtil.GetRemoteStorage(response.data, proxyCredentials, Session.TlsProtocols, Session.TlsProtocolsExplicitlyRequested);
+        return SFRemoteStorageUtil.GetRemoteStorage(response.data, proxyCredentials, _session.TlsProtocols, _session.TlsProtocolsExplicitlyRequested);
     }
 
     /// <summary>
@@ -1022,15 +1022,15 @@ internal class SFFileTransferAgent
     /// <returns>The renewed storage client.</returns>
     private async Task<ISFRemoteStorageClient> RenewExpiredClientAsync(CancellationToken cancellationToken)
     {
-        var sfStatement = new SFStatement(Session);
-        var statementContext = StatementContext.Default with { CommandText = TransferMetadata.command };
+        var sfStatement = new SFStatement(_session);
+        var statementContext = StatementContext.Default with { CommandText = _transferMetadata.command };
         var response = await
             sfStatement.ExecuteAsyncHelper<PutGetExecResponse, PutGetResponseData>(
                 statementContext,
                 null,
                 cancellationToken).ConfigureAwait(false);
 
-        return SFRemoteStorageUtil.GetRemoteStorage(response.data, tlsProtocols: Session.TlsProtocols, tlsProtocolsExplicitlyRequested: Session.TlsProtocolsExplicitlyRequested);
+        return SFRemoteStorageUtil.GetRemoteStorage(response.data, tlsProtocols: _session.TlsProtocols, tlsProtocolsExplicitlyRequested: _session.TlsProtocolsExplicitlyRequested);
     }
 
     /// <summary>
@@ -1070,7 +1070,7 @@ internal class SFFileTransferAgent
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
         }
 
-        ResultsMetas.Add(fileMetadata);
+        _resultsMetas.Add(fileMetadata);
 
         if (INJECT_WAIT_IN_PUT > 0)
         {
@@ -1115,7 +1115,7 @@ internal class SFFileTransferAgent
             fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
         }
 
-        ResultsMetas.Add(fileMetadata);
+        _resultsMetas.Add(fileMetadata);
 
         if (INJECT_WAIT_IN_PUT > 0)
         {
@@ -1142,7 +1142,7 @@ internal class SFFileTransferAgent
             UpdatePresignedUrl();
         }
 
-        ResultsMetas.Add(resultMetadata);
+        _resultsMetas.Add(resultMetadata);
 
         if (INJECT_WAIT_IN_PUT > 0)
         {
@@ -1169,7 +1169,7 @@ internal class SFFileTransferAgent
             await UpdatePresignedUrlAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        ResultsMetas.Add(resultMetadata);
+        _resultsMetas.Add(resultMetadata);
 
         if (INJECT_WAIT_IN_PUT > 0)
         {
@@ -1276,7 +1276,7 @@ internal class SFFileTransferAgent
             // Calculate the digest
             GetDigestAndSizeForFile(fileMetadata);
 
-            if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
+            if (StorageClientType.REMOTE == GetStorageClientType(_transferMetadata.stageInfo))
             {
                 // Upload the file using the remote client SDK and the file metadata
                 SFRemoteStorageUtil.UploadOneFileWithRetry(fileMetadata);
@@ -1289,7 +1289,7 @@ internal class SFFileTransferAgent
         }
         catch (Exception ex)
         {
-            Logger.Debug("Unhandled exception while uploading file.", ex);
+            s_logger.Debug("Unhandled exception while uploading file.", ex);
             throw;
         }
         finally
@@ -1337,7 +1337,7 @@ internal class SFFileTransferAgent
             // Calculate the digest
             GetDigestAndSizeForFile(fileMetadata);
 
-            if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
+            if (StorageClientType.REMOTE == GetStorageClientType(_transferMetadata.stageInfo))
             {
                 // Upload the file using the remote client SDK and the file metadata
                 await SFRemoteStorageUtil.UploadOneFileWithRetryAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
@@ -1350,7 +1350,7 @@ internal class SFFileTransferAgent
         }
         catch (Exception ex)
         {
-            Logger.Error("UploadSingleFileAsync encountered an error: " + ex.Message);
+            s_logger.Error("UploadSingleFileAsync encountered an error: " + ex.Message);
             throw;
         }
         finally
@@ -1375,7 +1375,7 @@ internal class SFFileTransferAgent
 
         try
         {
-            if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
+            if (StorageClientType.REMOTE == GetStorageClientType(_transferMetadata.stageInfo))
             {
                 // Upload the file using the remote client SDK and the file metadata
                 SFRemoteStorageUtil.DownloadOneFile(fileMetadata);
@@ -1388,7 +1388,7 @@ internal class SFFileTransferAgent
         }
         catch (Exception ex)
         {
-            Logger.Error("DownloadSingleFile encountered an error: " + ex.Message);
+            s_logger.Error("DownloadSingleFile encountered an error: " + ex.Message);
             throw;
         }
         finally
@@ -1413,7 +1413,7 @@ internal class SFFileTransferAgent
 
         try
         {
-            if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
+            if (StorageClientType.REMOTE == GetStorageClientType(_transferMetadata.stageInfo))
             {
                 // Upload the file using the remote client SDK and the file metadata
                 await SFRemoteStorageUtil.DownloadOneFileAsync(fileMetadata, cancellationToken).ConfigureAwait(false);
@@ -1426,7 +1426,7 @@ internal class SFFileTransferAgent
         }
         catch (Exception ex)
         {
-            Logger.Error("DownloadSingleFileAsync encountered an error: " + ex.Message);
+            s_logger.Error("DownloadSingleFileAsync encountered an error: " + ex.Message);
             throw;
         }
         finally
@@ -1476,16 +1476,16 @@ internal class SFFileTransferAgent
         if (_memoryStream != null)
         {
             // stream put only support single file
-            if (TransferMetadata.src_locations.Count != 1)
+            if (_transferMetadata.src_locations.Count != 1)
             {
                 throw new ArgumentException("Invalid stream put.");
             }
 
-            expandedSrcLocations.Add(TransferMetadata.src_locations[0]);
+            expandedSrcLocations.Add(_transferMetadata.src_locations[0]);
         }
         else
         {
-            foreach (var location in TransferMetadata.src_locations)
+            foreach (var location in _transferMetadata.src_locations)
             {
                 expandedSrcLocations.AddRange(ExpandFileNames(location));
             }
@@ -1497,7 +1497,7 @@ internal class SFFileTransferAgent
         InitFileMetadata(expandedSrcLocations);
 
         if (expandedSrcLocations.Count == 0)
-            throw new ArgumentException("No file found for: " + TransferMetadata.src_locations[0]);
+            throw new ArgumentException("No file found for: " + _transferMetadata.src_locations[0]);
     }
 
     private static bool IsDirectory(string path)

@@ -6,8 +6,8 @@ namespace Snowflake.Data.Client;
 
 public class SnowflakeDbDataAdapter : DbDataAdapter, IDbDataAdapter
 {
-    private static readonly object EventRowUpdated = new();
-    private static readonly object EventRowUpdating = new();
+    private static readonly object s_eventRowUpdated = new();
+    private static readonly object s_eventRowUpdating = new();
 
     private SnowflakeDbCommand _selectCommand;
 

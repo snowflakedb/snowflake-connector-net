@@ -16,56 +16,56 @@ public sealed class SnowflakeDbException : DbException
     // Sql states not coming directly from the server.
     internal static string CONNECTION_FAILURE_SSTATE = "08006";
 
-    private static readonly ResourceManager rm = new("Snowflake.Data.Core.ErrorMessages",
+    private static readonly ResourceManager s_rm = new("Snowflake.Data.Core.ErrorMessages",
         typeof(SnowflakeDbException).Assembly);
 
 #pragma warning disable CS0108, CS0114 // TODO SNOW-3662960
     public string SqlState { get; private set; }
 #pragma warning restore CS0108, CS0114
-    private int VendorCode;
+    private int _vendorCode;
 
     public string QueryId { get; set; }
 
-    public override int ErrorCode => VendorCode;
+    public override int ErrorCode => _vendorCode;
 
     public SnowflakeDbException(string sqlState, int vendorCode, string errorMessage, string queryId)
         : base(FormatExceptionMessage(errorMessage, vendorCode, sqlState, queryId))
     {
         SqlState = sqlState;
-        VendorCode = vendorCode;
+        _vendorCode = vendorCode;
         QueryId = queryId;
     }
 
     public SnowflakeDbException(SFError error, string queryId, Exception innerException)
         : base(FormatExceptionMessage(error, [innerException.Message], string.Empty, queryId), innerException)
     {
-        VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+        _vendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
         QueryId = queryId;
     }
 
     public SnowflakeDbException(SFError error, params object[] args)
         : base(FormatExceptionMessage(error, args, string.Empty, string.Empty))
     {
-        VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+        _vendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
     }
 
     public SnowflakeDbException(string sqlState, SFError error, params object[] args)
         : base(FormatExceptionMessage(error, args, sqlState, string.Empty))
     {
-        VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+        _vendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
         SqlState = sqlState;
     }
 
     public SnowflakeDbException(Exception innerException, SFError error, params object[] args)
         : base(FormatExceptionMessage(error, args, string.Empty, string.Empty), innerException)
     {
-        VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+        _vendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
     }
 
     public SnowflakeDbException(Exception innerException, string sqlState, SFError error, params object[] args)
         : base(FormatExceptionMessage(error, args, sqlState, string.Empty), innerException)
     {
-        VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+        _vendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
         SqlState = sqlState;
     }
 
@@ -87,7 +87,7 @@ public sealed class SnowflakeDbException : DbException
         var formatExceptionMessage = FormatExceptionMessage(error, args, string.Empty, queryId);
         var result = new SnowflakeDbException(formatExceptionMessage, innerException)
         {
-            VendorCode = error.GetAttribute<SFErrorAttr>().errorCode,
+            _vendorCode = error.GetAttribute<SFErrorAttr>().errorCode,
             QueryId = queryId
         };
 
@@ -99,7 +99,7 @@ public sealed class SnowflakeDbException : DbException
         string sqlState,
         string queryId)
     {
-        return FormatExceptionMessage(string.Format(rm.GetString(error.ToString()), args)
+        return FormatExceptionMessage(string.Format(s_rm.GetString(error.ToString()), args)
             , error.GetAttribute<SFErrorAttr>().errorCode
             , sqlState
             , queryId);
