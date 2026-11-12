@@ -91,6 +91,7 @@ await connection.OpenAsync(cancellationToken); // Pool 2 is created
 #### Minimum pool size
 
 Ensures the pool maintains at least the specified number of connections. Additional connections are created in the background when a connection is opened. During connection close, expired connections are removed and then new ones are created to restore the minimum size.
+The pool opens these connections and closes the expired ones asynchronously, at most `max(2, processor count)` at a time, so reaching the minimum size can take a moment.
 
 ```csharp
 using var connection = new SnowflakeDbConnection($"{ConnectionString};application=App1") // Pool of size 10 is created

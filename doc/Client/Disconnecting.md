@@ -14,6 +14,8 @@ CancellationTokenSource cancellationTokenSource  = new CancellationTokenSource()
 ((SnowflakeDbConnection)conn).CloseAsync(cancellationTokenSource.Token);
 ```
 
+On .NET 8 and newer, disposing the connection with `await using` (or calling `DisposeAsync`) closes it without blocking threads as well.
+
 ## Evict the Connection
 
 For the open connection, call the `PreventPooling()` to mark the connection to be removed on close instead being still pooled.

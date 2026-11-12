@@ -472,6 +472,34 @@ public class SnowflakeDbConnection : DbConnection
         return command;
     }
 
+#if NETCOREAPP3_0_OR_GREATER
+    /// <summary>
+    /// Asynchronously closes the connection and releases its resources.
+    /// If connection pooling is enabled, the session may be returned to the pool.
+    /// </summary>
+    /// <returns>A task representing the asynchronous dispose operation.</returns>
+    // Without this override "await using" would end up in the synchronous Close().
+    public override async ValueTask DisposeAsync()
+    {
+        if (!_disposed)
+        {
+            try
+            {
+                await CloseAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                // Prevent an exception from being thrown when disposing of this object
+                _logger.Error("Unable to close connection", ex);
+            }
+
+            _disposed = true;
+        }
+
+        await base.DisposeAsync().ConfigureAwait(false);
+    }
+#endif
+
     protected override void Dispose(bool disposing)
     {
         if (!_disposed)
