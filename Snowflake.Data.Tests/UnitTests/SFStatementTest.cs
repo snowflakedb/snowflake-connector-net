@@ -53,7 +53,7 @@ public class SFStatementTest
         sfSession.Open();
         var statement = new SFStatement(sfSession);
         var thrown = Assert.Throws<SnowflakeDbException>(() => statement.GetResultWithId("retryId"));
-        Assert.Equal(thrown.ErrorCode, Mock.MockRestSessionExpired.SESSION_EXPIRED_CODE);
+        Assert.Equal(thrown.ErrorCode, Mock.MockRestSessionExpired.SessionExpiredCode);
     }
 
     [SFFact]
@@ -78,7 +78,7 @@ public class SFStatementTest
         await sfSession.OpenAsync(CancellationToken.None).ConfigureAwait(false);
         var statement = new SFStatement(sfSession);
         var thrown = await Assert.ThrowsAsync<SnowflakeDbException>(async () => await statement.GetResultWithIdAsync("retryId", CancellationToken.None).ConfigureAwait(false)).ConfigureAwait(false);
-        Assert.Equal(thrown.ErrorCode, Mock.MockRestSessionExpired.SESSION_EXPIRED_CODE);
+        Assert.Equal(thrown.ErrorCode, Mock.MockRestSessionExpired.SessionExpiredCode);
     }
 
     // Mock test for session renew during query execution
@@ -104,7 +104,7 @@ public class SFStatementTest
         var restRequester = new Mock.MockServiceName();
         var sfSession = new SFSession("account=test;user=test;password=test", new SessionPropertiesContext(), restRequester);
         sfSession.Open();
-        var expectServiceName = Mock.MockServiceName.INIT_SERVICE_NAME;
+        var expectServiceName = Mock.MockServiceName.InitServiceName;
         Assert.Equal(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
         for (var i = 0; i < 5; i++)
         {

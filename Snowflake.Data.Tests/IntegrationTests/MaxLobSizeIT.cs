@@ -54,16 +54,16 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
     private const int LobRandomRange = 100000 + 1; // range to use for generating random numbers (0 - 100000)
 
     private static readonly string[] s_colName = { "C1", "C2", "C3" };
-    private static readonly AsyncLocal<string> t_tableName = new();
-    private static readonly AsyncLocal<string> t_insertQuery = new();
-    private static readonly AsyncLocal<string> t_positionalBindingInsertQuery = new();
-    private static readonly AsyncLocal<string> t_namedBindingInsertQuery = new();
-    private static readonly AsyncLocal<string> t_selectQuery = new();
-    private static readonly AsyncLocal<string> t_fileName = new();
-    private static readonly AsyncLocal<string> t_inputFilePath = new();
-    private static readonly AsyncLocal<string> t_outputFilePath = new();
-    private static readonly AsyncLocal<List<string>> t_filesToDelete = new();
-    private static readonly AsyncLocal<string[]> t_colData = new();
+    private static readonly AsyncLocal<string> s_tTableName = new();
+    private static readonly AsyncLocal<string> s_tInsertQuery = new();
+    private static readonly AsyncLocal<string> s_tPositionalBindingInsertQuery = new();
+    private static readonly AsyncLocal<string> s_tNamedBindingInsertQuery = new();
+    private static readonly AsyncLocal<string> s_tSelectQuery = new();
+    private static readonly AsyncLocal<string> s_tFileName = new();
+    private static readonly AsyncLocal<string> s_tInputFilePath = new();
+    private static readonly AsyncLocal<string> s_tOutputFilePath = new();
+    private static readonly AsyncLocal<List<string>> s_tFilesToDelete = new();
+    private static readonly AsyncLocal<string[]> s_tColData = new();
 
     public MaxLobSizeIT(MaxLobSizeITTestFixture maxLobeFixture) : base(maxLobeFixture)
     {
@@ -71,13 +71,13 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
         _outputDirectory = maxLobeFixture.OutputDirectory;
         var threadSuffix = Guid.NewGuid().ToString("N");
 
-        t_tableName.Value = $"LOB_TABLE_{threadSuffix}";
-        var tableNameWithColumns = $"{t_tableName.Value}({string.Join(", ", s_colName.Select(col => col))})";
-        t_insertQuery.Value = $"INSERT INTO {tableNameWithColumns} VALUES ";
-        t_positionalBindingInsertQuery.Value = $"INSERT INTO {tableNameWithColumns} VALUES (?, ?, ?)";
-        t_namedBindingInsertQuery.Value = $"INSERT INTO {tableNameWithColumns} VALUES (:1, :2, :3)";
-        t_selectQuery.Value = $"SELECT * FROM {t_tableName.Value}";
-        t_filesToDelete.Value = new List<string>();
+        s_tTableName.Value = $"LOB_TABLE_{threadSuffix}";
+        var tableNameWithColumns = $"{s_tTableName.Value}({string.Join(", ", s_colName.Select(col => col))})";
+        s_tInsertQuery.Value = $"INSERT INTO {tableNameWithColumns} VALUES ";
+        s_tPositionalBindingInsertQuery.Value = $"INSERT INTO {tableNameWithColumns} VALUES (?, ?, ?)";
+        s_tNamedBindingInsertQuery.Value = $"INSERT INTO {tableNameWithColumns} VALUES (:1, :2, :3)";
+        s_tSelectQuery.Value = $"SELECT * FROM {s_tTableName.Value}";
+        s_tFilesToDelete.Value = new List<string>();
 
         using (var conn = new SnowflakeDbConnection(_fixture.ConnectionString))
         {
@@ -86,7 +86,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
             {
                 // Create temp table
                 var columnNamesWithTypes = $"{s_colName[0]} VARCHAR({MaxLobSize}), {s_colName[1]} VARCHAR({MaxLobSize}), {s_colName[2]} INT";
-                command.CommandText = $"CREATE OR REPLACE TABLE {t_tableName.Value} ({columnNamesWithTypes})";
+                command.CommandText = $"CREATE OR REPLACE TABLE {s_tTableName.Value} ({columnNamesWithTypes})";
                 command.ExecuteNonQuery();
             }
         }
@@ -100,14 +100,14 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
             using (var command = conn.CreateCommand())
             {
                 // Drop temp table
-                command.CommandText = $"DROP TABLE IF EXISTS {t_tableName.Value}";
+                command.CommandText = $"DROP TABLE IF EXISTS {s_tTableName.Value}";
                 command.ExecuteNonQueryAsync();
             }
         }
 
-        if (t_filesToDelete != null)
+        if (s_tFilesToDelete != null)
         {
-            foreach (var file in t_filesToDelete.Value)
+            foreach (var file in s_tFilesToDelete.Value)
             {
                 File.Delete(file);
             }
@@ -153,10 +153,10 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
             using (var command = conn.CreateCommand())
             {
                 // act
-                command.CommandText = $"{t_insertQuery.Value} ('{c1}', '{c2}', '{c3}')";
+                command.CommandText = $"{s_tInsertQuery.Value} ('{c1}', '{c2}', '{c3}')";
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                command.CommandText = t_selectQuery.Value;
+                command.CommandText = s_tSelectQuery.Value;
                 var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
 
                 // assert
@@ -186,7 +186,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
             using (var command = conn.CreateCommand())
             {
                 // act
-                command.CommandText = $"{t_positionalBindingInsertQuery.Value}";
+                command.CommandText = $"{s_tPositionalBindingInsertQuery.Value}";
 
                 var p1 = command.CreateParameter();
                 p1.ParameterName = "1";
@@ -208,7 +208,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
 
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                command.CommandText = t_selectQuery.Value;
+                command.CommandText = s_tSelectQuery.Value;
                 var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
 
                 // assert
@@ -239,7 +239,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
             using (var command = conn.CreateCommand())
             {
                 // act
-                command.CommandText = $"{t_namedBindingInsertQuery.Value}";
+                command.CommandText = $"{s_tNamedBindingInsertQuery.Value}";
 
                 var p1 = command.CreateParameter();
                 p1.ParameterName = "1";
@@ -261,7 +261,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
 
                 await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
-                command.CommandText = t_selectQuery.Value;
+                command.CommandText = s_tSelectQuery.Value;
                 var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
 
                 // assert
@@ -282,7 +282,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
         var c1 = GenerateRandomString(lobSize);
         var c2 = GenerateRandomString(lobSize);
         var c3 = new Random().Next(LobRandomRange);
-        t_colData.Value = new string[] { c1, c2, c3.ToString() };
+        s_tColData.Value = new string[] { c1, c2, c3.ToString() };
 
         PrepareTest();
 
@@ -297,7 +297,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
         }
     }
 
-    private static readonly IEnumerable<int> LobSizeTestCases = new[]
+    private static readonly IEnumerable<int> s_lobSizeTestCases = new[]
     {
         OriginSize,
         MediumSize,
@@ -311,7 +311,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
     {
         foreach (var resultFormat in ResultFormats)
         {
-            foreach (var lobSize in LobSizeTestCases)
+            foreach (var lobSize in s_lobSizeTestCases)
             {
                 yield return new object[] { resultFormat, lobSize };
             }
@@ -335,19 +335,19 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
 
     private void PrepareTest()
     {
-        t_fileName.Value = $"{Guid.NewGuid()}.csv";
-        t_inputFilePath.Value = Path.GetTempPath() + t_fileName.Value;
+        s_tFileName.Value = $"{Guid.NewGuid()}.csv";
+        s_tInputFilePath.Value = Path.GetTempPath() + s_tFileName.Value;
 
-        var data = $"{t_colData.Value[0]},{t_colData.Value[1]},{t_colData.Value[2]}";
-        using (var stream = FileOperations.Instance.Create(t_inputFilePath.Value))
+        var data = $"{s_tColData.Value[0]},{s_tColData.Value[1]},{s_tColData.Value[2]}";
+        using (var stream = FileOperations.Instance.Create(s_tInputFilePath.Value))
         using (var writer = new StreamWriter(stream))
         {
             writer.Write(data);
         }
 
-        t_outputFilePath.Value = $@"{_outputDirectory}/{t_fileName.Value}";
-        t_filesToDelete.Value.Add(t_inputFilePath.Value);
-        t_filesToDelete.Value.Add(t_outputFilePath.Value);
+        s_tOutputFilePath.Value = $@"{_outputDirectory}/{s_tFileName.Value}";
+        s_tFilesToDelete.Value.Add(s_tInputFilePath.Value);
+        s_tFilesToDelete.Value.Add(s_tOutputFilePath.Value);
     }
 
     private static async Task PutFile(SnowflakeDbConnection conn)
@@ -355,7 +355,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
         using (var command = conn.CreateCommand())
         {
             // arrange
-            command.CommandText = $"PUT file://{t_inputFilePath.Value} @%{t_tableName.Value} AUTO_COMPRESS=FALSE";
+            command.CommandText = $"PUT file://{s_tInputFilePath.Value} @%{s_tTableName.Value} AUTO_COMPRESS=FALSE";
 
             // act
             var reader = command.ExecuteReader();
@@ -372,13 +372,13 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
         using (var command = conn.CreateCommand())
         {
             // arrange
-            command.CommandText = $"COPY INTO {t_tableName.Value}";
+            command.CommandText = $"COPY INTO {s_tTableName.Value}";
 
             // act
             await command.ExecuteNonQueryAsync().ConfigureAwait(false);
 
             // arrange
-            command.CommandText = $"SELECT * FROM {t_tableName.Value}";
+            command.CommandText = $"SELECT * FROM {s_tTableName.Value}";
 
             // act
             var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
@@ -395,8 +395,8 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
     private static void AssertOnColData(DbDataReader reader, int index)
     {
         var actual = reader.GetString(index);
-        var substringLength = t_colData.Value[index].Length > 20 ? 20 : t_colData.Value[index].Length;
-        Assert.True(t_colData.Value[index] == actual, $"Expected strings to be equal. Expected: '{t_colData.Value[index].Substring(0, substringLength)}' [...], got '{actual}' instead.");
+        var substringLength = s_tColData.Value[index].Length > 20 ? 20 : s_tColData.Value[index].Length;
+        Assert.True(s_tColData.Value[index] == actual, $"Expected strings to be equal. Expected: '{s_tColData.Value[index].Substring(0, substringLength)}' [...], got '{actual}' instead.");
     }
 
     private async Task GetFileAsync(DbConnection conn)
@@ -404,7 +404,7 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
         using (var command = conn.CreateCommand())
         {
             // arrange
-            command.CommandText = $"GET @%{t_tableName.Value}/{t_fileName.Value} file://{_outputDirectory}";
+            command.CommandText = $"GET @%{s_tTableName.Value}/{s_tFileName.Value} file://{_outputDirectory}";
 
             // act
             var reader = command.ExecuteReader();
@@ -415,12 +415,12 @@ public class MaxLobSizeIT : SFBaseTestAsync, IDisposable, IClassFixture<MaxLobSi
                 reader.GetString((int)SFResultSet.PutGetResponseRowTypeInfo.ResultStatus));
 
             // arrange
-            var content = File.ReadAllText(t_outputFilePath.Value).Split(',');
+            var content = File.ReadAllText(s_tOutputFilePath.Value).Split(',');
 
             // assert
-            Assert.Equal(t_colData.Value[0], content[0]);
-            Assert.Equal(t_colData.Value[1], content[1]);
-            Assert.Equal(t_colData.Value[2], content[2]);
+            Assert.Equal(s_tColData.Value[0], content[0]);
+            Assert.Equal(s_tColData.Value[1], content[1]);
+            Assert.Equal(s_tColData.Value[2], content[2]);
         }
     }
 

@@ -44,7 +44,7 @@ public sealed class WorkflowIdentityFederationAuthenticatorOidcTest : WorkloadId
     public void TestSuccessfulOidcAuthentication()
     {
         // arrange
-        var token = WorkflowIdentityFederationAuthenticatorAzureTest.s_JWTAccessToken;
+        var token = WorkflowIdentityFederationAuthenticatorAzureTest.JWTAccessToken;
         SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.OIDC, token);
         var session = CreateSessionForOidc(token);
 
@@ -59,7 +59,7 @@ public sealed class WorkflowIdentityFederationAuthenticatorOidcTest : WorkloadId
     public async Task TestSuccessfulOidcAuthenticationAsync()
     {
         // arrange
-        var token = WorkflowIdentityFederationAuthenticatorAzureTest.s_JWTAccessToken;
+        var token = WorkflowIdentityFederationAuthenticatorAzureTest.JWTAccessToken;
         SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.OIDC, token);
         var session = CreateSessionForOidc(token);
 
@@ -74,9 +74,9 @@ public sealed class WorkflowIdentityFederationAuthenticatorOidcTest : WorkloadId
     public void TestOidcAttestation()
     {
         // arrange
-        var token = WorkflowIdentityFederationAuthenticatorAzureTest.s_JWTAccessToken;
-        var subject = WorkflowIdentityFederationAuthenticatorAzureTest.s_TokenSubject;
-        var issuer = WorkflowIdentityFederationAuthenticatorAzureTest.s_TokenIssuer;
+        var token = WorkflowIdentityFederationAuthenticatorAzureTest.JWTAccessToken;
+        var subject = WorkflowIdentityFederationAuthenticatorAzureTest.TokenSubject;
+        var issuer = WorkflowIdentityFederationAuthenticatorAzureTest.TokenIssuer;
         var session = CreateSessionForOidc(token);
         var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
 
@@ -109,7 +109,7 @@ public sealed class WorkflowIdentityFederationAuthenticatorOidcTest : WorkloadId
     public void TestFailOidcAttestationWhenImpersonationIsUsed()
     {
         // arrange
-        var token = WorkflowIdentityFederationAuthenticatorAzureTest.s_JWTAccessToken;
+        var token = WorkflowIdentityFederationAuthenticatorAzureTest.JWTAccessToken;
         var session = PrepareSession(
             AttestationProvider.OIDC,
             $"token={token};workload_impersonation_path=some/impersonation/path;",

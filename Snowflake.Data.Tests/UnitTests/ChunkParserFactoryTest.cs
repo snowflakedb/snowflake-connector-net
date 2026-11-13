@@ -17,11 +17,11 @@ public sealed class ChunkParserFactoryTestCollection : ICollectionFixture<ChunkP
 [Collection(nameof(ChunkParserFactoryTestCollection))]
 public sealed class ChunkParserFactoryTest : IDisposable
 {
-    private readonly int ChunkParserVersionDefault = SFConfiguration.Instance().GetChunkParserVersion();
+    private readonly int _chunkParserVersionDefault = SFConfiguration.Instance().GetChunkParserVersion();
 
     public void Dispose()
     {
-        SFConfiguration.Instance().ChunkParserVersion = ChunkParserVersionDefault; // Return to default version
+        SFConfiguration.Instance().ChunkParserVersion = _chunkParserVersionDefault; // Return to default version
     }
 
     [SFTheory(RetriesCount = RetriesCount.Once)]
@@ -56,7 +56,7 @@ public sealed class ChunkParserFactoryTest : IDisposable
         }
         finally
         {
-            SFConfiguration.Instance().ChunkParserVersion = ChunkParserVersionDefault;
+            SFConfiguration.Instance().ChunkParserVersion = _chunkParserVersionDefault;
         }
     }
 }

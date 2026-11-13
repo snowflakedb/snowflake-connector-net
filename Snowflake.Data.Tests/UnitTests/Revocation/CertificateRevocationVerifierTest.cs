@@ -49,10 +49,10 @@ public class CertificateRevocationVerifierTest : RevocationTests
     {
         // arrange
         var expectedCrlUrls = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
-        var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
-        var parentCertificate = CertificateGenerator.LoadFromFile(s_digiCertParentCertificatePath);
+        var certificate = CertificateGenerator.LoadFromFile(DigiCertCertificatePath);
+        var parentCertificate = CertificateGenerator.LoadFromFile(DigiCertParentCertificatePath);
         var config = GetHttpConfig();
-        var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
+        var crlBytes = File.ReadAllBytes(DigiCertCrlPath);
         var restRequester = new Mock<IRestRequester>();
         MockByteResponseForGet(restRequester, DigiCertCrlUrl1, crlBytes);
         MockByteResponseForGet(restRequester, DigiCertCrlUrl2, crlBytes);
@@ -75,10 +75,10 @@ public class CertificateRevocationVerifierTest : RevocationTests
     {
         // arrange
         var expectedCrlUrls = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
-        var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
-        var parentCertificate = CertificateGenerator.LoadFromFile(s_digiCertParentCertificatePath);
+        var certificate = CertificateGenerator.LoadFromFile(DigiCertCertificatePath);
+        var parentCertificate = CertificateGenerator.LoadFromFile(DigiCertParentCertificatePath);
         var config = GetHttpConfig();
-        var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
+        var crlBytes = File.ReadAllBytes(DigiCertCrlPath);
         var restRequester = new Mock<IRestRequester>();
         MockByteResponseForGet(restRequester, DigiCertCrlUrl1, crlBytes);
         MockErrorResponseForGet(restRequester, DigiCertCrlUrl2, NotFoundHttpExceptionProvider);
@@ -101,10 +101,10 @@ public class CertificateRevocationVerifierTest : RevocationTests
     {
         // arrange
         var expectedCrlUrls = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
-        var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
-        var parentCertificate = CertificateGenerator.LoadFromFile(s_digiCertParentCertificatePath);
+        var certificate = CertificateGenerator.LoadFromFile(DigiCertCertificatePath);
+        var parentCertificate = CertificateGenerator.LoadFromFile(DigiCertParentCertificatePath);
         var config = GetHttpConfig();
-        var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
+        var crlBytes = File.ReadAllBytes(DigiCertCrlPath);
         var notParsableCrlBytes = Encoding.ASCII.GetBytes("not parsable crl");
         var restRequester = new Mock<IRestRequester>();
         MockByteResponseForGet(restRequester, DigiCertCrlUrl1, crlBytes);
@@ -128,9 +128,9 @@ public class CertificateRevocationVerifierTest : RevocationTests
     {
         // arrange
         var expectedCrlUrls = new[] { DigiCertCrlUrl1 };
-        var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
-        var parentCertificate = CertificateGenerator.LoadFromFile(s_digiCertParentCertificatePath);
-        var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
+        var certificate = CertificateGenerator.LoadFromFile(DigiCertCertificatePath);
+        var parentCertificate = CertificateGenerator.LoadFromFile(DigiCertParentCertificatePath);
+        var crlBytes = File.ReadAllBytes(DigiCertCrlPath);
 
         var maxSize = crlBytes.Length - 1;
         var config = GetHttpConfig(CertRevocationCheckMode.Enabled, maxSize);
@@ -167,8 +167,8 @@ public class CertificateRevocationVerifierTest : RevocationTests
     {
         // arrange
         var expectedCrlUrls = new[] { DigiCertCrlUrl1 };
-        var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
-        var parentCertificate = CertificateGenerator.LoadFromFile(s_digiCertParentCertificatePath);
+        var certificate = CertificateGenerator.LoadFromFile(DigiCertCertificatePath);
+        var parentCertificate = CertificateGenerator.LoadFromFile(DigiCertParentCertificatePath);
 
         var maxSize = 1000;
         var contentLengthTooLarge = maxSize + 1;
@@ -203,10 +203,10 @@ public class CertificateRevocationVerifierTest : RevocationTests
     {
         // arrange
         var expectedCrlUrls = new[] { DigiCertCrlUrl1, DigiCertCrlUrl2 };
-        var certificate = CertificateGenerator.LoadFromFile(s_digiCertCertificatePath);
+        var certificate = CertificateGenerator.LoadFromFile(DigiCertCertificatePath);
         var parentCertificate = CertificateGenerator.GenerateSelfSignedCertificate(DigiCertIssuer, DateTime.Now.AddYears(-1), DateTime.Now.AddYears(1), null);
         var config = GetHttpConfig();
-        var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
+        var crlBytes = File.ReadAllBytes(DigiCertCrlPath);
         var restRequester = new Mock<IRestRequester>();
         MockByteResponseForGet(restRequester, DigiCertCrlUrl1, crlBytes);
         MockByteResponseForGet(restRequester, DigiCertCrlUrl2, crlBytes);
@@ -230,7 +230,7 @@ public class CertificateRevocationVerifierTest : RevocationTests
         var certKeys = CertificateGenerator.GenerateEllipticKeysForCertAndItsParent();
         var certSubject = "CN=cert CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
         var rootSubject = "CN=root CN, O=Snowflake, OU=Drivers, L=Warsaw, ST=Masovian, C=PL";
-        var signatureAlgorithm = CertificateGenerator.SHA256WithECDSA;
+        var signatureAlgorithm = CertificateGenerator.SHA256WithEcdsa;
         var certificate = CertificateGenerator.GenerateCertificate(certSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[0], false, signatureAlgorithm);
         var parentCertificate = CertificateGenerator.GenerateCertificate(rootSubject, rootSubject, DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(300), null, certKeys[1], true, signatureAlgorithm);
         var privateKeyToSignCrl = signCrlWithCaPrivateKey ? certKeys[1].Private : CertificateGenerator.GenerateECDSAKeyPair().Private;

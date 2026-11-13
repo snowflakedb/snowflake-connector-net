@@ -999,13 +999,13 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         [SFFact]
         public async Task TestAbortRequestTimeoutIsAppliedToCancelRequest()
         {
-            const int abortTimeoutSeconds = 3;
-            const int cleanupWaitSeconds = 5;
+            const int AbortTimeoutSeconds = 3;
+            const int CleanupWaitSeconds = 5;
 
             using var mockRequester = new MockHangingQueryRestRequester();
             using var conn = new MockSnowflakeDbConnection(mockRequester);
             conn.ConnectionString = _fixtureHere.ConnectionString
-                                    + $"poolingEnabled=false;abort_request_timeout={abortTimeoutSeconds};cleanup_wait={cleanupWaitSeconds}";
+                                    + $"poolingEnabled=false;abort_request_timeout={AbortTimeoutSeconds};cleanup_wait={CleanupWaitSeconds}";
 
             await conn.OpenAsync(CancellationToken.None).ConfigureAwait(false);
             Assert.Equal(ConnectionState.Open, conn.State);
@@ -1027,7 +1027,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
             // The cancel request must carry the abort_request_timeout as its RestTimeout
             // so the real RestRequester's SendAsync honors it.
             Assert.NotNull(mockRequester.LastCancelRequest);
-            Assert.Equal(TimeSpan.FromSeconds(abortTimeoutSeconds), mockRequester.LastCancelRequest.RestTimeout);
+            Assert.Equal(TimeSpan.FromSeconds(AbortTimeoutSeconds), mockRequester.LastCancelRequest.RestTimeout);
         }
     }
 
@@ -1144,7 +1144,7 @@ public sealed class SFConnectionITAsync : SFBaseTestAsync
         }
         catch (SnowflakeDbException e)
         {
-            Assert.Equal(MockCloseSessionException.SESSION_CLOSE_ERROR, e.ErrorCode);
+            Assert.Equal(MockCloseSessionException.SessionCloseError, e.ErrorCode);
         }
         Assert.Equal(ConnectionState.Broken, conn.State);
     }

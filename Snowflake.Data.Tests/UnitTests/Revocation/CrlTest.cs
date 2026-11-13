@@ -25,7 +25,7 @@ public sealed class CrlTest : RevocationTests
     public void TestCrlParse()
     {
         // arrange
-        var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
+        var crlBytes = File.ReadAllBytes(DigiCertCrlPath);
         var envFacade = new Mock<IEnvironmentFacade>();
         var crlParser = new CrlParser(envFacade.Object);
         var now = new DateTime(2025, 7, 25, 16, 57, 0, DateTimeKind.Utc);
@@ -57,7 +57,7 @@ public sealed class CrlTest : RevocationTests
     public void TestCrlExpiredDependingOnNextUpdate(string nowString, bool expectedIsExpired)
     {
         // arrange
-        var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
+        var crlBytes = File.ReadAllBytes(DigiCertCrlPath);
         var envFacade = new Mock<IEnvironmentFacade>();
         var crlParser = new CrlParser(envFacade.Object);
         var now = DateTimeOffset.Parse(nowString).UtcDateTime;
@@ -107,7 +107,7 @@ public sealed class CrlTest : RevocationTests
     public void TestCrlIsStaleAfterValidityTime()
     {
         // arrange
-        var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
+        var crlBytes = File.ReadAllBytes(DigiCertCrlPath);
         var envFacade = new Mock<IEnvironmentFacade>();
         var crlParser = new CrlParser(envFacade.Object);
         var now = new DateTime(2025, 7, 25, 16, 57, 0, DateTimeKind.Utc);
@@ -151,7 +151,7 @@ public sealed class CrlTest : RevocationTests
     public void TestIsRevokedIsCaseInsensitive(string serialNumber)
     {
         // arrange
-        var crlBytes = File.ReadAllBytes(s_digiCertCrlPath);
+        var crlBytes = File.ReadAllBytes(DigiCertCrlPath);
         var envFacade = new Mock<IEnvironmentFacade>();
         var crlParser = new CrlParser(envFacade.Object);
         var now = new DateTime(2010, 04, 10, 16, 57, 0, DateTimeKind.Utc);

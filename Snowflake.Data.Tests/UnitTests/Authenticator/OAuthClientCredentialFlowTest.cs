@@ -43,11 +43,11 @@ public sealed class OAuthClientCredentialFlowTestFixture : ICollectionFixture<OA
 public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
 {
     private readonly OAuthClientCredentialFlowTestFixture.Fixture _fixture;
-    private static readonly string s_oauthClientCredentialsMappingPath = Path.Combine(s_oauthMappingPath, "ClientCredentials");
+    private static readonly string s_oauthClientCredentialsMappingPath = Path.Combine(OauthMappingPath, "ClientCredentials");
     private static readonly string s_clientCredentialSuccessfulMappingPath = Path.Combine(s_oauthClientCredentialsMappingPath, "successful_flow.json");
     private static readonly string s_tokenRequestErrorMappingPath = Path.Combine(s_oauthClientCredentialsMappingPath, "token_request_error.json");
     private static readonly string s_tokenRequestNoRefreshTokenMappingPath = Path.Combine(s_oauthClientCredentialsMappingPath, "successful_without_refresh_token.json");
-    private static readonly string s_oauthSnowflakeNonTokenLoginErrorMappingPath = Path.Combine(s_oauthMappingPath, "snowflake_non_token_login_error.json");
+    private static readonly string s_oauthSnowflakeNonTokenLoginErrorMappingPath = Path.Combine(OauthMappingPath, "snowflake_non_token_login_error.json");
     private const string NewAccessToken = "new-access-token-123";
 
     public OAuthClientCredentialFlowTest(OAuthClientCredentialFlowTestFixture.Fixture fixture)
@@ -61,7 +61,7 @@ public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession();
 
         // act
@@ -77,7 +77,7 @@ public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession();
 
         // act
@@ -93,7 +93,7 @@ public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_tokenRequestNoRefreshTokenMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession();
 
         // act
@@ -109,7 +109,7 @@ public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_tokenRequestNoRefreshTokenMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession();
 
         // act
@@ -125,7 +125,7 @@ public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession(clientSecretInConnectionString: false);
 
         // act
@@ -171,9 +171,9 @@ public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
     {
         // arrange — first login returns invalid token error (390303), then flow is replayed and second login succeeds
         _fixture.Runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginInvalidTokenMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginInvalidTokenMappingPath);
         _fixture.Runner.AddMappings(s_clientCredentialSuccessfulMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
         var session = PrepareSession();
 
         // act
@@ -189,9 +189,9 @@ public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
     {
         // arrange — first login returns invalid token error (390303), then flow is replayed and second login succeeds
         _fixture.Runner.AddMappings(s_clientCredentialSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginInvalidTokenMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginInvalidTokenMappingPath);
         _fixture.Runner.AddMappings(s_clientCredentialSuccessfulMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
         var session = PrepareSession();
 
         // act
@@ -264,7 +264,7 @@ public class OAuthClientCredentialFlowTest : BaseOAuthFlowTest
             .Append($"authenticator={authenticator};account={account};")
             .Append($"db={db};role={role};warehouse={warehouse};host={host};port={port};scheme={scheme};")
             .Append($"oauthClientId={clientId};oauthScope={AuthorizationScope};")
-            .Append($"oauthTokenRequestUrl={s_externalTokenRequestUrl};");
+            .Append($"oauthTokenRequestUrl={ExternalTokenRequestUrl};");
         if (addOAuthClientSecret)
             connectionStringBuilder.Append($"oauthClientSecret={ClientSecret};");
         if (addUser)

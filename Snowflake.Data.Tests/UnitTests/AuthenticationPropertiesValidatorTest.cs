@@ -10,7 +10,7 @@ namespace Snowflake.Data.Tests.UnitTests;
 
 public class AuthenticationPropertiesValidatorTest
 {
-    private const string _necessaryNonAuthProperties = "account=a;";
+    private const string NecessaryNonAuthProperties = "account=a;";
 
     [SFTheory]
     [InlineData("authenticator=snowflake;user=test;password=test", null)]
@@ -29,7 +29,7 @@ public class AuthenticationPropertiesValidatorTest
         var propertiesContext = new SessionPropertiesContext { Password = securePassword };
 
         // Act/Assert
-        SFSessionProperties.ParseConnectionString(_necessaryNonAuthProperties + connectionString, propertiesContext);
+        SFSessionProperties.ParseConnectionString(NecessaryNonAuthProperties + connectionString, propertiesContext);
     }
 
     [SFTheory]
@@ -58,7 +58,7 @@ public class AuthenticationPropertiesValidatorTest
         var propertiesContext = new SessionPropertiesContext { Password = securePassword };
 
         // Act
-        var exception = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(_necessaryNonAuthProperties + connectionString, propertiesContext));
+        var exception = Assert.Throws<SnowflakeDbException>(() => SFSessionProperties.ParseConnectionString(NecessaryNonAuthProperties + connectionString, propertiesContext));
 
         // Assert
         SnowflakeDbExceptionAssert.HasErrorCode(exception, expectedError);

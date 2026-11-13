@@ -18,14 +18,14 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator;
 
 public class WorkloadIdentityFederationAuthenticatorTest
 {
-    protected static readonly string s_wiremockUrl = $"http://localhost:{WiremockRunner.DefaultHttpPort}";
-    protected static readonly string s_wifMappingPath = Path.Combine("wiremock", "WIF");
-    protected static readonly string s_accessTokenReplacement = "%ACCESS_TOKEN%";
-    protected static readonly string s_WifProviderReplacement = "%WIF_PROVIDER%";
+    protected static readonly string WiremockUrl = $"http://localhost:{WiremockRunner.DefaultHttpPort}";
+    protected static readonly string WifMappingPath = Path.Combine("wiremock", "WIF");
+    protected static readonly string AccessTokenReplacement = "%ACCESS_TOKEN%";
+    protected static readonly string WifProviderReplacement = "%WIF_PROVIDER%";
     private const string MasterToken = "masterToken123";
     private const string SessionToken = "sessionToken123";
     private const string SessionId = "1234567890";
-    private static readonly string s_SuccessfulMappingPath = Path.Combine(s_wifMappingPath, "snowflake_successful_login.json");
+    private static readonly string s_successfulMappingPath = Path.Combine(WifMappingPath, "snowflake_successful_login.json");
 
     internal static SFSession PrepareSession(
         AttestationProvider? attestationProvider,
@@ -51,7 +51,7 @@ public class WorkloadIdentityFederationAuthenticatorTest
         timeProviderConfigurator(timeProvider);
         var awsSdkWrapper = new Mock<AwsSdkWrapper>();
         awsSdkConfigurator(awsSdkWrapper);
-        var authenticator = new WorkloadIdentityFederationAuthenticator(session, environmentOperations.Object, timeProvider.Object, awsSdkWrapper.Object, s_wiremockUrl);
+        var authenticator = new WorkloadIdentityFederationAuthenticator(session, environmentOperations.Object, timeProvider.Object, awsSdkWrapper.Object, WiremockUrl);
         session.ReplaceAuthenticator(authenticator);
         return session;
     }
@@ -134,10 +134,10 @@ public class WorkloadIdentityFederationAuthenticatorTest
     }
 
     internal static void SetupSnowflakeAuthentication(IWiremockRunner runner, AttestationProvider provider, string accessToken) =>
-        runner.AddMappings(s_SuccessfulMappingPath,
+        runner.AddMappings(s_successfulMappingPath,
             new StringTransformations()
-                .ThenTransform(s_accessTokenReplacement, accessToken)
-                .ThenTransform(s_WifProviderReplacement, provider.ToString())
+                .ThenTransform(AccessTokenReplacement, accessToken)
+                .ThenTransform(WifProviderReplacement, provider.ToString())
         );
 
     internal static void AssertSessionSuccessfullyCreated(SFSession session)

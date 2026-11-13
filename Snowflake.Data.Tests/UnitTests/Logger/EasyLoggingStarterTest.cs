@@ -14,18 +14,18 @@ namespace Snowflake.Data.Tests.UnitTests.Session;
 
 public sealed class EasyLoggingStarterTest
 {
-    private static readonly string HomeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-    private static readonly string LogPath = Path.Combine(HomeDirectory, "some-logs-path/some-folder");
+    private static readonly string s_homeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+    private static readonly string s_logPath = Path.Combine(s_homeDirectory, "some-logs-path/some-folder");
     private const string ConfigPath = "/some-path/config.json";
     private const string AnotherConfigPath = "/another/path";
-    private static readonly string s_expectedLogPath = Path.Combine(LogPath, "dotnet");
+    private static readonly string s_expectedLogPath = Path.Combine(s_logPath, "dotnet");
 
     private static readonly ClientConfig s_configWithErrorLevel = new()
     {
         CommonProps = new ClientConfigCommonProps
         {
             LogLevel = "Error",
-            LogPath = LogPath
+            LogPath = s_logPath
         }
     };
 
@@ -34,7 +34,7 @@ public sealed class EasyLoggingStarterTest
         CommonProps = new ClientConfigCommonProps
         {
             LogLevel = "Info",
-            LogPath = LogPath
+            LogPath = s_logPath
         }
     };
 
@@ -60,7 +60,7 @@ public sealed class EasyLoggingStarterTest
         CommonProps = new ClientConfigCommonProps
         {
             LogLevel = "Error",
-            LogPath = LogPath
+            LogPath = s_logPath
         },
         Dotnet = new ClientConfigDotnet
         {

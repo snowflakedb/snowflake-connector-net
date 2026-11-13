@@ -9,7 +9,7 @@ namespace Snowflake.Data.Tests.Mock;
 
 internal class MockRestRequesterForQueryCancellation : MockBaseRestRequester
 {
-    private static readonly string SessionToken = "mock_session_token";
+    private static readonly string s_sessionToken = "mock_session_token";
 
     internal bool CancelRequestSent { get; private set; }
     internal string CancelledQueryId { get; private set; }
@@ -34,7 +34,7 @@ internal class MockRestRequesterForQueryCancellation : MockBaseRestRequester
             {
                 data = new LoginResponseData()
                 {
-                    token = SessionToken,
+                    token = s_sessionToken,
                     masterToken = "master_token",
                     authResponseSessionInfo = new SessionInfo(),
                     nameValueParameter = new List<NameValueParameter>()

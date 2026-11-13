@@ -124,15 +124,15 @@ public class ConnectionPoolManagerMFATest : IDisposable
 
 internal class MockSessionFactoryMFA : ISessionFactory
 {
-    private readonly IMockRestRequester restRequester;
+    private readonly IMockRestRequester _restRequester;
 
     public MockSessionFactoryMFA(IMockRestRequester restRequester)
     {
-        this.restRequester = restRequester;
+        this._restRequester = restRequester;
     }
 
     public SFSession NewSession(string connectionString, SessionPropertiesContext sessionContext)
     {
-        return new SFSession(connectionString, sessionContext, EasyLoggingStarter.Instance, restRequester);
+        return new SFSession(connectionString, sessionContext, EasyLoggingStarter.Instance, _restRequester);
     }
 }

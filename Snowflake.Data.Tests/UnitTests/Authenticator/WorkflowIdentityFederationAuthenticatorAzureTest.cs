@@ -36,20 +36,20 @@ public sealed class WorkflowIdentityFederationAuthenticatorAzureTestFixture : IC
 [Collection(nameof(WorkflowIdentityFederationAuthenticatorAzureTestFixture))]
 public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadIdentityFederationAuthenticatorTest
 {
-    private static readonly string s_wifAzureMappingPath = Path.Combine(s_wifMappingPath, "Azure");
+    private static readonly string s_wifAzureMappingPath = Path.Combine(WifMappingPath, "Azure");
     private static readonly string s_wifAzureBasicSuccessfulMapping = Path.Combine(s_wifAzureMappingPath, "successful_flow_basic.json");
     private static readonly string s_wifAzureBasicWithClientIdSuccessfulMapping = Path.Combine(s_wifAzureMappingPath, "successful_flow_basic_with_client_id.json");
     private static readonly string s_wifAzureFunctionsSuccessfulMappingPath = Path.Combine(s_wifAzureMappingPath, "successful_flow_azure_functions.json");
     private static readonly string s_wifAzureFunctionsNoClientIdSuccessfulMappingPath = Path.Combine(s_wifAzureMappingPath, "successful_flow_azure_functions_no_client_id.json");
-    private static readonly string s_azureIdentityEndpoint = $"{s_wiremockUrl}/metadata/identity/endpoint/from/env";
+    private static readonly string s_azureIdentityEndpoint = $"{WiremockUrl}/metadata/identity/endpoint/from/env";
     private static readonly string s_azureIdentityHeader = "some-identity-header-from-env";
     private static readonly string s_azureManagedClientId = "managed-client-id-from-env";
     private static readonly string s_customEntraResource = "api://1111111-2222-3333-44444-55555555";
-    internal static readonly string s_JWTAccessToken = "eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NiIsImtpZCI6Ijk0ZGI4N2NiMjdmNjdjZDA1Zjk5OTlkZjMwNjg1NmQ4In0.eyJhdWQiOiJhcGkxIiwiaXNzIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvZmExNWQ2OTItZTljNy00NDYwLWE3NDMtMjlmMjk1MjIyMjkvIiwic3ViIjoiNzcyMTNFMzAtRThDQi00NTk1LUIxQjYtNUYwNTBFODMwOEZEIiwiZXhwIjoxNzQ0NzE2MDUxLCJpYXQiOjE3NDQ3MTI0NTEsImp0aSI6Ijg3MTMzNzcwMDk0MTZmYmFhNDM0MmFkMjMxZGUwMDBkIn0.C5jTYoybRs5YF5GvPgoDq4WK5U9-gDzh_N3IPaqEBI0IifdYSWpKQ72v3UISnVpp7Fc46C-ZC8kijUGe3IU9zA"; // pragma: allowlist secret
-    internal static readonly string s_TokenSubject = "77213E30-E8CB-4595-B1B6-5F050E8308FD";
-    internal static readonly string s_TokenIssuer = "https://sts.windows.net/fa15d692-e9c7-4460-a743-29f29522229/";
-    private static readonly string s_JWTAccessTokenV2 = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhcGk6Ly9mZDNmNzUzYi1lZWQzLTQ2MmMtYjZhNy1hNGI1YmI2NTBhYWQiLCJleHAiOjE3NDQ3MTYwNTEsImlhdCI6MTc0NDcxMjQ1MSwiaXNzIjoiaHR0cHM6Ly9sb2dpbi5taWNyb3NvZnRvbmxpbmUuY29tL2ZhMTVkNjkyLWU5YzctNDQ2MC1hNzQzLTI5ZjI5NTIyMjI5LyIsImp0aSI6Ijg3MTMzNzcwMDk0MTZmYmFhNDM0MmFkMjMxZGUwMDBkIiwic3ViIjoiNzcyMTNFMzAtRThDQi00NTk1LUIxQjYtNUYwNTBFODMwOEZEIn0.5mAlEPkzHLR7YbllpKgk-8ZEd88XfzA15DUK8u1rLWs"; // pragma: allowlist secret
-    private static readonly string s_TokenIssuerV2 = "https://login.microsoftonline.com/fa15d692-e9c7-4460-a743-29f29522229/";
+    internal static readonly string JWTAccessToken = "eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NiIsImtpZCI6Ijk0ZGI4N2NiMjdmNjdjZDA1Zjk5OTlkZjMwNjg1NmQ4In0.eyJhdWQiOiJhcGkxIiwiaXNzIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvZmExNWQ2OTItZTljNy00NDYwLWE3NDMtMjlmMjk1MjIyMjkvIiwic3ViIjoiNzcyMTNFMzAtRThDQi00NTk1LUIxQjYtNUYwNTBFODMwOEZEIiwiZXhwIjoxNzQ0NzE2MDUxLCJpYXQiOjE3NDQ3MTI0NTEsImp0aSI6Ijg3MTMzNzcwMDk0MTZmYmFhNDM0MmFkMjMxZGUwMDBkIn0.C5jTYoybRs5YF5GvPgoDq4WK5U9-gDzh_N3IPaqEBI0IifdYSWpKQ72v3UISnVpp7Fc46C-ZC8kijUGe3IU9zA"; // pragma: allowlist secret
+    internal static readonly string TokenSubject = "77213E30-E8CB-4595-B1B6-5F050E8308FD";
+    internal static readonly string TokenIssuer = "https://sts.windows.net/fa15d692-e9c7-4460-a743-29f29522229/";
+    private static readonly string JWTAccessTokenV2 = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhcGk6Ly9mZDNmNzUzYi1lZWQzLTQ2MmMtYjZhNy1hNGI1YmI2NTBhYWQiLCJleHAiOjE3NDQ3MTYwNTEsImlhdCI6MTc0NDcxMjQ1MSwiaXNzIjoiaHR0cHM6Ly9sb2dpbi5taWNyb3NvZnRvbmxpbmUuY29tL2ZhMTVkNjkyLWU5YzctNDQ2MC1hNzQzLTI5ZjI5NTIyMjI5LyIsImp0aSI6Ijg3MTMzNzcwMDk0MTZmYmFhNDM0MmFkMjMxZGUwMDBkIiwic3ViIjoiNzcyMTNFMzAtRThDQi00NTk1LUIxQjYtNUYwNTBFODMwOEZEIn0.5mAlEPkzHLR7YbllpKgk-8ZEd88XfzA15DUK8u1rLWs"; // pragma: allowlist secret
+    private static readonly string TokenIssuerV2 = "https://login.microsoftonline.com/fa15d692-e9c7-4460-a743-29f29522229/";
     private static readonly string s_clientIdReplacement = "%CLIENT_ID%";
     private static readonly string s_entraResourceReplacement = "%ENTRA_RESOURCE%";
     private static readonly string s_identityHeaderReplacement = "%IDENTITY_HEADER%";
@@ -67,7 +67,7 @@ public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadI
     {
         // arrange
         AddAzureBasicWiremockMappings();
-        SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AZURE, s_JWTAccessToken);
+        SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AZURE, JWTAccessToken);
         var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
 
         // act
@@ -82,7 +82,7 @@ public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadI
     {
         // arrange
         AddAzureBasicWiremockMappings();
-        SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AZURE, s_JWTAccessToken);
+        SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AZURE, JWTAccessToken);
         var session = PrepareSessionForAzure(null, NoEnvironmentSetup);
 
         // act
@@ -105,8 +105,8 @@ public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadI
 
         // assert
         Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
-        Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-        Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+        Assert.Equal(TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+        Assert.Equal(TokenSubject, attestation.UserIdentifierComponents["sub"]);
         AssertExtensions.NotEmptyString(attestation.Credential);
     }
 
@@ -123,8 +123,8 @@ public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadI
 
         // assert
         Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
-        Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-        Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+        Assert.Equal(TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+        Assert.Equal(TokenSubject, attestation.UserIdentifierComponents["sub"]);
         AssertExtensions.NotEmptyString(attestation.Credential);
     }
 
@@ -141,8 +141,8 @@ public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadI
 
         // assert
         Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
-        Assert.Equal(s_TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
-        Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+        Assert.Equal(TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
+        Assert.Equal(TokenSubject, attestation.UserIdentifierComponents["sub"]);
         AssertExtensions.NotEmptyString(attestation.Credential);
     }
 
@@ -179,8 +179,8 @@ public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadI
 
         // assert
         Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
-        Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-        Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+        Assert.Equal(TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+        Assert.Equal(TokenSubject, attestation.UserIdentifierComponents["sub"]);
         AssertExtensions.NotEmptyString(attestation.Credential);
     }
 
@@ -201,8 +201,8 @@ public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadI
 
         // assert
         Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
-        Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-        Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+        Assert.Equal(TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+        Assert.Equal(TokenSubject, attestation.UserIdentifierComponents["sub"]);
         AssertExtensions.NotEmptyString(attestation.Credential);
     }
 
@@ -224,8 +224,8 @@ public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadI
 
         // assert
         Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
-        Assert.Equal(s_TokenIssuer, attestation.UserIdentifierComponents["iss"]);
-        Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+        Assert.Equal(TokenIssuer, attestation.UserIdentifierComponents["iss"]);
+        Assert.Equal(TokenSubject, attestation.UserIdentifierComponents["sub"]);
         AssertExtensions.NotEmptyString(attestation.Credential);
     }
 
@@ -267,8 +267,8 @@ public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadI
 
         // assert
         Assert.Equal(AttestationProvider.AZURE, attestation.Provider);
-        Assert.Equal(s_TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
-        Assert.Equal(s_TokenSubject, attestation.UserIdentifierComponents["sub"]);
+        Assert.Equal(TokenIssuerV2, attestation.UserIdentifierComponents["iss"]);
+        Assert.Equal(TokenSubject, attestation.UserIdentifierComponents["sub"]);
         AssertExtensions.NotEmptyString(attestation.Credential);
     }
 
@@ -277,28 +277,28 @@ public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadI
     internal static void AddAzureBasicWiremockMappings(WiremockRunner runner) =>
         runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
             new StringTransformations()
-                .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
+                .ThenTransform(AccessTokenReplacement, JWTAccessToken)
                 .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
         );
 
     private void AddAzureBasicV2IssuerWiremockMappings() =>
         _fixture.Runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
             new StringTransformations()
-                .ThenTransform(s_accessTokenReplacement, s_JWTAccessTokenV2)
+                .ThenTransform(AccessTokenReplacement, JWTAccessTokenV2)
                 .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
         );
 
     private void AddAzureUnparsableTokenWiremockMappings() =>
         _fixture.Runner.AddMappings(s_wifAzureBasicSuccessfulMapping,
             new StringTransformations()
-                .ThenTransform(s_accessTokenReplacement, "unparsable.token")
+                .ThenTransform(AccessTokenReplacement, "unparsable.token")
                 .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
         );
 
     private void AddAzureFunctionsWiremockMappings() =>
         _fixture.Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
             new StringTransformations()
-                .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
+                .ThenTransform(AccessTokenReplacement, JWTAccessToken)
                 .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
                 .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
                 .ThenTransform(s_identityHeaderReplacement, s_azureIdentityHeader)
@@ -307,7 +307,7 @@ public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadI
     private void AddAzureFunctionsWithV2IssuerWiremockMappings() =>
         _fixture.Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
             new StringTransformations()
-                .ThenTransform(s_accessTokenReplacement, s_JWTAccessTokenV2)
+                .ThenTransform(AccessTokenReplacement, JWTAccessTokenV2)
                 .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
                 .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
                 .ThenTransform(s_identityHeaderReplacement, s_azureIdentityHeader)
@@ -316,7 +316,7 @@ public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadI
     private void AddAzureFunctionsWithCustomEntraResourceWiremockMappings() =>
         _fixture.Runner.AddMappings(s_wifAzureFunctionsSuccessfulMappingPath,
             new StringTransformations()
-                .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
+                .ThenTransform(AccessTokenReplacement, JWTAccessToken)
                 .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
                 .ThenTransform(s_entraResourceReplacement, s_customEntraResource)
                 .ThenTransform(s_identityHeaderReplacement, s_azureIdentityHeader)
@@ -325,7 +325,7 @@ public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadI
     private void AddAzureFunctionsWithoutClientIdWiremockMappings() =>
         _fixture.Runner.AddMappings(s_wifAzureFunctionsNoClientIdSuccessfulMappingPath,
             new StringTransformations()
-                .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
+                .ThenTransform(AccessTokenReplacement, JWTAccessToken)
                 .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
                 .ThenTransform(s_identityHeaderReplacement, s_azureIdentityHeader)
         );
@@ -333,7 +333,7 @@ public sealed class WorkflowIdentityFederationAuthenticatorAzureTest : WorkloadI
     private void AddAzureBasicWithClientIdWiremockMappings() =>
         _fixture.Runner.AddMappings(s_wifAzureBasicWithClientIdSuccessfulMapping,
             new StringTransformations()
-                .ThenTransform(s_accessTokenReplacement, s_JWTAccessToken)
+                .ThenTransform(AccessTokenReplacement, JWTAccessToken)
                 .ThenTransform(s_clientIdReplacement, s_azureManagedClientId)
                 .ThenTransform(s_entraResourceReplacement, WorkflowIdentityAzureAttestationRetriever.DefaultWorkloadIdentityEntraResource)
         );

@@ -42,14 +42,14 @@ public sealed class OAuthAuthorizationCodeFlowTestFixture : ICollectionFixture<O
 public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
 {
     private readonly OAuthAuthorizationCodeFlowTestFixture.Fixture _fixture;
-    private static readonly string s_authorizationCodeSuccessfulMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "successful_flow.json");
-    private static readonly string s_authorizationCodeSuccessfulWithSingleUseRefreshTokenMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "successful_flow_with_single_use_refresh_token.json");
-    private static readonly string s_authorizationCodeSuccessfulWithoutRefreshTokenMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "successful_flow_without_refresh_token.json");
-    private static readonly string s_invalidScopeErrorMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "invalid_scope_error.json");
-    private static readonly string s_invalidStateErrorMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "invalid_state_error.json");
-    private static readonly string s_badTokenRequestErrorMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "token_request_error.json");
-    private static readonly string s_oauthSnowflakeNonTokenLoginErrorMappingPath = Path.Combine(s_oauthMappingPath, "snowflake_non_token_login_error.json");
-    private static readonly string s_refreshTokenErrorMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "refresh_token_error.json");
+    private static readonly string s_authorizationCodeSuccessfulMappingPath = Path.Combine(OauthAuthorizationCodeMappingPath, "successful_flow.json");
+    private static readonly string s_authorizationCodeSuccessfulWithSingleUseRefreshTokenMappingPath = Path.Combine(OauthAuthorizationCodeMappingPath, "successful_flow_with_single_use_refresh_token.json");
+    private static readonly string s_authorizationCodeSuccessfulWithoutRefreshTokenMappingPath = Path.Combine(OauthAuthorizationCodeMappingPath, "successful_flow_without_refresh_token.json");
+    private static readonly string s_invalidScopeErrorMappingPath = Path.Combine(OauthAuthorizationCodeMappingPath, "invalid_scope_error.json");
+    private static readonly string s_invalidStateErrorMappingPath = Path.Combine(OauthAuthorizationCodeMappingPath, "invalid_state_error.json");
+    private static readonly string s_badTokenRequestErrorMappingPath = Path.Combine(OauthAuthorizationCodeMappingPath, "token_request_error.json");
+    private static readonly string s_oauthSnowflakeNonTokenLoginErrorMappingPath = Path.Combine(OauthMappingPath, "snowflake_non_token_login_error.json");
+    private static readonly string s_refreshTokenErrorMappingPath = Path.Combine(OauthAuthorizationCodeMappingPath, "refresh_token_error.json");
     private static readonly string s_externalAuthorizationUrl = $"http://localhost:{WiremockRunner.DefaultHttpPort}/oauth/authorize";
 
     public OAuthAuthorizationCodeFlowTest(OAuthAuthorizationCodeFlowTestFixture.Fixture fixture)
@@ -64,7 +64,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession();
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -84,7 +84,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession();
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -104,7 +104,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulWithSingleUseRefreshTokenMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession(connectionStringSuffix: "client_store_temporary_credential=true;oauthEnableSingleUseRefreshTokens=true;");
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -124,7 +124,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulWithSingleUseRefreshTokenMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession(connectionStringSuffix: "client_store_temporary_credential=true;oauthEnableSingleUseRefreshTokens=true;");
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -149,7 +149,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
             RemoveTokenFromCache(TokenType.OAuthAccessToken);
             RemoveTokenFromCache(TokenType.OAuthRefreshToken);
             _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
-            _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+            _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
             var session = PrepareSession();
             var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -175,7 +175,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulWithoutRefreshTokenMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession();
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -195,7 +195,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulWithoutRefreshTokenMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession();
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -215,7 +215,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession(false);
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -235,7 +235,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession(userInConnectionString: false);
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -254,7 +254,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession(userInConnectionString: false);
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -273,7 +273,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession(connectionStringSuffix: "client_store_temporary_credential=false;");
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -292,7 +292,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession(connectionStringSuffix: "client_store_temporary_credential=false;");
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -311,7 +311,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange
         SaveTokenToCache(TokenType.OAuthAccessToken, AccessToken);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession();
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -331,7 +331,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange
         SaveTokenToCache(TokenType.OAuthAccessToken, AccessToken);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession();
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -351,9 +351,9 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginInvalidTokenMappingPath);
-        _fixture.Runner.AddMappings(s_refreshTokenMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginInvalidTokenMappingPath);
+        _fixture.Runner.AddMappings(RefreshTokenMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
         var session = PrepareSession();
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -373,9 +373,9 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginInvalidTokenMappingPath);
-        _fixture.Runner.AddMappings(s_refreshTokenMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginInvalidTokenMappingPath);
+        _fixture.Runner.AddMappings(RefreshTokenMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
         var session = PrepareSession();
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -498,7 +498,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
         mockCredentialManager.Setup(m => m.GetCredentials(It.IsAny<string>())).Returns(string.Empty);
         SnowflakeCredentialManagerFactory.SetCredentialManager(mockCredentialManager.Object);
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession();
 
         // act
@@ -518,7 +518,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
         mockCredentialManager.Setup(m => m.GetCredentials(It.IsAny<string>())).Returns(string.Empty);
         SnowflakeCredentialManagerFactory.SetCredentialManager(mockCredentialManager.Object);
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession();
 
         // act
@@ -569,8 +569,8 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange — only refresh token in cache, no access token
         SaveTokenToCache(TokenType.OAuthRefreshToken, RefreshToken);
-        _fixture.Runner.AddMappings(s_refreshTokenMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
+        _fixture.Runner.AddMappings(RefreshTokenMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath, new StringTransformations().ThenTransform(AccessToken, NewAccessToken));
         var session = PrepareSession();
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -592,7 +592,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
         SaveTokenToCache(TokenType.OAuthRefreshToken, RefreshToken);
         _fixture.Runner.AddMappings(s_refreshTokenErrorMappingPath);
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession();
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -612,7 +612,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange — cache disabled (client_store_temporary_credential=false), refresh token should not be attempted
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession(connectionStringSuffix: "client_store_temporary_credential=false;");
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -631,7 +631,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
     {
         // arrange — cache enabled but empty (no access token, no refresh token)
         _fixture.Runner.AddMappings(s_authorizationCodeSuccessfulMappingPath);
-        _fixture.Runner.AddMappings(s_oauthSnowflakeLoginSuccessMappingPath);
+        _fixture.Runner.AddMappings(OauthSnowflakeLoginSuccessMappingPath);
         var session = PrepareSession();
         var authenticator = (OAuthAuthorizationCodeAuthenticator)session.GetAuthenticator();
 
@@ -682,7 +682,7 @@ public class OAuthAuthorizationCodeFlowTest : BaseOAuthFlowTest
             .Append($"db={db};role={role};warehouse={warehouse};host={host};port={port};scheme={scheme};")
             .Append($"oauthClientId={clientId};oauthScope={AuthorizationScope};")
             .Append($"oauthRedirectUri={redirectUri};")
-            .Append($"oauthAuthorizationUrl={s_externalAuthorizationUrl};oauthTokenRequestUrl={s_externalTokenRequestUrl};");
+            .Append($"oauthAuthorizationUrl={s_externalAuthorizationUrl};oauthTokenRequestUrl={ExternalTokenRequestUrl};");
         if (addOAuthClientSecret)
             connectionStringBuilder.Append($"oauthClientSecret={ClientSecret};");
         if (addUser)

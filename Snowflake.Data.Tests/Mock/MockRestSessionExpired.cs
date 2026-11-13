@@ -9,15 +9,15 @@ using Snowflake.Data.Core;
 
 internal class MockRestSessionExpired : MockBaseRestRequester
 {
-    private static readonly string EXPIRED_SESSION_TOKEN = "session_expired_token";
+    private static readonly string s_expiredSessionToken = "session_expired_token";
 
-    internal static readonly string NEW_SESSION_TOKEN = "new_session_token";
+    internal static readonly string NewSessionToken = "new_session_token";
 
-    private static readonly string TOKEN_FMT = "Snowflake Token=\"{0}\"";
+    private static readonly string s_tokenFmt = "Snowflake Token=\"{0}\"";
 
-    internal static readonly string THROW_ERROR_TOKEN = "throw_error_token";
+    internal static readonly string ThrowErrorToken = "throw_error_token";
 
-    internal static readonly int SESSION_EXPIRED_CODE = 390112;
+    internal static readonly int SessionExpiredCode = 390112;
 
     public string FirstTimeRequestID;
 
@@ -32,7 +32,7 @@ internal class MockRestSessionExpired : MockBaseRestRequester
             {
                 data = new LoginResponseData()
                 {
-                    token = EXPIRED_SESSION_TOKEN,
+                    token = s_expiredSessionToken,
                     masterToken = "master_token",
                     authResponseSessionInfo = new SessionInfo(),
                     nameValueParameter = new List<NameValueParameter>()
@@ -45,17 +45,17 @@ internal class MockRestSessionExpired : MockBaseRestRequester
         }
         else if (sfRequest.jsonBody is QueryRequest)
         {
-            if (sfRequest.authorizationToken.Equals(string.Format(TOKEN_FMT, EXPIRED_SESSION_TOKEN)))
+            if (sfRequest.authorizationToken.Equals(string.Format(s_tokenFmt, s_expiredSessionToken)))
             {
                 FirstTimeRequestID = ExtractRequestID(sfRequest.Url.Query);
                 var queryExecResponse = new QueryExecResponse
                 {
                     success = false,
-                    code = SESSION_EXPIRED_CODE
+                    code = SessionExpiredCode
                 };
                 return Task.FromResult<T>((T)(object)queryExecResponse);
             }
-            else if (sfRequest.authorizationToken.Equals(string.Format(TOKEN_FMT, NEW_SESSION_TOKEN)))
+            else if (sfRequest.authorizationToken.Equals(string.Format(s_tokenFmt, NewSessionToken)))
             {
                 SecondTimeRequestID = ExtractRequestID(sfRequest.Url.Query);
                 var queryExecResponse = new QueryExecResponse
@@ -89,7 +89,7 @@ internal class MockRestSessionExpired : MockBaseRestRequester
         }
         else if (sfRequest.jsonBody is RenewSessionRequest renewSessionRequest)
         {
-            if (renewSessionRequest.oldSessionToken == THROW_ERROR_TOKEN)
+            if (renewSessionRequest.oldSessionToken == ThrowErrorToken)
             {
                 throw new Exception("Error while renewing session");
             }
@@ -98,7 +98,7 @@ internal class MockRestSessionExpired : MockBaseRestRequester
                 success = true,
                 data = new RenewSessionResponseData()
                 {
-                    sessionToken = NEW_SESSION_TOKEN,
+                    sessionToken = NewSessionToken,
                     masterToken = "new_master_token"
                 }
             });
@@ -141,20 +141,20 @@ internal class MockRestSessionExpired : MockBaseRestRequester
             var queryExecResponse = new QueryExecResponse
             {
                 success = false,
-                code = SESSION_EXPIRED_CODE
+                code = SessionExpiredCode
             };
             return Task.FromResult<T>((T)(object)queryExecResponse);
         }
-        if (sfRequest.authorizationToken.Equals(string.Format(TOKEN_FMT, EXPIRED_SESSION_TOKEN)))
+        if (sfRequest.authorizationToken.Equals(string.Format(s_tokenFmt, s_expiredSessionToken)))
         {
             var queryExecResponse = new QueryExecResponse
             {
                 success = false,
-                code = SESSION_EXPIRED_CODE
+                code = SessionExpiredCode
             };
             return Task.FromResult<T>((T)(object)queryExecResponse);
         }
-        if (sfRequest.authorizationToken.Equals(string.Format(TOKEN_FMT, NEW_SESSION_TOKEN)))
+        if (sfRequest.authorizationToken.Equals(string.Format(s_tokenFmt, NewSessionToken)))
         {
             var queryExecResponse = new QueryExecResponse
             {

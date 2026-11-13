@@ -47,14 +47,14 @@ public sealed class SFPutFromMemoryIT : SFBaseTestAsync, IDisposable
     }
 
     [SFTheory]
-    [InlineData(SFPutGetTest.StageType.NAMED, true, 4)]
-    [InlineData(SFPutGetTest.StageType.NAMED, false, 4)]
-    [InlineData(SFPutGetTest.StageType.TABLE, true, 4)]
-    [InlineData(SFPutGetTest.StageType.TABLE, false, 4)]
-    [InlineData(SFPutGetTest.StageType.NAMED, true, 200)]
-    [InlineData(SFPutGetTest.StageType.NAMED, false, 200)]
-    [InlineData(SFPutGetTest.StageType.TABLE, true, 200)]
-    [InlineData(SFPutGetTest.StageType.TABLE, false, 200)]
+    [InlineData(SFPutGetTest.StageType.Named, true, 4)]
+    [InlineData(SFPutGetTest.StageType.Named, false, 4)]
+    [InlineData(SFPutGetTest.StageType.Table, true, 4)]
+    [InlineData(SFPutGetTest.StageType.Table, false, 4)]
+    [InlineData(SFPutGetTest.StageType.Named, true, 200)]
+    [InlineData(SFPutGetTest.StageType.Named, false, 200)]
+    [InlineData(SFPutGetTest.StageType.Table, true, 200)]
+    [InlineData(SFPutGetTest.StageType.Table, false, 200)]
     public async Task TestPutFromMemory_Csv(SFPutGetTest.StageType stageType, bool autoCompress, int rows)
     {
         await InitializeAsync().ConfigureAwait(false);
@@ -63,8 +63,8 @@ public sealed class SFPutFromMemoryIT : SFBaseTestAsync, IDisposable
     }
 
     [SFTheory]
-    [InlineData(SFPutGetTest.StageType.NAMED)]
-    [InlineData(SFPutGetTest.StageType.TABLE)]
+    [InlineData(SFPutGetTest.StageType.Named)]
+    [InlineData(SFPutGetTest.StageType.Table)]
     public async Task TestPutFromMemory_EmptyStream_NoAutoCompress(SFPutGetTest.StageType stageType)
     {
         await InitializeAsync().ConfigureAwait(false);
@@ -72,8 +72,8 @@ public sealed class SFPutFromMemoryIT : SFBaseTestAsync, IDisposable
     }
 
     [SFTheory]
-    [InlineData(SFPutGetTest.StageType.NAMED)]
-    [InlineData(SFPutGetTest.StageType.TABLE)]
+    [InlineData(SFPutGetTest.StageType.Named)]
+    [InlineData(SFPutGetTest.StageType.Table)]
     public async Task TestPutFromMemory_EmptyStream_AutoCompress(SFPutGetTest.StageType stageType)
     {
         await InitializeAsync().ConfigureAwait(false);
@@ -81,10 +81,10 @@ public sealed class SFPutFromMemoryIT : SFBaseTestAsync, IDisposable
     }
 
     [SFTheory]
-    [InlineData(SFPutGetTest.StageType.NAMED, true)]
-    [InlineData(SFPutGetTest.StageType.NAMED, false)]
-    [InlineData(SFPutGetTest.StageType.TABLE, true)]
-    [InlineData(SFPutGetTest.StageType.TABLE, false)]
+    [InlineData(SFPutGetTest.StageType.Named, true)]
+    [InlineData(SFPutGetTest.StageType.Named, false)]
+    [InlineData(SFPutGetTest.StageType.Table, true)]
+    [InlineData(SFPutGetTest.StageType.Table, false)]
     public async Task TestPutFromMemory_BinaryData(SFPutGetTest.StageType stageType, bool autoCompress)
     {
         await InitializeAsync().ConfigureAwait(false);
@@ -94,8 +94,8 @@ public sealed class SFPutFromMemoryIT : SFBaseTestAsync, IDisposable
     }
 
     [SFTheory]
-    [InlineData(SFPutGetTest.StageType.NAMED, true)]
-    [InlineData(SFPutGetTest.StageType.TABLE, false)]
+    [InlineData(SFPutGetTest.StageType.Named, true)]
+    [InlineData(SFPutGetTest.StageType.Table, false)]
     public async Task TestPutFromMemory_LargePayload(SFPutGetTest.StageType stageType, bool autoCompress)
     {
         await InitializeAsync().ConfigureAwait(false);
@@ -111,7 +111,7 @@ public sealed class SFPutFromMemoryIT : SFBaseTestAsync, IDisposable
 
         using var conn = new SnowflakeDbConnection(_fixture.ConnectionString);
         conn.Open();
-        var stagePath = StagePath(SFPutGetTest.StageType.NAMED);
+        var stagePath = StagePath(SFPutGetTest.StageType.Named);
 
         // Upload first file — unique PUT filename produces unique dest name on stage
         var csv1 = MakeCsvBytes();
@@ -161,10 +161,10 @@ public sealed class SFPutFromMemoryIT : SFBaseTestAsync, IDisposable
     }
 
     [SFTheory]
-    [InlineData(SFPutGetTest.StageType.NAMED, true)]
-    [InlineData(SFPutGetTest.StageType.NAMED, false)]
-    [InlineData(SFPutGetTest.StageType.TABLE, true)]
-    [InlineData(SFPutGetTest.StageType.TABLE, false)]
+    [InlineData(SFPutGetTest.StageType.Named, true)]
+    [InlineData(SFPutGetTest.StageType.Named, false)]
+    [InlineData(SFPutGetTest.StageType.Table, true)]
+    [InlineData(SFPutGetTest.StageType.Table, false)]
     public async Task TestPutFromMemory_PreCompressedGzip(SFPutGetTest.StageType stageType, bool autoCompress)
     {
         await InitializeAsync().ConfigureAwait(false);
@@ -183,7 +183,7 @@ public sealed class SFPutFromMemoryIT : SFBaseTestAsync, IDisposable
 
         using var conn = new SnowflakeDbConnection(_fixture.ConnectionString);
         conn.Open();
-        var stagePath = StagePath(SFPutGetTest.StageType.NAMED);
+        var stagePath = StagePath(SFPutGetTest.StageType.Named);
         var fileName = $"{Guid.NewGuid()}.csv";
 
         string destFileName;
@@ -216,7 +216,7 @@ public sealed class SFPutFromMemoryIT : SFBaseTestAsync, IDisposable
 
         using var conn = new SnowflakeDbConnection(_fixture.ConnectionString);
         conn.Open();
-        var stagePath = StagePath(SFPutGetTest.StageType.NAMED);
+        var stagePath = StagePath(SFPutGetTest.StageType.Named);
         var fileName = $"{Guid.NewGuid()}.csv";
 
         using var cmd = (SnowflakeDbCommand)conn.CreateCommand();
@@ -243,7 +243,7 @@ public sealed class SFPutFromMemoryIT : SFBaseTestAsync, IDisposable
 
         using var conn = new SnowflakeDbConnection(_fixture.ConnectionString);
         conn.Open();
-        var stagePath = StagePath(SFPutGetTest.StageType.NAMED);
+        var stagePath = StagePath(SFPutGetTest.StageType.Named);
         var fileName = $"{Guid.NewGuid()}.csv";
 
         using var cmd = (SnowflakeDbCommand)conn.CreateCommand();
@@ -449,7 +449,7 @@ public sealed class SFPutFromMemoryIT : SFBaseTestAsync, IDisposable
 
         // Memory stream uploads land on stage as "stream" (or "stream.gz" with auto-compress),
         // not as the filename from the PUT command. Use the actual dest name for COPY INTO.
-        command.CommandText = stageType == SFPutGetTest.StageType.TABLE
+        command.CommandText = stageType == SFPutGetTest.StageType.Table
             ? $"COPY INTO {_schemaName}.{_tableName}"
             : $"COPY INTO {_schemaName}.{_tableName} FROM {stagePath}/{destFileName}";
         command.ExecuteNonQuery();
@@ -515,8 +515,8 @@ public sealed class SFPutFromMemoryIT : SFBaseTestAsync, IDisposable
 
     private string StagePath(SFPutGetTest.StageType stageType) => stageType switch
     {
-        SFPutGetTest.StageType.TABLE => $"@{_schemaName}.%{_tableName}",
-        SFPutGetTest.StageType.NAMED => $"@{_schemaName}.{_stageName}",
+        SFPutGetTest.StageType.Table => $"@{_schemaName}.%{_tableName}",
+        SFPutGetTest.StageType.Named => $"@{_schemaName}.{_stageName}",
         _ => throw new ArgumentOutOfRangeException(nameof(stageType))
     };
 }

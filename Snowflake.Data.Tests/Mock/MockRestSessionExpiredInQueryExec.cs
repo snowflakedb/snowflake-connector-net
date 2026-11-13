@@ -8,11 +8,11 @@ using Snowflake.Data.Core;
 
 internal class MockRestSessionExpiredInQueryExec : MockBaseRestRequester
 {
-    private static readonly int QUERY_IN_EXEC_CODE = 333333;
+    private static readonly int s_queryInExecCode = 333333;
 
-    private static readonly int SESSION_EXPIRED_CODE = 390112;
+    private static readonly int s_sessionExpiredCode = 390112;
 
-    private int getResultCallCount;
+    private int _getResultCallCount;
 
     public override Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
     {
@@ -39,7 +39,7 @@ internal class MockRestSessionExpiredInQueryExec : MockBaseRestRequester
             var queryExecResponse = new QueryExecResponse
             {
                 success = false,
-                code = QUERY_IN_EXEC_CODE
+                code = s_queryInExecCode
             };
             return Task.FromResult<T>((T)(object)queryExecResponse);
 
@@ -74,30 +74,30 @@ internal class MockRestSessionExpiredInQueryExec : MockBaseRestRequester
     public override Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
     {
         var sfRequest = (SFRestRequest)request;
-        if (getResultCallCount == 0)
+        if (_getResultCallCount == 0)
         {
-            getResultCallCount++;
+            _getResultCallCount++;
             var queryExecResponse = new QueryExecResponse
             {
                 success = false,
-                code = QUERY_IN_EXEC_CODE
+                code = s_queryInExecCode
             };
             return Task.FromResult<T>((T)(object)queryExecResponse);
         }
-        else if (getResultCallCount == 1)
+        else if (_getResultCallCount == 1)
         {
-            getResultCallCount++;
+            _getResultCallCount++;
             var queryExecResponse = new QueryExecResponse
             {
                 success = false,
-                code = SESSION_EXPIRED_CODE
+                code = s_sessionExpiredCode
             };
             return Task.FromResult<T>((T)(object)queryExecResponse);
         }
-        else if (getResultCallCount == 2 &&
+        else if (_getResultCallCount == 2 &&
                  sfRequest.authorizationToken.Equals("Snowflake Token=\"new_session_token\""))
         {
-            getResultCallCount++;
+            _getResultCallCount++;
             var queryExecResponse = new QueryExecResponse
             {
                 success = true,
