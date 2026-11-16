@@ -1,0 +1,53 @@
+name: Upload coverage artifact
+description: Stage coverage files and upload them as a workflow artifact for the internal coverage pipeline.
+inputs:
+  name:
+    description: Unique suffix after coverage-
+    required: true
+  path:
+    description: Workspace-relative coverage file or bash glob
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Stage coverage outside the checkout
+      if: ${{ !cancelled() }}
+      shell: bash
+      env:
+        COVERAGE_PATH: ${{ inputs.path }}
+        COVERAGE_NAME: ${{ inputs.name }}
+      run: |
+        set -euo pipefail
+        stage="${RUNNER_TEMP}/codecov-stage/${COVERAGE_NAME}"
+        rm -rf "$stage"
+        mkdir -p "$stage"
+        # Unquoted so a glob in COVERAGE_PATH expands. Copy out of the
+        # checkout so the upload does not depend on repo ignore rules or hidden
+        # directories (upload-artifact skips hidden files by default).
+        shopt -s nullglob
+        matches=( $COVERAGE_PATH )
+        copied=0
+        for f in "${matches[@]}"; do
+          if [ -f "$f" ]; then
+            if [ ! -s "$f" ]; then
+              echo "skipping empty $f"
+              continue
+            fi
+            if grep -q '<packages' "$f" 2>/dev/null && ! grep -q '<class' "$f"; then
+              echo "skipping empty coverage report $f"
+              continue
+            fi
+            cp -f "$f" "$stage/"
+            copied=$((copied + 1))
+          fi
+        done
+        echo "staged ${copied} coverage file(s) from ${COVERAGE_PATH}"
+    - name: Upload coverage artifact
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-${{ inputs.name }}
+        path: ${{ runner.temp }}/codecov-stage/${{ inputs.name }}
+        if-no-files-found: ignore
+        include-hidden-files: true
+        retention-days: 5
