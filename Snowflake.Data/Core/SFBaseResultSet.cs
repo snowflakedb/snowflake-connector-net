@@ -5,7 +5,7 @@ using Snowflake.Data.Client;
 
 namespace Snowflake.Data.Core;
 
-internal abstract class SFBaseResultSet
+internal abstract class SFBaseResultSet : IDisposable
 {
     internal abstract ResultFormat ResultFormat { get; }
 
@@ -73,10 +73,12 @@ internal abstract class SFBaseResultSet
 
     internal abstract string GetString(int ordinal);
 
-    internal void Close()
+    internal virtual void Close()
     {
         isClosed = true;
     }
+
+    public void Dispose() => Close();
 
     internal void ThrowIfClosed()
     {

@@ -133,7 +133,7 @@ public class SnowflakeDbCommand : DbCommand
         using var activity = _connection?.SfSession?.StartActivity(TelemetryActivities.ExecuteNonQuery);
         try
         {
-            var resultSet = ExecuteInternal(statementContext);
+            using var resultSet = ExecuteInternal(statementContext);
             long total = 0;
             do
             {
@@ -177,7 +177,7 @@ public class SnowflakeDbCommand : DbCommand
             cancellationToken.ThrowIfCancellationRequested();
 
             var statementContext = GetStatementContext();
-            var resultSet = await ExecuteInternalAsync(statementContext, cancellationToken).ConfigureAwait(false);
+            using var resultSet = await ExecuteInternalAsync(statementContext, cancellationToken).ConfigureAwait(false);
             long total = 0;
             do
             {
@@ -218,7 +218,7 @@ public class SnowflakeDbCommand : DbCommand
         try
         {
             var statementContext = GetStatementContext();
-            var resultSet = ExecuteInternal(statementContext);
+            using var resultSet = ExecuteInternal(statementContext);
 
             object result;
             if (resultSet.Next())
@@ -245,7 +245,7 @@ public class SnowflakeDbCommand : DbCommand
             cancellationToken.ThrowIfCancellationRequested();
 
             var statementContext = GetStatementContext();
-            var resultSet = await ExecuteInternalAsync(statementContext, cancellationToken).ConfigureAwait(false);
+            using var resultSet = await ExecuteInternalAsync(statementContext, cancellationToken).ConfigureAwait(false);
 
             object result;
             if (await resultSet.NextAsync().ConfigureAwait(false))

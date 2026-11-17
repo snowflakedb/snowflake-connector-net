@@ -54,4 +54,11 @@ internal abstract class BaseResultChunk : IResultChunk
     internal virtual void ResetForRetry()
     {
     }
+
+    /// <summary>
+    /// Releases the data held by the chunk once it is no longer going to be read.
+    /// </summary>
+    internal virtual void ReleaseResources()
+    {
+    }
 }

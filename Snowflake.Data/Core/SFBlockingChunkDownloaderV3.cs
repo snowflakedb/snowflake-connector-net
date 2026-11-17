@@ -119,6 +119,23 @@ internal sealed class SFBlockingChunkDownloaderV3 : IChunkDownloader
         }
     }
 
+    public void ReleaseChunks()
+    {
+        for (var i = 0; i < _chunkDatas.Count; i++)
+        {
+            var chunk = _chunkDatas[i];
+            var download = _taskQueues[i];
+            if (download.IsCompleted)
+            {
+                chunk.ReleaseResources();
+            }
+            else
+            {
+                download.ContinueWith(_ => chunk.ReleaseResources(), CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+            }
+        }
+    }
+
     private async Task<BaseResultChunk> DownloadChunkAsync(DownloadContextV3 downloadContext)
     {
         var chunk = downloadContext.Chunk;

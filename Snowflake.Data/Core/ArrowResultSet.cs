@@ -18,6 +18,8 @@ internal class ArrowResultSet : SFBaseResultSet
 
     private readonly int _totalChunkCount;
     private BaseResultChunk _currentChunk;
+    // The first chunk comes inline with the query response and is not owned by the chunk downloader.
+    private BaseResultChunk _inlineChunk;
     private readonly IChunkDownloader _chunkDownloader;
 
     public ArrowResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken)
@@ -72,6 +74,25 @@ internal class ArrowResultSet : SFBaseResultSet
         {
             _currentChunk = new ArrowResultChunk(columnCount);
         }
+        _inlineChunk = _currentChunk;
+    }
+
+    private void ReleaseInlineChunk()
+    {
+        _inlineChunk?.ReleaseResources();
+        _inlineChunk = null;
+    }
+
+    internal BaseResultChunk CurrentChunk => _currentChunk;
+
+    internal override void Close()
+    {
+        if (!isClosed)
+        {
+            ReleaseInlineChunk();
+            _chunkDownloader?.ReleaseChunks();
+        }
+        base.Close();
     }
 
     internal override async Task<bool> NextAsync()
@@ -87,6 +108,7 @@ internal class ArrowResultSet : SFBaseResultSet
                            $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
                            $" size uncompressed: {_currentChunk.UncompressedSize}");
             _currentChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
+            ReleaseInlineChunk();
             return _currentChunk?.Next() ?? false;
         }
 
@@ -106,6 +128,7 @@ internal class ArrowResultSet : SFBaseResultSet
                            $" rows: {_currentChunk.RowCount}, size compressed: {_currentChunk.CompressedSize}," +
                            $" size uncompressed: {_currentChunk.UncompressedSize}");
             _currentChunk = Task.Run(async () => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
+            ReleaseInlineChunk();
 
             return _currentChunk?.Next() ?? false;
         }
