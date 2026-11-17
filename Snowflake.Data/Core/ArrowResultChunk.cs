@@ -144,18 +144,39 @@ internal class ArrowResultChunk : BaseResultChunk
 
         _currentBatchIndex = 0;
         _currentRecordIndex = -1;
-        RecordBatch.Clear();
+        DisposeRecordBatches();
 
         ResetTempTables();
     }
 
     internal override void ResetForRetry()
     {
-        RecordBatch.Clear();
+        DisposeRecordBatches();
         RowCount = 0;
         _currentBatchIndex = 0;
         _currentRecordIndex = -1;
         ResetTempTables();
+    }
+
+    internal override void ReleaseResources()
+    {
+        DisposeRecordBatches();
+        RowCount = 0;
+        _currentBatchIndex = 0;
+        _currentRecordIndex = -1;
+        ResetTempTables();
+    }
+
+    // Record batches read by ArrowStreamReader hold buffers allocated in native memory, which are only
+    // freed by Dispose() or, much later, by a finalizer. Every value returned to the caller is copied
+    // out of these buffers, so they can be released as soon as the chunk is reset or no longer read.
+    private void DisposeRecordBatches()
+    {
+        foreach (var recordBatch in RecordBatch)
+        {
+            recordBatch?.Dispose();
+        }
+        RecordBatch.Clear();
     }
 
     internal override bool Next()

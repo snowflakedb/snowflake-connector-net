@@ -3,6 +3,7 @@
 # Changelog
 - Upcoming release
   - Upload GHA coverage reports to Dedicated Codecov (`snowflake.codecov.io`) from Jenkins snowos instead of uploading from GitHub-hosted runners (SNOW-4248610).
+  - Bug fix: Arrow record batches are now disposed when a result chunk is reset, retried or released, and when a data reader is closed, so their native memory is freed right away instead of waiting for finalizers. `ExecuteScalar` and `ExecuteNonQuery` now close their internal result sets.
 - v6.5.0
   - Heartbeat interval now honors the `CLIENT_SESSION_KEEP_ALIVE_HEARTBEAT_FREQUENCY` session parameter.
   - Improved key-pair authentication PEM parse error messages.

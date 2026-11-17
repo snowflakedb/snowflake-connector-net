@@ -500,6 +500,30 @@ public sealed class ArrowResultSetTest
         Assert.Contains($"Unknown column type: {nameof(SFDataType.None)}", exception.Message);
     }
 
+    [SFFact]
+    public void TestCloseReleasesInlineChunk()
+    {
+        Assert.True(_arrowResultSet.Next());
+        var chunk = (ArrowResultChunk)_arrowResultSet.CurrentChunk;
+        Assert.NotEmpty(chunk.RecordBatch);
+
+        _arrowResultSet.Close();
+
+        Assert.Empty(chunk.RecordBatch);
+        Assert.Throws<SnowflakeDbException>(() => _arrowResultSet.Next());
+    }
+
+    [SFFact]
+    public void TestDisposeClosesResultSet()
+    {
+        var chunk = (ArrowResultChunk)_arrowResultSet.CurrentChunk;
+
+        _arrowResultSet.Dispose();
+
+        Assert.True(_arrowResultSet.isClosed);
+        Assert.Empty(chunk.RecordBatch);
+    }
+
     private void PrepareTestCase(SFDataType sfType, long scale, object values)
     {
         _recordBatch = ArrowResultChunkTest.PrepareRecordBatch(sfType, scale, values);

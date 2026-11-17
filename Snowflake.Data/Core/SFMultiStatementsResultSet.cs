@@ -54,6 +54,7 @@ internal class SFMultiStatementsResultSet : SFBaseResultSet
 
     internal override async Task<bool> NextResultAsync(CancellationToken cancellationToken)
     {
+        curResultSet?.Close();
         if (++curResultIndex < resultIds.Length)
         {
             curResultSet = await sfStatement.GetResultWithIdAsync(
@@ -71,6 +72,7 @@ internal class SFMultiStatementsResultSet : SFBaseResultSet
 
     internal override bool NextResult()
     {
+        curResultSet?.Close();
         if (++curResultIndex < resultIds.Length)
         {
             curResultSet = sfStatement.GetResultWithId(resultIds[curResultIndex]);
@@ -82,6 +84,12 @@ internal class SFMultiStatementsResultSet : SFBaseResultSet
 
         UpdateResultMetadata();
         return (curResultSet != null);
+    }
+
+    internal override void Close()
+    {
+        curResultSet?.Close();
+        base.Close();
     }
 
     internal override bool HasRows()
