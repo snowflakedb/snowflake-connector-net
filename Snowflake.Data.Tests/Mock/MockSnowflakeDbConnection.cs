@@ -13,7 +13,7 @@ namespace Snowflake.Data.Tests.Mock;
 internal class MockSnowflakeDbConnection : SnowflakeDbConnection
 {
     private readonly Func<SFSession, IAuthenticator> _authenticatorFactory;
-    private readonly SFLogger logger = SFLoggerFactory.GetLogger<MockSnowflakeDbConnection>();
+    private readonly SFLogger _logger = SFLoggerFactory.GetLogger<MockSnowflakeDbConnection>();
 
     private readonly IMockRestRequester _restRequester;
 
@@ -35,7 +35,7 @@ internal class MockSnowflakeDbConnection : SnowflakeDbConnection
 
     public override void Open()
     {
-        logger.Debug("Open Connection.");
+        _logger.Debug("Open Connection.");
         SetMockSession();
         try
         {
@@ -45,7 +45,7 @@ internal class MockSnowflakeDbConnection : SnowflakeDbConnection
         {
             // Otherwise when Dispose() is called, the close request would timeout.
             _connectionState = ConnectionState.Closed;
-            logger.Error("Unable to connect", e);
+            _logger.Error("Unable to connect", e);
             throw;
         }
         OnSessionEstablished();
@@ -65,14 +65,14 @@ internal class MockSnowflakeDbConnection : SnowflakeDbConnection
                     // Exception from SfSession.OpenAsync
                     Exception sfSessionEx = previousTask.Exception;
                     _connectionState = ConnectionState.Closed;
-                    logger.Error("Unable to connect", sfSessionEx);
+                    _logger.Error("Unable to connect", sfSessionEx);
                     throw //sfSessionEx.InnerException;
                         new SnowflakeDbException(sfSessionEx, SFError.INTERNAL_ERROR, args: "Unable to connect");
                 }
                 if (previousTask.IsCanceled)
                 {
                     _connectionState = ConnectionState.Closed;
-                    logger.Debug("Connection canceled");
+                    _logger.Debug("Connection canceled");
                     throw new SnowflakeDbException(SFError.REQUEST_TIMEOUT, args: ["N/A", "N/A"]);
                 }
                 else

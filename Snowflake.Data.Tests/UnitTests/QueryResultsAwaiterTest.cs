@@ -11,7 +11,7 @@ namespace Snowflake.Data.Tests.UnitTests;
 public class QueryResultsAwaiterTest
 {
     private const string ConnectionString = "account=test;user=test;password=test;poolingEnabled=false";
-    private static readonly string ValidQueryId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+    private static readonly string s_validQueryId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
     [SFFact]
     public async Task TestCancellationSendsAbortRequestForPreCancelledToken()
@@ -28,12 +28,12 @@ public class QueryResultsAwaiterTest
 
         // Act
         await Assert.ThrowsAsync<OperationCanceledException>(async () =>
-            await awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, true).ConfigureAwait(false)).ConfigureAwait(false);
+            await awaiter.RetryUntilQueryResultIsAvailable(conn, s_validQueryId, cts.Token, true).ConfigureAwait(false)).ConfigureAwait(false);
 
         // Assert
         Assert.True(mockRequester.CancelRequestSent,
             "Expected a SYSTEM$CANCEL_QUERY command to be sent when cancellation is requested");
-        Assert.Equal(ValidQueryId, mockRequester.CancelledQueryId);
+        Assert.Equal(s_validQueryId, mockRequester.CancelledQueryId);
     }
 
     [SFFact]
@@ -56,7 +56,7 @@ public class QueryResultsAwaiterTest
         // Act
         try
         {
-            await awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, true).ConfigureAwait(false);
+            await awaiter.RetryUntilQueryResultIsAvailable(conn, s_validQueryId, cts.Token, true).ConfigureAwait(false);
             Assert.Fail("Expected an OperationCanceledException to be thrown");
         }
         catch (OperationCanceledException)
@@ -67,7 +67,7 @@ public class QueryResultsAwaiterTest
         // Assert
         Assert.True(mockRequester.CancelRequestSent,
             "Expected a SYSTEM$CANCEL_QUERY command to be sent when cancellation is requested during polling");
-        Assert.Equal(ValidQueryId, mockRequester.CancelledQueryId);
+        Assert.Equal(s_validQueryId, mockRequester.CancelledQueryId);
     }
 
     [SFFact]
@@ -84,13 +84,13 @@ public class QueryResultsAwaiterTest
         cts.Cancel();
 
         // Act
-        var task = awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, false);
+        var task = awaiter.RetryUntilQueryResultIsAvailable(conn, s_validQueryId, cts.Token, false);
         await Assert.ThrowsAsync<OperationCanceledException>(async () => await task.ConfigureAwait(false)).ConfigureAwait(false);
 
         // Assert
         Assert.True(mockRequester.CancelRequestSent,
             "Expected a SYSTEM$CANCEL_QUERY command to be sent when cancellation is requested");
-        Assert.Equal(ValidQueryId, mockRequester.CancelledQueryId);
+        Assert.Equal(s_validQueryId, mockRequester.CancelledQueryId);
     }
 
     [SFFact]
@@ -108,13 +108,13 @@ public class QueryResultsAwaiterTest
         mockRequester.OnGetQueryStatusResponse = () => cts.Cancel();
 
         // Act
-        var task = awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, false);
+        var task = awaiter.RetryUntilQueryResultIsAvailable(conn, s_validQueryId, cts.Token, false);
         await Assert.ThrowsAsync<OperationCanceledException>(async () => await task.ConfigureAwait(false)).ConfigureAwait(false);
 
         // Assert
         Assert.True(mockRequester.CancelRequestSent,
             "Expected a SYSTEM$CANCEL_QUERY command to be sent when cancellation is requested during sync polling");
-        Assert.Equal(ValidQueryId, mockRequester.CancelledQueryId);
+        Assert.Equal(s_validQueryId, mockRequester.CancelledQueryId);
     }
 
     [SFFact]
@@ -132,7 +132,7 @@ public class QueryResultsAwaiterTest
 
         // Act & Assert
         await Assert.ThrowsAsync<OperationCanceledException>(async () =>
-            await awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, true).ConfigureAwait(false)).ConfigureAwait(false);
+            await awaiter.RetryUntilQueryResultIsAvailable(conn, s_validQueryId, cts.Token, true).ConfigureAwait(false)).ConfigureAwait(false);
         Assert.False(mockRequester.CancelRequestSent,
             "Cancel request should not have succeeded since the mock was configured to throw");
     }
@@ -151,7 +151,7 @@ public class QueryResultsAwaiterTest
         cts.Cancel();
 
         // Act & Assert
-        var task = awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, cts.Token, false);
+        var task = awaiter.RetryUntilQueryResultIsAvailable(conn, s_validQueryId, cts.Token, false);
         await Assert.ThrowsAsync<OperationCanceledException>(async () => await task.ConfigureAwait(false)).ConfigureAwait(false);
         Assert.False(mockRequester.CancelRequestSent,
             "Cancel request should not have succeeded since the mock was configured to throw");
@@ -168,7 +168,7 @@ public class QueryResultsAwaiterTest
 
         var awaiter = new QueryResultsAwaiter(new QueryResultsRetryConfig(1, new[] { 0, 0, 0 }));
 
-        await awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, CancellationToken.None, true).ConfigureAwait(false);
+        await awaiter.RetryUntilQueryResultIsAvailable(conn, s_validQueryId, CancellationToken.None, true).ConfigureAwait(false);
 
         Assert.False(mockRequester.CancelRequestSent,
             "No cancel request should be sent when query completes normally");
@@ -185,7 +185,7 @@ public class QueryResultsAwaiterTest
 
         var awaiter = new QueryResultsAwaiter(new QueryResultsRetryConfig(1, new[] { 0, 0, 0 }));
 
-        var task = awaiter.RetryUntilQueryResultIsAvailable(conn, ValidQueryId, CancellationToken.None, false);
+        var task = awaiter.RetryUntilQueryResultIsAvailable(conn, s_validQueryId, CancellationToken.None, false);
         await task.ConfigureAwait(false);
 
         Assert.False(mockRequester.CancelRequestSent,

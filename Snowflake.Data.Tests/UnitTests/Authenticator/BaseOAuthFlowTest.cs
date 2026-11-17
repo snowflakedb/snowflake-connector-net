@@ -10,12 +10,12 @@ namespace Snowflake.Data.Tests.UnitTests.Authenticator;
 
 public class BaseOAuthFlowTest
 {
-    protected static readonly string s_oauthMappingPath = Path.Combine("wiremock", "OAuth");
-    protected static readonly string s_oauthSnowflakeLoginSuccessMappingPath = Path.Combine(s_oauthMappingPath, "snowflake_successful_login.json");
-    protected static readonly string s_oauthSnowflakeLoginInvalidTokenMappingPath = Path.Combine(s_oauthMappingPath, "snowflake_invalid_token_login.json");
-    protected static readonly string s_oauthAuthorizationCodeMappingPath = Path.Combine(s_oauthMappingPath, "AuthorizationCode");
-    protected static readonly string s_refreshTokenMappingPath = Path.Combine(s_oauthAuthorizationCodeMappingPath, "refresh_token.json");
-    protected static readonly string s_externalTokenRequestUrl = $"http://localhost:{WiremockRunner.DefaultHttpPort}/oauth/token-request";
+    protected static readonly string OauthMappingPath = Path.Combine("wiremock", "OAuth");
+    protected static readonly string OauthSnowflakeLoginSuccessMappingPath = Path.Combine(OauthMappingPath, "snowflake_successful_login.json");
+    protected static readonly string OauthSnowflakeLoginInvalidTokenMappingPath = Path.Combine(OauthMappingPath, "snowflake_invalid_token_login.json");
+    protected static readonly string OauthAuthorizationCodeMappingPath = Path.Combine(OauthMappingPath, "AuthorizationCode");
+    protected static readonly string RefreshTokenMappingPath = Path.Combine(OauthAuthorizationCodeMappingPath, "refresh_token.json");
+    protected static readonly string ExternalTokenRequestUrl = $"http://localhost:{WiremockRunner.DefaultHttpPort}/oauth/token-request";
 
     protected const string MasterToken = "masterToken123";
     protected const string SessionToken = "sessionToken123";
@@ -67,7 +67,7 @@ public class BaseOAuthFlowTest
     private static string BuildOAuthCacheKey(TokenType tokenType) =>
         SnowflakeCredentialManagerFactory.BuildCacheKey(new CacheKeyInput(
             TokenType: tokenType,
-            Idp: s_externalTokenRequestUrl,
+            Idp: ExternalTokenRequestUrl,
             SnowflakeUrl: SnowflakeHost,
             Username: User,
             Role: Role

@@ -7,7 +7,7 @@ namespace Snowflake.Data.Tests.Mock;
 
 internal sealed class MockSessionGone : MockBaseRestRequester
 {
-    private const int SESSION_GONE_CODE = 390111;
+    private const int SessionGoneCode = 390111;
 
     public override Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken) => Task.FromResult(Post<T>(request));
 
@@ -35,7 +35,7 @@ internal sealed class MockSessionGone : MockBaseRestRequester
             object queryExecResponse = new QueryExecResponse
             {
                 success = false,
-                code = SESSION_GONE_CODE
+                code = SessionGoneCode
             };
             return (T)queryExecResponse;
         }
@@ -59,7 +59,7 @@ internal sealed class MockSessionGone : MockBaseRestRequester
             object queryStatusResponse = new QueryStatusResponse
             {
                 success = false,
-                code = SESSION_GONE_CODE
+                code = SessionGoneCode
             };
             return (T)queryStatusResponse;
         }
@@ -67,7 +67,7 @@ internal sealed class MockSessionGone : MockBaseRestRequester
         object queryExecResponse = new QueryExecResponse
         {
             success = false,
-            code = SESSION_GONE_CODE
+            code = SessionGoneCode
         };
         return (T)queryExecResponse;
     }

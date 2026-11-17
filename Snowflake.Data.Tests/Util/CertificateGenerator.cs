@@ -19,7 +19,7 @@ namespace Snowflake.Data.Tests.Util;
 public static class CertificateGenerator
 {
     public const string SHA256WithRsaAlgorithm = "SHA256withRSA";
-    public const string SHA256WithECDSA = "SHA256withECDSA";
+    public const string SHA256WithEcdsa = "SHA256withECDSA";
 
     public static X509Certificate2 LoadFromFile(string filePath) => X509CertificateLoader.LoadCertificateFromFile(filePath);
 

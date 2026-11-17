@@ -34,7 +34,7 @@ public sealed class SFRemoteStorageClientTest : IDisposable
 
     [ThreadStatic] private static string t_realSourceFilePath;
 
-    private readonly PutGetEncryptionMaterial EncryptionMaterial = new()
+    private readonly PutGetEncryptionMaterial _encryptionMaterial = new()
     {
         queryId = "MOCK/QUERY/ID/==",
         queryStageMasterKey = "MOCKQUERYSTAGEMASTERKE==",
@@ -191,7 +191,7 @@ public sealed class SFRemoteStorageClientTest : IDisposable
         _client.SetCustomWebRequest(mockWebRequest.Object);
 
         // Add encryption material to the file metadata
-        _fileMetadata.encryptionMaterial = containsEncryptionMaterial ? EncryptionMaterial : null;
+        _fileMetadata.encryptionMaterial = containsEncryptionMaterial ? _encryptionMaterial : null;
 
         // Use file for upload
         if (!useMemoryStream)
@@ -518,7 +518,7 @@ public sealed class SFRemoteStorageClientTest : IDisposable
 
     private void SetUpMockEncryptedFileForDownload()
     {
-        _fileMetadata.encryptionMaterial = EncryptionMaterial;
+        _fileMetadata.encryptionMaterial = _encryptionMaterial;
 
         // Write file to encrypt
         File.WriteAllText(t_downloadFileName, MockRemoteStorageClient.FileContent);

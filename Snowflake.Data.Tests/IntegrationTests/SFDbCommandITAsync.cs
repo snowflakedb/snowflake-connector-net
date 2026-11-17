@@ -877,8 +877,8 @@ public class SFDbCommandITAsync : SFBaseTestAsync
 
     private async Task ArrayBindTest(string connstr, string tableName, int size)
     {
-        const int timeoutSeconds = 150;
-        var externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+        const int TimeoutSeconds = 150;
+        var externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(TimeoutSeconds));
         using (var conn = new SnowflakeDbConnection())
         {
             conn.ConnectionString = connstr;
@@ -995,9 +995,9 @@ public class SFDbCommandITAsync : SFBaseTestAsync
 
                 var task = cmd.ExecuteNonQueryAsync(externalCancel.Token);
 
-                if (!task.Wait(TimeSpan.FromSeconds(timeoutSeconds)))
+                if (!task.Wait(TimeSpan.FromSeconds(TimeoutSeconds)))
                 {
-                    Assert.Fail($"Array bind operation timed out after {timeoutSeconds} seconds");
+                    Assert.Fail($"Array bind operation timed out after {TimeoutSeconds} seconds");
                 }
                 Assert.Equal(total * 3, task.Result);
 

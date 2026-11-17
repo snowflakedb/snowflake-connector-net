@@ -48,7 +48,7 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
     private const string AwsSecretKey = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStT"; // pragma: allowlist secret
     private const string AwsToken = "HIJKLMNOPQRSTUWXYZ"; // pragma: allowlist secret
     private const string FakeJwt = "fake.jwt.fake-signature";
-    private static readonly string s_wifAwsMappingPath = Path.Combine(s_wifMappingPath, "AWS");
+    private static readonly string s_wifAwsMappingPath = Path.Combine(WifMappingPath, "AWS");
     private static readonly string s_wifAwsSuccessfulStsPath = Path.Combine(s_wifAwsMappingPath, "successful_get_web_identity_token.json");
     private static readonly string s_wifAwsErrorStsPath = Path.Combine(s_wifAwsMappingPath, "error_get_web_identity_token.json");
     private static readonly string s_wifAwsImpersonationStsPath = Path.Combine(s_wifAwsMappingPath, "successful_impersonation.json");
@@ -159,7 +159,7 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
     public void TestSuccessfulAwsTransitiveImpersonation()
     {
         // arrange
-        _fixture.Runner.AddMappings(s_wifAwsImpersonationStsPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, FakeJwt));
+        _fixture.Runner.AddMappings(s_wifAwsImpersonationStsPath, new StringTransformations().ThenTransform(AccessTokenReplacement, FakeJwt));
         SetupSnowflakeAuthentication(_fixture.Runner, AttestationProvider.AWS, FakeJwt);
         var session = PrepareSessionForAws(NoEnvironmentSetup, addStsMapping: false,
             connectionStringSuffix: "workload_impersonation_path=arn:aws:iam::123456789012:role/TestRole");
@@ -175,7 +175,7 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
     public void TestSuccessfulAwsTransitiveImpersonationAttestation()
     {
         // arrange
-        _fixture.Runner.AddMappings(s_wifAwsImpersonationStsPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, FakeJwt));
+        _fixture.Runner.AddMappings(s_wifAwsImpersonationStsPath, new StringTransformations().ThenTransform(AccessTokenReplacement, FakeJwt));
         var session = PrepareSessionForAws(NoEnvironmentSetup, addStsMapping: false,
             connectionStringSuffix: "workload_impersonation_path=arn:aws:iam::123456789012:role/TestRole");
         var authenticator = (WorkloadIdentityFederationAuthenticator)session.GetAuthenticator();
@@ -197,7 +197,7 @@ public sealed class WorkloadIdentityFederationAuthenticatorAwsTest : WorkloadIde
         string connectionStringSuffix = null)
     {
         if (addStsMapping)
-            _fixture.Runner.AddMappings(s_wifAwsSuccessfulStsPath, new StringTransformations().ThenTransform(s_accessTokenReplacement, FakeJwt));
+            _fixture.Runner.AddMappings(s_wifAwsSuccessfulStsPath, new StringTransformations().ThenTransform(AccessTokenReplacement, FakeJwt));
         return PrepareSession(
             AttestationProvider.AWS,
             connectionStringSuffix,

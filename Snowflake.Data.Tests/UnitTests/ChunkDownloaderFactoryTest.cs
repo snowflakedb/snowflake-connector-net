@@ -11,11 +11,11 @@ using System.Collections.Generic;
 using System.Threading;
 public sealed class ChunkDownloaderFactoryTest : IDisposable
 {
-    private readonly int ChunkDownloaderVersionDefault = SFConfiguration.Instance().GetChunkDownloaderVersion();
+    private readonly int _chunkDownloaderVersionDefault = SFConfiguration.Instance().GetChunkDownloaderVersion();
 
     public void Dispose()
     {
-        SFConfiguration.Instance().ChunkDownloaderVersion = ChunkDownloaderVersionDefault; // Return to default version
+        SFConfiguration.Instance().ChunkDownloaderVersion = _chunkDownloaderVersionDefault; // Return to default version
     }
 
     private static QueryExecResponseData MockQueryRequestData()

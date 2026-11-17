@@ -376,10 +376,10 @@ public sealed class SessionTelemetryModuleTest
 
         var module = new SessionTelemetryModule(session);
 
-        const int bufferSize = 100;
+        const int BufferSize = 100;
         const int BuffersToSend = 12;
 
-        var totalPoints = (BuffersToSend + 1) * bufferSize - 1;
+        var totalPoints = (BuffersToSend + 1) * BufferSize - 1;
         Parallel.For(1, totalPoints, i =>
         {
             var activity = new Activity($"whatever {i}");
@@ -387,7 +387,7 @@ public sealed class SessionTelemetryModuleTest
             module.OnActivityStoppedImpl(activity);
         });
 
-        SpinWait.SpinUntil(() => datapointsCounter >= BuffersToSend * bufferSize, TimeSpan.FromSeconds(10));
+        SpinWait.SpinUntil(() => datapointsCounter >= BuffersToSend * BufferSize, TimeSpan.FromSeconds(10));
         Assert.InRange(datapointsCounter, long.MinValue, totalPoints);
     }
 

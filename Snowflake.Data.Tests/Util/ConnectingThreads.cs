@@ -16,7 +16,7 @@ internal class ConnectingThreads
 
     private readonly ConcurrentQueue<ThreadEvent> _events = new();
 
-    private readonly List<Thread> threads = new();
+    private readonly List<Thread> _threads = new();
 
     public ConnectingThreads(string connectionString)
     {
@@ -35,19 +35,19 @@ internal class ConnectingThreads
             waitBeforeConnectMillis,
             waitAfterConnectMillis,
             closeOnExit).Build();
-        threads.Add(thread);
+        _threads.Add(thread);
         return this;
     }
 
     public ConnectingThreads StartAll()
     {
-        threads.ForEach(thread => thread.Start());
+        _threads.ForEach(thread => thread.Start());
         return this;
     }
 
     public ConnectingThreads JoinAll()
     {
-        threads.ForEach(thread => thread.Join());
+        _threads.ForEach(thread => thread.Join());
         return this;
     }
 

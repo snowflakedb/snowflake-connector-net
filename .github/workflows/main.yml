@@ -1,3 +1,4 @@
+# Coverage xml is stashed as an artifact for the internal coverage pipeline.
 name: DotNet Build and Test
 
 permissions:
@@ -129,7 +130,14 @@ jobs:
         uses: codecov/test-results-action@v1
         with:
             token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
+      - name: Upload coverage artifact
+        if: ${{ !cancelled() && github.repository_owner != 'snowflakedb' }}
+        uses: ./.github/actions/upload-coverage-artifact
+        with:
+          name: windows-${{ matrix.dotnet }}-${{ matrix.cloud_env }}
+          path: Snowflake.Data.Tests/windows_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload coverage reports to Codecov
+        if: ${{ github.repository_owner == 'snowflakedb' }}
         uses: codecov/codecov-action@v6
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
@@ -220,7 +228,14 @@ jobs:
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
+      - name: Upload coverage artifact
+        if: ${{ !cancelled() && github.repository_owner != 'snowflakedb' }}
+        uses: ./.github/actions/upload-coverage-artifact
+        with:
+          name: linux-${{ matrix.dotnet }}-${{ matrix.cloud_env }}
+          path: Snowflake.Data.Tests/linux_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload coverage reports to Codecov
+        if: ${{ github.repository_owner == 'snowflakedb' }}
         uses: codecov/codecov-action@v6
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
@@ -311,7 +326,14 @@ jobs:
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
+      - name: Upload coverage artifact
+        if: ${{ !cancelled() && github.repository_owner != 'snowflakedb' }}
+        uses: ./.github/actions/upload-coverage-artifact
+        with:
+          name: macos-${{ matrix.dotnet }}-${{ matrix.cloud_env }}
+          path: Snowflake.Data.Tests/macos_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload coverage reports to Codecov
+        if: ${{ github.repository_owner == 'snowflakedb' }}
         uses: codecov/codecov-action@v6
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557
@@ -365,7 +387,14 @@ jobs:
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODE_COV_UPLOAD_TOKEN }}
+      - name: Upload coverage artifact
+        if: ${{ !cancelled() && github.repository_owner != 'snowflakedb' }}
+        uses: ./.github/actions/upload-coverage-artifact
+        with:
+          name: rockylinux9-${{ matrix.dotnet }}-${{ matrix.cloud_env }}
+          path: Snowflake.Data.Tests/rockylinux9_${{ matrix.dotnet }}_${{ matrix.cloud_env }}_coverage.xml
       - name: Upload coverage reports to Codecov
+        if: ${{ github.repository_owner == 'snowflakedb' }}
         uses: codecov/codecov-action@v6
         with:
           # without the token code cov may fail because of Github limits https://github.com/codecov/codecov-action/issues/557

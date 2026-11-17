@@ -9,14 +9,15 @@ using Snowflake.Data.Core;
 
 internal class MockServiceName : MockBaseRestRequester
 {
-    public const string INIT_SERVICE_NAME = "init";
+    public const string InitServiceName = "init";
+
     public override Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
     {
         var message = request.ToRequestMessage(HttpMethod.Post);
         var param = new NameValueParameter { name = "SERVICE_NAME" };
         if (!message.Headers.Contains("X-Snowflake-Service"))
         {
-            param.value = INIT_SERVICE_NAME;
+            param.value = InitServiceName;
         }
         else
         {

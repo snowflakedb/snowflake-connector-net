@@ -11,7 +11,7 @@ using System.Linq;
 public sealed class SFDbParameterCollectionTest
 {
     private readonly SnowflakeDbParameterCollection _parameterCollection;
-    private const int PARAM_COUNT = 10;
+    private const int ParamCount = 10;
 
     public SFDbParameterCollectionTest()
     {
@@ -34,12 +34,12 @@ public sealed class SFDbParameterCollectionTest
 
         var parameter = new SnowflakeDbParameter();
 
-        for (var i = 0; i < PARAM_COUNT; i++)
+        for (var i = 0; i < ParamCount; i++)
         {
             _parameterCollection.Add(parameter);
         }
 
-        Assert.Equal(PARAM_COUNT, _parameterCollection.Count);
+        Assert.Equal(ParamCount, _parameterCollection.Count);
     }
 
     [SFFact]
@@ -69,30 +69,30 @@ public sealed class SFDbParameterCollectionTest
     [MemberData(nameof(AllSFDataTypes))]
     public void TestDbParameterCollectionAddRange(SFDataType SFDataType)
     {
-        var parameterArray = new SnowflakeDbParameter[PARAM_COUNT];
+        var parameterArray = new SnowflakeDbParameter[ParamCount];
 
-        for (var i = 0; i < PARAM_COUNT; i++)
+        for (var i = 0; i < ParamCount; i++)
         {
             parameterArray[i] = new SnowflakeDbParameter(i, SFDataType);
         }
 
         _parameterCollection.AddRange(parameterArray);
-        Assert.Equal(PARAM_COUNT, _parameterCollection.Count);
+        Assert.Equal(ParamCount, _parameterCollection.Count);
     }
 
     [SFTheory]
     [MemberData(nameof(AllSFDataTypes))]
     public void TestDbParameterCollectionClear(SFDataType SFDataType)
     {
-        var parameterArray = new SnowflakeDbParameter[PARAM_COUNT];
+        var parameterArray = new SnowflakeDbParameter[ParamCount];
 
-        for (var i = 0; i < PARAM_COUNT; i++)
+        for (var i = 0; i < ParamCount; i++)
         {
             parameterArray[i] = new SnowflakeDbParameter(i, SFDataType);
         }
 
         _parameterCollection.AddRange(parameterArray);
-        Assert.Equal(PARAM_COUNT, _parameterCollection.Count);
+        Assert.Equal(ParamCount, _parameterCollection.Count);
 
         _parameterCollection.Clear();
         Assert.Empty(_parameterCollection);
@@ -155,12 +155,12 @@ public sealed class SFDbParameterCollectionTest
     {
         var paramName = "9";
 
-        for (var i = 0; i < PARAM_COUNT; i++)
+        for (var i = 0; i < ParamCount; i++)
         {
             _parameterCollection.Add(new SnowflakeDbParameter(i, SFDataType));
         }
 
-        Assert.Equal(PARAM_COUNT - 1, _parameterCollection.IndexOf(paramName));
+        Assert.Equal(ParamCount - 1, _parameterCollection.IndexOf(paramName));
     }
 
     [SFFact]
@@ -187,7 +187,7 @@ public sealed class SFDbParameterCollectionTest
     public void TestDbParameterCollectionInsert(SFDataType SFDataType)
     {
         SnowflakeDbParameter parameter;
-        for (var expectedParamIndex = 0; expectedParamIndex < PARAM_COUNT; expectedParamIndex++)
+        for (var expectedParamIndex = 0; expectedParamIndex < ParamCount; expectedParamIndex++)
         {
             parameter = new SnowflakeDbParameter(expectedParamIndex.ToString(), SFDataType);
 
@@ -209,21 +209,21 @@ public sealed class SFDbParameterCollectionTest
     [MemberData(nameof(AllSFDataTypes))]
     public void TestDbParameterCollectionRemove(SFDataType SFDataType)
     {
-        var parameterArray = new SnowflakeDbParameter[PARAM_COUNT];
+        var parameterArray = new SnowflakeDbParameter[ParamCount];
 
-        for (var i = 0; i < PARAM_COUNT; i++)
+        for (var i = 0; i < ParamCount; i++)
         {
             parameterArray[i] = new SnowflakeDbParameter(i, SFDataType);
         }
 
         _parameterCollection.AddRange(parameterArray);
-        Assert.Equal(PARAM_COUNT, _parameterCollection.Count);
+        Assert.Equal(ParamCount, _parameterCollection.Count);
 
 
-        for (var i = 0; i < PARAM_COUNT; i++)
+        for (var i = 0; i < ParamCount; i++)
         {
             _parameterCollection.Remove((SnowflakeDbParameter)_parameterCollection[0]);
-            Assert.Equal(PARAM_COUNT - i - 1, _parameterCollection.Count);
+            Assert.Equal(ParamCount - i - 1, _parameterCollection.Count);
         }
     }
 
@@ -231,20 +231,20 @@ public sealed class SFDbParameterCollectionTest
     [MemberData(nameof(AllSFDataTypes))]
     public void TestDbParameterCollectionRemoveAtName(SFDataType SFDataType)
     {
-        var parameterArray = new SnowflakeDbParameter[PARAM_COUNT];
+        var parameterArray = new SnowflakeDbParameter[ParamCount];
 
-        for (var i = 0; i < PARAM_COUNT; i++)
+        for (var i = 0; i < ParamCount; i++)
         {
             parameterArray[i] = new SnowflakeDbParameter(i, SFDataType);
         }
 
         _parameterCollection.AddRange(parameterArray);
-        Assert.Equal(PARAM_COUNT, _parameterCollection.Count);
+        Assert.Equal(ParamCount, _parameterCollection.Count);
 
-        for (var i = 0; i < PARAM_COUNT; i++)
+        for (var i = 0; i < ParamCount; i++)
         {
             _parameterCollection.RemoveAt(((SnowflakeDbParameter)_parameterCollection[0]).ParameterName);
-            Assert.Equal(PARAM_COUNT - i - 1, _parameterCollection.Count);
+            Assert.Equal(ParamCount - i - 1, _parameterCollection.Count);
         }
     }
 
@@ -252,21 +252,21 @@ public sealed class SFDbParameterCollectionTest
     [MemberData(nameof(AllSFDataTypes))]
     public void TestDbParameterCollectionRemoveAtIndex(SFDataType SFDataType)
     {
-        var parameterArray = new SnowflakeDbParameter[PARAM_COUNT];
+        var parameterArray = new SnowflakeDbParameter[ParamCount];
 
-        for (var i = 0; i < PARAM_COUNT; i++)
+        for (var i = 0; i < ParamCount; i++)
         {
             parameterArray[i] = new SnowflakeDbParameter(i, SFDataType);
         }
 
         _parameterCollection.AddRange(parameterArray);
-        Assert.Equal(PARAM_COUNT, _parameterCollection.Count);
+        Assert.Equal(ParamCount, _parameterCollection.Count);
 
 
-        for (var i = 0; i < PARAM_COUNT; i++)
+        for (var i = 0; i < ParamCount; i++)
         {
             _parameterCollection.RemoveAt(0);
-            Assert.Equal(PARAM_COUNT - i - 1, _parameterCollection.Count);
+            Assert.Equal(ParamCount - i - 1, _parameterCollection.Count);
         }
     }
 

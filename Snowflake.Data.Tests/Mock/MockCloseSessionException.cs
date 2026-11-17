@@ -8,7 +8,7 @@ namespace Snowflake.Data.Tests.Mock;
 
 internal class MockCloseSessionException : MockBaseRestRequester
 {
-    internal static readonly int SESSION_CLOSE_ERROR = 390111;
+    internal static readonly int SessionCloseError = 390111;
 
     public override T Get<T>(IRestRequest request)
     {
@@ -47,7 +47,7 @@ internal class MockCloseSessionException : MockBaseRestRequester
         }
         else
         {
-            throw new SnowflakeDbException("", SESSION_CLOSE_ERROR, "Mock generated error", null);
+            throw new SnowflakeDbException("", SessionCloseError, "Mock generated error", null);
         }
     }
 }

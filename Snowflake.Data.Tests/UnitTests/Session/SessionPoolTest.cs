@@ -339,7 +339,7 @@ public sealed class SessionPoolTest
         pool.ExtractIdleSession(connectionString);
 
         // assert
-        Assert.Equal(MockRestSessionExpired.NEW_SESSION_TOKEN, session.sessionToken);
+        Assert.Equal(MockRestSessionExpired.NewSessionToken, session.sessionToken);
     }
 
     [SFFact]
@@ -352,7 +352,7 @@ public sealed class SessionPoolTest
         var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
         pool.SetTimeout(0);
         pool._idleSessions.Add(session);
-        session.sessionToken = MockRestSessionExpired.THROW_ERROR_TOKEN;
+        session.sessionToken = MockRestSessionExpired.ThrowErrorToken;
 
         // act
         try
@@ -365,7 +365,7 @@ public sealed class SessionPoolTest
         }
 
         // assert
-        Assert.NotEqual(MockRestSessionExpired.NEW_SESSION_TOKEN, session.sessionToken);
+        Assert.NotEqual(MockRestSessionExpired.NewSessionToken, session.sessionToken);
     }
 
     [SFFact]

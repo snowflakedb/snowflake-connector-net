@@ -9,11 +9,11 @@ using System.Threading;
 
 public sealed class SFDbCommandTest
 {
-    private SnowflakeDbCommand command;
+    private SnowflakeDbCommand _command;
 
     public SFDbCommandTest()
     {
-        command = new SnowflakeDbCommand();
+        _command = new SnowflakeDbCommand();
     }
 
     [SFFact]
@@ -24,18 +24,18 @@ public sealed class SFDbCommandTest
         var commandText = "select 1";
 
         // Act
-        command = new SnowflakeDbCommand(conn, commandText);
+        _command = new SnowflakeDbCommand(conn, commandText);
 
         // Assert
-        Assert.Equal(conn, command.Connection);
-        Assert.Equal(commandText, command.CommandText);
+        Assert.Equal(conn, _command.Connection);
+        Assert.Equal(commandText, _command.CommandText);
     }
 
     [SFFact]
     public void TestCommandExecuteThrowsExceptionWhenCommandTextIsNotSet()
     {
         // Act
-        var thrown = Assert.Throws<Exception>(() => command.ExecuteScalar());
+        var thrown = Assert.Throws<Exception>(() => _command.ExecuteScalar());
 
         // Assert
         Assert.NotEmpty(thrown.Message);
@@ -45,7 +45,7 @@ public sealed class SFDbCommandTest
     public void TestCommandExecuteAsyncThrowsExceptionWhenCommandTextIsNotSet()
     {
         // Arrange
-        var commandTask = command.ExecuteScalarAsync(CancellationToken.None);
+        var commandTask = _command.ExecuteScalarAsync(CancellationToken.None);
 
         // Act
         var thrown = Assert.Throws<AggregateException>(() => commandTask.Wait());
@@ -57,6 +57,6 @@ public sealed class SFDbCommandTest
     [SFFact]
     public void TestCommandPrepareShouldNotThrowsException()
     {
-        command.Prepare();
+        _command.Prepare();
     }
 }

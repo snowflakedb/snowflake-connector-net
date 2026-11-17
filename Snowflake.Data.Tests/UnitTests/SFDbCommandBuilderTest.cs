@@ -6,35 +6,35 @@ using Xunit;
 using Snowflake.Data.Client;
 public sealed class SFDbCommandBuilderTest
 {
-    private SnowflakeDbCommandBuilder builder;
+    private SnowflakeDbCommandBuilder _builder;
 
     public SFDbCommandBuilderTest()
     {
-        builder = new SnowflakeDbCommandBuilder();
+        _builder = new SnowflakeDbCommandBuilder();
     }
 
     [SFFact]
     public void TestDefaultCommandBuilder()
     {
-        Assert.Equal(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_PREFIX, builder.QuotePrefix);
-        Assert.Equal(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_SUFFIX, builder.QuoteSuffix);
+        Assert.Equal(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_PREFIX, _builder.QuotePrefix);
+        Assert.Equal(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_SUFFIX, _builder.QuoteSuffix);
     }
 
     [SFFact]
     public void TestCommandBuilderWithoutAdapter()
     {
-        builder = new SnowflakeDbCommandBuilder();
-        Assert.Null(builder.DataAdapter);
+        _builder = new SnowflakeDbCommandBuilder();
+        Assert.Null(_builder.DataAdapter);
     }
 
     [SFFact]
     public void TestCommandBuilderWithAdapter()
     {
         var adapter = new SnowflakeDbDataAdapter();
-        builder = new SnowflakeDbCommandBuilder(adapter);
-        Assert.Equal(adapter, builder.DataAdapter);
-        Assert.Equal(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_PREFIX, builder.QuotePrefix);
-        Assert.Equal(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_SUFFIX, builder.QuoteSuffix);
+        _builder = new SnowflakeDbCommandBuilder(adapter);
+        Assert.Equal(adapter, _builder.DataAdapter);
+        Assert.Equal(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_PREFIX, _builder.QuotePrefix);
+        Assert.Equal(SnowflakeDbCommandBuilder.DEFAULT_QUOTE_SUFFIX, _builder.QuoteSuffix);
     }
 
     [SFFact]
@@ -42,10 +42,10 @@ public sealed class SFDbCommandBuilderTest
     {
         var newQuotePrefix = "\'";
 
-        Assert.NotEqual(newQuotePrefix, builder.QuotePrefix);
+        Assert.NotEqual(newQuotePrefix, _builder.QuotePrefix);
 
-        builder.QuotePrefix = newQuotePrefix;
-        Assert.Equal(newQuotePrefix, builder.QuotePrefix);
+        _builder.QuotePrefix = newQuotePrefix;
+        Assert.Equal(newQuotePrefix, _builder.QuotePrefix);
     }
 
     [SFFact]
@@ -53,9 +53,9 @@ public sealed class SFDbCommandBuilderTest
     {
         var newQuoteSuffix = "\'";
 
-        Assert.NotEqual(newQuoteSuffix, builder.QuoteSuffix);
+        Assert.NotEqual(newQuoteSuffix, _builder.QuoteSuffix);
 
-        builder.QuoteSuffix = newQuoteSuffix;
-        Assert.Equal(newQuoteSuffix, builder.QuoteSuffix);
+        _builder.QuoteSuffix = newQuoteSuffix;
+        Assert.Equal(newQuoteSuffix, _builder.QuoteSuffix);
     }
 }
