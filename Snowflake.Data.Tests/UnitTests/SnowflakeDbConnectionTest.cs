@@ -290,6 +290,44 @@ public class SnowflakeDbConnectionTest
         Assert.NotNull(conn.SfSession);
     }
 
+#if NET8_0_OR_GREATER
+    [SFFact]
+    public async Task TestDisposeAsyncClosesSessionWithoutBlockingCall()
+    {
+        // Arrange
+        var mockRestRequester = new MockCloseTrackingRestRequester();
+        var conn = new MockSnowflakeDbConnection(mockRestRequester);
+        conn.ConnectionString = "account=test;user=test;password=test;";
+        conn.Open();
+        Assert.Equal(ConnectionState.Open, conn.State);
+
+        // Act
+        await conn.DisposeAsync().ConfigureAwait(false);
+
+        // Assert
+        Assert.Equal(ConnectionState.Closed, conn.State);
+        Assert.Null(conn.SfSession);
+        Assert.Equal(1, mockRestRequester.AsyncCloseCalls);
+        Assert.Equal(0, mockRestRequester.BlockingCloseCalls);
+    }
+
+    [SFFact]
+    public async Task TestDisposeAsyncDoesNotThrowWhenSessionCloseThrows()
+    {
+        // Arrange
+        var conn = new MockSnowflakeDbConnection(new MockCloseSessionException());
+        conn.ConnectionString = "account=test;user=test;password=test;";
+        conn.Open();
+        Assert.Equal(ConnectionState.Open, conn.State);
+
+        // Act
+        await conn.DisposeAsync().ConfigureAwait(false);
+
+        // Assert
+        Assert.Equal(ConnectionState.Broken, conn.State);
+    }
+#endif
+
     [SFFact]
     public void TestSessionIdReturnsEmptyWhenConnectionIsNotOpen()
     {

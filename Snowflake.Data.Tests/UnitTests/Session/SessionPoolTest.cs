@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Moq;
 using Xunit;
 using Snowflake.Data.Client;
 using Snowflake.Data.Core;
@@ -386,6 +387,119 @@ public sealed class SessionPoolTest
     }
 
     [SFFact]
+    public async Task TestExpiredSessionFoundWhenGettingIdleSessionIsClosedWithoutBlockingCall()
+    {
+        // arrange
+        var connectionString = "account=testAccount;user=testUser;password=testPassword;";
+        var requester = new MockCloseTrackingRestRequester();
+        var session = CreateSessionWithCurrentStartTime(connectionString, requester);
+        session.sessionToken = "token";
+        var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
+        pool.SetTimeout(0);
+        pool._idleSessions.Add(session);
+
+        // act
+        var extractedSession = pool.ExtractIdleSession(connectionString);
+        await Awaiter.WaitUntilConditionOrTimeout(() => session.sessionToken == null, s_backgroundWorkTimeout).ConfigureAwait(false);
+
+        // assert
+        Assert.Null(extractedSession);
+        Assert.Equal(1, requester.AsyncCloseCalls);
+        Assert.Equal(0, requester.BlockingCloseCalls);
+    }
+
+    [SFFact]
+    public async Task TestExpiredSessionFoundWhenReturningSessionIsClosedWithoutBlockingCall()
+    {
+        // arrange
+        var connectionString = "account=testAccount;user=testUser;password=testPassword;";
+        var requester = new MockCloseTrackingRestRequester();
+        var expiredSession = CreateSessionWithCurrentStartTime(connectionString, requester);
+        expiredSession.sessionToken = "expired_token";
+        expiredSession.SetStartTime(DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeMilliseconds());
+        var returnedSession = CreateSessionWithCurrentStartTime(connectionString, requester);
+        returnedSession.sessionToken = "valid_token";
+        var pool = SessionPool.CreateSessionPool(connectionString, null, null, null);
+        pool._idleSessions.Add(expiredSession);
+
+        // act
+        var wasAdded = pool.AddSession(returnedSession, false);
+        await Awaiter.WaitUntilConditionOrTimeout(() => expiredSession.sessionToken == null, s_backgroundWorkTimeout).ConfigureAwait(false);
+
+        // assert
+        Assert.True(wasAdded);
+        Assert.Equal(returnedSession, Assert.Single(pool._idleSessions));
+        Assert.Equal(1, requester.AsyncCloseCalls);
+        Assert.Equal(0, requester.BlockingCloseCalls);
+    }
+
+    [SFFact]
+    public async Task TestSessionsMaintainingMinPoolSizeAreOpenedWithoutBlockingCall()
+    {
+        // arrange
+        const int MinPoolSize = 3;
+        var connectionString = $"account=testAccount;user=testUser;password=testPassword;minPoolSize={MinPoolSize};";
+        var sessionFactory = new TrackingSessionFactory(Task.CompletedTask);
+        var pool = SessionPool.CreateSessionPool(connectionString, null, null, null, sessionFactory);
+
+        // act
+        var session = await pool.GetSessionAsync(connectionString, new SessionPropertiesContext(), CancellationToken.None).ConfigureAwait(false);
+        await Awaiter.WaitUntilConditionOrTimeout(() => pool.GetCurrentState().IdleSessionsCount == MinPoolSize - 1, s_backgroundWorkTimeout).ConfigureAwait(false);
+
+        // assert
+        Assert.NotNull(session);
+        Assert.Equal(MinPoolSize - 1, pool.GetCurrentState().IdleSessionsCount);
+        Assert.Equal(MinPoolSize, sessionFactory.AsyncOpenCalls);
+        Assert.Equal(0, sessionFactory.BlockingOpenCalls);
+    }
+
+    [SFFact]
+    public async Task TestSessionsMaintainingMinPoolSizeAreOpenedWithLimitedConcurrency()
+    {
+        // arrange
+        var limit = SessionPool.s_maxConcurrentBackgroundOperations;
+        var minPoolSize = limit + 3; // one session for the caller, two more background sessions than the limit allows at once
+        var connectionString = $"account=testAccount;user=testUser;password=testPassword;minPoolSize={minPoolSize};maxPoolSize={minPoolSize};";
+        var loginResponse = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var sessionFactory = new TrackingSessionFactory(loginResponse.Task);
+        var pool = SessionPool.CreateSessionPool(connectionString, null, null, null, sessionFactory);
+
+        // act
+        var sessionTask = pool.GetSessionAsync(connectionString, new SessionPropertiesContext(), CancellationToken.None);
+        await Awaiter.WaitUntilConditionOrTimeout(() => sessionFactory.AsyncOpenCalls > limit, s_backgroundWorkTimeout).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false); // sessions over the limit would have started by now
+        var openCallsWhileLoginsArePending = sessionFactory.AsyncOpenCalls;
+        loginResponse.SetResult(true);
+        await sessionTask.ConfigureAwait(false);
+        await Awaiter.WaitUntilConditionOrTimeout(() => pool.GetCurrentState().IdleSessionsCount == minPoolSize - 1, s_backgroundWorkTimeout).ConfigureAwait(false);
+
+        // assert
+        Assert.Equal(limit + 1, openCallsWhileLoginsArePending);
+        Assert.Equal(minPoolSize - 1, pool.GetCurrentState().IdleSessionsCount);
+        Assert.Equal(minPoolSize, sessionFactory.AsyncOpenCalls);
+        Assert.Equal(0, sessionFactory.BlockingOpenCalls);
+    }
+
+    [SFFact]
+    public async Task TestFailureToOpenSessionMaintainingMinPoolSizeReleasesItsSlotInPool()
+    {
+        // arrange
+        const int MinPoolSize = 3;
+        var connectionString = $"account=testAccount;user=testUser;password=testPassword;minPoolSize={MinPoolSize};";
+        var sessionFactory = new TrackingSessionFactory(Task.CompletedTask, failingSessionsCount: MinPoolSize - 1);
+        var pool = SessionPool.CreateSessionPool(connectionString, null, null, null, sessionFactory);
+
+        // act
+        var session = await pool.GetSessionAsync(connectionString, new SessionPropertiesContext(), CancellationToken.None).ConfigureAwait(false);
+        await Awaiter.WaitUntilConditionOrTimeout(() => pool.OngoingSessionCreationsCount() == 0, s_backgroundWorkTimeout).ConfigureAwait(false);
+
+        // assert
+        Assert.NotNull(session);
+        Assert.Equal(0, pool.OngoingSessionCreationsCount());
+        Assert.Equal(1, pool.GetCurrentPoolSize());
+    }
+
+    [SFFact]
     public void TestClearIdleSessionsShouldEvictAllSessionsEvenWhenCloseThrows()
     {
         // arrange
@@ -528,6 +642,44 @@ public sealed class SessionPoolTest
         AssertExtensions.Equal(0, pool.OngoingSessionCreationsCount(),
             $"Expected 0 leaked tokens after {Iterations} cancelled operations, " +
             $"but {pool.OngoingSessionCreationsCount()} token(s) remain. ");
+    }
+
+    private static readonly TimeSpan s_backgroundWorkTimeout = TimeSpan.FromSeconds(30);
+
+    // Creates sessions which count how they were opened; the first session is the one requested by the caller.
+    private sealed class TrackingSessionFactory : ISessionFactory
+    {
+        private readonly Task _openAsyncResult;
+        private readonly int _failingSessionsCount;
+        private int _createdSessions;
+        private int _asyncOpenCalls;
+        private int _blockingOpenCalls;
+
+        internal int AsyncOpenCalls => Volatile.Read(ref _asyncOpenCalls);
+
+        internal int BlockingOpenCalls => Volatile.Read(ref _blockingOpenCalls);
+
+        internal TrackingSessionFactory(Task openAsyncResult, int failingSessionsCount = 0)
+        {
+            _openAsyncResult = openAsyncResult;
+            _failingSessionsCount = failingSessionsCount;
+        }
+
+        public SFSession NewSession(string connectionString, SessionPropertiesContext sessionContext)
+        {
+            var sessionNumber = Interlocked.Increment(ref _createdSessions);
+            var isFailing = sessionNumber > 1 && sessionNumber <= _failingSessionsCount + 1;
+            var session = new Mock<SFSession>(connectionString, sessionContext, EasyLoggingStarter.Instance);
+            session.Setup(x => x.Open()).Callback(() => Interlocked.Increment(ref _blockingOpenCalls));
+            session.Setup(x => x.OpenAsync(It.IsAny<CancellationToken>())).Returns(() =>
+            {
+                Interlocked.Increment(ref _asyncOpenCalls);
+                return isFailing ? Task.FromException(new Exception("Mock generated login error")) : _openAsyncResult;
+            });
+            session.Setup(x => x.IsNotOpen()).Returns(false);
+            session.Setup(x => x.IsExpired(It.IsAny<TimeSpan>(), It.IsAny<long>())).Returns(false);
+            return session.Object;
+        }
     }
 
     private static SFSession CreateSessionWithCurrentStartTime(string connectionString, IMockRestRequester restRequester = null)

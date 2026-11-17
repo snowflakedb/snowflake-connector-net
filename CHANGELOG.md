@@ -3,6 +3,8 @@
 # Changelog
 - Upcoming release
   - Upload GHA coverage reports to Dedicated Codecov (`snowflake.codecov.io`) from Jenkins snowos instead of uploading from GitHub-hosted runners (SNOW-4248610).
+  - Bug fix: the connection pool no longer blocks a thread pool thread for every expired session it closes and for every session it opens in the background to maintain `MinPoolSize`. Both are now done asynchronously, at most `max(2, processor count)` at a time, which prevents thread pool starvation and multi-second stalls of the whole application after the pooled sessions expire, most visible on hosts with one or two cores.
+  - `SnowflakeDbConnection.DisposeAsync` now closes the connection asynchronously on .NET 8 and newer, so `await using` no longer blocks the calling thread while the session is being closed.
 - v6.5.0
   - Heartbeat interval now honors the `CLIENT_SESSION_KEEP_ALIVE_HEARTBEAT_FREQUENCY` session parameter.
   - Improved key-pair authentication PEM parse error messages.

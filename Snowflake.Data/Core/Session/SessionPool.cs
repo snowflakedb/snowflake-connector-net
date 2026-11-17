@@ -36,6 +36,11 @@ internal sealed class SessionPool : IDisposable
     private bool _configOverriden;
     private bool _underDestruction;
 
+    // Limits how many sessions the pool opens or closes in the background at the same time,
+    // so that a burst of expired sessions does not compete with the requests being served.
+    internal static readonly int s_maxConcurrentBackgroundOperations = Math.Max(2, Environment.ProcessorCount);
+    private readonly SemaphoreSlim _backgroundOperationsSemaphore = new(s_maxConcurrentBackgroundOperations);
+
     private static readonly InvalidOperationException s_notSupportedInCachePoolException = new("Feature not supported in a Connection Cache");
 
     private SessionPool()
@@ -105,7 +110,7 @@ internal sealed class SessionPool : IDisposable
                     _idleSessions.Remove(item);
                     try
                     {
-                        Task.Run(() => item.Close());
+                        CloseSessionInBackground(item);
                     }
                     catch (Exception ex)
                     {
@@ -241,11 +246,50 @@ internal sealed class SessionPool : IDisposable
 
     private void ScheduleNewIdleSession(string connStr, SessionPropertiesContext sessionContext, SessionCreationToken token)
     {
-        Task.Run(() =>
+        Task.Run(() => NewIdleSessionAsync(connStr, sessionContext, token));
+    }
+
+    // Opens the session asynchronously, so no thread pool thread is blocked while waiting for the login response.
+    private async Task NewIdleSessionAsync(string connStr, SessionPropertiesContext sessionContext, SessionCreationToken token)
+    {
+        await _backgroundOperationsSemaphore.WaitAsync().ConfigureAwait(false);
+        try
         {
-            var session = NewSession(connStr, sessionContext, token);
+            var session = await NewSessionAsync(connStr, sessionContext, token, CancellationToken.None).ConfigureAwait(false);
             AddSession(session, false); // we don't want to ensure min pool size here because we could get into infinite recursion if expirationTimeout would be very low
-        });
+        }
+        catch (Exception ex)
+        {
+            _sessionCreationTokenCounter.RemoveToken(token);
+            s_logger.Error("SessionPool failed to create a session in the background, error ignored." + PoolIdentification(), ex);
+        }
+        finally
+        {
+            _backgroundOperationsSemaphore.Release();
+        }
+    }
+
+    private void CloseSessionInBackground(SFSession session)
+    {
+        Task.Run(() => CloseSessionAsync(session));
+    }
+
+    // Closes the session asynchronously, so no thread pool thread is blocked while waiting for the response.
+    private async Task CloseSessionAsync(SFSession session)
+    {
+        await _backgroundOperationsSemaphore.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            await session.CloseAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            s_logger.Error("SessionPool failed to close a session in the background, error ignored." + PoolIdentification(), ex);
+        }
+        finally
+        {
+            _backgroundOperationsSemaphore.Release();
+        }
     }
 
     private void WarnAboutOverridenConfig()
@@ -391,14 +435,14 @@ internal sealed class SessionPool : IDisposable
                         catch (Exception e)
                         {
                             s_logger.Error($"failed to renew session {session.sessionId}{PoolIdentification()} due to error: {e.Message}");
-                            Task.Run(() => session.Close());
+                            CloseSessionInBackground(session);
                             i--;
                         }
                     }
                     else
                     {
                         s_logger.Debug($"keep alive disabled: closing the expired session {session.sessionId}{PoolIdentification()}");
-                        Task.Run(() => session.Close());
+                        CloseSessionInBackground(session);
                         i--;
                     }
                 }
