@@ -3,6 +3,7 @@
 # Changelog
 - Upcoming release
   - Upload GHA coverage reports to Dedicated Codecov (`snowflake.codecov.io`) from Jenkins snowos instead of uploading from GitHub-hosted runners (SNOW-4248610).
+  - Bug fix: connection pools that have not been used for longer than their expiration timeout, and have no sessions in use, are now removed with their idle sessions closed. Pools are keyed by their secrets, so rotating a password or OAuth token (`token=` / `authenticator=oauth`) previously left every earlier pool and its sessions in memory until `SnowflakeDbConnectionPool.ClearAllPools()`.
 - v6.5.0
   - Heartbeat interval now honors the `CLIENT_SESSION_KEEP_ALIVE_HEARTBEAT_FREQUENCY` session parameter.
   - Improved key-pair authentication PEM parse error messages.

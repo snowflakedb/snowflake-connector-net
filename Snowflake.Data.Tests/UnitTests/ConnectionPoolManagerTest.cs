@@ -126,6 +126,57 @@ public class ConnectionPoolManagerTest
     }
 
     [SFFact]
+    public void TestRemoveUnusedPoolsRemovesOnlyPoolsUnusedLongerThanExpirationTimeout()
+    {
+        // Arrange
+        var connectionPoolManager = (ConnectionPoolManager)new Factory().CreateConnectionManager(ConnectionPoolType.MultipleConnectionPool);
+        var unusedPool = connectionPoolManager.GetPool(ConnectionString1, new SessionPropertiesContext());
+        connectionPoolManager.GetSession(ConnectionString2, new SessionPropertiesContext());
+        var poolWithBusySession = connectionPoolManager.GetPool(ConnectionString2, new SessionPropertiesContext());
+        var afterExpirationTimeout = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (long)TimeSpan.FromMinutes(61).TotalMilliseconds;
+
+        // Act
+        connectionPoolManager.RemoveUnusedPools(afterExpirationTimeout);
+
+        // Assert
+        Assert.NotSame(unusedPool, connectionPoolManager.GetPool(ConnectionString1, new SessionPropertiesContext()));
+        Assert.Same(poolWithBusySession, connectionPoolManager.GetPool(ConnectionString2, new SessionPropertiesContext()));
+    }
+
+    [SFFact]
+    public void TestGetSessionReplacesPoolDestroyedBeforeItIsRemoved()
+    {
+        // Arrange
+        var connectionPoolManager = (ConnectionPoolManager)new Factory().CreateConnectionManager(ConnectionPoolType.MultipleConnectionPool);
+        var destroyedPool = connectionPoolManager.GetPool(ConnectionString1, new SessionPropertiesContext());
+        var afterExpirationTimeout = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (long)TimeSpan.FromMinutes(61).TotalMilliseconds;
+        Assert.True(destroyedPool.TryDestroyIfUnused(afterExpirationTimeout));
+
+        // Act
+        connectionPoolManager.GetSession(ConnectionString1, new SessionPropertiesContext());
+
+        // Assert
+        Assert.Throws<SessionPoolDestroyedException>(() => destroyedPool.GetSession(ConnectionString1, new SessionPropertiesContext()));
+        var newPool = connectionPoolManager.GetPool(ConnectionString1, new SessionPropertiesContext());
+        Assert.NotSame(destroyedPool, newPool);
+        Assert.Equal(1, newPool.GetCurrentPoolSize());
+    }
+
+    [SFFact]
+    public void TestSessionPoolHandleFollowsPoolRecreatedAfterClearAllPools()
+    {
+        // Arrange
+        var poolHandle = SnowflakeDbConnectionPool.GetPool(ConnectionString1);
+        SnowflakeDbConnectionPool.ClearAllPools();
+
+        // Act
+        SnowflakeDbConnectionPool.ConnectionManager.GetSession(ConnectionString1, new SessionPropertiesContext());
+
+        // Assert
+        Assert.Equal(1, poolHandle.GetCurrentPoolSize());
+    }
+
+    [SFFact]
     public void TestCountingOfSessionProvidedByPool()
     {
         // Act

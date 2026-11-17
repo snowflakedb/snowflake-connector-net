@@ -530,6 +530,76 @@ public sealed class SessionPoolTest
             $"but {pool.OngoingSessionCreationsCount()} token(s) remain. ");
     }
 
+    [SFFact]
+    public void TestTryDestroyIfUnusedKeepsPoolUsedWithinExpirationTimeout()
+    {
+        // arrange
+        var pool = SessionPool.CreateSessionPool(ConnectionString, null, null, null);
+        var session = CreateSessionWithCurrentStartTime(ConnectionString);
+        pool._idleSessions.Add(session);
+        var withinExpirationTimeout = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (long)TimeSpan.FromMinutes(59).TotalMilliseconds;
+
+        // act
+        var destroyed = pool.TryDestroyIfUnused(withinExpirationTimeout);
+
+        // assert
+        Assert.False(destroyed);
+        Assert.Single(pool._idleSessions);
+    }
+
+    [SFFact]
+    public async Task TestTryDestroyIfUnusedDestroysPoolUnusedLongerThanExpirationTimeout()
+    {
+        // arrange
+        var pool = SessionPool.CreateSessionPool(ConnectionString, null, null, null);
+        var session = CreateSessionWithCurrentStartTime(ConnectionString, new MockRestSessionExpired());
+        session.sessionToken = "token";
+        pool._idleSessions.Add(session);
+        var afterExpirationTimeout = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (long)TimeSpan.FromMinutes(61).TotalMilliseconds;
+
+        // act
+        var destroyed = pool.TryDestroyIfUnused(afterExpirationTimeout);
+
+        // assert
+        Assert.True(destroyed);
+        Assert.Empty(pool._idleSessions);
+        Assert.False(pool.AddSession(CreateSessionWithCurrentStartTime(ConnectionString), false));
+        await Awaiter.WaitUntilConditionOrTimeout(() => session.sessionToken == null, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        Assert.Null(session.sessionToken);
+    }
+
+    [SFFact]
+    public void TestTryDestroyIfUnusedKeepsPoolWithOverriddenConfig()
+    {
+        // arrange
+        var pool = SessionPool.CreateSessionPool(ConnectionString, null, null, null);
+        pool.SetMaxPoolSize(5);
+        var afterExpirationTimeout = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (long)TimeSpan.FromMinutes(61).TotalMilliseconds;
+
+        // act
+        var destroyed = pool.TryDestroyIfUnused(afterExpirationTimeout);
+
+        // assert
+        Assert.False(destroyed);
+    }
+
+    [SFFact]
+    public void TestTryDestroyIfUnusedKeepsPoolWithBusySession()
+    {
+        // arrange
+        var connectionString = ConnectionString + "minPoolSize=0;";
+        var pool = SessionPool.CreateSessionPool(connectionString, null, null, null, new MockSessionFactory());
+        pool.GetSession(connectionString, new SessionPropertiesContext());
+        var afterExpirationTimeout = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (long)TimeSpan.FromMinutes(61).TotalMilliseconds;
+
+        // act
+        var destroyed = pool.TryDestroyIfUnused(afterExpirationTimeout);
+
+        // assert
+        Assert.False(destroyed);
+        Assert.Equal(1, pool.GetCurrentPoolSize());
+    }
+
     private static SFSession CreateSessionWithCurrentStartTime(string connectionString, IMockRestRequester restRequester = null)
     {
         var session = restRequester == null ? new SFSession(connectionString, new SessionPropertiesContext()) :

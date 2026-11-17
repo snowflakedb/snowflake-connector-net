@@ -5,26 +5,33 @@ namespace Snowflake.Data.Client;
 
 public class SnowflakeDbSessionPool
 {
-    private readonly SessionPool _sessionPool;
+    // Pools that stay unused are removed and recreated on demand, so the pool is looked up on every call
+    // to keep a handle from pointing at a pool that is no longer in use.
+    private readonly Func<SessionPool> _sessionPoolProvider;
 
-    internal SnowflakeDbSessionPool(SessionPool sessionPool)
-        => _sessionPool = sessionPool ?? throw new NullReferenceException("SessionPool not provided!");
+    internal SnowflakeDbSessionPool(Func<SessionPool> sessionPoolProvider)
+    {
+        _sessionPoolProvider = sessionPoolProvider ?? throw new NullReferenceException("SessionPool provider not provided!");
+        _ = SessionPool;
+    }
 
-    public bool GetPooling() => _sessionPool.GetPooling();
+    private SessionPool SessionPool => _sessionPoolProvider() ?? throw new NullReferenceException("SessionPool not provided!");
 
-    public int GetMinPoolSize() => _sessionPool.GetMinPoolSize();
+    public bool GetPooling() => SessionPool.GetPooling();
 
-    public int GetMaxPoolSize() => _sessionPool.GetMaxPoolSize();
+    public int GetMinPoolSize() => SessionPool.GetMinPoolSize();
 
-    public int GetCurrentPoolSize() => _sessionPool.GetCurrentPoolSize();
+    public int GetMaxPoolSize() => SessionPool.GetMaxPoolSize();
 
-    public long GetExpirationTimeout() => _sessionPool.GetTimeout();
+    public int GetCurrentPoolSize() => SessionPool.GetCurrentPoolSize();
 
-    public long GetConnectionTimeout() => _sessionPool.GetConnectionTimeout();
+    public long GetExpirationTimeout() => SessionPool.GetTimeout();
 
-    public long GetWaitForIdleSessionTimeout() => _sessionPool.GetWaitForIdleSessionTimeout();
+    public long GetConnectionTimeout() => SessionPool.GetConnectionTimeout();
 
-    public void ClearPool() => _sessionPool.ClearSessions();
+    public long GetWaitForIdleSessionTimeout() => SessionPool.GetWaitForIdleSessionTimeout();
 
-    public ChangedSessionBehavior GetChangedSession() => _sessionPool.GetChangedSession();
+    public void ClearPool() => SessionPool.ClearSessions();
+
+    public ChangedSessionBehavior GetChangedSession() => SessionPool.GetChangedSession();
 }

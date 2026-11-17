@@ -47,13 +47,13 @@ public class SnowflakeDbConnectionPool
             OAuthClientSecret = oauthClientSecret,
             Token = token
         };
-        return new SnowflakeDbSessionPool(ConnectionManager.GetPool(connectionString, sessionContext));
+        return new SnowflakeDbSessionPool(() => ConnectionManager.GetPool(connectionString, sessionContext));
     }
 
     public static SnowflakeDbSessionPool GetPool(string connectionString)
     {
         s_logger.Debug($"SnowflakeDbConnectionPool::GetPool");
-        return new SnowflakeDbSessionPool(ConnectionManager.GetPool(connectionString));
+        return new SnowflakeDbSessionPool(() => ConnectionManager.GetPool(connectionString));
     }
 
     internal static SessionPool GetPoolInternal(string connectionString)

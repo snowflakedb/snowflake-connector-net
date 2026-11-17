@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security;
@@ -15,9 +16,12 @@ internal sealed class ConnectionPoolManager : IConnectionManager
     private static readonly SFLogger s_logger = SFLoggerFactory.GetLogger<ConnectionPoolManager>();
     private static readonly object s_poolsLock = new();
     private static readonly Exception s_operationNotAvailable = new("You cannot change connection pool parameters for all the pools. Instead you can change it on a particular pool");
-    private readonly Dictionary<string, SessionPool> _pools;
+    private const int MaxGetSessionAttempts = 3;
+    private static readonly long s_unusedPoolsCheckIntervalMillis = (long)TimeSpan.FromMinutes(1).TotalMilliseconds;
+    private readonly ConcurrentDictionary<string, SessionPool> _pools;
     private readonly SessionPoolFactory _sessionPoolFactory;
     private readonly IConnectionManagerFactory _connectionManagerFactory;
+    private long _nextUnusedPoolsCheckMillis;
 
     internal ConnectionPoolManager() : this(DefaultSessionPoolFactory, ConnectionManagerFactory.Singleton)
     {
@@ -29,20 +33,41 @@ internal sealed class ConnectionPoolManager : IConnectionManager
         _connectionManagerFactory = connectionManagerFactory;
         lock (s_poolsLock)
         {
-            _pools = new Dictionary<string, SessionPool>();
+            _pools = new ConcurrentDictionary<string, SessionPool>();
         }
+        _nextUnusedPoolsCheckMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + s_unusedPoolsCheckIntervalMillis;
     }
 
     public SFSession GetSession(string connectionString, SessionPropertiesContext sessionContext)
     {
         s_logger.Debug($"ConnectionPoolManager::GetSession");
-        return GetPool(connectionString, sessionContext).GetSession(connectionString, sessionContext);
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                return GetPool(connectionString, sessionContext).GetSession(connectionString, sessionContext);
+            }
+            catch (SessionPoolDestroyedException) when (attempt < MaxGetSessionAttempts)
+            {
+                s_logger.Debug("ConnectionPoolManager::GetSession - pool was destroyed while getting a session, retrying with a new pool");
+            }
+        }
     }
 
-    public Task<SFSession> GetSessionAsync(string connectionString, SessionPropertiesContext sessionContext, CancellationToken cancellationToken)
+    public async Task<SFSession> GetSessionAsync(string connectionString, SessionPropertiesContext sessionContext, CancellationToken cancellationToken)
     {
         s_logger.Debug($"ConnectionPoolManager::GetSessionAsync");
-        return GetPool(connectionString, sessionContext).GetSessionAsync(connectionString, sessionContext, cancellationToken);
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                return await GetPool(connectionString, sessionContext).GetSessionAsync(connectionString, sessionContext, cancellationToken).ConfigureAwait(false);
+            }
+            catch (SessionPoolDestroyedException) when (attempt < MaxGetSessionAttempts)
+            {
+                s_logger.Debug("ConnectionPoolManager::GetSessionAsync - pool was destroyed while getting a session, retrying with a new pool");
+            }
+        }
     }
 
     public bool AddSession(SFSession session)
@@ -139,7 +164,9 @@ internal sealed class ConnectionPoolManager : IConnectionManager
         var token = sessionContext.Token;
         var poolKey = GetPoolKey(connectionString, password, oauthClientSecret, token);
 
-        if (_pools.TryGetValue(poolKey, out var item))
+        RemoveUnusedPoolsIfDue();
+
+        if (_pools.TryGetValue(poolKey, out var item) && !item.IsDestroyed)
         {
             item.ValidateSecurePassword(password);
             item.ValidateSecureOAuthClientSecret(oauthClientSecret);
@@ -149,7 +176,7 @@ internal sealed class ConnectionPoolManager : IConnectionManager
 
         lock (s_poolsLock)
         {
-            if (_pools.TryGetValue(poolKey, out var poolCreatedWhileWaitingOnLock))
+            if (_pools.TryGetValue(poolKey, out var poolCreatedWhileWaitingOnLock) && !poolCreatedWhileWaitingOnLock.IsDestroyed)
             {
                 poolCreatedWhileWaitingOnLock.ValidateSecurePassword(password);
                 poolCreatedWhileWaitingOnLock.ValidateSecureOAuthClientSecret(oauthClientSecret);
@@ -158,8 +185,33 @@ internal sealed class ConnectionPoolManager : IConnectionManager
             }
             s_logger.Info($"Creating new pool");
             var pool = _sessionPoolFactory(connectionString, password, oauthClientSecret, token);
-            _pools.Add(poolKey, pool);
+            _pools[poolKey] = pool;
             return pool;
+        }
+    }
+
+    // Pools are keyed by their secrets, so a rotated password or OAuth token leaves the previous pool
+    // behind. Without this, such pools would stay in memory with their idle sessions until ClearAllPools().
+    private void RemoveUnusedPoolsIfDue()
+    {
+        var nowMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var nextCheckMillis = Interlocked.Read(ref _nextUnusedPoolsCheckMillis);
+        if (nowMillis < nextCheckMillis)
+            return;
+        if (Interlocked.CompareExchange(ref _nextUnusedPoolsCheckMillis, nowMillis + s_unusedPoolsCheckIntervalMillis, nextCheckMillis) != nextCheckMillis)
+            return;
+        RemoveUnusedPools(nowMillis);
+    }
+
+    internal void RemoveUnusedPools(long nowMillis)
+    {
+        foreach (var entry in _pools.ToArray())
+        {
+            if (entry.Value.TryDestroyIfUnused(nowMillis))
+            {
+                // Removes the entry only if it still holds the destroyed pool, not one created since.
+                ((ICollection<KeyValuePair<string, SessionPool>>)_pools).Remove(entry);
+            }
         }
     }
 
