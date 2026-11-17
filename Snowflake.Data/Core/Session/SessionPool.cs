@@ -35,6 +35,7 @@ internal sealed class SessionPool : IDisposable
     private readonly ConnectionPoolConfig _poolConfig;
     private bool _configOverriden;
     private bool _underDestruction;
+    private long _lastUsedMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
     private static readonly InvalidOperationException s_notSupportedInCachePoolException = new("Feature not supported in a Connection Cache");
 
@@ -168,6 +169,7 @@ internal sealed class SessionPool : IDisposable
     internal SFSession GetSession(string connStr, SessionPropertiesContext sessionContext)
     {
         s_logger.Debug("SessionPool::GetSession" + PoolIdentification());
+        MarkUsed();
         var sessionProperties = SFSessionProperties.ParseConnectionString(connStr, sessionContext);
         ValidateMinPoolSizeWithPasscode(sessionProperties, sessionContext.Passcode);
         if (!GetPooling())
@@ -208,6 +210,7 @@ internal sealed class SessionPool : IDisposable
     internal async Task<SFSession> GetSessionAsync(string connStr, SessionPropertiesContext sessionContext, CancellationToken cancellationToken)
     {
         s_logger.Debug("SessionPool::GetSessionAsync" + PoolIdentification());
+        MarkUsed();
         var sessionProperties = SFSessionProperties.ParseConnectionString(connStr, sessionContext);
         ValidateMinPoolSizeWithPasscode(sessionProperties, sessionContext.Passcode);
         if (!GetPooling())
@@ -268,6 +271,11 @@ internal sealed class SessionPool : IDisposable
         s_logger.Debug("SessionPool::GetIdleSession" + PoolIdentification());
         lock (_sessionPoolLock)
         {
+            if (_underDestruction && IsMultiplePoolsVersion())
+            {
+                // Sessions taken from a destroyed pool would not be counted by the pool that replaces it.
+                throw new SessionPoolDestroyedException();
+            }
             if (_waitingForIdleSessionQueue.IsAnyoneWaiting())
             {
                 s_logger.Debug("SessionPool::GetIdleSession - someone is already waiting for a session, request is going to be queued" + PoolIdentification());
@@ -531,6 +539,8 @@ internal sealed class SessionPool : IDisposable
         if (!GetPooling() || _underDestruction)
             return false;
 
+        MarkUsed();
+
         var isMultiplePoolsVersion = IsMultiplePoolsVersion();
         if (isMultiplePoolsVersion &&
             session.SessionPropertiesChanged &&
@@ -622,6 +632,67 @@ internal sealed class SessionPool : IDisposable
             _busySessionsCounter.Reset();
             _waitingForIdleSessionQueue.Reset();
             _sessionCreationTokenCounter.Reset();
+        }
+    }
+
+    internal bool IsDestroyed => Volatile.Read(ref _underDestruction);
+
+    private void MarkUsed() => Interlocked.Exchange(ref _lastUsedMillis, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+
+    /// <summary>
+    /// Destroys the pool if no session has been requested from or returned to it for longer than the
+    /// expiration timeout, and no session is busy, being created or awaited. By then every idle session
+    /// in the pool has expired, so nothing usable is lost. Pools whose configuration was overridden and
+    /// pools with an infinite expiration timeout are kept.
+    /// </summary>
+    /// <returns>True if the pool is destroyed and can be removed from the pool manager.</returns>
+    internal bool TryDestroyIfUnused(long nowMillis)
+    {
+        if (!IsMultiplePoolsVersion() || _configOverriden || TimeoutHelper.IsInfinite(_poolConfig.ExpirationTimeout))
+            return false;
+
+        SFSession[] sessionsToClose;
+        // Cleanup runs on the connection path, so a pool that is busy right now is simply checked next time.
+        if (!Monitor.TryEnter(_sessionPoolLock))
+            return false;
+        try
+        {
+            if (_underDestruction)
+                return true;
+            var unusedMillis = nowMillis - Interlocked.Read(ref _lastUsedMillis);
+            if (unusedMillis <= (long)_poolConfig.ExpirationTimeout.TotalMilliseconds)
+                return false;
+            if (_busySessionsCounter.Count() > 0 || _sessionCreationTokenCounter.Count() > 0 || _waitingForIdleSessionQueue.IsAnyoneWaiting())
+                return false;
+            _underDestruction = true;
+            sessionsToClose = _idleSessions.ToArray();
+            _idleSessions.Clear();
+        }
+        finally
+        {
+            Monitor.Exit(_sessionPoolLock);
+        }
+
+        s_logger.Info($"Destroying a connection pool unused for longer than its expiration timeout, closing {sessionsToClose.Length} idle sessions" + PoolIdentification());
+        if (sessionsToClose.Length > 0)
+        {
+            Task.Run(() => CloseSessions(sessionsToClose));
+        }
+        return true;
+    }
+
+    private void CloseSessions(SFSession[] sessions)
+    {
+        foreach (var session in sessions)
+        {
+            try
+            {
+                session.Close();
+            }
+            catch (Exception ex)
+            {
+                s_logger.Error("SessionPool::CloseSessions failed to close a session, error ignored." + PoolIdentification(), ex);
+            }
         }
     }
 

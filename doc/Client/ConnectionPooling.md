@@ -88,6 +88,8 @@ await connection.OpenAsync(cancellationToken); // Pool 2 is created
 
 ```
 
+A pool is removed, and its idle connections are closed, once no connection has been taken from or returned to it for longer than its [Expiration Timeout](#expiration-timeout) and none of its connections is in use. Pools are also told apart by their password, OAuth client secret and token, so this matters most when one of these rotates (for example an OAuth access token passed with `token=`): pools for earlier values are no longer kept until `ClearAllPools()` is called. Pools with an infinite expiration timeout are kept.
+
 #### Minimum pool size
 
 Ensures the pool maintains at least the specified number of connections. Additional connections are created in the background when a connection is opened. During connection close, expired connections are removed and then new ones are created to restore the minimum size.
